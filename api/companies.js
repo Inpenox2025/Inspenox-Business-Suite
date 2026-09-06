@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
                 ORDER BY id ASC
             `;
 
-            // If no companies exist, seed default company
+            // If no companies exist, seed default Inspenox parent company
             if (companies.length === 0) {
                 const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
                 const token = env.WHATSAPP_ACCESS_TOKEN || '';
@@ -62,7 +62,7 @@ module.exports = async (req, res) => {
 
                 const defaultCo = await sql`
                     INSERT INTO companies (name, slug, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token)
-                    VALUES ('Manaswini Enterprises', 'manaswini-enterprises', ${phoneId}, ${token}, ${wabaId}, ${verifyToken})
+                    VALUES ('Inspenox Business Suite', 'inspenox', ${phoneId}, ${token}, ${wabaId}, ${verifyToken})
                     RETURNING *
                 `;
                 companies = [defaultCo[0]];
@@ -154,6 +154,14 @@ module.exports = async (req, res) => {
         try {
             const { id } = req.query;
             if (!id) return res.status(400).json({ error: 'Company ID is required' });
+
+            const targetComp = await sql`SELECT id, name FROM companies WHERE id = ${id} LIMIT 1`;
+            if (targetComp.length > 0) {
+                const compName = (targetComp[0].name || '').toLowerCase();
+                if (compName.includes('inspenox') || String(targetComp[0].id) === '1' || String(targetComp[0].id) === 'default') {
+                    return res.status(403).json({ error: 'Inspenox Business Suite is the primary parent organization and cannot be deleted.' });
+                }
+            }
 
             await sql`UPDATE companies SET is_active = false WHERE id = ${id}`;
             return res.status(200).json({ success: true });

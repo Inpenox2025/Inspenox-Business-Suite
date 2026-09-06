@@ -144,8 +144,40 @@ function apiFetch(url, options = {}) {
     return fetch(url, opts);
 }
 
-// --- Companies API & UI Management ---
+// --- Multi-Tenant Parent/Child Permissions & Company UI Management ---
+window.isParentAdmin = function isParentAdmin() {
+    let user = {};
+    try {
+        user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
+    } catch(e) {}
+
+    const uname = (user.username || '').toLowerCase();
+    const cname = (user.company_name || '').toLowerCase();
+    
+    if (uname === 'admin' || uname.includes('inspenox')) return true;
+    if (!user.company_id || String(user.company_id) === 'default' || String(user.company_id) === '1') return true;
+    if (cname.includes('inspenox')) return true;
+
+    return false;
+};
+
 async function loadCompanies() {
+    const isParent = isParentAdmin();
+    const switcherContainer = document.querySelector('.company-switcher-container');
+    if (switcherContainer) {
+        if (isParent) {
+            switcherContainer.style.display = 'block';
+        } else {
+            switcherContainer.style.display = 'none';
+            let user = {};
+            try { user = JSON.parse(localStorage.getItem('inspenox_user') || '{}'); } catch(e){}
+            if (user.company_id) {
+                currentCompanyId = String(user.company_id);
+                localStorage.setItem('inspenox_company_id', currentCompanyId);
+            }
+        }
+    }
+
     try {
         const res = await apiFetch('/api/companies');
         const companies = await res.json();
@@ -155,19 +187,19 @@ async function loadCompanies() {
             if (selectEl) {
                 selectEl.innerHTML = '';
                 if (companies.length === 0) {
-                    selectEl.innerHTML = '<option value="default">Default Organization</option>';
+                    selectEl.innerHTML = '<option value="default">Inspenox Business Suite (Parent)</option>';
                 } else {
                     companies.forEach(comp => {
                         const opt = document.createElement('option');
                         opt.value = comp.id;
-                        opt.textContent = comp.name + (comp.id === 'default' ? ' (Default)' : '');
-                        if (comp.id === currentCompanyId) opt.selected = true;
+                        opt.textContent = comp.name + (comp.name.toLowerCase().includes('inspenox') || comp.id === 'default' || comp.id === 1 ? ' (Parent)' : '');
+                        if (String(comp.id) === String(currentCompanyId)) opt.selected = true;
                         selectEl.appendChild(opt);
                     });
                 }
             }
-            if (companies.length > 0 && !companies.some(c => c.id === currentCompanyId)) {
-                currentCompanyId = companies[0].id;
+            if (companies.length > 0 && !companies.some(c => String(c.id) === String(currentCompanyId))) {
+                currentCompanyId = String(companies[0].id);
                 localStorage.setItem('inspenox_company_id', currentCompanyId);
                 if (selectEl) selectEl.value = currentCompanyId;
             }
@@ -187,6 +219,13 @@ document.getElementById('company-switcher')?.addEventListener('change', (e) => {
 async function loadCompaniesSettings() {
     const tbody = document.getElementById('companies-table-body');
     if (!tbody) return;
+
+    const isParent = isParentAdmin();
+
+    document.querySelectorAll('button[onclick="openCompanyModal()"]').forEach(btn => {
+        btn.style.display = isParent ? 'inline-flex' : 'none';
+    });
+
     tbody.innerHTML = `<tr><td colspan="6"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading companies...</span></div></td></tr>`;
     try {
         const res = await apiFetch('/api/companies?include_env=true');
@@ -221,19 +260,32 @@ async function loadCompaniesSettings() {
             companies.forEach(c => {
                 const tr = document.createElement('tr');
                 const isCurrent = String(c.id) === String(currentCompanyId);
+                const isInspenox = c.name.toLowerCase().includes('inspenox') || String(c.id) === 'default' || String(c.id) === '1';
+
+                let actionHtml = '';
+                if (isParent) {
+                    actionHtml = `<button class="btn secondary sm" onclick="editCompany('${c.id}')">Edit</button>`;
+                    if (!isInspenox) {
+                        actionHtml += ` <button class="btn danger sm" onclick="deleteCompany('${c.id}')">Delete</button>`;
+                    }
+                } else {
+                    if (isCurrent) {
+                        actionHtml = `<span class="window-badge" style="background:var(--primary-light);color:var(--primary);">Active Organization</span>`;
+                    } else {
+                        actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted);">Read Only</span>`;
+                    }
+                }
+
                 tr.innerHTML = `
                     <td>
                         <strong style="color:var(--text-main);">${c.name}</strong>
-                        ${isCurrent ? ' <span class="window-badge" style="background:var(--primary-light);color:var(--primary);">Active</span>' : ''}
+                        ${isInspenox ? ' <span class="window-badge" style="background:rgba(168, 85, 247, 0.15);color:#a855f7;">Parent</span>' : (isCurrent ? ' <span class="window-badge" style="background:var(--primary-light);color:var(--primary);">Active</span>' : '')}
                     </td>
                     <td><code style="font-size:0.8rem;">${c.id}</code></td>
                     <td><code style="font-size:0.8rem; color:var(--primary);">${c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id || 'Env Default'}</code></td>
                     <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id || 'Env Default'}</code></td>
                     <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_verify_token || systemEnv.whatsapp_verify_token || 'Env Default'}</code></td>
-                    <td style="text-align: right;">
-                        <button class="btn secondary sm" onclick="editCompany('${c.id}')">Edit</button>
-                        ${c.id !== 'default' && c.id !== 1 ? `<button class="btn danger sm" onclick="deleteCompany('${c.id}')">Delete</button>` : ''}
-                    </td>
+                    <td style="text-align: right;">${actionHtml}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -481,9 +533,11 @@ window.deleteUser = function deleteUser(id, username) {
 
 window.loadDashboard = async function loadDashboard() {
     const elCustomers = document.getElementById('dash-stat-customers');
+    const elMessages = document.getElementById('dash-stat-messages');
     const elWaSent = document.getElementById('dash-stat-wa-sent');
     const elEmailSent = document.getElementById('dash-stat-email-sent');
     const elSmsSent = document.getElementById('dash-stat-sms-sent');
+    const elChats = document.getElementById('dash-stat-chats');
     const elEstCost = document.getElementById('dash-stat-est-cost');
     const elInboxList = document.getElementById('dash-inbox-list');
 
@@ -492,9 +546,11 @@ window.loadDashboard = async function loadDashboard() {
         const data = await res.json();
 
         if (elCustomers) elCustomers.textContent = data.total_customers || 0;
+        if (elMessages) elMessages.textContent = data.messages_sent || 0;
         if (elWaSent) elWaSent.textContent = data.channels?.whatsapp || data.messages_sent || 0;
         if (elEmailSent) elEmailSent.textContent = data.channels?.email || 0;
         if (elSmsSent) elSmsSent.textContent = data.channels?.sms || 0;
+        if (elChats) elChats.textContent = data.recent_inbound?.length || 0;
         if (elEstCost) elEstCost.textContent = `₹${(data.estimated_costs?.total || 0).toFixed(2)}`;
 
         if (elInboxList) {
@@ -709,7 +765,12 @@ window.saveCompany = async function saveCompany(e) {
 };
 
 window.deleteCompany = function deleteCompany(id) {
-    showModal('Delete Company', `Are you sure you want to delete company "${id}"? All associated settings will be removed.`, 'confirm', async () => {
+    const comp = allCompanies.find(c => String(c.id) === String(id));
+    if (comp && (comp.name.toLowerCase().includes('inspenox') || String(id) === 'default' || String(id) === '1')) {
+        showModal('Protected Company', 'Inspenox Business Suite is the primary parent organization and cannot be deleted.');
+        return;
+    }
+    showModal('Delete Company', `Are you sure you want to delete company "${comp ? comp.name : id}"? All associated settings will be removed.`, 'confirm', async () => {
         try {
             const res = await apiFetch(`/api/companies?id=${id}`, { method: 'DELETE' });
             const data = await res.json();
