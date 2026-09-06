@@ -71,7 +71,21 @@ module.exports = async (req, res) => {
                 GROUP BY COALESCE(m.template_name, m.type, 'marketing')
             `;
 
-        let companyUsageQuery = sql`
+        let companyUsageQuery = companyId && companyId !== 'default' ? sql`
+            SELECT 
+                c.id, c.name,
+                COUNT(CASE WHEN m.direction = 'outbound' AND (m.channel = 'whatsapp' OR m.channel IS NULL) AND (m.type = 'marketing' OR m.type = 'text' OR m.type = 'image' OR m.type = 'template') THEN 1 END) as wa_marketing_count,
+                COUNT(CASE WHEN m.direction = 'outbound' AND (m.channel = 'whatsapp' OR m.channel IS NULL) AND m.type = 'utility' THEN 1 END) as wa_utility_count,
+                COUNT(CASE WHEN m.direction = 'outbound' AND (m.channel = 'whatsapp' OR m.channel IS NULL) AND m.type = 'authentication' THEN 1 END) as wa_auth_count,
+                COUNT(CASE WHEN m.direction = 'outbound' AND m.channel = 'email' THEN 1 END) as email_count,
+                COUNT(CASE WHEN m.direction = 'outbound' AND m.channel = 'sms' THEN 1 END) as sms_count,
+                COUNT(CASE WHEN m.direction = 'outbound' THEN 1 END) as total_outbound
+            FROM companies c
+            LEFT JOIN messages m ON m.company_id = c.id
+            WHERE c.id = ${companyId}
+            GROUP BY c.id, c.name
+            ORDER BY c.id ASC
+        ` : sql`
             SELECT 
                 c.id, c.name,
                 COUNT(CASE WHEN m.direction = 'outbound' AND (m.channel = 'whatsapp' OR m.channel IS NULL) AND (m.type = 'marketing' OR m.type = 'text' OR m.type = 'image' OR m.type = 'template') THEN 1 END) as wa_marketing_count,

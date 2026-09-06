@@ -605,6 +605,7 @@ window.loadDashboard = async function loadDashboard() {
 };
 
 window.loadUsageAnalytics = async function loadUsageAnalytics() {
+    const isParent = isParentAdmin();
     const elBadge = document.getElementById('usage-meta-badge');
     const elAmountSpent = document.getElementById('meta-stat-amount-spent');
     const elCostPerMsg = document.getElementById('meta-stat-cost-per-msg');
@@ -619,6 +620,12 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
 
     const tbodyTemplates = document.getElementById('meta-templates-insights-body');
     const tbodyCompanies = document.getElementById('usage-company-table-body');
+    const companyBreakdownCard = document.getElementById('usage-company-breakdown-card');
+
+    // Hide multi-tenant company breakdown card for child admins
+    if (companyBreakdownCard) {
+        companyBreakdownCard.style.display = isParent ? 'block' : 'none';
+    }
 
     if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="9"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading direct Meta template insights...</span></div></td></tr>`;
     if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="8"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading API usage data...</span></div></td></tr>`;
