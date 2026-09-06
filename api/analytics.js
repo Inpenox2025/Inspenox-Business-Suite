@@ -173,14 +173,6 @@ module.exports = async (req, res) => {
             }
         });
 
-        // Smart fallback template stats for WABA templates if DB logs are 0
-        const fallbackStatsByTemplate = {
-            'welcome': { sent: 14, delivered: 14, read: 8, replies: 2 },
-            'welcome_manaswini': { sent: 18, delivered: 18, read: 12, replies: 3 },
-            'product_video_showcase': { sent: 39, delivered: 39, read: 21, replies: 4 },
-            'hello_world': { sent: 5, delivered: 5, read: 3, replies: 1 }
-        };
-
         const templateInsightsList = [];
         let totalMetaSpent = 0;
         let totalMetaSent = 0;
@@ -192,12 +184,11 @@ module.exports = async (req, res) => {
                 const tName = t.name;
                 const tNameLower = tName.toLowerCase().trim();
                 const dbStat = dbTemplateMap[tNameLower] || dbTemplateMap[tName] || { sent: 0, delivered: 0, read: 0 };
-                const fbStat = fallbackStatsByTemplate[tNameLower] || { sent: 12, delivered: 12, read: 7, replies: 2 };
 
-                const sent = dbStat.sent > 0 ? dbStat.sent : fbStat.sent;
-                const delivered = dbStat.delivered > 0 ? dbStat.delivered : (fbStat.delivered || sent);
-                const read = dbStat.read > 0 ? dbStat.read : (fbStat.read || Math.round(delivered * 0.6));
-                const replies = fbStat.replies || Math.round(read * 0.25);
+                const sent = dbStat.sent || 0;
+                const delivered = dbStat.delivered || 0;
+                const read = dbStat.read || 0;
+                const replies = 0;
 
                 const category = (t.category || 'MARKETING').toUpperCase();
                 const rate = category === 'UTILITY' ? RATES.whatsapp_utility : (category === 'AUTHENTICATION' ? RATES.whatsapp_authentication : RATES.whatsapp_marketing);
@@ -214,20 +205,20 @@ module.exports = async (req, res) => {
                     name: tName,
                     category: category,
                     status: (t.status || 'APPROVED').toUpperCase(),
-                    language: t.language || 'en',
+                    language: t.language || (t.language_code || 'en'),
                     quality_score: t.quality_score?.score || 'HIGH',
                     sent: sent,
                     delivered: delivered,
                     read: read,
                     read_percent: readPercent,
                     replies: replies,
-                    cost_per_delivered: 0.86,
+                    cost_per_delivered: rate,
                     amount_spent: amountSpent
                 });
             });
         }
 
-        // If no templates from Meta, construct default template metrics from database
+        // If no templates from Meta, construct template metrics from database
         if (templateInsightsList.length === 0) {
             (templateStats || []).forEach((ts, idx) => {
                 const sent = parseInt(ts.sent_count || 0);
@@ -252,31 +243,21 @@ module.exports = async (req, res) => {
                     delivered: delivered,
                     read: read,
                     read_percent: readPercent,
-                    replies: Math.round(read * 0.2),
-                    cost_per_delivered: 0.86,
+                    replies: 0,
+                    cost_per_delivered: 0.8631,
                     amount_spent: amountSpent
                 });
             });
         }
 
-        const totalReplies = parseInt(inboundRepliesResult[0]?.count || 0) || 10;
+        const totalReplies = parseInt(inboundRepliesResult[0]?.count || 0);
 
         const company_usage_list = (companyUsage || []).map(cu => {
-            let m_cnt = parseInt(cu.wa_marketing_count || 0);
-            let u_cnt = parseInt(cu.wa_utility_count || 0);
-            let a_cnt = parseInt(cu.wa_auth_count || 0);
-            let e_cnt = parseInt(cu.email_count || 0);
-            let s_cnt = parseInt(cu.sms_count || 0);
-
-            // Populate active company metrics if DB message logs are 0
-            if (m_cnt === 0 && u_cnt === 0 && a_cnt === 0 && e_cnt === 0 && s_cnt === 0) {
-                if ((cu.name || '').toLowerCase().includes('manaswini')) {
-                    m_cnt = 32; // welcome + welcome_manaswini
-                } else {
-                    m_cnt = 44; // product_video_showcase + hello_world
-                }
-            }
-
+            const m_cnt = parseInt(cu.wa_marketing_count || 0);
+            const u_cnt = parseInt(cu.wa_utility_count || 0);
+            const a_cnt = parseInt(cu.wa_auth_count || 0);
+            const e_cnt = parseInt(cu.email_count || 0);
+            const s_cnt = parseInt(cu.sms_count || 0);
             const total_out = m_cnt + u_cnt + a_cnt + e_cnt + s_cnt;
             const c_cost = (m_cnt * RATES.whatsapp_marketing) + (u_cnt * RATES.whatsapp_utility) + (a_cnt * RATES.whatsapp_authentication) + (e_cnt * RATES.email) + (s_cnt * RATES.sms);
             return {
