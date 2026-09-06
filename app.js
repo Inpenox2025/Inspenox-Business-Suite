@@ -224,13 +224,21 @@ async function loadCompaniesSettings() {
 
     const isParent = isParentAdmin();
 
+    // Toggle System Environment credentials panel visibility
+    const envCard = document.getElementById('env-credentials-card');
+    if (envCard) envCard.style.display = isParent ? 'block' : 'none';
+
     document.querySelectorAll('button[onclick="openCompanyModal()"]').forEach(btn => {
         btn.style.display = isParent ? 'inline-flex' : 'none';
     });
 
     tbody.innerHTML = `<tr><td colspan="6"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading companies...</span></div></td></tr>`;
     try {
-        const res = await apiFetch('/api/companies?include_env=true');
+        let compUrl = '/api/companies?include_env=true';
+        if (!isParent && currentCompanyId && currentCompanyId !== 'default') {
+            compUrl += `&company_id=${currentCompanyId}`;
+        }
+        const res = await apiFetch(compUrl);
         const data = await res.json();
         
         const companies = Array.isArray(data) ? data : (data.companies || []);
@@ -271,17 +279,13 @@ async function loadCompaniesSettings() {
                         actionHtml += ` <button class="btn danger sm" onclick="deleteCompany('${c.id}')">Delete</button>`;
                     }
                 } else {
-                    if (isCurrent) {
-                        actionHtml = `<span class="window-badge" style="background:var(--primary-light);color:var(--primary);">Active Organization</span>`;
-                    } else {
-                        actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted);">Read Only</span>`;
-                    }
+                    actionHtml = `<button class="btn secondary sm" onclick="editCompany('${c.id}')">Edit Details</button>`;
                 }
 
                 tr.innerHTML = `
                     <td>
                         <strong style="color:var(--text-main);">${c.name}</strong>
-                        ${isInspenox ? ' <span class="window-badge" style="background:rgba(168, 85, 247, 0.15);color:#a855f7;">Parent</span>' : (isCurrent ? ' <span class="window-badge" style="background:var(--primary-light);color:var(--primary);">Active</span>' : ' <span class="window-badge" style="background:rgba(255,255,255,0.05);color:var(--text-muted);">Child</span>')}
+                        ${isInspenox ? ' <span class="window-badge" style="background:rgba(168, 85, 247, 0.15);color:#a855f7;">Parent</span>' : ' <span class="window-badge" style="background:rgba(255,255,255,0.08);color:var(--text-muted);">Child Company</span>'}
                     </td>
                     <td><code style="font-size:0.8rem;">${c.id}</code></td>
                     <td><code style="font-size:0.8rem; color:var(--primary);">${c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id || 'Env Default'}</code></td>
@@ -351,18 +355,23 @@ window.loadUsersList = async function loadUsersList() {
     if (!tbody) return;
     tbody.innerHTML = `<tr><td colspan="6"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading user accounts...</span></div></td></tr>`;
     try {
-        const res = await apiFetch('/api/auth');
+        const isParent = isParentAdmin();
+        let userUrl = '/api/auth';
+        if (!isParent && currentCompanyId && currentCompanyId !== 'default') {
+            userUrl = `/api/auth?company_id=${currentCompanyId}`;
+        }
+        const res = await apiFetch(userUrl);
         const users = await res.json();
         if (Array.isArray(users)) {
             allUsersList = users;
             if (users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No users registered yet.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No users registered for this company yet.</td></tr>`;
                 return;
             }
             tbody.innerHTML = '';
             users.forEach(u => {
                 const tr = document.createElement('tr');
-                const coName = u.company_name || (u.company_id ? `Company #${u.company_id}` : 'Default Organization (All)');
+                const coName = u.company_name || (u.company_id ? `Company #${u.company_id}` : 'Inspenox Parent (All Companies)');
                 tr.innerHTML = `
                     <td><code style="font-size:0.8rem;">${u.id}</code></td>
                     <td><strong style="color:var(--text-main);">${u.username}</strong></td>
@@ -372,7 +381,7 @@ window.loadUsersList = async function loadUsersList() {
                     <td style="text-align: right;">
                         <button class="btn secondary sm" onclick="openResetUserPassModal('${u.id}', '${u.username}')">🔑 Reset Password</button>
                         <button class="btn secondary sm" onclick="openUserModal('${u.id}')">Edit</button>
-                        ${u.username !== 'admin' ? `<button class="btn danger sm" onclick="deleteUser('${u.id}', '${u.username}')">Delete</button>` : ''}
+                        ${(u.username !== 'admin') ? `<button class="btn danger sm" onclick="deleteUser('${u.id}', '${u.username}')">Delete</button>` : ''}
                     </td>
                 `;
                 tbody.appendChild(tr);

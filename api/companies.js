@@ -69,13 +69,18 @@ module.exports = async (req, res) => {
             }
 
             // Hydrate environment variable fallbacks for empty fields
-            const resolvedCompanies = companies.map(c => ({
+            let resolvedCompanies = companies.map(c => ({
                 ...c,
                 whatsapp_phone_number_id: c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id,
                 whatsapp_business_account_id: c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id,
                 whatsapp_access_token: c.whatsapp_access_token || systemEnv.whatsapp_access_token,
                 whatsapp_verify_token: c.whatsapp_verify_token || systemEnv.whatsapp_verify_token
             }));
+
+            const filterCoId = req.query.company_id;
+            if (filterCoId && filterCoId !== 'default' && filterCoId !== 'parent' && filterCoId !== 'all') {
+                resolvedCompanies = resolvedCompanies.filter(c => String(c.id) === String(filterCoId));
+            }
 
             if (req.query.include_env === 'true') {
                 return res.status(200).json({

@@ -39,7 +39,6 @@ async function ensureUsersTable(sql) {
             console.log('Default admin user initialized (admin / admin123)');
         }
 
-        // Auto-assign manaswini user to company_id = 1 (Manaswini Enterprises) if null
     } catch (e) {
         console.error('Error ensuring users table:', e);
     }
@@ -55,12 +54,24 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
         try {
-            const users = await sql`
-                SELECT u.id, u.username, u.role, u.company_id, u.created_at, c.name as company_name 
-                FROM users u 
-                LEFT JOIN companies c ON u.company_id = c.id 
-                ORDER BY u.id ASC
-            `;
+            const companyFilter = req.query.company_id;
+            let users;
+            if (companyFilter && companyFilter !== 'default' && companyFilter !== 'null' && companyFilter !== 'all') {
+                users = await sql`
+                    SELECT u.id, u.username, u.role, u.company_id, u.created_at, c.name as company_name 
+                    FROM users u 
+                    LEFT JOIN companies c ON u.company_id = c.id 
+                    WHERE u.company_id = ${parseInt(companyFilter)}
+                    ORDER BY u.id ASC
+                `;
+            } else {
+                users = await sql`
+                    SELECT u.id, u.username, u.role, u.company_id, u.created_at, c.name as company_name 
+                    FROM users u 
+                    LEFT JOIN companies c ON u.company_id = c.id 
+                    ORDER BY u.id ASC
+                `;
+            }
             return res.status(200).json(users);
         } catch (err) {
             return res.status(500).json({ error: err.message });
