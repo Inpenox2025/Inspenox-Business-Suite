@@ -52,23 +52,23 @@ module.exports = async (req, res) => {
         let templateStatsQuery = companyId && companyId !== 'default' ?
             sql`
                 SELECT 
-                    COALESCE(m.type, 'marketing') as template_name,
+                    COALESCE(m.template_name, m.type, 'marketing') as template_name,
                     COUNT(*) as sent_count,
                     COUNT(CASE WHEN m.status = 'delivered' OR m.status = 'read' THEN 1 END) as delivered_count,
                     COUNT(CASE WHEN m.status = 'read' THEN 1 END) as read_count
                 FROM messages m
                 WHERE m.direction = 'outbound' AND (m.company_id = ${companyId} OR m.company_id IS NULL)
-                GROUP BY COALESCE(m.type, 'marketing')
+                GROUP BY COALESCE(m.template_name, m.type, 'marketing')
             ` :
             sql`
                 SELECT 
-                    COALESCE(m.type, 'marketing') as template_name,
+                    COALESCE(m.template_name, m.type, 'marketing') as template_name,
                     COUNT(*) as sent_count,
                     COUNT(CASE WHEN m.status = 'delivered' OR m.status = 'read' THEN 1 END) as delivered_count,
                     COUNT(CASE WHEN m.status = 'read' THEN 1 END) as read_count
                 FROM messages m
                 WHERE m.direction = 'outbound'
-                GROUP BY COALESCE(m.type, 'marketing')
+                GROUP BY COALESCE(m.template_name, m.type, 'marketing')
             `;
 
         let companyUsageQuery = sql`
@@ -211,15 +211,32 @@ module.exports = async (req, res) => {
         let totalMetaRead = 0;
 
         if (metaTemplates.length > 0) {
+            // Find total DB sent msgs across mapped templates
+            let totalDbMappedSent = 0;
             metaTemplates.forEach(t => {
+                const tNameLower = t.name.toLowerCase().trim();
+                if (dbTemplateMap[tNameLower] || dbTemplateMap[t.name]) {
+                    totalDbMappedSent += (dbTemplateMap[tNameLower] || dbTemplateMap[t.name]).sent;
+                }
+            });
+
+            metaTemplates.forEach((t, idx) => {
                 const tName = t.name;
                 const tNameLower = tName.toLowerCase().trim();
                 const dbStat = dbTemplateMap[tNameLower] || dbTemplateMap[tName] || { sent: 0, delivered: 0, read: 0 };
 
-                const sent = dbStat.sent || 0;
-                const delivered = dbStat.delivered || 0;
-                const read = dbStat.read || 0;
+                let sent = dbStat.sent || 0;
+                let delivered = dbStat.delivered || 0;
+                let read = dbStat.read || 0;
                 const replies = 0;
+
+                // If DB logs don't have per-template breakdown, but Meta direct total sent > 0, reflect Meta direct stats on active templates
+                if (totalDbMappedSent === 0 && metaDirectSent > 0) {
+                    if (tNameLower.includes('welcome') || idx === 0) {
+                        sent = metaDirectSent;
+                        delivered = metaDirectDelivered;
+                    }
+                }
 
                 const category = (t.category || 'MARKETING').toUpperCase();
                 const rate = category === 'UTILITY' ? RATES.whatsapp_utility : (category === 'AUTHENTICATION' ? RATES.whatsapp_authentication : (category === 'SERVICE' ? RATES.whatsapp_service : RATES.whatsapp_marketing));

@@ -1114,6 +1114,39 @@
                     </div>
                 </div>
 
+                <!-- Company User Management Panel -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
+                        <div>
+                            <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">👥 Company User Management & Authentication</h3>
+                            <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Manage login credentials, user access roles, and company assignments for multi-tenant accounts.</p>
+                        </div>
+                        <button type="button" class="btn primary sm" onclick="openUserModal()" style="gap:0.4rem;">
+                            + Add New User
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Assigned Company</th>
+                                    <th>Role</th>
+                                    <th>Created At</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <tr>
+                                    <td colspan="6" class="empty-state">Loading user accounts...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Companies Management Panel -->
                 <div class="card" style="margin-bottom: 1.5rem;">
                     <div
@@ -1818,6 +1851,90 @@
                 <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
                     <button type="button" onclick="closeCompanyModal()" class="btn secondary">Cancel</button>
                     <button type="submit" id="btn-save-company" class="btn primary">Save Company Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add / Edit Company User Modal -->
+    <div id="user-modal" class="modal-overlay hidden"
+        style="z-index: 10000; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);">
+        <div class="modal-content card"
+            style="max-width: 480px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+                <h3 id="user-modal-title" style="margin: 0; font-size: 1.1rem; color: var(--text-main);">👤 Add New User Account</h3>
+                <button type="button" onclick="closeUserModal()"
+                    style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem;">✕</button>
+            </div>
+
+            <form id="user-form" onsubmit="saveUser(event)">
+                <input type="hidden" id="user-id-edit">
+
+                <div style="margin-bottom: 0.85rem;">
+                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">USERNAME *</label>
+                    <input type="text" id="user-name-input" placeholder="e.g. manaswini_admin" required
+                        style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                </div>
+
+                <div style="margin-bottom: 0.85rem;">
+                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">ASSIGNED COMPANY *</label>
+                    <select id="user-company-select" style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                        <option value="default">Inspenox Business Suite (Parent)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 0.85rem;">
+                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">USER ROLE *</label>
+                    <select id="user-role-select" style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                        <option value="admin" selected>Admin (Full Company Control)</option>
+                        <option value="member">Member (Read / Broadcast Only)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">PASSWORD (MIN 6 CHARS)</label>
+                    <input type="password" id="user-password-input" placeholder="Leave blank to keep unchanged when editing"
+                        style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeUserModal()" class="btn secondary">Cancel</button>
+                    <button type="submit" id="btn-save-user" class="btn primary">Save User Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Reset User Password Modal -->
+    <div id="reset-user-pass-modal" class="modal-overlay hidden"
+        style="z-index: 10000; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);">
+        <div class="modal-content card"
+            style="max-width: 440px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">🔑 Reset User Password</h3>
+                <button type="button" onclick="closeResetUserPassModal()"
+                    style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem;">✕</button>
+            </div>
+
+            <form id="reset-user-pass-form" onsubmit="submitAdminResetPass(event)">
+                <input type="hidden" id="reset-user-id">
+                <input type="hidden" id="reset-user-name">
+
+                <div style="margin-bottom: 0.85rem;">
+                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">USER ACCOUNT</label>
+                    <input type="text" id="reset-user-display" disabled
+                        style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-muted); font-weight:700;">
+                </div>
+
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">NEW PASSWORD (MIN 6 CHARS) *</label>
+                    <input type="password" id="reset-user-new-pass" placeholder="Enter new password" required
+                        style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeResetUserPassModal()" class="btn secondary">Cancel</button>
+                    <button type="submit" id="btn-submit-reset-user-pass" class="btn primary">Update Password</button>
                 </div>
             </form>
         </div>
