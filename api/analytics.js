@@ -8,8 +8,8 @@ module.exports = async (req, res) => {
         const sql = getDb(env);
         const companyId = req.query.company_id || null;
 
-        let wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-        let token = env.WHATSAPP_ACCESS_TOKEN;
+        let wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || '1561463645723530';
+        let token = env.WHATSAPP_ACCESS_TOKEN || 'EAALed5FtFjwBSM78Kn6DBIsE0YFxzGVcANwCBOUvohsFPAmA4eKD1SmpjpIExU3KfxO40dekRMGzlR7JKYUVQ8ZCVzgyUGJRiAQRzZB7NAWmtfoTX5L9nZBupOvobMsk3tOMOKlYn69DLenuTpZBN9tySjaZAxugB3Mz38oHZAQJZBhGMexJOLJKXDmY67Fenca4AZDZD';
 
         if (companyId && companyId !== 'default') {
             try {
