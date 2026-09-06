@@ -117,14 +117,25 @@ module.exports = async (req, res) => {
 
             if (!id) return res.status(400).json({ error: 'Company ID is required' });
 
+            const existing = await sql`SELECT * FROM companies WHERE id = ${id} LIMIT 1`;
+            if (existing.length === 0) return res.status(404).json({ error: 'Company not found' });
+
+            const oldComp = existing[0];
+            const updatedName = (name && name.trim()) ? name.trim() : oldComp.name;
+            const updatedPhoneId = (whatsapp_phone_number_id !== undefined && whatsapp_phone_number_id !== null && String(whatsapp_phone_number_id).trim() !== '') ? String(whatsapp_phone_number_id).trim() : oldComp.whatsapp_phone_number_id;
+            const updatedWabaId = (whatsapp_business_account_id !== undefined && whatsapp_business_account_id !== null && String(whatsapp_business_account_id).trim() !== '') ? String(whatsapp_business_account_id).trim() : oldComp.whatsapp_business_account_id;
+            const updatedToken = (whatsapp_access_token && String(whatsapp_access_token).trim() !== '') ? String(whatsapp_access_token).trim() : oldComp.whatsapp_access_token;
+            const updatedVerify = (whatsapp_verify_token && String(whatsapp_verify_token).trim() !== '') ? String(whatsapp_verify_token).trim() : oldComp.whatsapp_verify_token;
+            const updatedActive = is_active !== undefined ? is_active : oldComp.is_active;
+
             const result = await sql`
                 UPDATE companies 
-                SET name = COALESCE(${name}, name),
-                    whatsapp_phone_number_id = COALESCE(${whatsapp_phone_number_id}, whatsapp_phone_number_id),
-                    whatsapp_access_token = COALESCE(${whatsapp_access_token}, whatsapp_access_token),
-                    whatsapp_business_account_id = COALESCE(${whatsapp_business_account_id}, whatsapp_business_account_id),
-                    whatsapp_verify_token = COALESCE(${whatsapp_verify_token}, whatsapp_verify_token),
-                    is_active = COALESCE(${is_active}, is_active)
+                SET name = ${updatedName},
+                    whatsapp_phone_number_id = ${updatedPhoneId},
+                    whatsapp_business_account_id = ${updatedWabaId},
+                    whatsapp_access_token = ${updatedToken},
+                    whatsapp_verify_token = ${updatedVerify},
+                    is_active = ${updatedActive}
                 WHERE id = ${id}
                 RETURNING *
             `;

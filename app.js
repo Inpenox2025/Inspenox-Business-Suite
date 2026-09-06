@@ -194,6 +194,7 @@ async function loadCompaniesSettings() {
         
         const companies = Array.isArray(data) ? data : (data.companies || []);
         const systemEnv = data.system_env || {};
+        systemEnvGlobals = systemEnv;
 
         // Update System Environment Credentials Panel
         const elPhone = document.getElementById('env-stat-phone-id');
@@ -242,6 +243,8 @@ async function loadCompaniesSettings() {
     }
 }
 
+let systemEnvGlobals = {};
+
 window.openCompanyModal = function openCompanyModal(companyId = null) {
     const modal = document.getElementById('company-modal');
     if (!modal) return;
@@ -249,15 +252,15 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
     document.getElementById('company-id-edit').value = '';
     document.getElementById('company-modal-title').textContent = companyId ? '🏢 Edit Company Account' : '🏢 Add New Company Account';
     
-    if (companyId) {
-        const comp = allCompanies.find(c => c.id === companyId);
+    if (companyId !== null && companyId !== undefined) {
+        const comp = allCompanies.find(c => String(c.id) === String(companyId));
         if (comp) {
             document.getElementById('company-id-edit').value = comp.id;
             document.getElementById('comp-name').value = comp.name || '';
-            document.getElementById('comp-phone-id').value = comp.whatsapp_phone_number_id || '';
-            document.getElementById('comp-waba-id').value = comp.whatsapp_business_account_id || '';
+            document.getElementById('comp-phone-id').value = comp.whatsapp_phone_number_id || systemEnvGlobals.whatsapp_phone_number_id || '';
+            document.getElementById('comp-waba-id').value = comp.whatsapp_business_account_id || systemEnvGlobals.whatsapp_business_account_id || '';
             document.getElementById('comp-access-token').value = comp.whatsapp_access_token || '';
-            document.getElementById('comp-verify-token').value = comp.whatsapp_verify_token || '';
+            document.getElementById('comp-verify-token').value = comp.whatsapp_verify_token || systemEnvGlobals.whatsapp_verify_token || '';
         }
     }
     
