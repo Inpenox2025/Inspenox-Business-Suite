@@ -4,6 +4,7 @@
   "description": "Inspenox Business Suite - WhatsApp Business Platform",
   "main": "index.html",
   "scripts": {
+    "build": "echo 'Static assets ready'",
     "dev": "wrangler pages dev .",
     "deploy": "wrangler pages deploy ."
   },
