@@ -1,0 +1,12 @@
+/node_modules/
+
+.env
+
+# Local Netlify folder
+.netlify
+
+# Developer utility scripts (not for production)
+/scratch/
+
+.vercel
+.env*.local

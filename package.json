@@ -1,0 +1,16 @@
+{
+  "name": "induio-whatsapp",
+  "version": "1.0.0",
+  "description": "WhatsApp Business Marketing Platform",
+  "main": "index.html",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.3",
+    "@octokit/rest": "^20.1.1",
+    "busboy": "^1.6.0",
+    "jsdom": "^29.1.1",
+    "xlsx": "^0.18.5"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}
