@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS companies (
   whatsapp_phone_number_id TEXT,
   whatsapp_access_token TEXT,
   whatsapp_business_account_id TEXT,
-  webhook_verify_token TEXT,
+  whatsapp_verify_token TEXT,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS companies (
   whatsapp_phone_number_id TEXT,
   whatsapp_access_token TEXT,
   whatsapp_business_account_id TEXT,
-  webhook_verify_token TEXT,
+  whatsapp_verify_token TEXT,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -132,3 +132,4 @@ ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS company_id INT REFERENCES compani
 ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS channel TEXT DEFAULT 'whatsapp';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
 ALTER TABLE media_library ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
+ALTER TABLE companies RENAME COLUMN webhook_verify_token TO whatsapp_verify_token;

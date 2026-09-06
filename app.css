@@ -100,6 +100,8 @@ svg {
     flex-direction: column;
     flex-shrink: 0;
     z-index: 20;
+    height: 100vh;
+    overflow-y: auto;
 }
 
 .sidebar-header {
@@ -191,6 +193,7 @@ svg {
     flex-direction: column;
     gap: 0.35rem;
     flex: 1;
+    overflow-y: auto;
 }
 
 .nav-item {
@@ -1514,6 +1517,7 @@ tr:hover td {
 
     .sidebar {
         width: 100%;
+        height: auto;
         padding: 0.75rem 1rem;
         flex-direction: row;
         align-items: center;
@@ -1523,10 +1527,12 @@ tr:hover td {
         position: sticky;
         top: 0;
         z-index: 99;
+        overflow-y: visible;
     }
 
     .sidebar-header {
         margin-bottom: 0;
+        width: 100%;
     }
 
     .mobile-only {
@@ -1540,19 +1546,22 @@ tr:hover td {
     #sidebar-nav {
         display: flex;
         flex-direction: column;
-        position: absolute;
-        top: 100%;
+        position: fixed;
+        top: 58px;
         left: 0;
         right: 0;
+        bottom: 0;
         background: var(--bg-sidebar);
-        padding: 1rem;
+        padding: 1rem 1.25rem 2rem 1.25rem;
         border-bottom: 1px solid var(--border);
-        box-shadow: var(--shadow);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         opacity: 0;
         visibility: hidden;
         transform: translateY(-10px);
-        transition: all 0.25s ease;
-        z-index: 100;
+        transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+        z-index: 1000;
+        overflow-y: auto;
+        max-height: calc(100dvh - 58px);
     }
 
     #sidebar-nav.active {

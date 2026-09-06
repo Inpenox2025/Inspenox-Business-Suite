@@ -4,7 +4,7 @@ module.exports = async (req, res) => {
     const env = req.env || process.env || {};
     const sql = getDb(env);
 
-    // Auto-create companies table if missing
+    // Auto-create companies table if missing & migrate column if old schema
     try {
         await sql`
             CREATE TABLE IF NOT EXISTS companies (
@@ -14,10 +14,21 @@ module.exports = async (req, res) => {
                 whatsapp_phone_number_id TEXT,
                 whatsapp_access_token TEXT,
                 whatsapp_business_account_id TEXT,
-                webhook_verify_token TEXT,
+                whatsapp_verify_token TEXT,
                 is_active BOOLEAN DEFAULT true,
                 created_at TIMESTAMPTZ DEFAULT NOW()
             );
+        `;
+        await sql`
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='companies' AND column_name='webhook_verify_token'
+                ) THEN
+                    ALTER TABLE companies RENAME COLUMN webhook_verify_token TO whatsapp_verify_token;
+                END IF;
+            END $$;
         `;
     } catch(e) {
         console.error("Table creation error for companies:", e);
@@ -28,13 +39,13 @@ module.exports = async (req, res) => {
             const systemEnv = {
                 whatsapp_phone_number_id: env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733',
                 whatsapp_business_account_id: env.WHATSAPP_BUSINESS_ACCOUNT_ID || '1561463645723530',
-                webhook_verify_token: env.WHATSAPP_VERIFY_TOKEN || 'inspenox_verify_token',
+                whatsapp_verify_token: env.WHATSAPP_VERIFY_TOKEN || 'manasageetha',
                 has_access_token: !!(env.WHATSAPP_ACCESS_TOKEN)
             };
 
             let companies = await sql`
                 SELECT id, name, slug, whatsapp_phone_number_id, whatsapp_business_account_id, 
-                       webhook_verify_token, is_active, created_at,
+                       whatsapp_verify_token, is_active, created_at,
                        (SELECT COUNT(*) FROM customers c WHERE c.company_id = companies.id) as customer_count,
                        (SELECT COUNT(*) FROM messages m WHERE m.company_id = companies.id) as message_count
                 FROM companies 
@@ -46,11 +57,11 @@ module.exports = async (req, res) => {
                 const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
                 const token = env.WHATSAPP_ACCESS_TOKEN || '';
                 const wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || '1561463645723530';
-                const verifyToken = env.WHATSAPP_VERIFY_TOKEN || 'inspenox_verify_token';
+                const verifyToken = env.WHATSAPP_VERIFY_TOKEN || 'manasageetha';
 
                 const defaultCo = await sql`
-                    INSERT INTO companies (name, slug, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, webhook_verify_token)
-                    VALUES ('Inspenox Main', 'inspenox-main', ${phoneId}, ${token}, ${wabaId}, ${verifyToken})
+                    INSERT INTO companies (name, slug, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token)
+                    VALUES ('Manaswini Enterprises', 'manaswini-enterprises', ${phoneId}, ${token}, ${wabaId}, ${verifyToken})
                     RETURNING *
                 `;
                 companies = [defaultCo[0]];
@@ -61,7 +72,7 @@ module.exports = async (req, res) => {
                 ...c,
                 whatsapp_phone_number_id: c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id,
                 whatsapp_business_account_id: c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id,
-                webhook_verify_token: c.webhook_verify_token || systemEnv.webhook_verify_token
+                whatsapp_verify_token: c.whatsapp_verify_token || systemEnv.whatsapp_verify_token
             }));
 
             if (req.query.include_env === 'true') {
@@ -79,7 +90,7 @@ module.exports = async (req, res) => {
 
     if (req.method === 'POST') {
         try {
-            const { name, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, webhook_verify_token } = req.body || {};
+            const { name, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token } = req.body || {};
 
             if (!name || !name.trim()) {
                 return res.status(400).json({ error: 'Company name is required' });
@@ -89,12 +100,10 @@ module.exports = async (req, res) => {
             const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `co-${Date.now()}`;
 
             const result = await sql`
-                INSERT INTO companies (name, slug, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, webhook_verify_token)
-                VALUES (${cleanName}, ${slug}, ${whatsapp_phone_number_id || null}, ${whatsapp_access_token || null}, ${whatsapp_business_account_id || null}, ${webhook_verify_token || 'inspenox_verify_token'})
+                INSERT INTO companies (name, slug, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token)
+                VALUES (${cleanName}, ${slug}, ${whatsapp_phone_number_id || null}, ${whatsapp_access_token || null}, ${whatsapp_business_account_id || null}, ${whatsapp_verify_token || 'manasageetha'})
                 RETURNING *
             `;
-
-            return res.status(200).json({ success: true, company: result[0] });
 
             return res.status(200).json({ success: true, company: result[0] });
         } catch (error) {
@@ -104,7 +113,7 @@ module.exports = async (req, res) => {
 
     if (req.method === 'PUT') {
         try {
-            const { id, name, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, webhook_verify_token, is_active } = req.body || {};
+            const { id, name, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token, is_active } = req.body || {};
 
             if (!id) return res.status(400).json({ error: 'Company ID is required' });
 
@@ -114,7 +123,7 @@ module.exports = async (req, res) => {
                     whatsapp_phone_number_id = COALESCE(${whatsapp_phone_number_id}, whatsapp_phone_number_id),
                     whatsapp_access_token = COALESCE(${whatsapp_access_token}, whatsapp_access_token),
                     whatsapp_business_account_id = COALESCE(${whatsapp_business_account_id}, whatsapp_business_account_id),
-                    webhook_verify_token = COALESCE(${webhook_verify_token}, webhook_verify_token),
+                    whatsapp_verify_token = COALESCE(${whatsapp_verify_token}, whatsapp_verify_token),
                     is_active = COALESCE(${is_active}, is_active)
                 WHERE id = ${id}
                 RETURNING *

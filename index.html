@@ -52,21 +52,21 @@
                 </button>
             </div>
 
-            <!-- Company Switcher -->
-            <div class="company-switcher-container"
-                style="padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; background: rgba(0,0,0,0.15);">
-                <label for="company-switcher"
-                    style="display: flex; align-items: center; justify-content: space-between; font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem;">
-                    <span>Active Company</span>
-                    <span style="font-size:0.6rem; color:var(--primary); font-weight:600;">Multi-Tenant</span>
-                </label>
-                <select id="company-switcher"
-                    style="width: 100%; padding: 0.45rem 0.6rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem; font-weight: 600; cursor: pointer; outline: none;">
-                    <option value="default">Default Organization</option>
-                </select>
-            </div>
-
             <nav id="sidebar-nav">
+                <!-- Company Switcher -->
+                <div class="company-switcher-container"
+                    style="padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; background: rgba(0,0,0,0.15); border-radius: 8px;">
+                    <label for="company-switcher"
+                        style="display: flex; align-items: center; justify-content: space-between; font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem;">
+                        <span>Active Company</span>
+                        <span style="font-size:0.6rem; color:var(--primary); font-weight:600;">Multi-Tenant</span>
+                    </label>
+                    <select id="company-switcher"
+                        style="width: 100%; padding: 0.45rem 0.6rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem; font-weight: 600; cursor: pointer; outline: none;">
+                        <option value="default">Default Organization</option>
+                    </select>
+                </div>
+
                 <a href="#dashboard" data-view="dashboard" class="nav-item active">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="9" rx="1"></rect>
@@ -1406,9 +1406,9 @@
 
                 <div style="margin-bottom: 1.25rem;">
                     <label
-                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">WEBHOOK
+                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">WHATSAPP
                         VERIFY TOKEN</label>
-                    <input type="text" id="comp-verify-token" placeholder="inspenox_verify_token"
+                    <input type="text" id="comp-verify-token" placeholder="manasageetha"
                         style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                 </div>
 

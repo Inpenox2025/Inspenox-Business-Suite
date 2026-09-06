@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
                     meta_phone_id: c.whatsapp_phone_number_id || env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733',
                     meta_token: c.whatsapp_access_token || env.WHATSAPP_ACCESS_TOKEN,
                     waba_id: c.whatsapp_business_account_id || env.WHATSAPP_BUSINESS_ACCOUNT_ID,
-                    verify_token: c.webhook_verify_token || env.WHATSAPP_VERIFY_TOKEN
+                    verify_token: c.whatsapp_verify_token || env.WHATSAPP_VERIFY_TOKEN
                 });
             }
         } catch(e) {}

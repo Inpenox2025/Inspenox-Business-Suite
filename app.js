@@ -203,7 +203,7 @@ async function loadCompaniesSettings() {
 
         if (elPhone) elPhone.textContent = systemEnv.whatsapp_phone_number_id || 'Not Set';
         if (elWaba) elWaba.textContent = systemEnv.whatsapp_business_account_id || 'Not Set';
-        if (elVerify) elVerify.textContent = systemEnv.webhook_verify_token || 'Not Set';
+        if (elVerify) elVerify.textContent = systemEnv.whatsapp_verify_token || 'Not Set';
         if (elToken) {
             elToken.textContent = systemEnv.has_access_token ? 'Configured ✅' : 'Missing Token ⚠️';
             elToken.style.background = systemEnv.has_access_token ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
@@ -228,7 +228,7 @@ async function loadCompaniesSettings() {
                     <td><code style="font-size:0.8rem;">${c.id}</code></td>
                     <td><code style="font-size:0.8rem; color:var(--primary);">${c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id || 'Env Default'}</code></td>
                     <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id || 'Env Default'}</code></td>
-                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.webhook_verify_token || systemEnv.webhook_verify_token || 'Env Default'}</code></td>
+                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_verify_token || systemEnv.whatsapp_verify_token || 'Env Default'}</code></td>
                     <td style="text-align: right;">
                         <button class="btn secondary sm" onclick="editCompany('${c.id}')">Edit</button>
                         ${c.id !== 'default' && c.id !== 1 ? `<button class="btn danger sm" onclick="deleteCompany('${c.id}')">Delete</button>` : ''}
@@ -257,7 +257,7 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
             document.getElementById('comp-phone-id').value = comp.whatsapp_phone_number_id || '';
             document.getElementById('comp-waba-id').value = comp.whatsapp_business_account_id || '';
             document.getElementById('comp-access-token').value = comp.whatsapp_access_token || '';
-            document.getElementById('comp-verify-token').value = comp.webhook_verify_token || '';
+            document.getElementById('comp-verify-token').value = comp.whatsapp_verify_token || '';
         }
     }
     
@@ -284,7 +284,7 @@ window.saveCompany = async function saveCompany(e) {
     const whatsapp_phone_number_id = document.getElementById('comp-phone-id').value;
     const whatsapp_business_account_id = document.getElementById('comp-waba-id').value;
     const whatsapp_access_token = document.getElementById('comp-access-token').value;
-    const webhook_verify_token = document.getElementById('comp-verify-token').value;
+    const whatsapp_verify_token = document.getElementById('comp-verify-token').value;
 
     const btn = document.getElementById('btn-save-company');
     if (btn) {
@@ -294,7 +294,7 @@ window.saveCompany = async function saveCompany(e) {
 
     try {
         const method = id ? 'PUT' : 'POST';
-        const body = { name, whatsapp_phone_number_id, whatsapp_business_account_id, whatsapp_access_token, webhook_verify_token };
+        const body = { name, whatsapp_phone_number_id, whatsapp_business_account_id, whatsapp_access_token, whatsapp_verify_token };
         if (id) body.id = id;
 
         const res = await apiFetch('/api/companies', {

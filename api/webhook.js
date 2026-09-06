@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
         return res.status(200).send(challenge);
       }
       try {
-        const matchingCos = await sql`SELECT id FROM companies WHERE webhook_verify_token = ${token} LIMIT 1`;
+        const matchingCos = await sql`SELECT id FROM companies WHERE whatsapp_verify_token = ${token} LIMIT 1`;
         if (matchingCos.length > 0) {
           return res.status(200).send(challenge);
         }
