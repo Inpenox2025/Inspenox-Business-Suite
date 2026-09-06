@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
         try {
             const companyFilter = req.query.company_id;
             let users;
-            if (companyFilter && companyFilter !== 'default' && companyFilter !== 'null' && companyFilter !== 'all') {
+            if (req.query.all !== 'true' && companyFilter && companyFilter !== 'default' && companyFilter !== 'null' && companyFilter !== 'all') {
                 users = await sql`
                     SELECT u.id, u.username, u.role, u.company_id, u.created_at, c.name as company_name 
                     FROM users u 

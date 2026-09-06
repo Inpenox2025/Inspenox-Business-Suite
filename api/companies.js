@@ -78,7 +78,7 @@ module.exports = async (req, res) => {
             }));
 
             const filterCoId = req.query.company_id;
-            if (filterCoId && filterCoId !== 'default' && filterCoId !== 'parent' && filterCoId !== 'all') {
+            if (req.query.all !== 'true' && filterCoId && filterCoId !== 'default' && filterCoId !== 'parent' && filterCoId !== 'all') {
                 resolvedCompanies = resolvedCompanies.filter(c => String(c.id) === String(filterCoId));
             }
 

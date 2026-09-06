@@ -135,7 +135,7 @@ function apiFetch(url, options = {}) {
         const companyId = getCompanyId();
         if (companyId) {
             opts.headers['X-Company-ID'] = companyId;
-            if (!url.includes('company_id=')) {
+            if (!url.includes('company_id=') && !url.includes('all=true')) {
                 const sep = url.includes('?') ? '&' : '?';
                 url = `${url}${sep}company_id=${encodeURIComponent(companyId)}`;
             }
@@ -145,65 +145,69 @@ function apiFetch(url, options = {}) {
 }
 
 // --- Multi-Tenant Parent/Child Permissions & Company UI Management ---
-// --- Multi-Tenant Parent/Child Permissions & Company UI Management ---
 window.isParentAdmin = function isParentAdmin() {
     let user = {};
     try {
         user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
     } catch(e) {}
 
+    const coId = user.company_id;
     const uname = (user.username || '').toLowerCase();
     const cname = (user.company_name || '').toLowerCase();
-    
-    // Inspenox main system admin or users under Inspenox parent company
-    if (uname === 'admin' && (!user.company_id || String(user.company_id) === 'default')) return true;
-    if (cname.includes('inspenox') || uname.includes('inspenox')) return true;
 
-    return false;
+    if (uname === 'admin' || uname === 'inspenox' || cname.includes('inspenox')) {
+        return true;
+    }
+
+    // If user has an explicit non-parent company_id (e.g. 1, 2), they are a child tenant admin
+    if (coId !== undefined && coId !== null && String(coId) !== 'default' && String(coId) !== 'null' && String(coId) !== '' && String(coId) !== '0') {
+        return false;
+    }
+
+    // Null or default company_id or admin username -> Master Parent Admin
+    return true;
 };
 
 async function loadCompanies() {
     const isParent = isParentAdmin();
     const switcherContainer = document.querySelector('.company-switcher-container');
-    if (switcherContainer) {
-        if (isParent) {
-            switcherContainer.style.display = 'block';
-        } else {
-            switcherContainer.style.display = 'none';
-            let user = {};
-            try { user = JSON.parse(localStorage.getItem('inspenox_user') || '{}'); } catch(e){}
-            if (user.company_id) {
-                currentCompanyId = String(user.company_id);
-                localStorage.setItem('inspenox_company_id', currentCompanyId);
-            }
-        }
+
+    let user = {};
+    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+
+    if (!isParent && user.company_id) {
+        currentCompanyId = String(user.company_id);
+        localStorage.setItem('inspenox_company_id', currentCompanyId);
+        if (switcherContainer) switcherContainer.style.display = 'none';
+    } else {
+        if (switcherContainer) switcherContainer.style.display = 'block';
     }
 
     try {
-        const res = await apiFetch('/api/companies');
+        const compUrl = isParent ? '/api/companies?all=true' : '/api/companies';
+        const res = await apiFetch(compUrl);
         const companies = await res.json();
         if (Array.isArray(companies)) {
             allCompanies = companies;
             const selectEl = document.getElementById('company-switcher');
             if (selectEl) {
                 selectEl.innerHTML = '';
-                if (companies.length === 0) {
-                    selectEl.innerHTML = '<option value="default">Inspenox Business Suite (Parent)</option>';
-                } else {
-                    companies.forEach(comp => {
-                        const opt = document.createElement('option');
-                        opt.value = comp.id;
-                        const isParentCo = comp.name.toLowerCase().includes('inspenox') || String(comp.slug || '').toLowerCase() === 'inspenox' || comp.id === 'default';
-                        opt.textContent = comp.name + (isParentCo ? ' (Parent)' : '');
-                        if (String(comp.id) === String(currentCompanyId)) opt.selected = true;
-                        selectEl.appendChild(opt);
-                    });
+                if (isParent) {
+                    const optDef = document.createElement('option');
+                    optDef.value = 'default';
+                    optDef.textContent = 'Inspenox Business Suite (Parent - All Companies)';
+                    if (!currentCompanyId || currentCompanyId === 'default') optDef.selected = true;
+                    selectEl.appendChild(optDef);
                 }
-            }
-            if (companies.length > 0 && !companies.some(c => String(c.id) === String(currentCompanyId))) {
-                currentCompanyId = String(companies[0].id);
-                localStorage.setItem('inspenox_company_id', currentCompanyId);
-                if (selectEl) selectEl.value = currentCompanyId;
+
+                companies.forEach(comp => {
+                    const opt = document.createElement('option');
+                    opt.value = comp.id;
+                    const isParentCo = comp.name.toLowerCase().includes('inspenox') || String(comp.slug || '').toLowerCase() === 'inspenox';
+                    opt.textContent = comp.name + (isParentCo ? ' (Parent)' : '');
+                    if (String(comp.id) === String(currentCompanyId)) opt.selected = true;
+                    selectEl.appendChild(opt);
+                });
             }
         }
     } catch(e) {
@@ -235,7 +239,9 @@ async function loadCompaniesSettings() {
     tbody.innerHTML = `<tr><td colspan="6"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading companies...</span></div></td></tr>`;
     try {
         let compUrl = '/api/companies?include_env=true';
-        if (!isParent && currentCompanyId && currentCompanyId !== 'default') {
+        if (isParent) {
+            compUrl += '&all=true';
+        } else if (currentCompanyId && currentCompanyId !== 'default') {
             compUrl += `&company_id=${currentCompanyId}`;
         }
         const res = await apiFetch(compUrl);
@@ -357,7 +363,9 @@ window.loadUsersList = async function loadUsersList() {
     try {
         const isParent = isParentAdmin();
         let userUrl = '/api/auth';
-        if (!isParent && currentCompanyId && currentCompanyId !== 'default') {
+        if (isParent) {
+            userUrl = '/api/auth?all=true';
+        } else if (currentCompanyId && currentCompanyId !== 'default') {
             userUrl = `/api/auth?company_id=${currentCompanyId}`;
         }
         const res = await apiFetch(userUrl);
@@ -381,7 +389,7 @@ window.loadUsersList = async function loadUsersList() {
                     <td style="text-align: right;">
                         <button class="btn secondary sm" onclick="openResetUserPassModal('${u.id}', '${u.username}')">🔑 Reset Password</button>
                         <button class="btn secondary sm" onclick="openUserModal('${u.id}')">Edit</button>
-                        ${(u.username !== 'admin') ? `<button class="btn danger sm" onclick="deleteUser('${u.id}', '${u.username}')">Delete</button>` : ''}
+                        ${(u.username !== 'admin' && isParent) ? `<button class="btn danger sm" onclick="deleteUser('${u.id}', '${u.username}')">Delete</button>` : ''}
                     </td>
                 `;
                 tbody.appendChild(tr);
