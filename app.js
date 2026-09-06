@@ -521,48 +521,113 @@ window.loadDashboard = async function loadDashboard() {
 };
 
 window.loadUsageAnalytics = async function loadUsageAnalytics() {
+    const elBadge = document.getElementById('usage-meta-badge');
+    const elAmountSpent = document.getElementById('meta-stat-amount-spent');
+    const elCostPerMsg = document.getElementById('meta-stat-cost-per-msg');
     const elTotalMsgs = document.getElementById('usage-stat-total-msgs');
-    const elWaCost = document.getElementById('usage-stat-wa-cost');
-    const elOtherCost = document.getElementById('usage-stat-other-cost');
     const elTotalCost = document.getElementById('usage-stat-total-cost');
-    const tbody = document.getElementById('usage-company-table-body');
 
-    if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="8"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading API usage data...</span></div></td></tr>`;
-    }
+    const elSentCount = document.getElementById('meta-stat-sent-count');
+    const elDeliveredCount = document.getElementById('meta-stat-delivered-count');
+    const elReadCount = document.getElementById('meta-stat-read-count');
+    const elReadPercent = document.getElementById('meta-stat-read-percent');
+    const elUniqueReplies = document.getElementById('meta-stat-unique-replies');
+
+    const tbodyTemplates = document.getElementById('meta-templates-insights-body');
+    const tbodyCompanies = document.getElementById('usage-company-table-body');
+
+    if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="9"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading direct Meta template insights...</span></div></td></tr>`;
+    if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="8"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading API usage data...</span></div></td></tr>`;
 
     try {
         const res = await apiFetch('/api/analytics');
         const data = await res.json();
 
-        if (elTotalMsgs) elTotalMsgs.textContent = data.messages_sent || 0;
-        if (elWaCost) elWaCost.textContent = `₹${(data.estimated_costs?.whatsapp || 0).toFixed(2)}`;
-        if (elOtherCost) elOtherCost.textContent = `₹${((data.estimated_costs?.email || 0) + (data.estimated_costs?.sms || 0)).toFixed(2)}`;
+        // 1. Connection Status Badge
+        if (elBadge) {
+            if (data.meta_connected) {
+                elBadge.innerHTML = '⚡ Direct Meta Graph API v20.0';
+                elBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                elBadge.style.color = '#10b981';
+            } else {
+                elBadge.innerHTML = '📊 Local Database Analytics';
+                elBadge.style.background = 'rgba(234, 179, 8, 0.15)';
+                elBadge.style.color = '#eab308';
+            }
+        }
+
+        // 2. Direct Meta Summary Stat Cards
+        const metaInsights = data.meta_direct_insights || {};
+        if (elAmountSpent) elAmountSpent.textContent = `₹${(metaInsights.total_amount_spent || data.estimated_costs?.whatsapp || 0).toFixed(2)}`;
+        if (elCostPerMsg) elCostPerMsg.textContent = `₹${(metaInsights.cost_per_delivered || 0.86).toFixed(2)}`;
+        if (elTotalMsgs) elTotalMsgs.textContent = metaInsights.total_sent || data.messages_sent || 0;
         if (elTotalCost) elTotalCost.textContent = `₹${(data.estimated_costs?.total || 0).toFixed(2)}`;
 
-        if (tbody) {
+        // 3. Performance Metrics
+        if (elSentCount) elSentCount.textContent = metaInsights.total_sent || 0;
+        if (elDeliveredCount) elDeliveredCount.textContent = metaInsights.total_delivered || 0;
+        if (elReadCount) elReadCount.textContent = metaInsights.total_read || 0;
+        if (elReadPercent) elReadPercent.textContent = `(${metaInsights.total_read_percent || 0}%)`;
+        if (elUniqueReplies) elUniqueReplies.textContent = metaInsights.unique_replies || 0;
+
+        // 4. Render Template Insights Table
+        if (tbodyTemplates) {
+            const tList = metaInsights.templates || [];
+            if (tList.length === 0) {
+                tbodyTemplates.innerHTML = `<tr><td colspan="9" class="empty-state">No Meta template analytics recorded yet.</td></tr>`;
+            } else {
+                tbodyTemplates.innerHTML = tList.map(t => {
+                    const statusBadge = t.status === 'APPROVED' || t.status === 'ACTIVE' ? 
+                        '<span class="window-badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; font-weight:600;">Active</span>' : 
+                        '<span class="window-badge" style="background:rgba(234, 179, 8, 0.15); color:#eab308; font-weight:600;">Pending</span>';
+                    const categoryBadge = `<span class="window-badge" style="background:var(--primary-light); color:var(--primary); font-size:0.75rem; text-transform:uppercase;">${t.category}</span>`;
+                    return `
+                        <tr>
+                            <td>
+                                <strong style="color:var(--text-main); display:block;">${t.name}</strong>
+                                <span style="font-size:0.75rem; color:var(--text-muted);">ID: ${t.id} · ${t.language}</span>
+                            </td>
+                            <td>${categoryBadge}</td>
+                            <td>${statusBadge}</td>
+                            <td><strong>${t.sent}</strong></td>
+                            <td><strong style="color:#10b981;">${t.delivered}</strong></td>
+                            <td>
+                                <span style="font-weight:700; color:#3b82f6;">${t.read}</span>
+                                <span style="font-size:0.75rem; color:var(--text-muted); margin-left:0.2rem;">(${t.read_percent}%)</span>
+                            </td>
+                            <td><strong style="color:#8b5cf6;">${t.replies}</strong></td>
+                            <td><code style="color:var(--text-muted);">₹${t.cost_per_delivered.toFixed(2)}</code></td>
+                            <td style="text-align: right;"><strong style="color:var(--text-main); font-size:1.05rem;">₹${t.amount_spent.toFixed(2)}</strong></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // 5. Render Company Usage Table
+        if (tbodyCompanies) {
             const usageList = data.company_usage || [];
             if (usageList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No company API usage data recorded yet.</td></tr>`;
-                return;
+                tbodyCompanies.innerHTML = `<tr><td colspan="8" class="empty-state">No company API usage data recorded yet.</td></tr>`;
+            } else {
+                tbodyCompanies.innerHTML = usageList.map(u => `
+                    <tr>
+                        <td><strong style="color:var(--text-main);">${u.name}</strong></td>
+                        <td><code style="color:var(--primary); font-weight:600;">${u.wa_marketing_count}</code></td>
+                        <td><code>${u.wa_utility_count}</code></td>
+                        <td><code>${u.wa_auth_count}</code></td>
+                        <td><code>${u.email_count}</code></td>
+                        <td><code>${u.sms_count}</code></td>
+                        <td><strong>${u.total_outbound}</strong></td>
+                        <td style="text-align: right;"><strong style="color:var(--primary);">₹${u.est_cost.toFixed(2)}</strong></td>
+                    </tr>
+                `).join('');
             }
-
-            tbody.innerHTML = usageList.map(u => `
-                <tr>
-                    <td><strong style="color:var(--text-main);">${u.name}</strong></td>
-                    <td><code style="color:var(--primary); font-weight:600;">${u.wa_marketing_count}</code></td>
-                    <td><code>${u.wa_utility_count}</code></td>
-                    <td><code>${u.wa_auth_count}</code></td>
-                    <td><code>${u.email_count}</code></td>
-                    <td><code>${u.sms_count}</code></td>
-                    <td><strong>${u.total_outbound}</strong></td>
-                    <td style="text-align: right;"><strong style="color:var(--primary);">₹${u.est_cost.toFixed(2)}</strong></td>
-                </tr>
-            `).join('');
         }
     } catch(e) {
         console.error('Error loading usage analytics:', e);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Failed to load API usage statistics.</td></tr>`;
+        if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="9" class="empty-state">Failed to load direct Meta template insights.</td></tr>`;
+        if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="8" class="empty-state">Failed to load API usage statistics.</td></tr>`;
     }
 };
 

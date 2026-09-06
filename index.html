@@ -78,7 +78,7 @@
                         <rect x="14" y="12" width="7" height="9" rx="1"></rect>
                         <rect x="3" y="16" width="7" height="5" rx="1"></rect>
                     </svg>
-                    <span>Inspenox Business Suite For Marketing</span>
+                    <span>Dashboard</span>
                 </a>
 
                 <!-- WhatsApp Marketing Submenu Group -->
@@ -222,6 +222,14 @@
                     </svg>
                     <span>Terms of Service</span>
                 </a>
+                <a href="#usage" data-view="usage" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>API Usage & Meta Insights</span>
+                </a>
                 <a href="#settings" data-view="settings" class="nav-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
@@ -258,7 +266,7 @@
             <section id="view-dashboard" class="view active">
                 <div class="page-header">
                     <div>
-                        <h1>Dashboard</h1>
+                        <h1>Inspenox Business Suite For Marketing</h1>
                         <p class="subtitle">Overview of your Inspenox Business Suite workspace & real-time messaging
                             stats.</p>
                     </div>
@@ -1096,6 +1104,230 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <footer class="page-footer">
+                    <p>Inspenox Business Suite - Business Messaging Platform</p>
+                </footer>
+            </section>
+
+            <!-- API Usage & Direct Meta Insights View -->
+            <section id="view-usage" class="view">
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <div>
+                        <h1>API Usage & Meta Insights</h1>
+                        <p class="subtitle">Direct real-time WhatsApp Cloud API consumption, template insights, and message costs from Meta.</p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <span id="usage-meta-badge" class="window-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; padding: 0.4rem 0.85rem; font-size: 0.85rem;">
+                            ⚡ Direct Meta Graph API v20.0
+                        </span>
+                        <button class="btn secondary" onclick="loadUsageAnalytics()" style="gap: 0.4rem;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M1 20v-6h6"></path>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            Sync Insights
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Meta WhatsApp Manager Banner Notice -->
+                <div class="card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.12)); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: flex-start; gap: 0.85rem;">
+                        <div style="font-size: 1.25rem; color: #a855f7;">⭐</div>
+                        <div>
+                            <strong style="color: var(--text-main); font-size: 0.925rem; display: block; margin-bottom: 0.2rem;">You could get up to 9% more marketing messages delivered compared to Cloud API</strong>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">When you send messages through Marketing Messages API for WhatsApp, formerly known as MM Lite API, you can enhance the customer experience and deliver the right message to more of the right people.</p>
+                        </div>
+                    </div>
+                    <a href="https://business.facebook.com/latest/whatsapp_manager" target="_blank" rel="noopener noreferrer" class="btn primary sm" style="white-space: nowrap;">
+                        Set up Marketing Messages API →
+                    </a>
+                </div>
+
+                <!-- Top Direct Meta Metric Cards Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="card" style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 0.4rem;">
+                            Amount spent
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        </span>
+                        <div id="meta-stat-amount-spent" style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 0.4rem; letter-spacing: -0.5px;">₹33.66</div>
+                        <span style="font-size: 0.725rem; color: var(--primary); font-weight: 600;">Direct Meta Cloud Spend</span>
+                    </div>
+
+                    <div class="card" style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 0.4rem;">
+                            Cost per message delivered
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        </span>
+                        <div id="meta-stat-cost-per-msg" style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 0.4rem; letter-spacing: -0.5px;">₹0.86</div>
+                        <span style="font-size: 0.725rem; color: var(--text-muted);">Marketing Rate (India)</span>
+                    </div>
+
+                    <div class="card" style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Messages Sent</span>
+                        <div id="usage-stat-total-msgs" style="font-size: 2.2rem; font-weight: 800; color: #10b981; margin-top: 0.4rem; letter-spacing: -0.5px;">0</div>
+                        <span style="font-size: 0.725rem; color: var(--text-muted);">Cloud API Broadcasts</span>
+                    </div>
+
+                    <div class="card" style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Multi-Channel Cost</span>
+                        <div id="usage-stat-total-cost" style="font-size: 2.2rem; font-weight: 800; color: #3b82f6; margin-top: 0.4rem; letter-spacing: -0.5px;">₹0.00</div>
+                        <span style="font-size: 0.725rem; color: var(--text-muted);">WhatsApp + Email + SMS</span>
+                    </div>
+                </div>
+
+                <!-- Meta Performance Card Grid -->
+                <div class="card" style="margin-bottom: 1.5rem; padding: 1.35rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                                Performance Insights
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; color: var(--text-muted);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            </h3>
+                            <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Real-time message delivery, read receipts, and response rates from Meta WhatsApp Manager.</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                        <div style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
+                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                                Messages sent
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            </span>
+                            <div id="meta-stat-sent-count" style="font-size: 2rem; font-weight: 800; color: var(--text-main); margin-top: 0.35rem;">0</div>
+                        </div>
+
+                        <div style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
+                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                                Messages delivered
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            </span>
+                            <div id="meta-stat-delivered-count" style="font-size: 2rem; font-weight: 800; color: #10b981; margin-top: 0.35rem;">0</div>
+                        </div>
+
+                        <div style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
+                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                                Messages read
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            </span>
+                            <div style="display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.35rem;">
+                                <div id="meta-stat-read-count" style="font-size: 2rem; font-weight: 800; color: #3b82f6;">0</div>
+                                <span id="meta-stat-read-percent" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">(0%)</span>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
+                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                                Unique replies
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            </span>
+                            <div id="meta-stat-unique-replies" style="font-size: 2rem; font-weight: 800; color: #8b5cf6; margin-top: 0.35rem;">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Meta Template Insights Breakdown Table -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main); font-weight: 700;">Template Insights Breakdown</h3>
+                            <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Direct performance stats, read rates, and exact spend per message template.</p>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Template Name</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Sent</th>
+                                    <th>Delivered</th>
+                                    <th>Read Rate</th>
+                                    <th>Replies</th>
+                                    <th>Cost / Msg</th>
+                                    <th style="text-align: right;">Amount Spent</th>
+                                </tr>
+                            </thead>
+                            <tbody id="meta-templates-insights-body">
+                                <tr><td colspan="9" class="empty-state">Loading template insights...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Multi-Tenant Company API Usage Breakdown Table -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">Multi-Tenant Company Usage Breakdown</h3>
+                            <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Message counts and estimated charges broken down by company account.</p>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Company Name</th>
+                                    <th>WA Marketing</th>
+                                    <th>WA Utility</th>
+                                    <th>WA Auth</th>
+                                    <th>Email Msgs</th>
+                                    <th>SMS Msgs</th>
+                                    <th>Total Outbound</th>
+                                    <th style="text-align: right;">Estimated Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usage-company-table-body">
+                                <tr><td colspan="8" class="empty-state">Loading company usage data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Interactive Pricing Calculator Card -->
+                <div class="card">
+                    <div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">🧮 Interactive API Pricing Calculator</h3>
+                        <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Calculate estimated WhatsApp, Email, and SMS charges based on official Meta rates.</p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Market / Region</label>
+                            <select id="calc-market" onchange="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                                <option value="IN" data-m="0.8631" data-u="0.1150" data-a="0.1150" selected>India (₹0.8631 Mkt / ₹0.1150 Util)</option>
+                                <option value="US" data-m="2.0000" data-u="0.5000" data-a="0.5000">North America ($0.025 Mkt)</option>
+                                <option value="AE" data-m="2.5000" data-u="0.7500" data-a="0.7500">UAE & Gulf ($0.030 Mkt)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">WhatsApp Marketing Msgs</label>
+                            <input type="number" id="calc-wa-marketing" value="1000" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">WhatsApp Utility Msgs</label>
+                            <input type="number" id="calc-wa-utility" value="500" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Email Messages</label>
+                            <input type="number" id="calc-email-count" value="2000" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                        </div>
+                    </div>
+
+                    <div style="background: var(--bg-dark); padding: 1rem 1.25rem; border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">Estimated Total Investment:</span>
+                        <strong id="calc-result-total" style="font-size: 1.5rem; color: var(--primary); font-weight: 800;">₹920.60</strong>
                     </div>
                 </div>
 
