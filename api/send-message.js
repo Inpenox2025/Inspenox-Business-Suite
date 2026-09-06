@@ -4,10 +4,11 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
     try {
+        const env = req.env || process.env || {};
         const { customer_id, type, content, media_id, template_name, template_language } = req.body;
         if (!customer_id || !type) return res.status(400).json({ error: 'customer_id and type are required' });
 
-        const sql = getDb();
+        const sql = getDb(env);
         const customers = await sql`SELECT * FROM customers WHERE id = ${customer_id}`;
         if (customers.length === 0) return res.status(404).json({ error: 'Customer not found' });
         
@@ -15,8 +16,8 @@ module.exports = async (req, res) => {
         const phone = customer.phone ? customer.phone.replace(/[^0-9]/g, '') : '';
         if (!phone) return res.status(400).json({ error: 'Customer has an invalid phone number' });
 
-        const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
-        const token = process.env.WHATSAPP_ACCESS_TOKEN;
+        const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
+        const token = env.WHATSAPP_ACCESS_TOKEN;
         const url = `https://graph.facebook.com/v19.0/${phoneId}/messages`;
 
         let payload = {

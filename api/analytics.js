@@ -4,7 +4,8 @@ module.exports = async (req, res) => {
     if (req.method !== 'GET') return res.status(405).send('Method Not Allowed');
 
     try {
-        const sql = getDb();
+        const env = req.env || process.env || {};
+        const sql = getDb(env);
         
         // Run queries concurrently
         const [customersResult, messagesResult, recentInbound] = await Promise.all([

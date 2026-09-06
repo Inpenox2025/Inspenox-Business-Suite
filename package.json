@@ -1,11 +1,14 @@
 {
-  "name": "induio-whatsapp",
+  "name": "inspenox-business-suite",
   "version": "1.0.0",
-  "description": "WhatsApp Business Marketing Platform",
+  "description": "Inspenox Business Suite - WhatsApp Business Platform",
   "main": "index.html",
+  "scripts": {
+    "dev": "wrangler pages dev .",
+    "deploy": "wrangler pages deploy ."
+  },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.3",
-    "@octokit/rest": "^20.1.1",
     "busboy": "^1.6.0",
     "jsdom": "^29.1.1",
     "xlsx": "^0.18.5"

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Induio - WhatsApp Business Platform</title>
+    <title>Inspenox Business Suite - WhatsApp Business Platform</title>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="/app.css">
     <!-- SheetJS for Excel parsing -->
@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
         // Redirect to login if not authenticated
-        if (!localStorage.getItem('induio_token')) {
+        if (!localStorage.getItem('inspenox_token') && !localStorage.getItem('induio_token')) {
             window.location.href = '/login.html';
         }
     </script>
@@ -23,9 +23,9 @@
             <div class="sidebar-header">
                 <div class="logo">
                     <div class="logo-icon">
-                        <img src="/favicon.png" alt="Induio Logo">
+                        <img src="/favicon.png" alt="Inspenox Business Suite Logo">
                     </div>
-                    <span class="logo-text">Induio</span>
+                    <span class="logo-text">Inspenox</span>
                 </div>
                 <button id="theme-toggle" class="icon-btn" title="Toggle Theme" aria-label="Toggle Theme">
                     <svg class="theme-icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -108,7 +108,7 @@
                 <div class="page-header">
                     <div>
                         <h1>Dashboard</h1>
-                        <p class="subtitle">Overview of your Induio workspace & real-time messaging stats.</p>
+                        <p class="subtitle">Overview of your Inspenox Business Suite workspace & real-time messaging stats.</p>
                     </div>
                     <div class="header-actions">
                         <button class="btn primary" onclick="switchView('send')">
@@ -471,7 +471,7 @@
                 <div class="page-header">
                     <div>
                         <h1>Media Library</h1>
-                        <p class="subtitle">Cloud media assets synced with your GitHub repository for fast broadcast attachments.</p>
+                        <p class="subtitle">Cloud media assets stored securely for fast broadcast attachments.</p>
                     </div>
                     <div class="header-actions">
                         <input type="file" id="media-library-upload-input" accept="image/*,video/*" style="display:none">
@@ -500,7 +500,7 @@
 
                 <div class="card" style="line-height: 1.6; font-size: 0.925rem;">
                     <h3 style="color: var(--primary); margin-bottom: 0.5rem;">1. Application & Ownership</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 1.25rem;">The Induio WhatsApp Business platform is operated for business operations of <strong>Manaswini Enterprises</strong> and <strong>Geetha Enterprises</strong>.</p>
+                    <p style="color: var(--text-muted); margin-bottom: 1.25rem;">The Inspenox Business Suite platform is operated for business operations of <strong>Manaswini Enterprises</strong> and <strong>Geetha Enterprises</strong>.</p>
 
                     <h3 style="color: var(--primary); margin-bottom: 0.5rem;">2. Information We Collect</h3>
                     <p style="color: var(--text-muted); margin-bottom: 1.25rem;">We collect customer names, phone numbers, opt-in consent timestamps, and WhatsApp message logs strictly required to deliver business updates, promotional offers, and customer service communications via the official Meta Cloud API.</p>
@@ -534,7 +534,7 @@
 
                 <div class="card" style="line-height: 1.6; font-size: 0.925rem;">
                     <h3 style="color: var(--primary); margin-bottom: 0.5rem;">1. Acceptance of Terms</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 1.25rem;">By accessing or using the Induio platform, you agree to these Terms of Service and Meta’s WhatsApp Business Terms & Messaging Policies.</p>
+                    <p style="color: var(--text-muted); margin-bottom: 1.25rem;">By accessing or using the Inspenox Business Suite platform, you agree to these Terms of Service and Meta’s WhatsApp Business Terms & Messaging Policies.</p>
 
                     <h3 style="color: var(--primary); margin-bottom: 0.5rem;">2. Authorized Messaging & Scope</h3>
                     <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Communications sent via this platform are authorized for Manaswini Enterprises and Geetha Enterprises. Messages include order updates, customer service replies, marketing announcements, and promotional offers.</p>

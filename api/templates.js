@@ -1,6 +1,7 @@
 module.exports = async (req, res) => {
-    const wabaId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-    const token = process.env.WHATSAPP_ACCESS_TOKEN;
+    const env = req.env || process.env || {};
+    const wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+    const token = env.WHATSAPP_ACCESS_TOKEN;
 
     if (!wabaId || !token) {
         return res.status(400).json({ error: 'WhatsApp credentials not fully configured in environment variables.' });

@@ -4,10 +4,11 @@ module.exports = async (req, res) => {
     if (req.method !== 'GET') return res.status(405).send('Method Not Allowed');
 
     try {
+        const env = req.env || process.env || {};
         const { customer_id } = req.query;
         if (!customer_id) return res.status(400).json({ error: 'customer_id is required' });
 
-        const sql = getDb();
+        const sql = getDb(env);
         
         // 1. Fetch messages for customer
         const messages = await sql`

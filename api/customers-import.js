@@ -15,12 +15,13 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
     try {
+        const env = req.env || process.env || {};
         const { customers } = req.body; // Array of {name, phone}
         if (!customers || !Array.isArray(customers)) {
             return res.status(400).json({ error: 'Invalid data format' });
         }
 
-        const sql = getDb();
+        const sql = getDb(env);
         let added = 0;
 
         for (const cust of customers) {

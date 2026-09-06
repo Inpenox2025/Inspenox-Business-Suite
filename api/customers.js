@@ -12,7 +12,8 @@ function formatIndiaPhone(phone) {
 }
 
 module.exports = async (req, res) => {
-    const sql = getDb();
+    const env = req.env || process.env || {};
+    const sql = getDb(env);
 
     try {
         await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_saved BOOLEAN DEFAULT true;`;

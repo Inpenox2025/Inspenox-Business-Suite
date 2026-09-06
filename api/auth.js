@@ -2,6 +2,10 @@ const { getDb } = require('../lib/db');
 const crypto = require('crypto');
 
 function hashPassword(password) {
+    return crypto.createHash('sha256').update(password + '_inspenox_salt_2026').digest('hex');
+}
+
+function legacyHashPassword(password) {
     return crypto.createHash('sha256').update(password + '_induio_salt_2026').digest('hex');
 }
 
@@ -34,7 +38,8 @@ async function ensureUsersTable(sql) {
 }
 
 module.exports = async (req, res) => {
-    const sql = getDb();
+    const env = req.env || process.env || {};
+    const sql = getDb(env);
     await ensureUsersTable(sql);
 
     const action = req.query.action || 'login';
@@ -50,6 +55,7 @@ module.exports = async (req, res) => {
 
                 const cleanUser = username.trim().toLowerCase();
                 const hash = hashPassword(password);
+                const legacyHash = legacyHashPassword(password);
 
                 const users = await sql`
                     SELECT id, username, role, password_hash 
@@ -57,7 +63,7 @@ module.exports = async (req, res) => {
                     WHERE LOWER(username) = ${cleanUser}
                 `;
 
-                if (users.length === 0 || users[0].password_hash !== hash) {
+                if (users.length === 0 || (users[0].password_hash !== hash && users[0].password_hash !== legacyHash)) {
                     return res.status(401).json({ error: 'Invalid username or password' });
                 }
 

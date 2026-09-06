@@ -4,9 +4,10 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
     try {
+        const env = req.env || process.env || {};
         const { target, type, content, media_id, template_name, template_language } = req.body;
 
-        const sql = getDb();
+        const sql = getDb(env);
         let customersToMessage = [];
         
         if (target === 'all') {
@@ -17,8 +18,8 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Invalid target' });
         }
 
-        const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
-        const token = process.env.WHATSAPP_ACCESS_TOKEN;
+        const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
+        const token = env.WHATSAPP_ACCESS_TOKEN;
         const url = `https://graph.facebook.com/v19.0/${phoneId}/messages`;
 
         let sent = 0;

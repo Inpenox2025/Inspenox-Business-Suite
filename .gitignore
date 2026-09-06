@@ -8,5 +8,5 @@
 # Developer utility scripts (not for production)
 /scratch/
 
-.vercel
+.wrangler
 .env*.local

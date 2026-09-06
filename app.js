@@ -184,7 +184,7 @@ window.submitChangePass = async function submitChangePass(e) {
 
     let username = 'admin';
     try {
-        const storedUser = JSON.parse(localStorage.getItem('induio_user') || '{}');
+        const storedUser = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
         if (storedUser.username) username = storedUser.username;
     } catch(err) {}
 
@@ -359,6 +359,8 @@ document.addEventListener('click', (e) => {
     const logoutBtn = e.target.closest('#btn-logout-nav');
     if (logoutBtn) {
         e.preventDefault();
+        localStorage.removeItem('inspenox_token');
+        localStorage.removeItem('inspenox_user');
         localStorage.removeItem('induio_token');
         localStorage.removeItem('induio_user');
         window.location.href = '/login.html';
@@ -730,7 +732,7 @@ document.getElementById('btn-download-template')?.addEventListener('click', () =
     // Set column widths
     worksheet['!cols'] = [{ wch: 20 }, { wch: 20 }];
     
-    XLSX.writeFile(workbook, "induio_customers_template.xlsx");
+    XLSX.writeFile(workbook, "inspenox_customers_template.xlsx");
 });
 
 
@@ -2830,29 +2832,8 @@ function uploadMediaToMetaFast(file, config, onProgress) {
     });
 }
 
-// Non-blocking background sync to GitHub Media Storage
-function syncToGithubBackground(file, config) {
-    getBase64(file).then(base64Data => {
-        const cleanBase64 = base64Data.replace(/^data:.*?;base64,/, "");
-        const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-        
-        fetch(`https://api.github.com/repos/${config.github_owner}/${config.github_repo}/contents/uploads/${fileName}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${config.github_token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                message: `Upload media ${file.name}`,
-                content: cleanBase64,
-                branch: "main"
-            })
-        }).then(() => {
-            if (typeof loadMedia === 'function') loadMedia();
-            if (typeof loadMediaForSelect === 'function') loadMediaForSelect();
-        }).catch(err => console.error("Background GitHub sync warning:", err));
-    }).catch(err => console.error("Base64 encoding error:", err));
-}
+// Background sync to GitHub Media Storage (Removed)
+function syncToGithubBackground() {}
 
 function resetBroadcastForm() {
     const form = document.getElementById('broadcast-form');
@@ -3008,7 +2989,6 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                     if (statusDiv) statusDiv.innerHTML = `<span class="spinner"></span> Streaming ${file.name} to Meta Cloud (${percent}%)...`;
                 });
                 media_id = metaData.id;
-                syncToGithubBackground(file, config);
             } else {
                 throw new Error("Please select a media file from Library or upload a new file.");
             }
@@ -3881,11 +3861,6 @@ document.getElementById('media-library-upload-input')?.addEventListener('change'
                 file_url: fileUrl
             })
         });
-
-        // 4. Non-blocking background sync to GitHub Media Storage if configured
-        if (config.github_token) {
-            syncToGithubBackground(file, config);
-        }
 
         showModal('Success', `Uploaded ${file.name} to Cloud Media storage successfully!`);
         loadMedia();

@@ -1,13 +1,16 @@
 const { getDb } = require("../lib/db");
 
 module.exports = async (req, res) => {
+  const env = req.env || process.env || {};
+
   // 1. Webhook Verification (GET)
   if (req.method === "GET") {
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
+    const verifyToken = env.WEBHOOK_VERIFY_TOKEN || env.WHATSAPP_VERIFY_TOKEN;
 
-    if (mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+    if (mode === "subscribe" && token === verifyToken) {
       return res.status(200).send(challenge);
     }
     return res.status(403).send("Forbidden");
@@ -54,7 +57,7 @@ module.exports = async (req, res) => {
             content = `[${messageType}]`;
           }
 
-          const sql = getDb();
+          const sql = getDb(env);
 
           // Ensure customer exists or create them
           let customer =
@@ -82,7 +85,7 @@ module.exports = async (req, res) => {
           const messageId = statusObj.id;
           const status = statusObj.status; // sent, delivered, read, failed
 
-          const sql = getDb();
+          const sql = getDb(env);
           if (status === 'failed' && statusObj.errors && statusObj.errors.length > 0) {
               const err = statusObj.errors[0];
               const errDetails = ` [Failed ${err.code}: ${err.title || err.message || 'Meta delivery failure'}]`;
