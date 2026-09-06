@@ -25,7 +25,14 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
         try {
-            const companies = await sql`
+            const systemEnv = {
+                whatsapp_phone_number_id: env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733',
+                whatsapp_business_account_id: env.WHATSAPP_BUSINESS_ACCOUNT_ID || '1561463645723530',
+                webhook_verify_token: env.WHATSAPP_VERIFY_TOKEN || 'inspenox_verify_token',
+                has_access_token: !!(env.WHATSAPP_ACCESS_TOKEN)
+            };
+
+            let companies = await sql`
                 SELECT id, name, slug, whatsapp_phone_number_id, whatsapp_business_account_id, 
                        webhook_verify_token, is_active, created_at,
                        (SELECT COUNT(*) FROM customers c WHERE c.company_id = companies.id) as customer_count,
@@ -34,22 +41,37 @@ module.exports = async (req, res) => {
                 ORDER BY id ASC
             `;
 
-            // If no companies exist, seed default
+            // If no companies exist, seed default company
             if (companies.length === 0) {
                 const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
                 const token = env.WHATSAPP_ACCESS_TOKEN || '';
                 const wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || '1561463645723530';
-                const verifyToken = env.WHATSAPP_VERIFY_TOKEN || 'manasageetha';
+                const verifyToken = env.WHATSAPP_VERIFY_TOKEN || 'inspenox_verify_token';
 
                 const defaultCo = await sql`
                     INSERT INTO companies (name, slug, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, webhook_verify_token)
-                    VALUES ('Manaswini Enterprises', 'manaswini-enterprises', ${phoneId}, ${token}, ${wabaId}, ${verifyToken})
+                    VALUES ('Inspenox Main', 'inspenox-main', ${phoneId}, ${token}, ${wabaId}, ${verifyToken})
                     RETURNING *
                 `;
-                return res.status(200).json([defaultCo[0]]);
+                companies = [defaultCo[0]];
             }
 
-            return res.status(200).json(companies);
+            // Hydrate environment variable fallbacks for empty fields
+            const resolvedCompanies = companies.map(c => ({
+                ...c,
+                whatsapp_phone_number_id: c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id,
+                whatsapp_business_account_id: c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id,
+                webhook_verify_token: c.webhook_verify_token || systemEnv.webhook_verify_token
+            }));
+
+            if (req.query.include_env === 'true') {
+                return res.status(200).json({
+                    companies: resolvedCompanies,
+                    system_env: systemEnv
+                });
+            }
+
+            return res.status(200).json(resolvedCompanies);
         } catch (error) {
             return res.status(500).json({ error: error.message });
         }
@@ -68,9 +90,11 @@ module.exports = async (req, res) => {
 
             const result = await sql`
                 INSERT INTO companies (name, slug, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, webhook_verify_token)
-                VALUES (${cleanName}, ${slug}, ${whatsapp_phone_number_id || null}, ${whatsapp_access_token || null}, ${whatsapp_business_account_id || null}, ${webhook_verify_token || 'manasageetha'})
+                VALUES (${cleanName}, ${slug}, ${whatsapp_phone_number_id || null}, ${whatsapp_access_token || null}, ${whatsapp_business_account_id || null}, ${webhook_verify_token || 'inspenox_verify_token'})
                 RETURNING *
             `;
+
+            return res.status(200).json({ success: true, company: result[0] });
 
             return res.status(200).json({ success: true, company: result[0] });
         } catch (error) {

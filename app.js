@@ -189,37 +189,56 @@ async function loadCompaniesSettings() {
     if (!tbody) return;
     tbody.innerHTML = `<tr><td colspan="6"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading companies...</span></div></td></tr>`;
     try {
-        const res = await apiFetch('/api/companies');
-        const companies = await res.json();
+        const res = await apiFetch('/api/companies?include_env=true');
+        const data = await res.json();
+        
+        const companies = Array.isArray(data) ? data : (data.companies || []);
+        const systemEnv = data.system_env || {};
+
+        // Update System Environment Credentials Panel
+        const elPhone = document.getElementById('env-stat-phone-id');
+        const elWaba = document.getElementById('env-stat-waba-id');
+        const elVerify = document.getElementById('env-stat-verify-token');
+        const elToken = document.getElementById('env-stat-token-status');
+
+        if (elPhone) elPhone.textContent = systemEnv.whatsapp_phone_number_id || 'Not Set';
+        if (elWaba) elWaba.textContent = systemEnv.whatsapp_business_account_id || 'Not Set';
+        if (elVerify) elVerify.textContent = systemEnv.webhook_verify_token || 'Not Set';
+        if (elToken) {
+            elToken.textContent = systemEnv.has_access_token ? 'Configured ✅' : 'Missing Token ⚠️';
+            elToken.style.background = systemEnv.has_access_token ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+            elToken.style.color = systemEnv.has_access_token ? '#10b981' : '#ef4444';
+        }
+
         if (Array.isArray(companies)) {
             allCompanies = companies;
             if (companies.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No companies created yet. Click "Add New Company" to create one.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No custom companies created yet. Using System Environment credentials.</td></tr>`;
                 return;
             }
             tbody.innerHTML = '';
             companies.forEach(c => {
                 const tr = document.createElement('tr');
-                const isCurrent = c.id === currentCompanyId;
+                const isCurrent = String(c.id) === String(currentCompanyId);
                 tr.innerHTML = `
                     <td>
                         <strong style="color:var(--text-main);">${c.name}</strong>
                         ${isCurrent ? ' <span class="window-badge" style="background:var(--primary-light);color:var(--primary);">Active</span>' : ''}
                     </td>
                     <td><code style="font-size:0.8rem;">${c.id}</code></td>
-                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_phone_number_id || 'Env Default'}</code></td>
-                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_business_account_id || 'Env Default'}</code></td>
-                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.webhook_verify_token || 'Env Default'}</code></td>
+                    <td><code style="font-size:0.8rem; color:var(--primary);">${c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id || 'Env Default'}</code></td>
+                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id || 'Env Default'}</code></td>
+                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.webhook_verify_token || systemEnv.webhook_verify_token || 'Env Default'}</code></td>
                     <td style="text-align: right;">
                         <button class="btn secondary sm" onclick="editCompany('${c.id}')">Edit</button>
-                        ${c.id !== 'default' ? `<button class="btn danger sm" onclick="deleteCompany('${c.id}')">Delete</button>` : ''}
+                        ${c.id !== 'default' && c.id !== 1 ? `<button class="btn danger sm" onclick="deleteCompany('${c.id}')">Delete</button>` : ''}
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
     } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Failed to load companies.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Failed to load companies settings.</td></tr>`;
     }
 }
 
@@ -515,11 +534,28 @@ document.addEventListener('click', (e) => {
     }
 });
 
+window.toggleNavGroup = function toggleNavGroup(headerEl) {
+    if (!headerEl) return;
+    const group = headerEl.closest('.nav-group');
+    if (group) {
+        group.classList.toggle('collapsed');
+    }
+};
+
 window.switchView = function switchView(target, pushHistory = true) {
     if (!target) return;
     document.querySelectorAll('#sidebar-nav a[data-view]').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('#sidebar-nav .nav-group').forEach(g => g.classList.remove('active-group'));
+
     const link = document.querySelector(`[data-view="${target}"]`);
-    if(link) link.classList.add('active');
+    if (link) {
+        link.classList.add('active');
+        const parentGroup = link.closest('.nav-group');
+        if (parentGroup) {
+            parentGroup.classList.add('active-group');
+            parentGroup.classList.remove('collapsed');
+        }
+    }
     
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById(`view-${target}`)?.classList.add('active');
@@ -899,7 +935,7 @@ document.getElementById('excel-upload')?.addEventListener('change', async (e) =>
 
     showModal(
         'Bulk Contact Consent Certification',
-        `By importing contacts from "${file.name}", you certify that all contacts have agreed: "I agree to receive WhatsApp updates, offers and promotional messages from Manaswini Enterprises and Geetha Enterprises".`,
+        `By importing contacts from "${file.name}", you certify that all contacts have agreed: "I agree to receive WhatsApp, Email, and SMS promotional updates & service announcements from Inspenox Business Suite".`,
         'confirm',
         async () => {
             const importBtn = document.getElementById('btn-import-excel');

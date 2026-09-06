@@ -245,6 +245,109 @@ svg {
     border-radius: 12px;
 }
 
+/* Sidebar Nav Submenus & Collapsible Groups */
+.nav-group {
+    display: flex;
+    flex-direction: column;
+    margin: 0.2rem 0;
+}
+
+.nav-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.nav-group-header:hover {
+    background: var(--primary-light);
+    color: var(--text-main);
+}
+
+.nav-group-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.nav-group-title svg {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+}
+
+.nav-group-header .chevron {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.2s ease;
+}
+
+.nav-group.collapsed .nav-group-header .chevron {
+    transform: rotate(-90deg);
+}
+
+.nav-group.collapsed .nav-submenu {
+    display: none;
+}
+
+.nav-submenu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding-left: 0.5rem;
+    margin-top: 0.25rem;
+    border-left: 2px solid var(--border);
+    margin-left: 1.15rem;
+}
+
+.nav-subitem {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.nav-subitem svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.nav-subitem:hover {
+    background: var(--primary-light);
+    color: var(--text-main);
+}
+
+.nav-subitem.active {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.badge-soon {
+    font-size: 0.625rem;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    border-radius: 6px;
+    background: rgba(234, 179, 8, 0.15);
+    color: #eab308;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .sidebar-footer {
     padding-top: 1rem;
     border-top: 1px solid var(--border);
