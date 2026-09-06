@@ -1,17 +1,18 @@
--- Customers imported from Excel
+-- Customers Table
 CREATE TABLE IF NOT EXISTS customers (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   phone TEXT NOT NULL UNIQUE,
+  is_saved BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- All messages sent/received
 CREATE TABLE IF NOT EXISTS messages (
   id SERIAL PRIMARY KEY,
-  customer_id INT REFERENCES customers(id),
+  customer_id INT REFERENCES customers(id) ON DELETE CASCADE,
   direction TEXT CHECK (direction IN ('outbound', 'inbound')),
-  type TEXT CHECK (type IN ('text', 'image', 'video', 'template')),
+  type TEXT,
   content TEXT,          -- text body or caption
   media_url TEXT,        -- URL or uploaded media URL
   wa_message_id TEXT,    -- WhatsApp message ID from Meta
@@ -38,4 +39,14 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   role TEXT DEFAULT 'admin',
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Media Library Assets Table
+CREATE TABLE IF NOT EXISTS media_library (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  type VARCHAR(50) DEFAULT 'image',
+  meta_media_id VARCHAR(255),
+  file_url TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
