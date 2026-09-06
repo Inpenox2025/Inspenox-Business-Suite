@@ -276,6 +276,121 @@ window.closeCompanyModal = function closeCompanyModal() {
     }
 };
 
+window.loadDashboard = async function loadDashboard() {
+    const elCustomers = document.getElementById('dash-stat-customers');
+    const elWaSent = document.getElementById('dash-stat-wa-sent');
+    const elEmailSent = document.getElementById('dash-stat-email-sent');
+    const elSmsSent = document.getElementById('dash-stat-sms-sent');
+    const elEstCost = document.getElementById('dash-stat-est-cost');
+    const elInboxList = document.getElementById('dash-inbox-list');
+
+    try {
+        const res = await apiFetch('/api/analytics');
+        const data = await res.json();
+
+        if (elCustomers) elCustomers.textContent = data.total_customers || 0;
+        if (elWaSent) elWaSent.textContent = data.channels?.whatsapp || data.messages_sent || 0;
+        if (elEmailSent) elEmailSent.textContent = data.channels?.email || 0;
+        if (elSmsSent) elSmsSent.textContent = data.channels?.sms || 0;
+        if (elEstCost) elEstCost.textContent = `₹${(data.estimated_costs?.total || 0).toFixed(2)}`;
+
+        if (elInboxList) {
+            if (!data.recent_inbound || data.recent_inbound.length === 0) {
+                elInboxList.innerHTML = `<div class="empty-state">No recent customer activity.</div>`;
+            } else {
+                elInboxList.innerHTML = data.recent_inbound.map(msg => `
+                    <div class="dash-list-item" style="padding:0.75rem; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:0.75rem;">
+                        <div class="dash-avatar" style="width:36px; height:36px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem;">
+                            ${getInitial(msg.name)}
+                        </div>
+                        <div class="dash-list-item-content" style="flex:1;">
+                            <strong style="color:var(--text-main); font-size:0.875rem;">${msg.name || formatDisplayPhone(msg.phone)}</strong>
+                            <p style="margin:0.15rem 0 0 0; font-size:0.775rem; color:var(--text-muted);">${msg.content || '[Message]'}</p>
+                        </div>
+                        <span style="font-size:0.7rem; color:var(--text-muted);">${formatTime(msg.created_at)}</span>
+                    </div>
+                `).join('');
+            }
+        }
+    } catch(e) {
+        console.error('Error loading dashboard analytics:', e);
+    }
+};
+
+window.loadUsageAnalytics = async function loadUsageAnalytics() {
+    const elTotalMsgs = document.getElementById('usage-stat-total-msgs');
+    const elWaCost = document.getElementById('usage-stat-wa-cost');
+    const elOtherCost = document.getElementById('usage-stat-other-cost');
+    const elTotalCost = document.getElementById('usage-stat-total-cost');
+    const tbody = document.getElementById('usage-company-table-body');
+
+    if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading API usage data...</span></div></td></tr>`;
+    }
+
+    try {
+        const res = await apiFetch('/api/analytics');
+        const data = await res.json();
+
+        if (elTotalMsgs) elTotalMsgs.textContent = data.messages_sent || 0;
+        if (elWaCost) elWaCost.textContent = `₹${(data.estimated_costs?.whatsapp || 0).toFixed(2)}`;
+        if (elOtherCost) elOtherCost.textContent = `₹${((data.estimated_costs?.email || 0) + (data.estimated_costs?.sms || 0)).toFixed(2)}`;
+        if (elTotalCost) elTotalCost.textContent = `₹${(data.estimated_costs?.total || 0).toFixed(2)}`;
+
+        if (tbody) {
+            const usageList = data.company_usage || [];
+            if (usageList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No company API usage data recorded yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = usageList.map(u => `
+                <tr>
+                    <td><strong style="color:var(--text-main);">${u.name}</strong></td>
+                    <td><code style="color:var(--primary); font-weight:600;">${u.wa_marketing_count}</code></td>
+                    <td><code>${u.wa_utility_count}</code></td>
+                    <td><code>${u.wa_auth_count}</code></td>
+                    <td><code>${u.email_count}</code></td>
+                    <td><code>${u.sms_count}</code></td>
+                    <td><strong>${u.total_outbound}</strong></td>
+                    <td style="text-align: right;"><strong style="color:var(--primary);">₹${u.est_cost.toFixed(2)}</strong></td>
+                </tr>
+            `).join('');
+        }
+    } catch(e) {
+        console.error('Error loading usage analytics:', e);
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Failed to load API usage statistics.</td></tr>`;
+    }
+};
+
+window.calculateEstimatorCost = function calculateEstimatorCost() {
+    const marketSelect = document.getElementById('calc-market');
+    const elMarketing = document.getElementById('calc-wa-marketing');
+    const elUtility = document.getElementById('calc-wa-utility');
+    const elAuth = document.getElementById('calc-wa-auth');
+    const elEmail = document.getElementById('calc-email-count');
+    const elSms = document.getElementById('calc-sms-count');
+    const elResult = document.getElementById('calc-result-total');
+
+    if (!marketSelect || !elResult) return;
+
+    const opt = marketSelect.options[marketSelect.selectedIndex];
+    const rateM = parseFloat(opt.getAttribute('data-m') || 0.8631);
+    const rateU = parseFloat(opt.getAttribute('data-u') || 0.1150);
+    const rateA = parseFloat(opt.getAttribute('data-a') || 0.1150);
+    const rateEmail = 0.05;
+    const rateSms = 0.25;
+
+    const cntM = parseFloat(elMarketing?.value || 0);
+    const cntU = parseFloat(elUtility?.value || 0);
+    const cntA = parseFloat(elAuth?.value || 0);
+    const cntEmail = parseFloat(elEmail?.value || 0);
+    const cntSms = parseFloat(elSms?.value || 0);
+
+    const total = (cntM * rateM) + (cntU * rateU) + (cntA * rateA) + (cntEmail * rateEmail) + (cntSms * rateSms);
+    elResult.textContent = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 window.editCompany = function editCompany(id) {
     openCompanyModal(id);
 };
@@ -569,6 +684,7 @@ window.switchView = function switchView(target, pushHistory = true) {
     if (target !== 'inbox') closeChat();
 
     if (target === 'dashboard') loadDashboard();
+    if (target === 'usage') loadUsageAnalytics();
     if (target === 'customers') loadCustomers();
     if (target === 'templates') loadTemplates();
     if (target === 'send') { loadCustomersForSelect(); loadTemplatesForSelect(); }

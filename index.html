@@ -74,7 +74,7 @@
                         <rect x="14" y="12" width="7" height="9" rx="1"></rect>
                         <rect x="3" y="16" width="7" height="5" rx="1"></rect>
                     </svg>
-                    <span>Dashboard</span>
+                    <span>Universal Marketing</span>
                 </a>
 
                 <!-- WhatsApp Marketing Submenu Group -->
@@ -200,6 +200,13 @@
                     </svg>
                     <span>Settings</span>
                 </a>
+                <a href="#usage" data-view="usage" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    <span>API Usage & Pricing</span>
+                </a>
                 <a href="#" id="btn-logout-nav" class="nav-item" style="color: #ef4444;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -223,18 +230,16 @@
         </aside>
 
         <main class="content">
-            <!-- Dashboard View -->
+            <!-- Universal Marketing Suite Dashboard View -->
             <section id="view-dashboard" class="view active">
                 <div class="page-header">
                     <div>
-                        <h1>Dashboard</h1>
-                        <p class="subtitle">Overview of your Inspenox Business Suite workspace & real-time messaging
-                            stats.</p>
+                        <h1>Universal Marketing Suite</h1>
+                        <p class="subtitle">Unified multi-channel analytics across WhatsApp, Email, and SMS Marketing.</p>
                     </div>
                     <div class="header-actions">
                         <button class="btn primary" onclick="switchView('send')">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                style="width:16px;height:16px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
                                 <line x1="22" y1="2" x2="11" y2="13"></line>
                                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                             </svg>
@@ -243,7 +248,7 @@
                     </div>
                 </div>
 
-                <div class="stats-grid">
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom:1.5rem;">
                     <div class="stat-card card">
                         <div class="stat-icon icon-emerald">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -252,31 +257,126 @@
                             </svg>
                         </div>
                         <div class="stat-info">
-                            <h3>Total Customers</h3>
+                            <h3>Total Contacts</h3>
                             <p id="dash-stat-customers">0</p>
                         </div>
                     </div>
                     <div class="stat-card card">
                         <div class="stat-icon icon-teal">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="22" y1="2" x2="11" y2="13"></line>
-                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
                             </svg>
                         </div>
                         <div class="stat-info">
-                            <h3>Messages Sent</h3>
-                            <p id="dash-stat-messages">0</p>
+                            <h3>WhatsApp Sent</h3>
+                            <p id="dash-stat-wa-sent">0</p>
                         </div>
                     </div>
                     <div class="stat-card card">
                         <div class="stat-icon icon-blue">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Email Sent</h3>
+                            <p id="dash-stat-email-sent">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-purple" style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
                         </div>
                         <div class="stat-info">
-                            <h3>Active Inbound Chats</h3>
-                            <p id="dash-stat-chats">0</p>
+                            <h3>SMS Sent</h3>
+                            <p id="dash-stat-sms-sent">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-gold" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Est. API Spend</h3>
+                            <p id="dash-stat-est-cost">₹0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Universal Multi-Channel Summary Row -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                    <div class="card" style="padding: 1.25rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.6rem;">
+                            <h3 style="margin:0; font-size:1rem; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+                                <span>📱 WhatsApp Cloud API</span>
+                            </h3>
+                            <span class="badge-count" style="background:var(--primary-light); color:var(--primary);">Active</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.85rem;">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:var(--text-muted);">Marketing Rate (India)</span>
+                                <strong style="color:var(--text-main);">₹0.8631 / msg</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:var(--text-muted);">Utility & Auth Rate</span>
+                                <strong style="color:var(--text-main);">₹0.1150 / msg</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:var(--text-muted);">Service / Inbound</span>
+                                <strong style="color:#10b981;">Free Tier</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 1.25rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.6rem;">
+                            <h3 style="margin:0; font-size:1rem; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+                                <span>📧 Email Marketing</span>
+                            </h3>
+                            <span class="badge-count" style="background:rgba(59, 130, 246, 0.15); color:#3b82f6;">Active</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.85rem;">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:var(--text-muted);">Standard Email Rate</span>
+                                <strong style="color:var(--text-main);">₹0.05 / email</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:var(--text-muted);">HTML & Attachment Support</span>
+                                <strong style="color:#10b981;">Enabled</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:var(--text-muted);">Bounce & Open Tracking</span>
+                                <strong style="color:var(--text-main);">Automated</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 1.25rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.6rem;">
+                            <h3 style="margin:0; font-size:1rem; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+                                <span>💬 SMS Marketing</span>
+                            </h3>
+                            <span class="badge-count" style="background:rgba(168, 85, 247, 0.15); color:#a855f7;">Active</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.85rem;">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:var(--text-muted);">DLT / Sender Rate</span>
+                                <strong style="color:var(--text-main);">₹0.25 / SMS</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:var(--text-muted);">Global Coverage</span>
+                                <strong style="color:#10b981;">Supported</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:var(--text-muted);">Real-time Carrier Logs</span>
+                                <strong style="color:var(--text-main);">Active</strong>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -285,8 +385,7 @@
                     <div class="widget card">
                         <div class="widget-header">
                             <h3>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    style="width:18px;height:18px;vertical-align:middle;margin-right:6px;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;">
                                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                 </svg>
                                 Recent Customer Activity
@@ -300,8 +399,7 @@
                     <div class="widget card">
                         <div class="widget-header">
                             <h3>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    style="width:18px;height:18px;vertical-align:middle;margin-right:6px;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;">
                                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                     <circle cx="8.5" cy="8.5" r="1.5"></circle>
                                     <polyline points="21 15 16 10 5 21"></polyline>
@@ -316,7 +414,7 @@
                     </div>
                 </div>
                 <footer class="page-footer">
-                    <p>Inspenox Business Suite - Business Messaging Platform</p>
+                    <p>Inspenox Business Suite - Universal Marketing Platform</p>
                 </footer>
             </section>
 
@@ -995,6 +1093,233 @@
                 <footer class="page-footer">
                     <p>Inspenox Business Suite - Business Messaging Platform</p>
                 </footer>
+            </section>
+
+            <!-- API Usage & Meta Pricing View -->
+            <section id="view-usage" class="view">
+                <div class="page-header">
+                    <div>
+                        <h1>API Usage & Meta Pricing</h1>
+                        <p class="subtitle">Multi-company messaging throughput analytics, Meta Cloud API rate card, and live cost calculation.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn secondary" onclick="loadUsageAnalytics()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                            Refresh Usage Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Overall API Spend Stat Cards -->
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom:1.5rem;">
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-teal">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total Outbound Messages</h3>
+                            <p id="usage-stat-total-msgs">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-emerald">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Meta WhatsApp API Spend</h3>
+                            <p id="usage-stat-wa-cost">₹0.00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-blue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path></svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Email & SMS API Spend</h3>
+                            <p id="usage-stat-other-cost">₹0.00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-gold" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total Estimated Spend</h3>
+                            <p id="usage-stat-total-cost">₹0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Per-Company Usage Breakdown Table -->
+                <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.65rem;">
+                        <div>
+                            <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">🏢 Company API Usage Breakdown</h3>
+                            <p style="margin:0.2rem 0 0 0; font-size:0.775rem; color:var(--text-muted);">Real-time breakdown of messages sent per company and estimated Meta API cost.</p>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Company Name</th>
+                                    <th>WA Marketing (₹0.8631)</th>
+                                    <th>WA Utility (₹0.1150)</th>
+                                    <th>WA Auth (₹0.1150)</th>
+                                    <th>Email (₹0.05)</th>
+                                    <th>SMS (₹0.25)</th>
+                                    <th>Total Messages</th>
+                                    <th style="text-align: right;">Est. Spend (INR ₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usage-company-table-body">
+                                <tr>
+                                    <td colspan="8" class="empty-state">Loading company usage data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Live Meta API Rate Card & Cost Estimator Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.25rem;">
+                    <!-- Interactive Cost Estimator Calculator -->
+                    <div class="card" style="padding: 1.25rem;">
+                        <h3 style="margin:0 0 0.25rem 0; font-size:1.1rem; color:var(--text-main);">🧮 Live API Cost Estimator</h3>
+                        <p style="margin:0 0 1rem 0; font-size:0.775rem; color:var(--text-muted);">Simulate message volume and compute estimated costs in INR (₹).</p>
+
+                        <div style="display:flex; flex-direction:column; gap:0.85rem;">
+                            <div>
+                                <label style="display:block; font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:0.35rem;">TARGET REGION / MARKET</label>
+                                <select id="calc-market" style="width:100%; padding:0.5rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-weight:600;" onchange="calculateEstimatorCost()">
+                                    <option value="India" data-m="0.8631" data-u="0.1150" data-a="0.1150" selected>India (Marketing: ₹0.8631, Utility/Auth: ₹0.1150)</option>
+                                    <option value="North America" data-m="1.8313" data-u="0.2491" data-a="0.2491">North America (Marketing: ₹1.8313, Utility/Auth: ₹0.2491)</option>
+                                    <option value="United Arab Emirates" data-m="3.6613" data-u="1.1509" data-a="1.1509">United Arab Emirates (Marketing: ₹3.6613, Utility/Auth: ₹1.1509)</option>
+                                    <option value="Saudi Arabia" data-m="3.6621" data-u="0.7834" data-a="0.7834">Saudi Arabia (Marketing: ₹3.6621, Utility/Auth: ₹0.7834)</option>
+                                    <option value="United Kingdom" data-m="4.6496" data-u="1.6122" data-a="1.6122">United Kingdom (Marketing: ₹4.6496, Utility/Auth: ₹1.6122)</option>
+                                    <option value="Germany" data-m="10.0073" data-u="4.0322" data-a="4.0322">Germany (Marketing: ₹10.0073, Utility/Auth: ₹4.0322)</option>
+                                    <option value="France" data-m="6.2990" data-u="2.1994" data-a="2.1994">France (Marketing: ₹6.2990, Utility/Auth: ₹2.1994)</option>
+                                    <option value="Singapore" data-m="5.3664" data-u="1.1727" data-a="1.1727">Singapore (Marketing: ₹5.3664, Utility/Auth: ₹1.1727)</option>
+                                    <option value="Brazil" data-m="4.5808" data-u="0.4984" data-a="0.4984">Brazil (Marketing: ₹4.5808, Utility/Auth: ₹0.4984)</option>
+                                    <option value="Other" data-m="4.4248" data-u="0.5641" data-a="0.5641">Rest of World (Marketing: ₹4.4248, Utility/Auth: ₹0.5641)</option>
+                                </select>
+                            </div>
+
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                                <div>
+                                    <label style="display:block; font-size:0.725rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">WA MARKETING</label>
+                                    <input type="number" id="calc-wa-marketing" value="1000" min="0" style="width:100%; padding:0.45rem 0.6rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);" oninput="calculateEstimatorCost()">
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.725rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">WA UTILITY</label>
+                                    <input type="number" id="calc-wa-utility" value="200" min="0" style="width:100%; padding:0.45rem 0.6rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);" oninput="calculateEstimatorCost()">
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.725rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">WA AUTHENTICATION</label>
+                                    <input type="number" id="calc-wa-auth" value="100" min="0" style="width:100%; padding:0.45rem 0.6rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);" oninput="calculateEstimatorCost()">
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.725rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">EMAIL COUNT</label>
+                                    <input type="number" id="calc-email-count" value="5000" min="0" style="width:100%; padding:0.45rem 0.6rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);" oninput="calculateEstimatorCost()">
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.725rem; font-weight:600; color:var(--text-muted); margin-bottom:0.25rem;">SMS COUNT</label>
+                                    <input type="number" id="calc-sms-count" value="500" min="0" style="width:100%; padding:0.45rem 0.6rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);" oninput="calculateEstimatorCost()">
+                                </div>
+                            </div>
+
+                            <div style="margin-top:0.5rem; padding:0.85rem 1rem; border-radius:10px; background:rgba(0, 168, 132, 0.08); border:1px solid rgba(0, 168, 132, 0.25); display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; display:block;">ESTIMATED TOTAL SPEND</span>
+                                    <strong id="calc-result-total" style="font-size:1.45rem; color:var(--primary); font-weight:800;">₹1,264.60</strong>
+                                </div>
+                                <span style="font-size:0.7rem; color:var(--text-muted);">INR ₹ (Excl. taxes)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Meta WhatsApp Pricing Rate Card Reference Table -->
+                    <div class="card" style="padding: 1.25rem;">
+                        <h3 style="margin:0 0 0.25rem 0; font-size:1.1rem; color:var(--text-main);">📋 Official Meta WhatsApp Rate Card</h3>
+                        <p style="margin:0 0 1rem 0; font-size:0.775rem; color:var(--text-muted);">Cost per message in INR (₹) on WhatsApp Cloud API (effective July 1, 2026).</p>
+
+                        <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                            <table style="font-size:0.785rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Market</th>
+                                        <th>Marketing (₹)</th>
+                                        <th>Utility (₹)</th>
+                                        <th>Auth (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="background:rgba(0, 168, 132, 0.08);">
+                                        <td><strong>🇮🇳 India</strong></td>
+                                        <td><strong style="color:var(--primary);">₹0.8631</strong></td>
+                                        <td>₹0.1150</td>
+                                        <td>₹0.1150</td>
+                                    </tr>
+                                    <tr>
+                                        <td>🇺🇸 North America</td>
+                                        <td>₹1.8313</td>
+                                        <td>₹0.2491</td>
+                                        <td>₹0.2491</td>
+                                    </tr>
+                                    <tr>
+                                        <td>🇦🇪 United Arab Emirates</td>
+                                        <td>₹3.6613</td>
+                                        <td>₹1.1509</td>
+                                        <td>₹1.1509</td>
+                                    </tr>
+                                    <tr>
+                                        <td>🇸🇦 Saudi Arabia</td>
+                                        <td>₹3.6621</td>
+                                        <td>₹0.7834</td>
+                                        <td>₹0.7834</td>
+                                    </tr>
+                                    <tr>
+                                        <td>🇬🇧 United Kingdom</td>
+                                        <td>₹4.6496</td>
+                                        <td>₹1.6122</td>
+                                        <td>₹1.6122</td>
+                                    </tr>
+                                    <tr>
+                                        <td>🇩🇪 Germany</td>
+                                        <td>₹10.0073</td>
+                                        <td>₹4.0322</td>
+                                        <td>₹4.0322</td>
+                                    </tr>
+                                    <tr>
+                                        <td>🇫🇷 France</td>
+                                        <td>₹6.2990</td>
+                                        <td>₹2.1994</td>
+                                        <td>₹2.1994</td>
+                                    </tr>
+                                    <tr>
+                                        <td>🇸🇬 Singapore</td>
+                                        <td>₹5.3664</td>
+                                        <td>₹1.1727</td>
+                                        <td>₹1.1727</td>
+                                    </tr>
+                                    <tr>
+                                        <td>🇧🇷 Brazil</td>
+                                        <td>₹4.5808</td>
+                                        <td>₹0.4984</td>
+                                        <td>₹0.4984</td>
+                                    </tr>
+                                    <tr>
+                                        <td>🌐 Rest of World</td>
+                                        <td>₹4.4248</td>
+                                        <td>₹0.5641</td>
+                                        <td>₹0.5641</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
