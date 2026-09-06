@@ -160,22 +160,27 @@ module.exports = async (req, res) => {
         const est_sms_cost = sms_sent * RATES.sms;
         const total_est_cost = est_wa_cost + est_email_cost + est_sms_cost;
 
-        // Fetch Live Direct Meta Graph API Template List & Direct WABA Analytics if credentials exist
+        // Fetch Live Direct Meta Graph API Template List & Per-Template Analytics if credentials exist
         let metaConnected = false;
         let metaTemplates = [];
         let metaError = null;
         let metaDataPoints = [];
+        let metaTemplateAnalytics = {}; // { template_id: { sent, delivered, read } }
 
         if (wabaId && token) {
             try {
                 const nowTs = Math.floor(Date.now() / 1000);
                 const startTs = nowTs - (90 * 86400); // 90 days lookback
 
-                const [metaRes, metaAnalyticsRes] = await Promise.all([
+                // Fetch template list, aggregate WABA analytics, and per-template analytics
+                const [metaRes, metaAnalyticsRes, templateAnalyticsRes] = await Promise.all([
                     fetch(`https://graph.facebook.com/v20.0/${wabaId}/message_templates?limit=100`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     }),
                     fetch(`https://graph.facebook.com/v20.0/${wabaId}?fields=analytics.start(${startTs}).end(${nowTs}).granularity(DAY).metric_types(['SENT','DELIVERED','RECEIVED','COST'])`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch(`https://graph.facebook.com/v20.0/${wabaId}/template_analytics?start=${startTs}&end=${nowTs}&granularity=DAILY&metric_types=SENT,DELIVERED,READ`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     })
                 ]);
@@ -191,6 +196,34 @@ module.exports = async (req, res) => {
                 const metaAnalyticsData = await metaAnalyticsRes.json();
                 if (metaAnalyticsData.analytics && Array.isArray(metaAnalyticsData.analytics.data_points)) {
                     metaDataPoints = metaAnalyticsData.analytics.data_points;
+                }
+
+                // Parse per-template analytics response
+                const tplAnalyticsData = await templateAnalyticsRes.json();
+                if (tplAnalyticsData.data && Array.isArray(tplAnalyticsData.data)) {
+                    tplAnalyticsData.data.forEach(entry => {
+                        const tplId = entry.template_id || entry.id;
+                        if (!tplId) return;
+                        let sent = 0, delivered = 0, read = 0;
+                        if (Array.isArray(entry.data_points)) {
+                            entry.data_points.forEach(dp => {
+                                sent += (dp.sent || 0);
+                                delivered += (dp.delivered || 0);
+                                read += (dp.read || 0);
+                            });
+                        } else if (entry.analytics && Array.isArray(entry.analytics)) {
+                            entry.analytics.forEach(dp => {
+                                sent += (dp.sent || 0);
+                                delivered += (dp.delivered || 0);
+                                read += (dp.read || 0);
+                            });
+                        } else {
+                            sent = entry.sent || 0;
+                            delivered = entry.delivered || 0;
+                            read = entry.read || 0;
+                        }
+                        metaTemplateAnalytics[String(tplId)] = { sent, delivered, read };
+                    });
                 }
             } catch (err) {
                 metaError = err.message;
@@ -225,32 +258,26 @@ module.exports = async (req, res) => {
         let totalMetaRead = 0;
 
         if (metaTemplates.length > 0) {
-            // Find total DB sent msgs across mapped templates
-            let totalDbMappedSent = 0;
-            metaTemplates.forEach(t => {
-                const tNameLower = t.name.toLowerCase().trim();
-                if (dbTemplateMap[tNameLower] || dbTemplateMap[t.name]) {
-                    totalDbMappedSent += (dbTemplateMap[tNameLower] || dbTemplateMap[t.name]).sent;
-                }
-            });
-
-            metaTemplates.forEach((t, idx) => {
+            metaTemplates.forEach((t) => {
                 const tName = t.name;
                 const tNameLower = tName.toLowerCase().trim();
-                const dbStat = dbTemplateMap[tNameLower] || dbTemplateMap[tName] || { sent: 0, delivered: 0, read: 0 };
+                const tId = String(t.id || '');
 
-                let sent = dbStat.sent || 0;
-                let delivered = dbStat.delivered || 0;
-                let read = dbStat.read || 0;
-                const replies = 0;
+                // Priority: 1) Per-template Meta analytics, 2) DB stats, 3) zeros
+                const metaTplStat = metaTemplateAnalytics[tId] || null;
+                const dbStat = dbTemplateMap[tNameLower] || dbTemplateMap[tName] || null;
 
-                // If DB logs don't have per-template breakdown, but Meta direct total sent > 0, reflect Meta direct stats on active templates
-                if (totalDbMappedSent === 0 && metaDirectSent > 0) {
-                    if (tNameLower.includes('welcome') || idx === 0) {
-                        sent = metaDirectSent;
-                        delivered = metaDirectDelivered;
-                    }
+                let sent = 0, delivered = 0, read = 0;
+                if (metaTplStat && (metaTplStat.sent > 0 || metaTplStat.delivered > 0)) {
+                    sent = metaTplStat.sent;
+                    delivered = metaTplStat.delivered;
+                    read = metaTplStat.read;
+                } else if (dbStat) {
+                    sent = dbStat.sent;
+                    delivered = dbStat.delivered;
+                    read = dbStat.read;
                 }
+                const replies = 0;
 
                 const category = (t.category || 'MARKETING').toUpperCase();
                 const rate = category === 'UTILITY' ? RATES.whatsapp_utility : (category === 'AUTHENTICATION' ? RATES.whatsapp_authentication : (category === 'SERVICE' ? RATES.whatsapp_service : RATES.whatsapp_marketing));
