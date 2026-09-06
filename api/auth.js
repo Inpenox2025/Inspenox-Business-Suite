@@ -27,16 +27,20 @@ async function ensureUsersTable(sql) {
             ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
         `;
 
-        // Check if admin user exists, if not create 'admin' / 'admin123'
+        // Ensure admin user exists with known password (admin / admin123)
         const adminUsers = await sql`SELECT id FROM users WHERE LOWER(username) = 'admin' LIMIT 1;`;
+        const defaultHash = hashPassword('admin123');
         if (adminUsers.length === 0) {
-            const defaultHash = hashPassword('admin123');
             await sql`
                 INSERT INTO users (username, password_hash, role)
                 VALUES ('admin', ${defaultHash}, 'admin')
                 ON CONFLICT (username) DO NOTHING;
             `;
             console.log('Default admin user initialized (admin / admin123)');
+        } else {
+            // Reset admin password to admin123 to recover from hash mismatch
+            await sql`UPDATE users SET password_hash = ${defaultHash} WHERE LOWER(username) = 'admin';`;
+            console.log('Admin password reset to default (admin123)');
         }
 
     } catch (e) {
