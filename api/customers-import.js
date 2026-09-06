@@ -12,27 +12,39 @@ function formatIndiaPhone(phone) {
 }
 
 module.exports = async (req, res) => {
-    if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
         const env = req.env || process.env || {};
-        const { customers } = req.body; // Array of {name, phone}
+        const { customers, company_id } = req.body; // Array of {name, phone, email, company_name, city, tags}
         if (!customers || !Array.isArray(customers)) {
             return res.status(400).json({ error: 'Invalid data format' });
         }
 
         const sql = getDb(env);
+        const targetCompanyId = company_id || 1;
         let added = 0;
 
         for (const cust of customers) {
             if (!cust.phone) continue;
             const cleanPhone = formatIndiaPhone(cust.phone);
-            const name = cust.name || 'Customer';
+            const name = cust.name;
+            const email = cust.email || null;
+            const companyName = cust.company_name || cust.company || null;
+            const city = cust.city || null;
+            const tags = cust.tags || null;
             
             await sql`
-                INSERT INTO customers (name, phone, is_saved) 
-                VALUES (${name}, ${cleanPhone}, true) 
-                ON CONFLICT (phone) DO UPDATE SET name = EXCLUDED.name, is_saved = true
+                INSERT INTO customers (name, phone, email, company_name, city, tags, company_id, is_saved) 
+                VALUES (${name}, ${cleanPhone}, ${email}, ${companyName}, ${city}, ${tags}, ${targetCompanyId}, true) 
+                ON CONFLICT (phone) DO UPDATE SET 
+                    name = EXCLUDED.name,
+                    email = COALESCE(EXCLUDED.email, customers.email),
+                    company_name = COALESCE(EXCLUDED.company_name, customers.company_name),
+                    city = COALESCE(EXCLUDED.city, customers.city),
+                    tags = COALESCE(EXCLUDED.tags, customers.tags),
+                    company_id = EXCLUDED.company_id,
+                    is_saved = true
             `;
             added++;
         }

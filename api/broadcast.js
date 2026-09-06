@@ -5,21 +5,33 @@ module.exports = async (req, res) => {
 
     try {
         const env = req.env || process.env || {};
-        const { target, type, content, media_id, template_name, template_language } = req.body;
+        const { target, type, content, media_id, template_name, template_language, company_id } = req.body;
 
         const sql = getDb(env);
         let customersToMessage = [];
-        
+        const targetCompanyId = company_id || 1;
+
         if (target === 'all') {
-            customersToMessage = await sql`SELECT id, name, phone FROM customers`;
+            customersToMessage = await sql`SELECT id, name, phone FROM customers WHERE company_id = ${targetCompanyId} OR company_id IS NULL`;
         } else if (Array.isArray(target)) {
             customersToMessage = await sql`SELECT id, name, phone FROM customers WHERE id = ANY(${target})`;
         } else {
             return res.status(400).json({ error: 'Invalid target' });
         }
 
-        const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
-        const token = env.WHATSAPP_ACCESS_TOKEN;
+        let phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
+        let token = env.WHATSAPP_ACCESS_TOKEN;
+
+        if (company_id) {
+            try {
+                const cos = await sql`SELECT * FROM companies WHERE id = ${company_id} LIMIT 1`;
+                if (cos.length > 0 && cos[0].whatsapp_phone_number_id && cos[0].whatsapp_access_token) {
+                    phoneId = cos[0].whatsapp_phone_number_id;
+                    token = cos[0].whatsapp_access_token;
+                }
+            } catch(e) {}
+        }
+
         const url = `https://graph.facebook.com/v19.0/${phoneId}/messages`;
 
         let sent = 0;
@@ -152,8 +164,8 @@ module.exports = async (req, res) => {
                 const wa_message_id = (data.messages && data.messages[0]) ? data.messages[0].id : 'sent_' + Date.now();
                 const saveContent = type === 'template' ? `[Template] ${template_name}` : content;
                 await sql`
-                    INSERT INTO messages (customer_id, direction, type, content, wa_message_id, status) 
-                    VALUES (${cust.id}, 'outbound', ${type}, ${saveContent}, ${wa_message_id}, 'sent')
+                    INSERT INTO messages (company_id, customer_id, direction, type, content, wa_message_id, status) 
+                    VALUES (${targetCompanyId}, ${cust.id}, 'outbound', ${type}, ${saveContent}, ${wa_message_id}, 'sent')
                 `;
             }
 
@@ -164,8 +176,8 @@ module.exports = async (req, res) => {
         // Log campaign
         const campaignContent = type === 'template' ? `Template: ${template_name}` : content;
         await sql`
-            INSERT INTO campaigns (name, message_type, content, sent_count, failed_count) 
-            VALUES (${'Broadcast ' + new Date().toISOString()}, ${type}, ${campaignContent}, ${sent}, ${failed})
+            INSERT INTO campaigns (company_id, name, message_type, content, sent_count, failed_count) 
+            VALUES (${targetCompanyId}, ${'Broadcast ' + new Date().toISOString()}, ${type}, ${campaignContent}, ${sent}, ${failed})
         `;
 
         return res.status(200).json({ success: true, sent, failed, errors });

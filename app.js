@@ -119,6 +119,211 @@ window.closeMediaPreview = function closeMediaPreview() {
     }
 };
 
+// --- Multi-Tenant Company State & API Fetch Wrapper ---
+let currentCompanyId = localStorage.getItem('inspenox_company_id') || 'default';
+let allCompanies = [];
+
+function getCompanyId() {
+    return currentCompanyId || 'default';
+}
+
+function apiFetch(url, options = {}) {
+    const opts = { ...options };
+    opts.headers = { ...(opts.headers || {}) };
+    
+    if (typeof url === 'string' && url.startsWith('/api/')) {
+        const companyId = getCompanyId();
+        if (companyId) {
+            opts.headers['X-Company-ID'] = companyId;
+            if (!url.includes('company_id=')) {
+                const sep = url.includes('?') ? '&' : '?';
+                url = `${url}${sep}company_id=${encodeURIComponent(companyId)}`;
+            }
+        }
+    }
+    return fetch(url, opts);
+}
+
+// --- Companies API & UI Management ---
+async function loadCompanies() {
+    try {
+        const res = await apiFetch('/api/companies');
+        const companies = await res.json();
+        if (Array.isArray(companies)) {
+            allCompanies = companies;
+            const selectEl = document.getElementById('company-switcher');
+            if (selectEl) {
+                selectEl.innerHTML = '';
+                if (companies.length === 0) {
+                    selectEl.innerHTML = '<option value="default">Default Organization</option>';
+                } else {
+                    companies.forEach(comp => {
+                        const opt = document.createElement('option');
+                        opt.value = comp.id;
+                        opt.textContent = comp.name + (comp.id === 'default' ? ' (Default)' : '');
+                        if (comp.id === currentCompanyId) opt.selected = true;
+                        selectEl.appendChild(opt);
+                    });
+                }
+            }
+            if (companies.length > 0 && !companies.some(c => c.id === currentCompanyId)) {
+                currentCompanyId = companies[0].id;
+                localStorage.setItem('inspenox_company_id', currentCompanyId);
+                if (selectEl) selectEl.value = currentCompanyId;
+            }
+        }
+    } catch(e) {
+        console.error('Error loading companies:', e);
+    }
+}
+
+document.getElementById('company-switcher')?.addEventListener('change', (e) => {
+    currentCompanyId = e.target.value;
+    localStorage.setItem('inspenox_company_id', currentCompanyId);
+    const activeView = localStorage.getItem('activeView') || 'dashboard';
+    switchView(activeView, false);
+});
+
+async function loadCompaniesSettings() {
+    const tbody = document.getElementById('companies-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading companies...</span></div></td></tr>`;
+    try {
+        const res = await apiFetch('/api/companies');
+        const companies = await res.json();
+        if (Array.isArray(companies)) {
+            allCompanies = companies;
+            if (companies.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No companies created yet. Click "Add New Company" to create one.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = '';
+            companies.forEach(c => {
+                const tr = document.createElement('tr');
+                const isCurrent = c.id === currentCompanyId;
+                tr.innerHTML = `
+                    <td>
+                        <strong style="color:var(--text-main);">${c.name}</strong>
+                        ${isCurrent ? ' <span class="window-badge" style="background:var(--primary-light);color:var(--primary);">Active</span>' : ''}
+                    </td>
+                    <td><code style="font-size:0.8rem;">${c.id}</code></td>
+                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_phone_number_id || 'Env Default'}</code></td>
+                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_business_account_id || 'Env Default'}</code></td>
+                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.webhook_verify_token || 'Env Default'}</code></td>
+                    <td style="text-align: right;">
+                        <button class="btn secondary sm" onclick="editCompany('${c.id}')">Edit</button>
+                        ${c.id !== 'default' ? `<button class="btn danger sm" onclick="deleteCompany('${c.id}')">Delete</button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Failed to load companies.</td></tr>`;
+    }
+}
+
+window.openCompanyModal = function openCompanyModal(companyId = null) {
+    const modal = document.getElementById('company-modal');
+    if (!modal) return;
+    document.getElementById('company-form')?.reset();
+    document.getElementById('company-id-edit').value = '';
+    document.getElementById('company-modal-title').textContent = companyId ? '🏢 Edit Company Account' : '🏢 Add New Company Account';
+    
+    if (companyId) {
+        const comp = allCompanies.find(c => c.id === companyId);
+        if (comp) {
+            document.getElementById('company-id-edit').value = comp.id;
+            document.getElementById('comp-name').value = comp.name || '';
+            document.getElementById('comp-phone-id').value = comp.whatsapp_phone_number_id || '';
+            document.getElementById('comp-waba-id').value = comp.whatsapp_business_account_id || '';
+            document.getElementById('comp-access-token').value = comp.whatsapp_access_token || '';
+            document.getElementById('comp-verify-token').value = comp.webhook_verify_token || '';
+        }
+    }
+    
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+};
+
+window.closeCompanyModal = function closeCompanyModal() {
+    const modal = document.getElementById('company-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.editCompany = function editCompany(id) {
+    openCompanyModal(id);
+};
+
+window.saveCompany = async function saveCompany(e) {
+    if (e) e.preventDefault();
+    const id = document.getElementById('company-id-edit').value;
+    const name = document.getElementById('comp-name').value;
+    const whatsapp_phone_number_id = document.getElementById('comp-phone-id').value;
+    const whatsapp_business_account_id = document.getElementById('comp-waba-id').value;
+    const whatsapp_access_token = document.getElementById('comp-access-token').value;
+    const webhook_verify_token = document.getElementById('comp-verify-token').value;
+
+    const btn = document.getElementById('btn-save-company');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Saving...';
+    }
+
+    try {
+        const method = id ? 'PUT' : 'POST';
+        const body = { name, whatsapp_phone_number_id, whatsapp_business_account_id, whatsapp_access_token, webhook_verify_token };
+        if (id) body.id = id;
+
+        const res = await apiFetch('/api/companies', {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            closeCompanyModal();
+            loadCompanies();
+            loadCompaniesSettings();
+            showModal('Success', id ? 'Company updated successfully!' : 'New company created successfully!');
+        } else {
+            showModal('Error', data.error || 'Failed to save company credentials.');
+        }
+    } catch(err) {
+        showModal('Error', err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Save Company Account';
+        }
+    }
+};
+
+window.deleteCompany = function deleteCompany(id) {
+    showModal('Delete Company', `Are you sure you want to delete company "${id}"? All associated settings will be removed.`, 'confirm', async () => {
+        try {
+            const res = await apiFetch(`/api/companies?id=${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                if (currentCompanyId === id) {
+                    currentCompanyId = 'default';
+                    localStorage.setItem('inspenox_company_id', 'default');
+                }
+                loadCompanies();
+                loadCompaniesSettings();
+            } else {
+                showModal('Error', data.error || 'Failed to delete company.');
+            }
+        } catch(e) {
+            showModal('Error', 'Error deleting company.');
+        }
+    });
+};
+
 // --- Globals ---
 let templatesCache = [];
 let selectedCustomerIds = [];
@@ -194,7 +399,7 @@ window.submitChangePass = async function submitChangePass(e) {
     }
 
     try {
-        const res = await fetch('/api/auth?action=change-password', {
+        const res = await apiFetch('/api/auth?action=change-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, currentPassword, newPassword })
@@ -330,6 +535,7 @@ window.switchView = function switchView(target, pushHistory = true) {
     if (target === 'send') { loadCustomersForSelect(); loadTemplatesForSelect(); }
     if (target === 'inbox') loadInboxSidebar();
     if (target === 'media') loadMedia();
+    if (target === 'settings') loadCompaniesSettings();
 
     if (pushHistory && history.pushState) {
         history.pushState({ view: target }, '', `#${target}`);
@@ -416,6 +622,7 @@ const savedView = (initialHash && document.getElementById(`view-${initialHash}`)
 if (history.replaceState) {
     history.replaceState({ view: savedView }, '', `#${savedView}`);
 }
+loadCompanies();
 switchView(savedView, false);
 
 
@@ -423,15 +630,15 @@ switchView(savedView, false);
 async function loadCustomers() {
     const tbody = document.getElementById('customers-table-body');
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="4"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading customer directory...</span></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading customer directory...</span></div></td></tr>`;
     }
     try {
-        const res = await fetch('/api/customers');
+        const res = await apiFetch('/api/customers');
         const customers = await res.json();
         
         if (customers.error) {
             console.error('API Error:', customers.error);
-            if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="empty-state" style="height:100px;">Failed to load customers.</td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="height:100px;">Failed to load customers.</td></tr>`;
             return;
         }
         
@@ -445,7 +652,7 @@ async function loadCustomers() {
         renderCustomersTable();
     } catch (e) { 
         console.error('Error loading customers:', e);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="empty-state" style="height:100px;">Error loading data.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="height:100px;">Error loading data.</td></tr>`;
     }
 }
 
@@ -471,19 +678,25 @@ function renderCustomersTable() {
     tbody.innerHTML = '';
     pageData.forEach(c => {
         const tr = document.createElement('tr');
+        const tagsHtml = c.tags ? c.tags.split(',').map(t => `<span class="window-badge" style="background:rgba(99, 102, 241, 0.15);color:#818cf8;margin-right:2px;font-size:0.7rem;">${t.trim()}</span>`).join('') : '<span style="color:var(--text-muted);font-size:0.75rem;">-</span>';
+
         tr.innerHTML = `
             <td>
                 <div class="user-cell">
                     <div class="user-avatar">${getInitial(c.name)}</div>
                     <div>
                         <strong style="color:var(--text-main);display:block;">${c.name}</strong>
+                        ${c.city ? `<span style="font-size:0.75rem;color:var(--text-muted);">${c.city}${c.state ? ', ' + c.state : ''}</span>` : ''}
                     </div>
                 </div>
             </td>
             <td><code style="font-size:0.85rem;color:var(--primary);">${c.phone}</code></td>
+            <td><span style="font-size:0.8rem;color:var(--text-muted);">${c.email || '-'}</span></td>
+            <td><span style="font-size:0.8rem;color:var(--text-muted);">${c.company_name || '-'}</span></td>
+            <td>${tagsHtml}</td>
             <td><span class="window-badge" style="background:var(--primary-light);color:var(--primary);">${c.message_count || 0} messages</span></td>
             <td style="text-align: right;">
-                <button class="btn secondary sm" onclick="editCustomer(${c.id}, '${c.name}', '${c.phone}')">Edit</button>
+                <button class="btn secondary sm" onclick="editCustomer(${c.id})">Edit</button>
                 <button class="btn danger sm" onclick="deleteCustomer(${c.id})">Delete</button>
             </td>
         `;
@@ -491,7 +704,7 @@ function renderCustomersTable() {
     });
 
     if (totalItems === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="empty-state" style="height: 100px;">No matching customers found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="height: 100px;">No matching customers found.</td></tr>`;
     }
 
     if (pageInfo) {
@@ -506,7 +719,11 @@ document.getElementById('customers-search')?.addEventListener('input', (e) => {
     const query = e.target.value.toLowerCase();
     filteredCustomers = allCustomers.filter(c => 
         (c.name && c.name.toLowerCase().includes(query)) || 
-        (c.phone && c.phone.toLowerCase().includes(query))
+        (c.phone && c.phone.toLowerCase().includes(query)) ||
+        (c.email && c.email.toLowerCase().includes(query)) ||
+        (c.company_name && c.company_name.toLowerCase().includes(query)) ||
+        (c.tags && c.tags.toLowerCase().includes(query)) ||
+        (c.city && c.city.toLowerCase().includes(query))
     );
     currentCustomersPage = 1;
     renderCustomersTable();
@@ -529,15 +746,24 @@ document.getElementById('btn-next-page')?.addEventListener('click', () => {
 
 window.deleteCustomer = (id) => {
     showModal('Delete Customer', 'Are you sure you want to delete this customer? This action cannot be undone.', 'confirm', async () => {
-        await fetch(`/api/customers?id=${id}`, { method: 'DELETE' });
+        await apiFetch(`/api/customers?id=${id}`, { method: 'DELETE' });
         loadCustomers();
     });
 };
 
-window.editCustomer = (id, name, phone) => {
-    document.getElementById('cust-id').value = id;
-    document.getElementById('cust-name').value = name;
-    document.getElementById('cust-phone').value = phone;
+window.editCustomer = (id) => {
+    const cust = allCustomers.find(c => c.id === id);
+    if (!cust) return;
+    document.getElementById('cust-id').value = cust.id;
+    document.getElementById('cust-name').value = cust.name || '';
+    document.getElementById('cust-phone').value = cust.phone || '';
+    if (document.getElementById('cust-email')) document.getElementById('cust-email').value = cust.email || '';
+    if (document.getElementById('cust-company')) document.getElementById('cust-company').value = cust.company_name || '';
+    if (document.getElementById('cust-city')) document.getElementById('cust-city').value = cust.city || '';
+    if (document.getElementById('cust-state')) document.getElementById('cust-state').value = cust.state || '';
+    if (document.getElementById('cust-pincode')) document.getElementById('cust-pincode').value = cust.pincode || '';
+    if (document.getElementById('cust-tags')) document.getElementById('cust-tags').value = cust.tags || '';
+    if (document.getElementById('cust-notes')) document.getElementById('cust-notes').value = cust.notes || '';
     document.getElementById('btn-save-cust').innerHTML = `<span>Update Customer</span>`;
     document.getElementById('btn-cancel-edit').style.display = 'inline-flex';
 };
@@ -554,25 +780,41 @@ document.getElementById('add-customer-form')?.addEventListener('submit', async (
     const custId = document.getElementById('cust-id').value;
     const name = document.getElementById('cust-name').value;
     const phone = formatIndiaPhone(document.getElementById('cust-phone').value);
-    
+    const email = document.getElementById('cust-email')?.value || '';
+    const company_name = document.getElementById('cust-company')?.value || '';
+    const city = document.getElementById('cust-city')?.value || '';
+    const state = document.getElementById('cust-state')?.value || '';
+    const pincode = document.getElementById('cust-pincode')?.value || '';
+    const tags = document.getElementById('cust-tags')?.value || '';
+    const notes = document.getElementById('cust-notes')?.value || '';
+
     const performSave = async () => {
-        await fetch('/api/customers', {
+        await apiFetch('/api/customers', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name, phone })
+            body: JSON.stringify({
+                id: custId || undefined,
+                name,
+                phone,
+                email,
+                company_name,
+                city,
+                state,
+                pincode,
+                tags,
+                notes
+            })
         });
         document.getElementById('btn-cancel-edit').click();
         loadCustomers();
     };
 
     if (custId) {
-        // Direct update for edit mode
         await performSave();
     } else {
-        // Show Privacy & Consent Opt-in Modal for new customer
         showModal(
             'Customer Opt-In Consent Confirmation',
-            `By adding ${name} (${phone}), you certify that this customer has agreed: "I agree to receive WhatsApp updates, offers and promotional messages from Manaswini Enterprises and Geetha Enterprises".`,
+            `By adding ${name} (${phone}), you certify that this customer has agreed: "I agree to receive WhatsApp, Email, and SMS promotional updates & service announcements from Inspenox Business Suite".`,
             'confirm',
             performSave,
             'I Confirm & Agree',
@@ -592,7 +834,7 @@ async function loadDashboard() {
     if(statChats) statChats.textContent = '...';
 
     try {
-        const res = await fetch('/api/analytics');
+        const res = await apiFetch('/api/analytics');
         const analytics = await res.json();
         
         if (!analytics.error) {
@@ -623,7 +865,7 @@ async function loadDashboard() {
 
         const mediaGrid = document.getElementById('dash-media-grid');
         if (mediaGrid) {
-            const mediaRes = await fetch('/api/media');
+            const mediaRes = await apiFetch('/api/media');
             const mediaList = await mediaRes.json();
             
             if (!Array.isArray(mediaList) || mediaList.length === 0) {
@@ -681,16 +923,25 @@ document.getElementById('excel-upload')?.addEventListener('change', async (e) =>
                         const keys = Object.keys(row);
                         const nameKey = keys.find(k => k.toLowerCase().includes('name')) || keys[0];
                         const phoneKey = keys.find(k => k.toLowerCase().includes('phone') || k.toLowerCase().includes('mobile')) || keys[1];
+                        const emailKey = keys.find(k => k.toLowerCase().includes('email'));
+                        const companyKey = keys.find(k => k.toLowerCase().includes('company') || k.toLowerCase().includes('organization'));
+                        const cityKey = keys.find(k => k.toLowerCase().includes('city'));
+                        const tagKey = keys.find(k => k.toLowerCase().includes('tag'));
+
                         const rawPhone = row[phoneKey];
                         const formattedPhone = formatIndiaPhone(rawPhone);
                         return { 
                             name: row[nameKey] ? String(row[nameKey]).trim() : 'Customer', 
-                            phone: formattedPhone 
+                            phone: formattedPhone,
+                            email: emailKey && row[emailKey] ? String(row[emailKey]).trim() : '',
+                            company_name: companyKey && row[companyKey] ? String(row[companyKey]).trim() : '',
+                            city: cityKey && row[cityKey] ? String(row[cityKey]).trim() : '',
+                            tags: tagKey && row[tagKey] ? String(row[tagKey]).trim() : ''
                         };
                     }).filter(c => c.phone && c.phone.length >= 10);
 
                     if(customers.length > 0) {
-                        await fetch('/api/customers-import', {
+                        await apiFetch('/api/customers-import', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({ customers })
@@ -746,7 +997,7 @@ async function loadTemplates() {
         grid.innerHTML = `<div style="grid-column: 1 / -1;"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading WhatsApp message templates...</span></div></div>`;
     }
     try {
-        const res = await fetch('/api/templates');
+        const res = await apiFetch('/api/templates');
         templatesCache = await res.json();
         
         if (templatesCache.error) {
@@ -950,7 +1201,7 @@ window.deleteTemplate = function deleteTemplate(name, id) {
 
     showModal('Delete Template', `Are you sure you want to permanently delete template "${name}" from your Meta WhatsApp Business Account? This action cannot be undone.`, 'confirm', async () => {
         try {
-            const res = await fetch(`/api/templates?name=${encodeURIComponent(name)}&id=${id || ''}`, {
+            const res = await apiFetch(`/api/templates?name=${encodeURIComponent(name)}&id=${id || ''}`, {
                 method: 'DELETE'
             });
             const data = await res.json();
@@ -2402,7 +2653,8 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             if (currentMediaSampleFile) {
                 try {
-                    const config = await getGlobalMetaConfig();
+                    const configRes = await apiFetch('/api/config');
+                    const config = await configRes.json();
                     if (config.phoneNumberId && config.accessToken) {
                         const metaData = await uploadMediaToMetaFast(currentMediaSampleFile, config);
                         const handle = metaData.h || metaData.id;
@@ -2563,7 +2815,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 payloadObj.parameter_format = parameterFormat;
             }
 
-            const res = await fetch(endpoint, {
+            const res = await apiFetch(endpoint, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payloadObj)
@@ -2629,7 +2881,7 @@ let broadcastCustomersCache = [];
 
 async function loadCustomersForSelect() {
     try {
-        const res = await fetch('/api/customers');
+        const res = await apiFetch('/api/customers');
         const customers = await res.json();
         
         if (customers.error) return;
@@ -2708,7 +2960,7 @@ function updateBcDisplay() {
 // Populate Media Library Select in Broadcast View (Filtered by Image vs Video)
 async function loadMediaForSelect(targetType) {
     try {
-        const res = await fetch('/api/media');
+        const res = await apiFetch('/api/media');
         const mediaList = await res.json();
         const select = document.getElementById('bc-media-select');
         const fileInput = document.getElementById('bc-media');
@@ -2951,7 +3203,7 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
         const isSelectAll = document.getElementById('bc-select-all')?.checked;
 
         if (isSelectAll) {
-            const res = await fetch('/api/customers');
+            const res = await apiFetch('/api/customers');
             const allCust = await res.json();
             if (Array.isArray(allCust)) targetList = allCust;
         } else {
@@ -2959,7 +3211,7 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
             if (broadcastCustomersCache.length > 0) {
                 targetList = broadcastCustomersCache.filter(c => selectedCustomerIds.includes(String(c.id)));
             } else {
-                const res = await fetch('/api/customers');
+                const res = await apiFetch('/api/customers');
                 const allCust = await res.json();
                 if (Array.isArray(allCust)) {
                     targetList = allCust.filter(c => selectedCustomerIds.includes(String(c.id)));
@@ -2981,7 +3233,7 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                 media_id = librarySelectedUrl;
             } else if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
-                const configRes = await fetch('/api/config');
+                const configRes = await apiFetch('/api/config');
                 const config = await configRes.json();
                 
                 if (statusDiv) statusDiv.innerHTML = `<span class="spinner"></span> Streaming ${file.name} to Meta Cloud...`;
@@ -3024,7 +3276,7 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
             updateBcProgress(i, targetList.length, sentTotal, failedTotal, `⏳ Sending to ${chunkNames}...`);
 
             try {
-                const res = await fetch('/api/broadcast', {
+                const res = await apiFetch('/api/broadcast', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ target: chunkIds, type, content, media_id, template_name, template_language })
@@ -3084,7 +3336,7 @@ async function loadInboxSidebar() {
         sidebar.innerHTML = `<div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading chats...</span></div>`;
     }
     try {
-        const res = await fetch('/api/customers');
+        const res = await apiFetch('/api/customers');
         const customers = await res.json();
         if(!sidebar) return;
         
@@ -3261,7 +3513,7 @@ function openSaveUnsavedLeadsModal() {
             singleSaveBtn.innerHTML = '<span class="spinner"></span> Saving...';
 
             try {
-                const res = await fetch('/api/customers', {
+                const res = await apiFetch('/api/customers', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ name: newName, phone: formattedPhone })
@@ -3338,7 +3590,7 @@ document.getElementById('btn-save-all-unsaved-leads')?.addEventListener('click',
     }
 
     try {
-        const res = await fetch('/api/customers-import', {
+        const res = await apiFetch('/api/customers-import', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ customers: toSave })
@@ -3543,7 +3795,7 @@ async function fetchChatMessages(isInitial = false) {
     }
 
     try {
-        const res = await fetch(`/api/messages?customer_id=${activeInboxCustomer}`);
+        const res = await apiFetch(`/api/messages?customer_id=${activeInboxCustomer}`);
         const messages = await res.json();
         
         if (messages.error || !Array.isArray(messages)) return;
@@ -3646,7 +3898,7 @@ document.getElementById('chat-reply-form')?.addEventListener('submit', async (e)
     inputEl.value = '';
     btn.disabled = true;
     
-    const res = await fetch('/api/send-message', {
+    const res = await apiFetch('/api/send-message', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -3687,7 +3939,7 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
     if (!activeInboxCustomer) return;
     
     try {
-        const res = await fetch('/api/templates');
+        const res = await apiFetch('/api/templates');
         const templates = await res.json();
         
         if (!Array.isArray(templates) || templates.length === 0) {
@@ -3712,7 +3964,7 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
             const templateName = selectEl.value;
             const templateLang = selectEl.options[selectEl.selectedIndex].getAttribute('data-lang') || 'en_US';
             
-            const sendRes = await fetch('/api/send-message', {
+            const sendRes = await apiFetch('/api/send-message', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -3744,7 +3996,7 @@ async function loadMedia() {
         grid.innerHTML = `<div style="grid-column: 1 / -1;"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading media library...</span></div></div>`;
     }
     try {
-        const res = await fetch('/api/media');
+        const res = await apiFetch('/api/media');
         const mediaList = await res.json();
         if (!grid) return;
 
@@ -3811,7 +4063,7 @@ async function loadMedia() {
 window.deleteMedia = (id) => {
     showModal('Delete Media', 'Are you sure you want to delete this file from your Media Library?', 'confirm', async () => {
         try {
-            await fetch(`/api/media?id=${id}`, { method: 'DELETE' });
+            await apiFetch(`/api/media?id=${id}`, { method: 'DELETE' });
             loadMedia();
             loadMediaForSelect();
         } catch(e) {
@@ -3833,7 +4085,7 @@ document.getElementById('media-library-upload-input')?.addEventListener('change'
     }
 
     try {
-        const configRes = await fetch('/api/config');
+        const configRes = await apiFetch('/api/config');
         const config = await configRes.json();
 
         // 1. Generate local Base64 image/video thumbnail
@@ -3851,7 +4103,7 @@ document.getElementById('media-library-upload-input')?.addEventListener('change'
 
         // 3. Save media record with thumbnail URL into Neon Database
         const fileType = (file.type && file.type.startsWith('video')) || file.name.endsWith('.mp4') ? 'video' : 'image';
-        await fetch('/api/media', {
+        await apiFetch('/api/media', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

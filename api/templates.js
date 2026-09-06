@@ -1,10 +1,23 @@
 module.exports = async (req, res) => {
     const env = req.env || process.env || {};
-    const wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-    const token = env.WHATSAPP_ACCESS_TOKEN;
+    let wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+    let token = env.WHATSAPP_ACCESS_TOKEN;
+
+    const companyId = req.query.company_id || (req.body && req.body.company_id);
+    if (companyId) {
+        try {
+            const { getDb } = require('../lib/db');
+            const sql = getDb(env);
+            const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
+            if (cos.length > 0) {
+                if (cos[0].whatsapp_business_account_id) wabaId = cos[0].whatsapp_business_account_id;
+                if (cos[0].whatsapp_access_token) token = cos[0].whatsapp_access_token;
+            }
+        } catch(e) {}
+    }
 
     if (!wabaId || !token) {
-        return res.status(400).json({ error: 'WhatsApp credentials not fully configured in environment variables.' });
+        return res.status(400).json({ error: 'WhatsApp credentials not fully configured for this company.' });
     }
 
     if (req.method === 'GET') {

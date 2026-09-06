@@ -16,8 +16,20 @@ module.exports = async (req, res) => {
         const phone = customer.phone ? customer.phone.replace(/[^0-9]/g, '') : '';
         if (!phone) return res.status(400).json({ error: 'Customer has an invalid phone number' });
 
-        const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
-        const token = env.WHATSAPP_ACCESS_TOKEN;
+        let phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
+        let token = env.WHATSAPP_ACCESS_TOKEN;
+
+        const companyId = req.body.company_id || customer.company_id;
+        if (companyId) {
+            try {
+                const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
+                if (cos.length > 0 && cos[0].whatsapp_phone_number_id && cos[0].whatsapp_access_token) {
+                    phoneId = cos[0].whatsapp_phone_number_id;
+                    token = cos[0].whatsapp_access_token;
+                }
+            } catch(e) {}
+        }
+
         const url = `https://graph.facebook.com/v19.0/${phoneId}/messages`;
 
         let payload = {
@@ -140,9 +152,10 @@ module.exports = async (req, res) => {
 
         // Insert into messages table
         const saveContent = type === 'template' ? `[Template] ${template_name}` : content;
+        const msgCompanyId = companyId || customer.company_id || 1;
         await sql`
-            INSERT INTO messages (customer_id, direction, type, content, wa_message_id, status) 
-            VALUES (${customer_id}, 'outbound', ${type}, ${saveContent}, ${wa_message_id}, 'sent')
+            INSERT INTO messages (company_id, customer_id, direction, type, content, wa_message_id, status) 
+            VALUES (${msgCompanyId}, ${customer_id}, 'outbound', ${type}, ${saveContent}, ${wa_message_id}, 'sent')
         `;
 
         return res.status(200).json({ success: true, message_id: wa_message_id });

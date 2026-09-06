@@ -3,6 +3,7 @@ const { handleCloudflareRequest } = require('../../lib/cf-adapter');
 const analyticsHandler = require('../../api/analytics');
 const authHandler = require('../../api/auth');
 const broadcastHandler = require('../../api/broadcast');
+const companiesHandler = require('../../api/companies');
 const configHandler = require('../../api/config');
 const customersImportHandler = require('../../api/customers-import');
 const customersHandler = require('../../api/customers');
@@ -17,6 +18,7 @@ const routes = {
     'analytics': analyticsHandler,
     'auth': authHandler,
     'broadcast': broadcastHandler,
+    'companies': companiesHandler,
     'config': configHandler,
     'customers-import': customersImportHandler,
     'customers': customersHandler,

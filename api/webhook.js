@@ -2,6 +2,7 @@ const { getDb } = require("../lib/db");
 
 module.exports = async (req, res) => {
   const env = req.env || process.env || {};
+  const sql = getDb(env);
 
   // 1. Webhook Verification (GET)
   if (req.method === "GET") {
@@ -10,8 +11,16 @@ module.exports = async (req, res) => {
     const challenge = req.query["hub.challenge"];
     const verifyToken = env.WEBHOOK_VERIFY_TOKEN || env.WHATSAPP_VERIFY_TOKEN;
 
-    if (mode === "subscribe" && token === verifyToken) {
-      return res.status(200).send(challenge);
+    if (mode === "subscribe") {
+      if (token === verifyToken) {
+        return res.status(200).send(challenge);
+      }
+      try {
+        const matchingCos = await sql`SELECT id FROM companies WHERE webhook_verify_token = ${token} LIMIT 1`;
+        if (matchingCos.length > 0) {
+          return res.status(200).send(challenge);
+        }
+      } catch(e) {}
     }
     return res.status(403).send("Forbidden");
   }
@@ -28,13 +37,25 @@ module.exports = async (req, res) => {
           body.entry[0].changes &&
           body.entry[0].changes[0].value.messages
         ) {
-          const message = body.entry[0].changes[0].value.messages[0];
-          const contact = body.entry[0].changes[0].value.contacts[0];
+          const value = body.entry[0].changes[0].value;
+          const message = value.messages[0];
+          const contact = value.contacts[0];
+          const metadata = value.metadata || {};
 
           const phone = contact.wa_id;
           const name = contact.profile.name;
           const messageType = message.type;
           const messageId = message.id;
+          const metaPhoneId = metadata.phone_number_id;
+
+          // Lookup matching company by phone_number_id
+          let targetCompanyId = 1;
+          if (metaPhoneId) {
+            try {
+              const cos = await sql`SELECT id FROM companies WHERE whatsapp_phone_number_id = ${metaPhoneId} LIMIT 1`;
+              if (cos.length > 0) targetCompanyId = cos[0].id;
+            } catch(e) {}
+          }
 
           let content = "";
           if (messageType === "text") {
@@ -57,16 +78,16 @@ module.exports = async (req, res) => {
             content = `[${messageType}]`;
           }
 
-          const sql = getDb(env);
-
           // Ensure customer exists or create them
-          let customer =
-            await sql`SELECT id FROM customers WHERE phone = ${phone}`;
+          let customer = await sql`SELECT id FROM customers WHERE phone = ${phone}`;
           let customerId;
 
           if (customer.length === 0) {
-            const newCust =
-              await sql`INSERT INTO customers (name, phone, is_saved) VALUES (${name}, ${phone}, false) RETURNING id`;
+            const newCust = await sql`
+              INSERT INTO customers (name, phone, company_id, is_saved) 
+              VALUES (${name}, ${phone}, ${targetCompanyId}, false) 
+              RETURNING id
+            `;
             customerId = newCust[0].id;
           } else {
             customerId = customer[0].id;
@@ -74,8 +95,10 @@ module.exports = async (req, res) => {
 
           // Insert inbound message
           const dbMsgType = (messageType === "text" || messageType === "image" || messageType === "video" || messageType === "template" || messageType === "button" || messageType === "interactive") ? messageType : "text";
-          await sql`INSERT INTO messages (customer_id, direction, type, content, wa_message_id, status) 
-                              VALUES (${customerId}, 'inbound', ${dbMsgType}, ${content}, ${messageId}, 'delivered')`;
+          await sql`
+            INSERT INTO messages (company_id, customer_id, direction, type, content, wa_message_id, status) 
+            VALUES (${targetCompanyId}, ${customerId}, 'inbound', ${dbMsgType}, ${content}, ${messageId}, 'delivered')
+          `;
         } else if (
           body.entry &&
           body.entry[0].changes &&
@@ -85,7 +108,6 @@ module.exports = async (req, res) => {
           const messageId = statusObj.id;
           const status = statusObj.status; // sent, delivered, read, failed
 
-          const sql = getDb(env);
           if (status === 'failed' && statusObj.errors && statusObj.errors.length > 0) {
               const err = statusObj.errors[0];
               const errDetails = ` [Failed ${err.code}: ${err.title || err.message || 'Meta delivery failure'}]`;
@@ -97,14 +119,12 @@ module.exports = async (req, res) => {
         }
       }
 
-      // Send 200 OK after processing so Vercel doesn't freeze the function
       res.status(200).json({ received: true });
     } catch (err) {
       console.error("Webhook error:", err);
-      // Even on error, we should return 200 to prevent Meta from retrying infinitely
       res.status(200).json({ received: false, error: err.message });
     }
   } else {
-    res.status(405).send("Method Not Allowed");
+    res.status(405).json({ error: "Method Not Allowed" });
   }
 };

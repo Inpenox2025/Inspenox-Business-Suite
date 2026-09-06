@@ -1,16 +1,30 @@
 const { getDb } = require('../lib/db');
 
 module.exports = async (req, res) => {
-    if (req.method !== 'GET') return res.status(405).send('Method Not Allowed');
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
         const env = req.env || process.env || {};
         const sql = getDb(env);
-        
-        // Run queries concurrently
-        const [customersResult, messagesResult, recentInbound] = await Promise.all([
-            sql`SELECT COUNT(*) as count FROM customers`,
-            sql`SELECT COUNT(*) as count FROM messages WHERE direction = 'outbound'`,
+        const companyId = req.query.company_id || null;
+
+        let customersQuery = companyId ? 
+            sql`SELECT COUNT(*) as count FROM customers WHERE company_id = ${companyId} OR company_id IS NULL` : 
+            sql`SELECT COUNT(*) as count FROM customers`;
+
+        let messagesQuery = companyId ? 
+            sql`SELECT COUNT(*) as count FROM messages WHERE direction = 'outbound' AND (company_id = ${companyId} OR company_id IS NULL)` : 
+            sql`SELECT COUNT(*) as count FROM messages WHERE direction = 'outbound'`;
+
+        let recentInboundQuery = companyId ? 
+            sql`
+                SELECT m.*, c.name, c.phone 
+                FROM messages m
+                JOIN customers c ON m.customer_id = c.id
+                WHERE m.direction = 'inbound' AND (m.company_id = ${companyId} OR m.company_id IS NULL)
+                ORDER BY m.created_at DESC
+                LIMIT 5
+            ` : 
             sql`
                 SELECT m.*, c.name, c.phone 
                 FROM messages m
@@ -18,7 +32,12 @@ module.exports = async (req, res) => {
                 WHERE m.direction = 'inbound'
                 ORDER BY m.created_at DESC
                 LIMIT 5
-            `
+            `;
+
+        const [customersResult, messagesResult, recentInbound] = await Promise.all([
+            customersQuery,
+            messagesQuery,
+            recentInboundQuery
         ]);
 
         const analytics = {
