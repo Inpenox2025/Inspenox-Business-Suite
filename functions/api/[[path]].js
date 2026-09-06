@@ -58,12 +58,12 @@ async function onRequest(context) {
     return handleApi(context.request, context.env, context.params ? context.params.path : null);
 }
 
-// For Cloudflare Workers (main entrypoint in wrangler.toml)
+// For Cloudflare Workers (ES Module Format with default export)
 const workerExport = {
     async fetch(request, env, ctx) {
         return handleApi(request, env);
     }
 };
 
-module.exports = workerExport;
-module.exports.onRequest = onRequest;
+export default workerExport;
+export { onRequest };
