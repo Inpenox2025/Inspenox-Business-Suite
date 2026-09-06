@@ -28,9 +28,16 @@ const routes = {
     'webhook': webhookHandler
 };
 
-async function onRequest(context) {
-    const pathArr = context.params.path || [];
-    const routeName = pathArr[0];
+async function handleApi(request, env, paramsPath = null) {
+    const url = new URL(request.url);
+    let routeName = '';
+
+    if (paramsPath && Array.isArray(paramsPath) && paramsPath.length > 0) {
+        routeName = paramsPath[0];
+    } else {
+        const cleanPath = url.pathname.replace(/^\/api\/?/, '');
+        routeName = cleanPath.split('/')[0];
+    }
 
     const handler = routes[routeName];
     if (!handler) {
@@ -43,7 +50,20 @@ async function onRequest(context) {
         });
     }
 
-    return handleCloudflareRequest(handler, context);
+    return handleCloudflareRequest(handler, { request, env });
 }
 
-module.exports = { onRequest };
+// For Cloudflare Pages Functions
+async function onRequest(context) {
+    return handleApi(context.request, context.env, context.params ? context.params.path : null);
+}
+
+// For Cloudflare Workers (main entrypoint in wrangler.toml)
+const workerExport = {
+    async fetch(request, env, ctx) {
+        return handleApi(request, env);
+    }
+};
+
+module.exports = workerExport;
+module.exports.onRequest = onRequest;
