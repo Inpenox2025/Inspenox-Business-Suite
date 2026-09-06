@@ -172,15 +172,12 @@ module.exports = async (req, res) => {
                 const nowTs = Math.floor(Date.now() / 1000);
                 const startTs = nowTs - (90 * 86400); // 90 days lookback
 
-                // Fetch template list, aggregate WABA analytics, and per-template analytics
-                const [metaRes, metaAnalyticsRes, templateAnalyticsRes] = await Promise.all([
+                // Step 1: Fetch template list and aggregate WABA analytics in parallel
+                const [metaRes, metaAnalyticsRes] = await Promise.all([
                     fetch(`https://graph.facebook.com/v20.0/${wabaId}/message_templates?limit=100`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     }),
                     fetch(`https://graph.facebook.com/v20.0/${wabaId}?fields=analytics.start(${startTs}).end(${nowTs}).granularity(DAY).metric_types(['SENT','DELIVERED','RECEIVED','COST'])`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    }),
-                    fetch(`https://graph.facebook.com/v20.0/${wabaId}/template_analytics?start=${startTs}&end=${nowTs}&granularity=DAILY&metric_types=SENT,DELIVERED,READ`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     })
                 ]);
@@ -198,37 +195,59 @@ module.exports = async (req, res) => {
                     metaDataPoints = metaAnalyticsData.analytics.data_points;
                 }
 
-                // Parse per-template analytics response
-                const tplAnalyticsData = await templateAnalyticsRes.json();
-                if (tplAnalyticsData.data && Array.isArray(tplAnalyticsData.data)) {
-                    tplAnalyticsData.data.forEach(entry => {
-                        const tplId = entry.template_id || entry.id;
-                        if (!tplId) return;
-                        let sent = 0, delivered = 0, read = 0;
-                        if (Array.isArray(entry.data_points)) {
-                            entry.data_points.forEach(dp => {
-                                sent += (dp.sent || 0);
-                                delivered += (dp.delivered || 0);
-                                read += (dp.read || 0);
+                // Step 2: Fetch per-template analytics using template_ids[] parameter
+                if (metaTemplates.length > 0) {
+                    try {
+                        const tplIdParams = metaTemplates.map(t => `template_ids[]=${t.id}`).join('&');
+                        const tplAnalyticsUrl = `https://graph.facebook.com/v20.0/${wabaId}/template_analytics?start=${startTs}&end=${nowTs}&granularity=DAILY&metric_types=SENT,DELIVERED,READ&${tplIdParams}`;
+                        
+                        const templateAnalyticsRes = await fetch(tplAnalyticsUrl, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const tplAnalyticsData = await templateAnalyticsRes.json();
+                        console.log('Meta template_analytics raw response:', JSON.stringify(tplAnalyticsData).slice(0, 500));
+                        
+                        if (tplAnalyticsData.data && Array.isArray(tplAnalyticsData.data)) {
+                            tplAnalyticsData.data.forEach(entry => {
+                                const tplId = String(entry.template_id || entry.id || '');
+                                if (!tplId) return;
+                                let sent = 0, delivered = 0, read = 0;
+                                if (Array.isArray(entry.data_points)) {
+                                    entry.data_points.forEach(dp => {
+                                        sent += (dp.sent || 0);
+                                        delivered += (dp.delivered || 0);
+                                        read += (dp.read || 0);
+                                    });
+                                } else {
+                                    sent = entry.sent || 0;
+                                    delivered = entry.delivered || 0;
+                                    read = entry.read || 0;
+                                }
+                                metaTemplateAnalytics[tplId] = { sent, delivered, read };
                             });
-                        } else if (entry.analytics && Array.isArray(entry.analytics)) {
-                            entry.analytics.forEach(dp => {
-                                sent += (dp.sent || 0);
-                                delivered += (dp.delivered || 0);
-                                read += (dp.read || 0);
-                            });
-                        } else {
-                            sent = entry.sent || 0;
-                            delivered = entry.delivered || 0;
-                            read = entry.read || 0;
                         }
-                        metaTemplateAnalytics[String(tplId)] = { sent, delivered, read };
-                    });
+
+                        // Also try mapping by template name from the data_points if structured differently
+                        if (tplAnalyticsData.data_points && Array.isArray(tplAnalyticsData.data_points)) {
+                            tplAnalyticsData.data_points.forEach(dp => {
+                                const tplId = String(dp.template_id || '');
+                                if (!tplId) return;
+                                if (!metaTemplateAnalytics[tplId]) metaTemplateAnalytics[tplId] = { sent: 0, delivered: 0, read: 0 };
+                                metaTemplateAnalytics[tplId].sent += (dp.sent || 0);
+                                metaTemplateAnalytics[tplId].delivered += (dp.delivered || 0);
+                                metaTemplateAnalytics[tplId].read += (dp.read || 0);
+                            });
+                        }
+                    } catch (tplErr) {
+                        console.error('Meta template_analytics error:', tplErr.message);
+                    }
                 }
             } catch (err) {
                 metaError = err.message;
             }
         }
+
+        console.log('Meta template analytics resolved:', JSON.stringify(metaTemplateAnalytics));
 
         // Aggregate direct Meta WABA analytics metrics
         let metaDirectSent = 0;
