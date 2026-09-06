@@ -145,6 +145,7 @@ function apiFetch(url, options = {}) {
 }
 
 // --- Multi-Tenant Parent/Child Permissions & Company UI Management ---
+// --- Multi-Tenant Parent/Child Permissions & Company UI Management ---
 window.isParentAdmin = function isParentAdmin() {
     let user = {};
     try {
@@ -154,9 +155,9 @@ window.isParentAdmin = function isParentAdmin() {
     const uname = (user.username || '').toLowerCase();
     const cname = (user.company_name || '').toLowerCase();
     
-    if (uname === 'admin' || uname.includes('inspenox')) return true;
-    if (!user.company_id || String(user.company_id) === 'default' || String(user.company_id) === '1') return true;
-    if (cname.includes('inspenox')) return true;
+    // Inspenox main system admin or users under Inspenox parent company
+    if (uname === 'admin' && (!user.company_id || String(user.company_id) === 'default')) return true;
+    if (cname.includes('inspenox') || uname.includes('inspenox')) return true;
 
     return false;
 };
@@ -192,7 +193,8 @@ async function loadCompanies() {
                     companies.forEach(comp => {
                         const opt = document.createElement('option');
                         opt.value = comp.id;
-                        opt.textContent = comp.name + (comp.name.toLowerCase().includes('inspenox') || comp.id === 'default' || comp.id === 1 ? ' (Parent)' : '');
+                        const isParentCo = comp.name.toLowerCase().includes('inspenox') || String(comp.slug || '').toLowerCase() === 'inspenox' || comp.id === 'default';
+                        opt.textContent = comp.name + (isParentCo ? ' (Parent)' : '');
                         if (String(comp.id) === String(currentCompanyId)) opt.selected = true;
                         selectEl.appendChild(opt);
                     });
@@ -260,7 +262,7 @@ async function loadCompaniesSettings() {
             companies.forEach(c => {
                 const tr = document.createElement('tr');
                 const isCurrent = String(c.id) === String(currentCompanyId);
-                const isInspenox = c.name.toLowerCase().includes('inspenox') || String(c.id) === 'default' || String(c.id) === '1';
+                const isInspenox = c.name.toLowerCase().includes('inspenox') || String(c.slug || '').toLowerCase() === 'inspenox' || String(c.id) === 'default';
 
                 let actionHtml = '';
                 if (isParent) {
@@ -279,7 +281,7 @@ async function loadCompaniesSettings() {
                 tr.innerHTML = `
                     <td>
                         <strong style="color:var(--text-main);">${c.name}</strong>
-                        ${isInspenox ? ' <span class="window-badge" style="background:rgba(168, 85, 247, 0.15);color:#a855f7;">Parent</span>' : (isCurrent ? ' <span class="window-badge" style="background:var(--primary-light);color:var(--primary);">Active</span>' : '')}
+                        ${isInspenox ? ' <span class="window-badge" style="background:rgba(168, 85, 247, 0.15);color:#a855f7;">Parent</span>' : (isCurrent ? ' <span class="window-badge" style="background:var(--primary-light);color:var(--primary);">Active</span>' : ' <span class="window-badge" style="background:rgba(255,255,255,0.05);color:var(--text-muted);">Child</span>')}
                     </td>
                     <td><code style="font-size:0.8rem;">${c.id}</code></td>
                     <td><code style="font-size:0.8rem; color:var(--primary);">${c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id || 'Env Default'}</code></td>
@@ -730,6 +732,27 @@ window.calculateEstimatorCost = function calculateEstimatorCost() {
 
 window.editCompany = function editCompany(id) {
     openCompanyModal(id);
+};
+
+window.deleteCompany = function deleteCompany(id) {
+    const comp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(id)) : null;
+    const compName = comp ? comp.name : `Company #${id}`;
+    
+    showModal('Delete Company Account', `Are you sure you want to delete company "${compName}"? This action will disable access for this tenant account.`, 'confirm', async () => {
+        try {
+            const res = await apiFetch(`/api/companies?id=${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                loadCompaniesSettings();
+                loadCompanies();
+                showModal('Success', `Company "${compName}" deleted successfully.`);
+            } else {
+                showModal('Error', data.error || 'Failed to delete company.');
+            }
+        } catch(e) {
+            showModal('Error', e.message || 'Error deleting company.');
+        }
+    }, 'Delete Company', 'btn danger');
 };
 
 window.saveCompany = async function saveCompany(e) {

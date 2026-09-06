@@ -38,6 +38,8 @@ async function ensureUsersTable(sql) {
             `;
             console.log('Default admin user initialized (admin / admin123)');
         }
+
+        // Auto-assign manaswini user to company_id = 1 (Manaswini Enterprises) if null
     } catch (e) {
         console.error('Error ensuring users table:', e);
     }
@@ -141,7 +143,7 @@ module.exports = async (req, res) => {
 
                 const cleanUser = username.trim().toLowerCase();
                 const userRole = role || 'admin';
-                const coId = (company_id && company_id !== 'default' && String(company_id) !== '1') ? parseInt(company_id) : null;
+                const coId = (company_id && company_id !== 'default' && company_id !== 'parent' && String(company_id).trim() !== '') ? parseInt(company_id) : null;
 
                 if (id) {
                     if (password && password.trim()) {

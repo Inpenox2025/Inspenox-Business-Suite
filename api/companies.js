@@ -155,10 +155,11 @@ module.exports = async (req, res) => {
             const { id } = req.query;
             if (!id) return res.status(400).json({ error: 'Company ID is required' });
 
-            const targetComp = await sql`SELECT id, name FROM companies WHERE id = ${id} LIMIT 1`;
+            const targetComp = await sql`SELECT id, name, slug FROM companies WHERE id = ${id} LIMIT 1`;
             if (targetComp.length > 0) {
                 const compName = (targetComp[0].name || '').toLowerCase();
-                if (compName.includes('inspenox') || String(targetComp[0].id) === '1' || String(targetComp[0].id) === 'default') {
+                const compSlug = (targetComp[0].slug || '').toLowerCase();
+                if (compName.includes('inspenox') || compSlug === 'inspenox' || String(targetComp[0].id) === 'default') {
                     return res.status(403).json({ error: 'Inspenox Business Suite is the primary parent organization and cannot be deleted.' });
                 }
             }
