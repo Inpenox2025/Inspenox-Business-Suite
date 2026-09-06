@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS messages (
   direction TEXT CHECK (direction IN ('outbound', 'inbound')),
   type TEXT,                           -- text, image, video, template, button, interactive, email, sms
   channel TEXT DEFAULT 'whatsapp',     -- whatsapp, email, sms
+  template_name TEXT,                  -- WhatsApp Template Slug/Name
   content TEXT,                        -- Text body, caption, or HTML content
   media_url TEXT,                      -- Media asset attachment URL
   wa_message_id TEXT,                  -- External Message ID from Meta / Provider
