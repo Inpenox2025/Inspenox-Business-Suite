@@ -50,3 +50,15 @@ CREATE TABLE IF NOT EXISTS media_library (
   file_url TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+
+-- 2. Insert default admin user (Username: admin | Password: admin123)
+INSERT INTO users (username, password_hash, role)
+VALUES (
+  'admin', 
+  '00e3bcd172820d16832b5039623de4977201c4bdf15c60af94eaafa7c584f7e0', 
+  'admin'
+)
+ON CONFLICT (username) DO UPDATE 
+SET password_hash = EXCLUDED.password_hash;
