@@ -37,9 +37,9 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
         try {
             const systemEnv = {
-                whatsapp_phone_number_id: env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733',
-                whatsapp_business_account_id: env.WHATSAPP_BUSINESS_ACCOUNT_ID || '1561463645723530',
-                whatsapp_access_token: env.WHATSAPP_ACCESS_TOKEN || 'EAALed5FtFjwBSM78Kn6DBIsE0YFxzGVcANwCBOUvohsFPAmA4eKD1SmpjpIExU3KfxO40dekRMGzlR7JKYUVQ8ZCVzgyUGJRiAQRzZB7NAWmtfoTX5L9nZBupOvobMsk3tOMOKlYn69DLenuTpZBN9tySjaZAxugB3Mz38oHZAQJZBhGMexJOLJKXDmY67Fenca4AZDZD',
+                whatsapp_phone_number_id: env.WHATSAPP_PHONE_NUMBER_ID || '',
+                whatsapp_business_account_id: env.WHATSAPP_BUSINESS_ACCOUNT_ID || '',
+                whatsapp_access_token: env.WHATSAPP_ACCESS_TOKEN || '',
                 whatsapp_verify_token: env.WHATSAPP_VERIFY_TOKEN || 'manasageetha',
                 has_access_token: !!(env.WHATSAPP_ACCESS_TOKEN)
             };
@@ -55,9 +55,9 @@ module.exports = async (req, res) => {
 
             // If no companies exist, seed default Inspenox parent company
             if (companies.length === 0) {
-                const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
-                const token = env.WHATSAPP_ACCESS_TOKEN || '';
-                const wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || '1561463645723530';
+                const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || null;
+                const token = env.WHATSAPP_ACCESS_TOKEN || null;
+                const wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || null;
                 const verifyToken = env.WHATSAPP_VERIFY_TOKEN || 'manasageetha';
 
                 const defaultCo = await sql`

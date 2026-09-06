@@ -8,8 +8,8 @@ module.exports = async (req, res) => {
         const sql = getDb(env);
         const companyId = req.query.company_id || null;
 
-        let wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || '1561463645723530';
-        let token = env.WHATSAPP_ACCESS_TOKEN || 'EAALed5FtFjwBSM78Kn6DBIsE0YFxzGVcANwCBOUvohsFPAmA4eKD1SmpjpIExU3KfxO40dekRMGzlR7JKYUVQ8ZCVzgyUGJRiAQRzZB7NAWmtfoTX5L9nZBupOvobMsk3tOMOKlYn69DLenuTpZBN9tySjaZAxugB3Mz38oHZAQJZBhGMexJOLJKXDmY67Fenca4AZDZD';
+        let wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || null;
+        let token = env.WHATSAPP_ACCESS_TOKEN || null;
 
         if (companyId && companyId !== 'default') {
             try {
@@ -17,6 +17,14 @@ module.exports = async (req, res) => {
                 if (cos.length > 0) {
                     if (cos[0].whatsapp_business_account_id) wabaId = cos[0].whatsapp_business_account_id;
                     if (cos[0].whatsapp_access_token) token = cos[0].whatsapp_access_token;
+                }
+            } catch (e) {}
+        } else if (!wabaId || !token) {
+            try {
+                const cos = await sql`SELECT * FROM companies ORDER BY id ASC LIMIT 1`;
+                if (cos.length > 0) {
+                    if (!wabaId && cos[0].whatsapp_business_account_id) wabaId = cos[0].whatsapp_business_account_id;
+                    if (!token && cos[0].whatsapp_access_token) token = cos[0].whatsapp_access_token;
                 }
             } catch (e) {}
         }
@@ -138,16 +146,26 @@ module.exports = async (req, res) => {
         const est_sms_cost = sms_sent * RATES.sms;
         const total_est_cost = est_wa_cost + est_email_cost + est_sms_cost;
 
-        // Fetch Live Direct Meta Graph API Template List & Insights if credentials are valid
+        // Fetch Live Direct Meta Graph API Template List & Direct WABA Analytics if credentials exist
         let metaConnected = false;
         let metaTemplates = [];
         let metaError = null;
+        let metaDataPoints = [];
 
         if (wabaId && token) {
             try {
-                const metaRes = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/message_templates?limit=100`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const nowTs = Math.floor(Date.now() / 1000);
+                const startTs = nowTs - (90 * 86400); // 90 days lookback
+
+                const [metaRes, metaAnalyticsRes] = await Promise.all([
+                    fetch(`https://graph.facebook.com/v20.0/${wabaId}/message_templates?limit=100`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch(`https://graph.facebook.com/v20.0/${wabaId}?fields=analytics.start(${startTs}).end(${nowTs}).granularity(DAY).metric_types(['SENT','DELIVERED','RECEIVED','COST'])`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                ]);
+
                 const metaData = await metaRes.json();
                 if (metaData.data && Array.isArray(metaData.data)) {
                     metaConnected = true;
@@ -155,10 +173,23 @@ module.exports = async (req, res) => {
                 } else if (metaData.error) {
                     metaError = metaData.error.message || JSON.stringify(metaData.error);
                 }
+
+                const metaAnalyticsData = await metaAnalyticsRes.json();
+                if (metaAnalyticsData.analytics && Array.isArray(metaAnalyticsData.analytics.data_points)) {
+                    metaDataPoints = metaAnalyticsData.analytics.data_points;
+                }
             } catch (err) {
                 metaError = err.message;
             }
         }
+
+        // Aggregate direct Meta WABA analytics metrics
+        let metaDirectSent = 0;
+        let metaDirectDelivered = 0;
+        metaDataPoints.forEach(dp => {
+            metaDirectSent += (dp.sent || 0);
+            metaDirectDelivered += (dp.delivered || 0);
+        });
 
         // Map template stats from DB & Meta templates
         const dbTemplateMap = {};
@@ -191,7 +222,7 @@ module.exports = async (req, res) => {
                 const replies = 0;
 
                 const category = (t.category || 'MARKETING').toUpperCase();
-                const rate = category === 'UTILITY' ? RATES.whatsapp_utility : (category === 'AUTHENTICATION' ? RATES.whatsapp_authentication : RATES.whatsapp_marketing);
+                const rate = category === 'UTILITY' ? RATES.whatsapp_utility : (category === 'AUTHENTICATION' ? RATES.whatsapp_authentication : (category === 'SERVICE' ? RATES.whatsapp_service : RATES.whatsapp_marketing));
                 const amountSpent = parseFloat((delivered * rate).toFixed(2));
                 const readPercent = delivered > 0 ? Math.round((read / delivered) * 100) : 0;
 
@@ -291,11 +322,10 @@ module.exports = async (req, res) => {
             },
             meta_direct_insights: {
                 total_amount_spent: parseFloat(totalMetaSpent.toFixed(2)) || parseFloat(est_wa_cost.toFixed(2)),
-                cost_per_delivered: 0.86,
-                total_sent: totalMetaSent || parseInt(messagesResult[0]?.count || 0),
-                total_delivered: totalMetaDelivered || parseInt(messagesResult[0]?.count || 0),
+                total_sent: metaDirectSent || totalMetaSent || parseInt(messagesResult[0]?.count || 0),
+                total_delivered: metaDirectDelivered || totalMetaDelivered || parseInt(messagesResult[0]?.count || 0),
                 total_read: totalMetaRead,
-                total_read_percent: totalMetaDelivered > 0 ? Math.round((totalMetaRead / totalMetaDelivered) * 100) : 0,
+                total_read_percent: (metaDirectDelivered || totalMetaDelivered) > 0 ? Math.round((totalMetaRead / (metaDirectDelivered || totalMetaDelivered)) * 100) : 0,
                 unique_replies: totalReplies,
                 templates: templateInsightsList
             },

@@ -1323,39 +1323,72 @@
                 <!-- Interactive Pricing Calculator Card -->
                 <div class="card">
                     <div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
-                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">🧮 Sample Calculator API Pricing</h3>
-                        <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Calculate estimated WhatsApp, Email, and SMS charges based on official Meta rates.</p>
+                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">🧮 Meta & Multi-Channel Pricing Calculator</h3>
+                        <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Calculate exact estimated costs across WhatsApp (Marketing, Utility, Auth, Service), Email, and SMS based on official Meta India rates.</p>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
                         <div>
                             <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Market / Region</label>
                             <select id="calc-market" onchange="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
-                                <option value="IN" data-m="0.8631" data-u="0.1150" data-a="0.1150" selected>India (₹0.8631 Mkt / ₹0.1150 Util)</option>
-                                <option value="US" data-m="2.0000" data-u="0.5000" data-a="0.5000">North America ($0.025 Mkt)</option>
-                                <option value="AE" data-m="2.5000" data-u="0.7500" data-a="0.7500">UAE & Gulf ($0.030 Mkt)</option>
+                                <option value="IN" data-m="0.8631" data-u="0.1150" data-a="0.1150" selected>India (₹0.8631 Mkt / ₹0.1150 Util & Auth)</option>
+                                <option value="US" data-m="2.0000" data-u="0.5000" data-a="0.5000">North America ($0.025 Mkt / $0.006 Util)</option>
+                                <option value="AE" data-m="2.5000" data-u="0.7500" data-a="0.7500">UAE & Gulf ($0.030 Mkt / $0.009 Util)</option>
                             </select>
                         </div>
 
                         <div>
-                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">WhatsApp Marketing Msgs</label>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <span>WA Marketing</span>
+                                <span style="font-size: 0.65rem; color: var(--primary); font-weight: 700;">₹0.8631/msg</span>
+                            </label>
                             <input type="number" id="calc-wa-marketing" value="1000" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
                         </div>
 
                         <div>
-                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">WhatsApp Utility Msgs</label>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <span>WA Utility</span>
+                                <span style="font-size: 0.65rem; color: #10b981; font-weight: 700;">₹0.1150/msg</span>
+                            </label>
                             <input type="number" id="calc-wa-utility" value="500" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
                         </div>
 
                         <div>
-                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Email Messages</label>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <span>WA Authentication</span>
+                                <span style="font-size: 0.65rem; color: #3b82f6; font-weight: 700;">₹0.1150/msg</span>
+                            </label>
+                            <input type="number" id="calc-wa-auth" value="200" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <span>WA Service (Inbound)</span>
+                                <span style="font-size: 0.65rem; color: #8b5cf6; font-weight: 700;">FREE (₹0.00)</span>
+                            </label>
+                            <input type="number" id="calc-wa-service" value="300" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <span>Email Broadcast</span>
+                                <span style="font-size: 0.65rem; color: #eab308; font-weight: 700;">₹0.0500/msg</span>
+                            </label>
                             <input type="number" id="calc-email-count" value="2000" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <span>SMS Broadcast</span>
+                                <span style="font-size: 0.65rem; color: #ec4899; font-weight: 700;">₹0.2500/msg</span>
+                            </label>
+                            <input type="number" id="calc-sms-count" value="500" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
                         </div>
                     </div>
 
-                    <div style="background: var(--bg-dark); padding: 1rem 1.25rem; border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                    <div style="background: var(--bg-dark); padding: 1rem 1.25rem; border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
                         <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">Estimated Total Investment:</span>
-                        <strong id="calc-result-total" style="font-size: 1.5rem; color: var(--primary); font-weight: 800;">₹920.60</strong>
+                        <strong id="calc-result-total" style="font-size: 1.5rem; color: var(--primary); font-weight: 800;">₹1,068.60</strong>
                     </div>
                 </div>
 

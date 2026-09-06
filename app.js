@@ -442,16 +442,25 @@ window.openUserModal = function openUserModal(userId = null) {
     document.getElementById('user-id-edit').value = '';
     document.getElementById('user-modal-title').textContent = userId ? '👤 Edit User Account' : '👤 Add New User Account';
 
+    const isParent = isParentAdmin();
     const selectCo = document.getElementById('user-company-select');
     if (selectCo) {
-        selectCo.innerHTML = '<option value="default">Default Organization (All Companies)</option>';
+        selectCo.innerHTML = isParent ? '<option value="default">Inspenox Business Suite (Parent)</option>' : '';
         if (Array.isArray(allCompanies)) {
             allCompanies.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.id;
-                opt.textContent = c.name;
-                selectCo.appendChild(opt);
+                if (isParent || String(c.id) === String(currentCompanyId)) {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name;
+                    selectCo.appendChild(opt);
+                }
             });
+        }
+        if (!isParent) {
+            selectCo.value = currentCompanyId;
+            selectCo.disabled = true;
+        } else {
+            selectCo.disabled = false;
         }
     }
 
@@ -615,7 +624,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         // 2. Direct Meta Summary Stat Cards
         const metaInsights = data.meta_direct_insights || {};
         if (elAmountSpent) elAmountSpent.textContent = `₹${(metaInsights.total_amount_spent || data.estimated_costs?.whatsapp || 0).toFixed(2)}`;
-        if (elCostPerMsg) elCostPerMsg.textContent = `₹${(metaInsights.cost_per_delivered || 0.86).toFixed(2)}`;
+        if (elCostPerMsg) elCostPerMsg.textContent = `₹0.8631 / ₹0.115`;
         if (elTotalMsgs) elTotalMsgs.textContent = metaInsights.total_sent || data.messages_sent || 0;
         if (elTotalCost) elTotalCost.textContent = `₹${(data.estimated_costs?.total || 0).toFixed(2)}`;
 
@@ -637,6 +646,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                         '<span class="window-badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; font-weight:600;">Active</span>' : 
                         '<span class="window-badge" style="background:rgba(234, 179, 8, 0.15); color:#eab308; font-weight:600;">Pending</span>';
                     const categoryBadge = `<span class="window-badge" style="background:var(--primary-light); color:var(--primary); font-size:0.75rem; text-transform:uppercase;">${t.category}</span>`;
+                    const rateDisplay = (t.cost_per_delivered < 0.2 && t.cost_per_delivered > 0) ? `₹${t.cost_per_delivered.toFixed(4)}` : (t.cost_per_delivered === 0 ? 'FREE' : `₹${t.cost_per_delivered.toFixed(4)}`);
                     return `
                         <tr>
                             <td>
@@ -652,7 +662,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                                 <span style="font-size:0.75rem; color:var(--text-muted); margin-left:0.2rem;">(${t.read_percent}%)</span>
                             </td>
                             <td><strong style="color:#8b5cf6;">${t.replies}</strong></td>
-                            <td><code style="color:var(--text-muted);">₹${t.cost_per_delivered.toFixed(2)}</code></td>
+                            <td><code style="color:var(--text-muted); font-weight:600;">${rateDisplay}</code></td>
                             <td style="text-align: right;"><strong style="color:var(--text-main); font-size:1.05rem;">₹${t.amount_spent.toFixed(2)}</strong></td>
                         </tr>
                     `;
@@ -692,6 +702,7 @@ window.calculateEstimatorCost = function calculateEstimatorCost() {
     const elMarketing = document.getElementById('calc-wa-marketing');
     const elUtility = document.getElementById('calc-wa-utility');
     const elAuth = document.getElementById('calc-wa-auth');
+    const elService = document.getElementById('calc-wa-service');
     const elEmail = document.getElementById('calc-email-count');
     const elSms = document.getElementById('calc-sms-count');
     const elResult = document.getElementById('calc-result-total');
@@ -702,16 +713,18 @@ window.calculateEstimatorCost = function calculateEstimatorCost() {
     const rateM = parseFloat(opt.getAttribute('data-m') || 0.8631);
     const rateU = parseFloat(opt.getAttribute('data-u') || 0.1150);
     const rateA = parseFloat(opt.getAttribute('data-a') || 0.1150);
-    const rateEmail = 0.05;
-    const rateSms = 0.25;
+    const rateService = 0.0000;
+    const rateEmail = 0.0500;
+    const rateSms = 0.2500;
 
     const cntM = parseFloat(elMarketing?.value || 0);
     const cntU = parseFloat(elUtility?.value || 0);
     const cntA = parseFloat(elAuth?.value || 0);
+    const cntS = parseFloat(elService?.value || 0);
     const cntEmail = parseFloat(elEmail?.value || 0);
     const cntSms = parseFloat(elSms?.value || 0);
 
-    const total = (cntM * rateM) + (cntU * rateU) + (cntA * rateA) + (cntEmail * rateEmail) + (cntSms * rateSms);
+    const total = (cntM * rateM) + (cntU * rateU) + (cntA * rateA) + (cntS * rateService) + (cntEmail * rateEmail) + (cntSms * rateSms);
     elResult.textContent = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
