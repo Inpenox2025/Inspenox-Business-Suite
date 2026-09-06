@@ -39,12 +39,13 @@ module.exports = async (req, res) => {
             const systemEnv = {
                 whatsapp_phone_number_id: env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733',
                 whatsapp_business_account_id: env.WHATSAPP_BUSINESS_ACCOUNT_ID || '1561463645723530',
+                whatsapp_access_token: env.WHATSAPP_ACCESS_TOKEN || 'EAALed5FtFjwBSM78Kn6DBIsE0YFxzGVcANwCBOUvohsFPAmA4eKD1SmpjpIExU3KfxO40dekRMGzlR7JKYUVQ8ZCVzgyUGJRiAQRzZB7NAWmtfoTX5L9nZBupOvobMsk3tOMOKlYn69DLenuTpZBN9tySjaZAxugB3Mz38oHZAQJZBhGMexJOLJKXDmY67Fenca4AZDZD',
                 whatsapp_verify_token: env.WHATSAPP_VERIFY_TOKEN || 'manasageetha',
                 has_access_token: !!(env.WHATSAPP_ACCESS_TOKEN)
             };
 
             let companies = await sql`
-                SELECT id, name, slug, whatsapp_phone_number_id, whatsapp_business_account_id, 
+                SELECT id, name, slug, whatsapp_phone_number_id, whatsapp_business_account_id, whatsapp_access_token, 
                        whatsapp_verify_token, is_active, created_at,
                        (SELECT COUNT(*) FROM customers c WHERE c.company_id = companies.id) as customer_count,
                        (SELECT COUNT(*) FROM messages m WHERE m.company_id = companies.id) as message_count
@@ -72,6 +73,7 @@ module.exports = async (req, res) => {
                 ...c,
                 whatsapp_phone_number_id: c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id,
                 whatsapp_business_account_id: c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id,
+                whatsapp_access_token: c.whatsapp_access_token || systemEnv.whatsapp_access_token,
                 whatsapp_verify_token: c.whatsapp_verify_token || systemEnv.whatsapp_verify_token
             }));
 

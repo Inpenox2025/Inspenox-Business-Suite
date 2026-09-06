@@ -238,6 +238,7 @@ async function loadCompaniesSettings() {
                 tbody.appendChild(tr);
             });
         }
+        loadUsersList();
     } catch(e) {
         tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Failed to load companies settings.</td></tr>`;
     }
@@ -274,6 +275,208 @@ window.closeCompanyModal = function closeCompanyModal() {
         modal.classList.add('hidden');
         modal.style.display = 'none';
     }
+};
+
+window.toggleCompTokenVisibility = function toggleCompTokenVisibility() {
+    const input = document.getElementById('comp-access-token');
+    const btn = document.getElementById('btn-toggle-comp-token');
+    if (!input) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (btn) btn.textContent = '🔒';
+    } else {
+        input.type = 'password';
+        if (btn) btn.textContent = '👁️';
+    }
+};
+
+let allUsersList = [];
+
+window.loadUsersList = async function loadUsersList() {
+    const tbody = document.getElementById('users-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading user accounts...</span></div></td></tr>`;
+    try {
+        const res = await apiFetch('/api/auth');
+        const users = await res.json();
+        if (Array.isArray(users)) {
+            allUsersList = users;
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No users registered yet.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = '';
+            users.forEach(u => {
+                const tr = document.createElement('tr');
+                const coName = u.company_name || (u.company_id ? `Company #${u.company_id}` : 'Default Organization (All)');
+                tr.innerHTML = `
+                    <td><code style="font-size:0.8rem;">${u.id}</code></td>
+                    <td><strong style="color:var(--text-main);">${u.username}</strong></td>
+                    <td><span class="window-badge" style="background:var(--primary-light);color:var(--primary);">${coName}</span></td>
+                    <td><code style="font-size:0.8rem; text-transform:uppercase;">${u.role || 'admin'}</code></td>
+                    <td><span style="font-size:0.75rem; color:var(--text-muted);">${formatTime(u.created_at)}</span></td>
+                    <td style="text-align: right;">
+                        <button class="btn secondary sm" onclick="openResetUserPassModal('${u.id}', '${u.username}')">🔑 Reset Password</button>
+                        <button class="btn secondary sm" onclick="openUserModal('${u.id}')">Edit</button>
+                        ${u.username !== 'admin' ? `<button class="btn danger sm" onclick="deleteUser('${u.id}', '${u.username}')">Delete</button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Failed to load user accounts.</td></tr>`;
+    }
+};
+
+window.openResetUserPassModal = function openResetUserPassModal(userId, username) {
+    const modal = document.getElementById('reset-user-pass-modal');
+    if (!modal) return;
+    document.getElementById('reset-user-id').value = userId || '';
+    document.getElementById('reset-user-name').value = username || '';
+    document.getElementById('reset-user-display').value = username || 'admin';
+    document.getElementById('reset-user-new-pass').value = '';
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+};
+
+window.closeResetUserPassModal = function closeResetUserPassModal() {
+    const modal = document.getElementById('reset-user-pass-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.submitAdminResetPass = async function submitAdminResetPass(e) {
+    if (e) e.preventDefault();
+    const userId = document.getElementById('reset-user-id').value;
+    const username = document.getElementById('reset-user-name').value;
+    const newPassword = document.getElementById('reset-user-new-pass').value;
+
+    const btn = document.getElementById('btn-submit-reset-user-pass');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Resetting...';
+    }
+
+    try {
+        const res = await apiFetch('/api/auth?action=admin-reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, username, newPassword })
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeResetUserPassModal();
+            showModal('Success', `Password for user "${username}" reset successfully!`);
+        } else {
+            showModal('Error', data.error || 'Failed to reset password.');
+        }
+    } catch(err) {
+        showModal('Error', err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Update Password';
+        }
+    }
+};
+
+window.openUserModal = function openUserModal(userId = null) {
+    const modal = document.getElementById('user-modal');
+    if (!modal) return;
+    document.getElementById('user-form')?.reset();
+    document.getElementById('user-id-edit').value = '';
+    document.getElementById('user-modal-title').textContent = userId ? '👤 Edit User Account' : '👤 Add New User Account';
+
+    const selectCo = document.getElementById('user-company-select');
+    if (selectCo) {
+        selectCo.innerHTML = '<option value="default">Default Organization (All Companies)</option>';
+        if (Array.isArray(allCompanies)) {
+            allCompanies.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                selectCo.appendChild(opt);
+            });
+        }
+    }
+
+    if (userId) {
+        const u = allUsersList.find(usr => String(usr.id) === String(userId));
+        if (u) {
+            document.getElementById('user-id-edit').value = u.id;
+            document.getElementById('user-name-input').value = u.username || '';
+            document.getElementById('user-role-select').value = u.role || 'admin';
+            if (selectCo) selectCo.value = u.company_id || 'default';
+        }
+    }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+};
+
+window.closeUserModal = function closeUserModal() {
+    const modal = document.getElementById('user-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.saveUser = async function saveUser(e) {
+    if (e) e.preventDefault();
+    const id = document.getElementById('user-id-edit').value;
+    const username = document.getElementById('user-name-input').value;
+    const company_id = document.getElementById('user-company-select').value;
+    const role = document.getElementById('user-role-select').value;
+    const password = document.getElementById('user-password-input').value;
+
+    const btn = document.getElementById('btn-save-user');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Saving...';
+    }
+
+    try {
+        const res = await apiFetch('/api/auth?action=save-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, username, company_id, role, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeUserModal();
+            loadUsersList();
+            showModal('Success', `User "${username}" saved successfully!`);
+        } else {
+            showModal('Error', data.error || 'Failed to save user.');
+        }
+    } catch(err) {
+        showModal('Error', err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Save User';
+        }
+    }
+};
+
+window.deleteUser = function deleteUser(id, username) {
+    showModal('Delete User', `Are you sure you want to delete user "${username}"?`, 'confirm', async () => {
+        try {
+            const res = await apiFetch(`/api/auth?id=${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                loadUsersList();
+            } else {
+                showModal('Error', data.error || 'Failed to delete user.');
+            }
+        } catch(e) {
+            showModal('Error', 'Error deleting user.');
+        }
+    });
 };
 
 window.loadDashboard = async function loadDashboard() {
