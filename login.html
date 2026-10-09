@@ -3,84 +3,714 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inspenox Business Suite - Admin Login</title>
+    <title>Inspenox Business Suite — Omnichannel Marketing (WhatsApp Cloud API, Email & SMS)</title>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/app.css">
     <script>
-        // Redirect to main app if already logged in
+        // Redirect to dashboard if already authenticated
         if (localStorage.getItem('inspenox_token') || localStorage.getItem('induio_token')) {
             window.location.href = '/';
         }
+        // Initialize stored theme preference early
+        (function() {
+            const savedTheme = localStorage.getItem('inspenox_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
     </script>
-</head>
-<body style="margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 40%), radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.08), transparent 40%), var(--bg-dark); font-family: 'Plus Jakarta Sans', sans-serif; padding: 1.5rem 1rem;">
+    <style>
+        body {
+            height: auto !important;
+            overflow-y: auto !important;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
 
-    <div style="width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center;">
-        
-        <!-- Brand Header Logo -->
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; text-decoration: none;">
-            <div style="width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, var(--primary), #059669); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.35);">
-                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        /* Landing Navbar */
+        .landing-header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(16px);
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border);
+            padding: 0.85rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.3s ease;
+        }
+
+        .landing-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .landing-logo-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), #059669);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(0, 168, 132, 0.35);
+        }
+
+        .landing-logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .landing-logo-sub {
+            font-size: 0.7rem;
+            color: var(--primary);
+            font-weight: 600;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .landing-nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.75rem;
+        }
+
+        .landing-nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .landing-nav-link:hover {
+            color: var(--primary);
+        }
+
+        .landing-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .theme-toggle-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 10px;
+            padding: 0.45rem 0.85rem;
+            font-size: 0.825rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .landing-hero {
+            position: relative;
+            padding: 4.5rem 1.5rem 3.5rem 1.5rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            background: var(--primary-light);
+            border: 1px solid rgba(0, 168, 132, 0.3);
+            color: var(--primary);
+            font-size: 0.825rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.2px;
+        }
+
+        .hero-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.25rem;
+            font-weight: 800;
+            line-height: 1.15;
+            color: var(--text-main);
+            margin: 0 auto 1.25rem auto;
+            max-width: 900px;
+            letter-spacing: -1px;
+        }
+
+        .hero-title-highlight {
+            background: linear-gradient(135deg, var(--primary), #10b981, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            max-width: 760px;
+            margin: 0 auto 2.25rem auto;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 3.5rem;
+        }
+
+        .btn-hero-primary {
+            background: linear-gradient(135deg, var(--primary), #059669);
+            color: #ffffff;
+            padding: 0.85rem 1.85rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 168, 132, 0.35);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0, 168, 132, 0.45);
+        }
+
+        .btn-hero-secondary {
+            background: var(--bg-card);
+            color: var(--text-main);
+            padding: 0.85rem 1.65rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: border-color 0.2s ease, color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-hero-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Hero Mockup Showcase Card */
+        .hero-mockup-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: left;
+            position: relative;
+        }
+
+        .mockup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.25rem;
+        }
+
+        .mockup-dots {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .mockup-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+        }
+
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .mockup-stat-box {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.15rem;
+        }
+
+        /* Features Section */
+        .landing-section {
+            padding: 4.5rem 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 3rem auto;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 0.75rem 0;
+            letter-spacing: -0.5px;
+        }
+
+        .section-subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.75rem;
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 1.15rem;
+        }
+
+        .feature-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .feature-desc {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Omnichannel Channels Badge Grid */
+        .channels-banner {
+            background: linear-gradient(135deg, rgba(0, 168, 132, 0.1), rgba(6, 182, 212, 0.08));
+            border: 1px solid rgba(0, 168, 132, 0.25);
+            border-radius: 20px;
+            padding: 2.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+            align-items: center;
+            margin-top: 2rem;
+        }
+
+        /* Pricing Rate Box */
+        .rate-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: border-color 0.2s ease;
+        }
+
+        .rate-card:hover {
+            border-color: var(--primary);
+        }
+
+        .rate-price {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0.4rem 0;
+        }
+
+        /* Login Card Container Section */
+        .landing-auth-section {
+            padding: 4.5rem 1.5rem;
+            background: var(--bg-dark);
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-box-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.25rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+            text-align: left;
+        }
+
+        .input-with-icon input {
+            width: 100%;
+            padding: 0.75rem 0.85rem 0.75rem 2.6rem;
+            border-radius: 10px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-with-icon input:focus {
+            border-color: var(--primary);
+        }
+
+        .input-with-icon svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Footer */
+        .landing-footer {
+            border-top: 1px solid var(--border);
+            background: var(--bg-sidebar);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            font-size: 0.825rem;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .landing-header { padding: 0.75rem 1rem; }
+            .landing-nav-links { display: none; }
+            .hero-title { font-size: 2.25rem; }
+            .hero-subtitle { font-size: 0.95rem; }
+            .landing-section { padding: 3rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Landing Navigation Bar -->
+    <header class="landing-header">
+        <a href="#" class="landing-logo">
+            <div class="landing-logo-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
                 </svg>
             </div>
             <div>
-                <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.85rem; font-weight: 800; margin: 0; color: var(--text-main); letter-spacing: -0.5px;">Inspenox</h1>
-                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Business Suite</span>
+                <h1 class="landing-logo-text">Inspenox</h1>
+                <span class="landing-logo-sub">Business Suite</span>
             </div>
+        </a>
+
+        <nav class="landing-nav-links">
+            <a href="#features" class="landing-nav-link">Features</a>
+            <a href="#omnichannel" class="landing-nav-link">Omnichannel</a>
+            <a href="#pricing" class="landing-nav-link">Rates & Pricing</a>
+            <a href="#login-section" class="landing-nav-link">Sign In</a>
+        </nav>
+
+        <div class="landing-header-actions">
+            <button id="btn-theme-switcher" class="theme-toggle-btn" title="Toggle Light/Dark Theme">
+                <span id="theme-btn-icon">🌙</span>
+                <span id="theme-btn-text">Dark</span>
+            </button>
+
+            <a href="#login-section" class="btn-hero-primary" style="padding: 0.5rem 1.15rem; font-size: 0.85rem;">
+                Sign In ➔
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="landing-hero">
+        <div class="hero-badge">
+            ⚡ Direct Meta Graph API v20.0 · Omnichannel Engine
         </div>
 
-        <!-- Login Card -->
-        <div class="card" style="width: 100%; padding: 2rem; border-radius: 20px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px);">
-            
-            <div style="margin-bottom: 1.5rem;">
-                <h2 style="font-size: 1.35rem; font-weight: 700; margin: 0 0 0.35rem 0; color: var(--text-main);">Welcome Back</h2>
-                <p style="margin: 0; font-size: 0.825rem; color: var(--text-muted);">Sign in to access your broadcast dashboard and inbox.</p>
+        <h1 class="hero-title">
+            Omnichannel Marketing — <span class="hero-title-highlight">WhatsApp Cloud API, Email & SMS</span>
+        </h1>
+
+        <p class="hero-subtitle">
+            Reach millions of customers with official Meta WhatsApp Cloud API broadcasts, automated drip campaigns, bulk Email & SMS messaging, and real-time interactive customer support — all from a single unified workspace.
+        </p>
+
+        <div class="hero-cta-group">
+            <a href="#login-section" class="btn-hero-primary">
+                🚀 Sign In to Dashboard
+            </a>
+            <a href="#pricing" class="btn-hero-secondary">
+                📊 Explore Pricing & Rates
+            </a>
+        </div>
+
+        <!-- Live Product Interface Showcase Mockup -->
+        <div class="hero-mockup-card">
+            <div class="mockup-header">
+                <div class="mockup-dots">
+                    <div class="mockup-dot" style="background:#ef4444;"></div>
+                    <div class="mockup-dot" style="background:#eab308;"></div>
+                    <div class="mockup-dot" style="background:#10b981;"></div>
+                </div>
+                <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); font-family:monospace;">
+                    https://marketing.inspenox.in/#dashboard
+                </div>
+                <div style="font-size:0.75rem; color:var(--primary); font-weight:700;">
+                    ● LIVE API CONNECTED
+                </div>
+            </div>
+
+            <div class="mockup-grid">
+                <div class="mockup-stat-box">
+                    <span style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Direct Meta Cloud Spend</span>
+                    <div style="font-size:1.8rem; font-weight:800; color:var(--text-main); margin-top:0.3rem;">₹6.90</div>
+                    <span style="font-size:0.7rem; color:#10b981; font-weight:600;">⚡ Graph API v20.0 Verified</span>
+                </div>
+                <div class="mockup-stat-box">
+                    <span style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Messages Delivered</span>
+                    <div style="font-size:1.8rem; font-weight:800; color:#10b981; margin-top:0.3rem;">64 <span style="font-size:0.85rem; color:#3b82f6;">(100% Read)</span></div>
+                    <span style="font-size:0.7rem; color:var(--text-muted);">WhatsApp Cloud Broadcasts</span>
+                </div>
+                <div class="mockup-stat-box">
+                    <span style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Multi-Channel Cost</span>
+                    <div style="font-size:1.8rem; font-weight:800; color:#3b82f6; margin-top:0.3rem;">₹65.18</div>
+                    <span style="font-size:0.7rem; color:var(--text-muted);">Excl. GST: ₹55.24 | GST: ₹9.94</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Omnichannel Channel Suite Section -->
+    <section id="omnichannel" class="landing-section">
+        <div class="section-header">
+            <h2 class="section-title">One Platform, Every Customer Channel</h2>
+            <p class="section-subtitle">Connect with your audience wherever they are. Scale engagement using WhatsApp, Email, and SMS from a single dashboard.</p>
+        </div>
+
+        <div class="channels-banner">
+            <div>
+                <div class="feature-icon" style="background:rgba(16,185,129,0.15); color:#10b981;">💬</div>
+                <h3 style="font-size:1.3rem; font-weight:700; margin:0 0 0.4rem 0;">WhatsApp Cloud API</h3>
+                <p style="font-size:0.875rem; color:var(--text-muted); margin:0; line-height:1.5;">Official Meta Cloud API messaging with 99.8% open rates, media headers, action buttons, and zero-tap OTP auth.</p>
+            </div>
+            <div>
+                <div class="feature-icon" style="background:rgba(59,130,246,0.15); color:#3b82f6;">✉️</div>
+                <h3 style="font-size:1.3rem; font-weight:700; margin:0 0 0.4rem 0;">Email Marketing</h3>
+                <p style="font-size:0.875rem; color:var(--text-muted); margin:0; line-height:1.5;">Send bulk newsletter broadcasts, automated drip campaigns, and transactional emails with high inbox deliverability.</p>
+            </div>
+            <div>
+                <div class="feature-icon" style="background:rgba(168,85,247,0.15); color:#a855f7;">📱</div>
+                <h3 style="font-size:1.3rem; font-weight:700; margin:0 0 0.4rem 0;">SMS Marketing</h3>
+                <p style="font-size:0.875rem; color:var(--text-muted); margin:0; line-height:1.5;">Instant DLT-compliant bulk SMS dispatch for time-critical promotional offers, alerts, and OTP verification codes.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Features Section -->
+    <section id="features" class="landing-section">
+        <div class="section-header">
+            <h2 class="section-title">Built for High-Growth Enterprise Messaging</h2>
+            <p class="section-subtitle">Enterprise-grade tools designed for seamless campaign management, customer support, and multi-tenant organization control.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">✨</div>
+                <h3 class="feature-title">Meta Template Builder & Live Preview</h3>
+                <p class="feature-desc">Design rich WhatsApp templates with dynamic variables (<code>{{customer_name}}</code>), quick replies, call-to-action buttons, and sample media sync directly from Meta Graph API.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📥</div>
+                <h3 class="feature-title">Shared Customer Inbox & Live Chat</h3>
+                <p class="feature-desc">Manage 2-way customer conversations in real-time with automated bot replies, Excel customer contact imports, and consent certification tracking.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🏢</div>
+                <h3 class="feature-title">Multi-Tenant Account Management</h3>
+                <p class="feature-desc">Easily switch between parent and child organization accounts, manage isolated API credentials, and grant granular team permissions.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">💳</div>
+                <h3 class="feature-title">Itemized Billing & 18% GST Tax Invoices</h3>
+                <p class="feature-desc">Transparent billing breakdown displaying base usage amounts (Excl. GST) and 18% GST amounts separately, with instant UPI, Card, and Netbanking payments.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3 class="feature-title">Super Admin Overrides & Analytics</h3>
+                <p class="feature-desc">Override analytics stats, edit summary cards, and customize message usage reporting for company tenant accounts with live DB persistence.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3 class="feature-title">Security & Meta Cloud API Compliance</h3>
+                <p class="feature-desc">Strict adherence to Meta WhatsApp Business policies, end-to-end token encryption, and full compliance with regional privacy regulations.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="landing-section">
+        <div class="section-header">
+            <h2 class="section-title">Transparent & Itemized Pay-As-You-Go Rates</h2>
+            <p class="section-subtitle">No hidden monthly lock-ins. Pay only for actual delivered messages with full GST tax invoice breakdown.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem;">
+            <div class="rate-card">
+                <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">WhatsApp Marketing</span>
+                <div class="rate-price">₹0.8631</div>
+                <span style="font-size:0.75rem; color:var(--text-muted);">per delivered message</span>
+            </div>
+
+            <div class="rate-card">
+                <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">WhatsApp Utility</span>
+                <div class="rate-price">₹0.1150</div>
+                <span style="font-size:0.75rem; color:var(--text-muted);">per delivered message</span>
+            </div>
+
+            <div class="rate-card">
+                <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Email Marketing</span>
+                <div class="rate-price">₹0.0500</div>
+                <span style="font-size:0.75rem; color:var(--text-muted);">per email sent</span>
+            </div>
+
+            <div class="rate-card">
+                <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">SMS Messaging</span>
+                <div class="rate-price">₹0.2500</div>
+                <span style="font-size:0.75rem; color:var(--text-muted);">per DLT SMS sent</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sign In / Auth Section -->
+    <section id="login-section" class="landing-auth-section">
+        <div class="login-box-card">
+            <div style="margin-bottom: 1.5rem; text-align: center;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), #059669); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; box-shadow: 0 6px 18px rgba(0, 168, 132, 0.3);">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    </svg>
+                </div>
+                <h2 style="font-size: 1.45rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);">Sign In to Workspace</h2>
+                <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Enter your credentials to access your marketing dashboard & customer inbox.</p>
             </div>
 
             <!-- Error Banner -->
-            <div id="login-error-banner" style="display: none; padding: 0.65rem 0.85rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444; font-size: 0.8rem; margin-bottom: 1.25rem; text-align: left;"></div>
+            <div id="login-error-banner" style="display: none; padding: 0.65rem 0.85rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444; font-size: 0.8rem; margin-bottom: 1.25rem;"></div>
 
             <!-- Login Form -->
             <form id="login-form">
-                <div style="margin-bottom: 1.15rem; text-align: left;">
-                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem;">USERNAME OR EMAIL</label>
-                    <div class="input-with-icon">
+                <div style="margin-bottom: 1.15rem;">
+                    <label style="display: block; font-size: 0.775rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px;">Username or Email</label>
+                    <div class="input-with-icon" style="position: relative;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                         <input type="text" id="login-username" placeholder="Enter admin username" required autocomplete="username">
                     </div>
                 </div>
 
-                <div style="margin-bottom: 1.5rem; text-align: left;">
-                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem;">PASSWORD</label>
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.775rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px;">Password</label>
                     <div class="input-with-icon" style="position: relative;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                         <input type="password" id="login-password" placeholder="Enter password" required autocomplete="current-password">
-                        <button type="button" id="btn-toggle-password" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; padding: 2px;" title="Toggle Password">👁️</button>
+                        <button type="button" id="btn-toggle-password" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; padding: 2px;" title="Toggle Password">👁️</button>
                     </div>
                 </div>
 
-                <button type="submit" id="btn-login-submit" class="btn primary" style="width: 100%; justify-content: center; padding: 0.8rem; font-size: 0.925rem; font-weight: 700; border-radius: 10px;">
-                    Sign In
+                <button type="submit" id="btn-login-submit" class="btn-hero-primary" style="width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem;">
+                    Sign In to Dashboard
                 </button>
             </form>
-        </div>
 
-        <!-- Privacy & Terms Footer Links below login card -->
-        <div style="margin-top: 1.75rem; display: flex; align-items: center; justify-content: center; gap: 1.25rem; font-size: 0.775rem;">
-            <a href="#" id="link-login-privacy" style="color: var(--text-muted); text-decoration: none; transition: color 0.2s;">Privacy Policy</a>
-            <span style="color: var(--border);">•</span>
-            <a href="#" id="link-login-terms" style="color: var(--text-muted); text-decoration: none; transition: color 0.2s;">Terms of Service</a>
+            <div style="margin-top: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 1rem; font-size: 0.775rem;">
+                <a href="#" id="link-login-privacy" style="color: var(--text-muted); text-decoration: none;">Privacy Policy</a>
+                <span style="color: var(--border);">•</span>
+                <a href="#" id="link-login-terms" style="color: var(--text-muted); text-decoration: none;">Terms of Service</a>
+            </div>
         </div>
-        
-        <div style="margin-top: 0.75rem; font-size: 0.725rem; color: var(--text-muted); opacity: 0.7;">
-            Powered by WhatsApp Meta Cloud API
-        </div>
+    </section>
 
-    </div>
+    <!-- Landing Footer -->
+    <footer class="landing-footer">
+        <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-main);">
+            Inspenox Business Suite — Business Messaging Platform
+        </div>
+        <div>
+            Powered by WhatsApp Meta Cloud API · All Rights Reserved © 2026 Inspenox
+        </div>
+    </footer>
 
     <!-- Privacy Policy Modal -->
     <div id="login-privacy-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);">
@@ -89,7 +719,7 @@
                 <h3 style="margin: 0; color: var(--text-main);">🔒 Privacy Policy</h3>
                 <button type="button" id="btn-close-privacy-modal" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem;">✕</button>
             </div>
-            <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">Inspenox Business Suite operates as a WhatsApp Cloud API business management suite. All customer contact details, messages, and broadcast lists are stored securely in your private database. We strictly comply with Meta WhatsApp Cloud API policies and data protection guidelines.</p>
+            <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">Inspenox Business Suite operates as an official WhatsApp Cloud API business management suite. All customer contact details, messages, and broadcast lists are stored securely in your private database. We strictly comply with Meta WhatsApp Cloud API policies and data protection guidelines.</p>
         </div>
     </div>
 
@@ -105,6 +735,32 @@
     </div>
 
     <script>
+        // Light / Dark Theme Switcher Logic
+        const themeBtn = document.getElementById('btn-theme-switcher');
+        const themeIcon = document.getElementById('theme-btn-icon');
+        const themeText = document.getElementById('theme-btn-text');
+
+        function updateThemeUI(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('inspenox_theme', theme);
+            if (theme === 'light') {
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark';
+            }
+        }
+
+        const initialTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        updateThemeUI(initialTheme);
+
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            updateThemeUI(nextTheme);
+        });
+
         // Password toggle
         const toggleBtn = document.getElementById('btn-toggle-password');
         const passInput = document.getElementById('login-password');
@@ -130,7 +786,7 @@
         document.getElementById('btn-close-privacy-modal').addEventListener('click', () => privacyModal.classList.add('hidden'));
         document.getElementById('btn-close-terms-modal').addEventListener('click', () => termsModal.classList.add('hidden'));
 
-        // Login Submit Form
+        // Login Form Submit Handler
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('login-username').value.trim();
@@ -170,7 +826,7 @@
                 errorBanner.style.display = 'block';
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Sign In';
+                submitBtn.innerHTML = 'Sign In to Dashboard';
             }
         });
     </script>
