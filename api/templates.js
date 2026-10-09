@@ -102,6 +102,16 @@ module.exports = async (req, res) => {
 
             const formattedName = name.toLowerCase().trim().replace(/[^a-z0-9_]/g, '_');
 
+            // Validate media header components require example.header_handle
+            const headerComp = components.find(c => c.type === 'HEADER');
+            if (headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
+                if (!headerComp.example || (!headerComp.example.header_handle && !headerComp.example.header_url)) {
+                    return res.status(400).json({
+                        error: `Header component of type ${headerComp.format} is missing expected field(s) (example). Please upload a sample ${headerComp.format.toLowerCase()} file.`
+                    });
+                }
+            }
+
             const payloadToMeta = {
                 name: formattedName,
                 category: category.toUpperCase(),
