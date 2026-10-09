@@ -8,28 +8,36 @@ module.exports = async (req, res) => {
         const { target, type, content, media_id, media_type, template_name, template_language, company_id } = req.body;
 
         const sql = getDb(env);
-        let customersToMessage = [];
-        const targetCompanyId = company_id || 1;
 
+        const rawCompanyHeader = req.headers['x-company-id'];
+        const companyId = (company_id !== undefined && company_id !== null && String(company_id).trim() !== '') 
+            ? parseInt(company_id) 
+            : (rawCompanyHeader ? parseInt(rawCompanyHeader) : 1);
+
+        let customersToMessage = [];
         if (target === 'all') {
-            customersToMessage = await sql`SELECT id, name, phone FROM customers WHERE company_id = ${targetCompanyId} OR company_id IS NULL`;
+            customersToMessage = await sql`SELECT id, name, phone, company_id FROM customers WHERE company_id = ${companyId} OR company_id IS NULL`;
         } else if (Array.isArray(target)) {
-            customersToMessage = await sql`SELECT id, name, phone FROM customers WHERE id = ANY(${target})`;
+            customersToMessage = await sql`SELECT id, name, phone, company_id FROM customers WHERE id = ANY(${target})`;
         } else {
             return res.status(400).json({ error: 'Invalid target' });
         }
 
         let phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
         let token = env.WHATSAPP_ACCESS_TOKEN;
+        let wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
 
-        if (company_id) {
+        if (companyId) {
             try {
-                const cos = await sql`SELECT * FROM companies WHERE id = ${company_id} LIMIT 1`;
-                if (cos.length > 0 && cos[0].whatsapp_phone_number_id && cos[0].whatsapp_access_token) {
-                    phoneId = cos[0].whatsapp_phone_number_id;
-                    token = cos[0].whatsapp_access_token;
+                const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
+                if (cos.length > 0) {
+                    if (cos[0].whatsapp_phone_number_id) phoneId = cos[0].whatsapp_phone_number_id;
+                    if (cos[0].whatsapp_access_token) token = cos[0].whatsapp_access_token;
+                    if (cos[0].whatsapp_business_account_id) wabaId = cos[0].whatsapp_business_account_id;
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.error('Error fetching company Meta credentials for broadcast:', e);
+            }
         }
 
         const url = `https://graph.facebook.com/v19.0/${phoneId}/messages`;
@@ -304,7 +312,7 @@ module.exports = async (req, res) => {
                 const saveContent = type === 'template' ? `[Template] ${template_name}` : content;
                 await sql`
                     INSERT INTO messages (company_id, customer_id, direction, type, content, wa_message_id, status) 
-                    VALUES (${targetCompanyId}, ${cust.id}, 'outbound', ${type}, ${saveContent}, ${wa_message_id}, 'sent')
+                    VALUES (${companyId}, ${cust.id}, 'outbound', ${type}, ${saveContent}, ${wa_message_id}, 'sent')
                 `;
             }
 
@@ -316,7 +324,7 @@ module.exports = async (req, res) => {
         const campaignContent = type === 'template' ? `Template: ${template_name}` : content;
         await sql`
             INSERT INTO campaigns (company_id, name, message_type, content, sent_count, failed_count) 
-            VALUES (${targetCompanyId}, ${'Broadcast ' + new Date().toISOString()}, ${type}, ${campaignContent}, ${sent}, ${failed})
+            VALUES (${companyId}, ${'Broadcast ' + new Date().toISOString()}, ${type}, ${campaignContent}, ${sent}, ${failed})
         `;
 
         return res.status(200).json({ success: true, sent, failed, errors });

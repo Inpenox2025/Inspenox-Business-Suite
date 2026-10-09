@@ -4385,10 +4385,11 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
             updateBcProgress(i, targetList.length, sentTotal, failedTotal, `⏳ Sending to ${chunkNames}...`);
 
             try {
+                const activeCoId = typeof getActiveCompanyId === 'function' ? getActiveCompanyId() : null;
                 const res = await apiFetch('/api/broadcast', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ target: chunkIds, type, content, media_id, media_type, template_name, template_language })
+                    body: JSON.stringify({ target: chunkIds, type, content, media_id, media_type, template_name, template_language, company_id: activeCoId })
                 });
                 
                 const result = await res.json();
@@ -4891,6 +4892,7 @@ function getChatDateHeader(dateStr) {
 
 let lastChatMsgCount = 0;
 let lastChatLatestMsgId = null;
+let lastChatStatusHash = '';
 
 async function fetchChatMessages(isInitial = false) {
     if(!activeInboxCustomer) return;
@@ -4900,6 +4902,7 @@ async function fetchChatMessages(isInitial = false) {
     if (isInitial) {
         lastChatMsgCount = 0;
         lastChatLatestMsgId = null;
+        lastChatStatusHash = '';
         chatContainer.innerHTML = `<div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading conversation history...</span></div>`;
     }
 
@@ -4913,9 +4916,10 @@ async function fetchChatMessages(isInitial = false) {
 
         const latestMsg = messages.length > 0 ? messages[messages.length - 1] : null;
         const latestMsgId = latestMsg ? (latestMsg.id || latestMsg.created_at) : null;
+        const currentStatusHash = messages.map(m => `${m.id}:${m.status}`).join('|');
 
-        // Skip DOM re-render on polling if message count and latest message ID haven't changed
-        if (!isInitial && messages.length === lastChatMsgCount && latestMsgId === lastChatLatestMsgId) {
+        // Skip DOM re-render on polling if message count, latest message ID, AND status hash haven't changed
+        if (!isInitial && messages.length === lastChatMsgCount && latestMsgId === lastChatLatestMsgId && currentStatusHash === lastChatStatusHash) {
             return;
         }
 
@@ -4923,6 +4927,7 @@ async function fetchChatMessages(isInitial = false) {
 
         lastChatMsgCount = messages.length;
         lastChatLatestMsgId = latestMsgId;
+        lastChatStatusHash = currentStatusHash;
 
         chatContainer.innerHTML = '';
         
