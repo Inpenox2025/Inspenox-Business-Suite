@@ -1172,8 +1172,17 @@ const CUSTOMERS_PER_PAGE = 10;
 function showModal(title, message, type = 'info', onConfirm = null, confirmText = 'OK', confirmClass = null) {
     const overlay = document.getElementById('app-modal');
     if (!overlay) return;
-    document.getElementById('modal-title').textContent = title;
-    document.getElementById('modal-message').textContent = message;
+    const titleEl = document.getElementById('modal-title');
+    if (titleEl) titleEl.textContent = title;
+
+    const msgEl = document.getElementById('modal-message');
+    if (msgEl) {
+        if (typeof message === 'string' && message.includes('<') && message.includes('>')) {
+            msgEl.innerHTML = message;
+        } else {
+            msgEl.textContent = message;
+        }
+    }
     
     const confirmBtn = document.getElementById('modal-confirm-btn');
     const cancelBtn = document.getElementById('modal-cancel-btn');
@@ -1182,6 +1191,18 @@ function showModal(title, message, type = 'info', onConfirm = null, confirmText 
     confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
     const newCancel = cancelBtn.cloneNode(true);
     cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+    newConfirm.disabled = false;
+    newConfirm.removeAttribute('disabled');
+    newConfirm.style.pointerEvents = 'auto';
+    newConfirm.style.opacity = '1';
+    newConfirm.style.cursor = 'pointer';
+
+    newCancel.disabled = false;
+    newCancel.removeAttribute('disabled');
+    newCancel.style.pointerEvents = 'auto';
+    newCancel.style.opacity = '1';
+    newCancel.style.cursor = 'pointer';
 
     if (type === 'confirm') {
         newCancel.style.display = 'inline-block';
@@ -3364,11 +3385,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateLivePreview();
     });
 
-    // Button Type Select
-    document.getElementById('tpl-button-type')?.addEventListener('change', (e) => {
-        updateButtonInputs(e.target.value);
-    });
-
     // Submit Template for Review
     document.getElementById('btn-submit-tpl')?.addEventListener('click', async () => {
         const name = document.getElementById('tpl-name')?.value.trim();
@@ -3390,6 +3406,30 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const submitBtn = document.getElementById('btn-submit-tpl');
+        const origBtnText = submitBtn ? (submitBtn.dataset.origText || submitBtn.innerHTML) : 'Submit Template to Meta';
+
+        const resetSubmitBtn = () => {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.pointerEvents = 'auto';
+                submitBtn.innerHTML = origBtnText;
+            }
+        };
+
+        if (submitBtn) {
+            submitBtn.dataset.origText = origBtnText;
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.6';
+            submitBtn.style.pointerEvents = 'none';
+            if (['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerType) && currentMediaSampleFile) {
+                submitBtn.innerHTML = '<span class="spinner"></span> Uploading sample media to Meta...';
+            } else {
+                submitBtn.innerHTML = '<span class="spinner"></span> Submitting to Meta...';
+            }
+        }
+
         // Validate Zero-Tap Consent Box if Zero-Tap is selected
         if (category === 'AUTHENTICATION') {
             const otpRadio = document.querySelector('input[name="otp-type"]:checked')?.value;
@@ -3398,6 +3438,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (otpRadio === 'zero_tap' && consentCb && !consentCb.checked) {
                 if (errBanner) errBanner.style.display = 'flex';
+                resetSubmitBtn();
                 return;
             } else if (errBanner) {
                 errBanner.style.display = 'none';
@@ -3435,6 +3476,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     handle = await getMetaHeaderHandle(currentMediaSampleFile);
                 } catch (err) {
                     console.error('Sample media upload error:', err);
+                    resetSubmitBtn();
                     showModal('Sample Media Upload Error', `Failed to upload sample ${headerType.toLowerCase()} to Meta: ${err.message}. Please select the file again.`);
                     return;
                 }
@@ -3461,6 +3503,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     example: { header_handle: [handle] }
                 });
             } else {
+                resetSubmitBtn();
                 showModal('Sample File Required', `Meta requires a sample ${headerType.toLowerCase()} file for template verification. Please drag & drop or select a sample ${headerType.toLowerCase()} file in the "Upload sample media file" box.`);
                 return;
             }
@@ -3552,8 +3595,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 buttons: buttonsArray
             });
         } else if (category === 'AUTHENTICATION') {
-            const otpType = document.querySelector('input[name="otp-type"]:checked')?.value || 'copy_code';
-            if (otpType === 'copy_code') {
+            const otpRadio = document.querySelector('input[name="otp-type"]:checked')?.value || 'copy_code';
+            if (otpRadio === 'copy_code') {
                 components.push({
                     type: 'BUTTONS',
                     buttons: [{ type: 'OTP', otp_type: 'COPY_CODE', text: 'Copy Code' }]
@@ -3585,13 +3628,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        const submitBtn = document.getElementById('btn-submit-tpl');
-        const origBtnText = submitBtn ? (submitBtn.dataset.origText || submitBtn.innerHTML) : 'Submit Template to Meta';
         if (submitBtn) {
-            submitBtn.dataset.origText = origBtnText;
-            submitBtn.disabled = true;
-            submitBtn.style.opacity = '0.6';
-            submitBtn.style.pointerEvents = 'none';
             submitBtn.innerHTML = '<span class="spinner"></span> Submitting to Meta...';
         }
 
@@ -3621,34 +3658,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
 
             if (data.error) {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.style.opacity = '1';
-                    submitBtn.style.pointerEvents = 'auto';
-                    submitBtn.innerHTML = origBtnText;
-                }
+                resetSubmitBtn();
                 showModal('Meta Submission Error', data.error);
             } else {
                 closeTemplateModal();
                 editingTemplateId = null;
                 const nameInput = document.getElementById('tpl-name');
                 if (nameInput) nameInput.disabled = false;
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.style.opacity = '1';
-                    submitBtn.style.pointerEvents = 'auto';
-                    submitBtn.innerHTML = origBtnText;
-                }
+                resetSubmitBtn();
                 showModal('Success!', isEdit ? `Template "${name}" updated in Meta Cloud API successfully!` : `Template "${name}" created and submitted to Meta for review successfully! Status: ${data.template?.status || 'PENDING'}`);
                 loadTemplates();
             }
         } catch (err) {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
-                submitBtn.style.pointerEvents = 'auto';
-                submitBtn.innerHTML = origBtnText;
-            }
+            resetSubmitBtn();
             showModal('Error', 'Failed to connect to template API: ' + err.message);
         }
     });
