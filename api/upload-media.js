@@ -18,6 +18,7 @@ module.exports = async (req, res) => {
         let handle = null;
         let mediaId = null;
 
+        
         if (token) {
             // Step A: Attempt Resumable Upload Session API to get handle 'h' for template headers
             try {

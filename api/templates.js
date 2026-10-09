@@ -112,6 +112,7 @@ module.exports = async (req, res) => {
                 }
             }
 
+            
             const payloadToMeta = {
                 name: formattedName,
                 category: category.toUpperCase(),

@@ -207,6 +207,7 @@ module.exports = async (req, res) => {
                     }
                 }
 
+                
                 // Strategy 2: Fallback variation trials if template metadata was unavailable or failed
                 if (!responseData) {
                     const baseHeaderComp = [];

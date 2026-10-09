@@ -87,6 +87,7 @@ module.exports = async (req, res) => {
                     console.error('Failed to fetch template metadata:', e);
                 }
             }
+            
 
             const primaryLang = template_language || (templateMeta ? templateMeta.language : 'en');
             const langCodes = [primaryLang];
