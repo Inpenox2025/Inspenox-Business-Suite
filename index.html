@@ -7,15 +7,28 @@
     <title>Inspenox Business Suite - WhatsApp Business Platform</title>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="/app.css">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <!-- SheetJS for Excel parsing -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <script>
-        // Redirect to login if not authenticated
-        if (!localStorage.getItem('inspenox_token') && !localStorage.getItem('induio_token')) {
-            window.location.href = '/login.html';
+        // Redirect to login if not authenticated & prevent back-button navigation after logout
+        function checkAuthAndRedirect() {
+            const hasAuth = localStorage.getItem('inspenox_token') || localStorage.getItem('induio_token');
+            if (!hasAuth) {
+                window.location.replace('/login.html');
+            }
         }
+        checkAuthAndRedirect();
+        window.addEventListener('pageshow', function (event) {
+            checkAuthAndRedirect();
+        });
+        window.addEventListener('popstate', function () {
+            checkAuthAndRedirect();
+        });
     </script>
 </head>
 

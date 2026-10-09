@@ -1493,7 +1493,8 @@ document.addEventListener('click', (e) => {
         localStorage.removeItem('inspenox_user');
         localStorage.removeItem('induio_token');
         localStorage.removeItem('induio_user');
-        window.location.href = '/login.html';
+        try { sessionStorage.clear(); } catch(err) {}
+        window.location.replace('/login.html');
         return;
     }
 });
