@@ -409,8 +409,9 @@ module.exports = async (req, res) => {
             const e_cnt = parseInt(cu.email_count || 0);
             const s_cnt = parseInt(cu.sms_count || 0);
             const total_out = m_cnt + u_cnt + a_cnt + e_cnt + s_cnt;
-            const base_cost = (m_cnt * RATES.whatsapp_marketing) + (u_cnt * RATES.whatsapp_utility) + (a_cnt * RATES.whatsapp_authentication) + (e_cnt * RATES.email) + (s_cnt * RATES.sms);
-            const c_cost_with_gst = base_cost * 1.18; // Includes 18% GST
+            const base_c = (m_cnt * RATES.whatsapp_marketing) + (u_cnt * RATES.whatsapp_utility) + (a_cnt * RATES.whatsapp_authentication) + (e_cnt * RATES.email) + (s_cnt * RATES.sms);
+            const gst_amt = base_c * 0.18;
+            const c_cost_with_gst = base_c + gst_amt;
             return {
                 id: cu.id,
                 name: cu.name,
@@ -420,6 +421,8 @@ module.exports = async (req, res) => {
                 email_count: e_cnt,
                 sms_count: s_cnt,
                 total_outbound: total_out,
+                base_cost: parseFloat(base_c.toFixed(2)),
+                gst_amount: parseFloat(gst_amt.toFixed(2)),
                 est_cost: parseFloat(c_cost_with_gst.toFixed(2))
             };
         });
@@ -472,7 +475,10 @@ module.exports = async (req, res) => {
             cu.total_outbound = cu.wa_marketing_count + cu.wa_utility_count + cu.wa_auth_count + cu.email_count + cu.sms_count;
 
             const base_c = (cu.wa_marketing_count * RATES.whatsapp_marketing) + (cu.wa_utility_count * RATES.whatsapp_utility) + (cu.wa_auth_count * RATES.whatsapp_authentication) + (cu.email_count * RATES.email) + (cu.sms_count * RATES.sms);
-            cu.est_cost = parseFloat((base_c * 1.18).toFixed(2));
+            const gst_amt = base_c * 0.18;
+            cu.base_cost = parseFloat(base_c.toFixed(2));
+            cu.gst_amount = parseFloat(gst_amt.toFixed(2));
+            cu.est_cost = parseFloat((base_c + gst_amt).toFixed(2));
         });
 
         // Apply Superadmin Manual Overrides to Multi-Tenant Company Usage Breakdown
@@ -489,22 +495,36 @@ module.exports = async (req, res) => {
                 cu.total_outbound = cu.wa_marketing_count + cu.wa_utility_count + cu.wa_auth_count + cu.email_count + cu.sms_count;
                 if (ov.est_cost !== undefined) {
                     cu.est_cost = parseFloat(ov.est_cost);
+                    cu.base_cost = parseFloat((cu.est_cost / 1.18).toFixed(2));
+                    cu.gst_amount = parseFloat((cu.est_cost - cu.base_cost).toFixed(2));
                 } else {
                     const base_c = (cu.wa_marketing_count * RATES.whatsapp_marketing) + (cu.wa_utility_count * RATES.whatsapp_utility) + (cu.wa_auth_count * RATES.whatsapp_authentication) + (cu.email_count * RATES.email) + (cu.sms_count * RATES.sms);
-                    cu.est_cost = parseFloat((base_c * 1.18).toFixed(2));
+                    const gst_amt = base_c * 0.18;
+                    cu.base_cost = parseFloat(base_c.toFixed(2));
+                    cu.gst_amount = parseFloat(gst_amt.toFixed(2));
+                    cu.est_cost = parseFloat((base_c + gst_amt).toFixed(2));
                 }
             }
         });
 
         let calculated_total_est_cost = 0;
+        let calculated_total_base_cost = 0;
+        let calculated_total_gst_amount = 0;
+
         if (companyId && companyId !== 'default') {
             const myCo = company_usage_list.find(cu => String(cu.id) === String(companyId));
             if (myCo) {
                 calculated_total_est_cost = myCo.est_cost;
+                calculated_total_base_cost = myCo.base_cost;
+                calculated_total_gst_amount = myCo.gst_amount;
             } else {
-                calculated_total_est_cost = total_est_cost;
+                calculated_total_base_cost = total_est_cost;
+                calculated_total_gst_amount = total_est_cost * 0.18;
+                calculated_total_est_cost = total_est_cost * 1.18;
             }
         } else {
+            calculated_total_base_cost = company_usage_list.reduce((acc, cu) => acc + (cu.base_cost || 0), 0);
+            calculated_total_gst_amount = company_usage_list.reduce((acc, cu) => acc + (cu.gst_amount || 0), 0);
             calculated_total_est_cost = company_usage_list.reduce((acc, cu) => acc + (cu.est_cost || 0), 0);
         }
 
@@ -538,6 +558,8 @@ module.exports = async (req, res) => {
                 whatsapp: parseFloat(est_wa_cost.toFixed(4)),
                 email: parseFloat(est_email_cost.toFixed(4)),
                 sms: parseFloat(est_sms_cost.toFixed(4)),
+                subtotal: parseFloat(calculated_total_base_cost.toFixed(2)),
+                gst_amount: parseFloat(calculated_total_gst_amount.toFixed(2)),
                 total: parseFloat(calculated_total_est_cost.toFixed(2))
             },
             company_usage: company_usage_list,

@@ -684,8 +684,18 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         if (elTotalMsgs) elTotalMsgs.textContent = metaInsights.total_sent || data.messages_sent || 0;
 
         const totalCostVal = data.estimated_costs?.total || 0;
+        const subtotalVal = data.estimated_costs?.subtotal || (totalCostVal / 1.18);
+        const gstVal = data.estimated_costs?.gst_amount || (totalCostVal - subtotalVal);
         window.latestTotalCost = totalCostVal;
+        window.latestSubtotal = subtotalVal;
+        window.latestGst = gstVal;
+
         if (elTotalCost) elTotalCost.textContent = `₹${totalCostVal.toFixed(2)}`;
+
+        const elCostSubtext = document.getElementById('usage-stat-cost-subtext');
+        if (elCostSubtext) {
+            elCostSubtext.innerHTML = `Excl. GST: <strong>₹${subtotalVal.toFixed(2)}</strong> + 18% GST: <strong>₹${gstVal.toFixed(2)}</strong>`;
+        }
 
         // Show Pay Bill Now container for registered logged-in company users
         const payContainer = document.getElementById('pay-now-container');
@@ -744,9 +754,11 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                 tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">No company API usage data recorded yet.</td></tr>`;
             } else {
                 tbodyCompanies.innerHTML = usageList.map(u => {
+                    const baseCost = u.base_cost || (u.est_cost / 1.18);
+                    const gstAmount = u.gst_amount || (u.est_cost - baseCost);
                     const actionTd = isParent ? 
                         `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editCompanyUsageModal('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.wa_marketing_count}, ${u.wa_utility_count}, ${u.wa_auth_count}, ${u.email_count}, ${u.sms_count}, ${u.est_cost})">✏️ Edit</button></td>` : 
-                        `<td style="text-align:center;"><button class="btn primary sm" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#10b981; border:none; font-weight:700;" onclick="triggerCompanyPayment('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.est_cost})">💳 Pay Charges</button></td>`;
+                        `<td style="text-align:center;"><button class="btn primary sm" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#10b981; border:none; font-weight:700;" onclick="triggerCompanyPayment('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.est_cost}, ${baseCost}, ${gstAmount})">💳 Pay Charges</button></td>`;
                     return `
                     <tr>
                         <td><strong style="color:var(--text-main);">${u.name}</strong></td>
@@ -756,7 +768,12 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                         <td><code>${u.email_count}</code></td>
                         <td><code>${u.sms_count}</code></td>
                         <td><strong>${u.total_outbound}</strong></td>
-                        <td style="text-align: right;"><strong style="color:var(--primary); font-size:1.05rem;">₹${u.est_cost.toFixed(2)}</strong></td>
+                        <td style="text-align: right;">
+                            <strong style="color:var(--primary); font-size:1.05rem; display:block;">₹${u.est_cost.toFixed(2)} <span style="font-size:0.7rem; color:#10b981; font-weight:600;">(Incl. GST)</span></strong>
+                            <span style="font-size:0.725rem; color:var(--text-muted); display:block; font-weight:500; margin-top:0.15rem;">
+                                Excl. GST: ₹${baseCost.toFixed(2)} | GST 18%: ₹${gstAmount.toFixed(2)}
+                            </span>
+                        </td>
                         ${actionTd}
                     </tr>
                 `;
@@ -771,17 +788,30 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
 };
 
 // Payment Flow for Logged-In Registered Companies
-window.triggerCompanyPayment = function(id, name, amount) {
+window.triggerCompanyPayment = function(id, name, amount, baseCost, gstAmt) {
     const currentCompany = getStoredCompany();
     const compName = name || currentCompany?.name || 'Registered Account';
     const totalAmt = (amount !== undefined && amount !== null) ? amount : (window.latestTotalCost || 0);
+    const baseVal = (baseCost !== undefined && baseCost !== null) ? baseCost : (window.latestSubtotal || (totalAmt / 1.18));
+    const gstVal = (gstAmt !== undefined && gstAmt !== null) ? gstAmt : (window.latestGst || (totalAmt - baseVal));
 
     const paymentModalHtml = `
         <div style="display:flex; flex-direction:column; gap:1rem;">
-            <div style="background:rgba(16,185,129,0.1); border:1px solid #10b981; padding:1rem; border-radius:10px; text-align:center;">
-                <span style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Total Outstanding Balance (inc. 18% GST)</span>
-                <div style="font-size:2.4rem; font-weight:800; color:#10b981; margin-top:0.2rem; letter-spacing:-0.5px;">₹${parseFloat(totalAmt).toFixed(2)}</div>
-                <span style="font-size:0.8rem; color:var(--text-main); font-weight:600;">Account: ${compName}</span>
+            <div style="background:rgba(16,185,129,0.08); border:1px solid #10b981; padding:1rem; border-radius:10px;">
+                <div style="font-size:0.78rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:0.6rem; text-align:center;">Itemized Bill & Tax Invoice</div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem; font-size:0.85rem;">
+                    <span style="color:var(--text-muted);">Base Usage Amount (Excl. GST):</span>
+                    <strong style="color:var(--text-main);">₹${parseFloat(baseVal).toFixed(2)}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem; font-size:0.85rem; border-bottom:1px dashed var(--border); padding-bottom:0.5rem;">
+                    <span style="color:var(--text-muted);">GST (18%):</span>
+                    <strong style="color:var(--text-main);">+ ₹${parseFloat(gstVal).toFixed(2)}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.4rem;">
+                    <span style="font-size:0.85rem; font-weight:700; color:var(--text-main);">Total Payable (Incl. GST):</span>
+                    <strong style="font-size:1.8rem; font-weight:800; color:#10b981;">₹${parseFloat(totalAmt).toFixed(2)}</strong>
+                </div>
+                <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:0.4rem;">Account: <strong>${compName}</strong></div>
             </div>
 
             <div style="font-size:0.85rem;">
