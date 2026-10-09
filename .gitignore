@@ -10,3 +10,5 @@
 
 .wrangler
 .env*.local
+Induio/
+.gitmodules
