@@ -5,7 +5,7 @@ module.exports = async (req, res) => {
 
     try {
         const env = req.env || process.env || {};
-        const { customer_id, type, content, media_id, template_name, template_language, company_id } = req.body;
+        const { customer_id, type, content, media_id, media_type, template_name, template_language, company_id } = req.body;
 
         if (!customer_id || !type) {
             return res.status(400).json({ error: 'Missing customer_id or type' });

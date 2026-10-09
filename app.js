@@ -2233,6 +2233,33 @@ window.deleteTemplate = function deleteTemplate(name, id) {
     });
 };
 
+function checkSelectedTemplateMediaRequirement() {
+    const type = document.getElementById('bc-type')?.value;
+    const mediaGroup = document.getElementById('bc-media-group');
+    if (!mediaGroup) return;
+
+    if (type === 'template') {
+        const tSel = document.getElementById('bc-template');
+        const selectedName = tSel ? tSel.value : null;
+        const tmpl = (templatesCache || []).find(t => t.name === selectedName);
+        const headerComp = tmpl && tmpl.components ? tmpl.components.find(c => c.type === 'HEADER') : null;
+
+        if (headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
+            const mediaFormat = headerComp.format.toLowerCase();
+            mediaGroup.style.display = 'block';
+            const label = document.getElementById('bc-media-group-label') || mediaGroup.querySelector('label');
+            if (label) label.textContent = `Attach Template Header ${headerComp.format} (Required by Meta)`;
+            loadMediaForSelect(mediaFormat === 'video' ? 'video' : 'image');
+            return;
+        }
+    }
+
+    if (type !== 'image' && type !== 'video') {
+        mediaGroup.style.display = 'none';
+    }
+}
+window.checkSelectedTemplateMediaRequirement = checkSelectedTemplateMediaRequirement;
+
 async function loadTemplatesForSelect() {
     if(templatesCache.length === 0) await loadTemplates();
     const select = document.getElementById('bc-template');
@@ -2247,6 +2274,7 @@ async function loadTemplatesForSelect() {
             });
         }
     }
+    checkSelectedTemplateMediaRequirement();
 }
 
 // Meta Template Modal Setup & Logic
@@ -4060,19 +4088,20 @@ const bcType = document.getElementById('bc-type');
 bcType?.addEventListener('change', (e) => {
     const type = e.target.value;
     document.getElementById('bc-template-group').style.display = type === 'template' ? 'block' : 'none';
-    document.getElementById('bc-media-group').style.display = (type === 'image' || type === 'video' || type === 'template') ? 'block' : 'none';
     document.getElementById('bc-content-group').style.display = type === 'template' ? 'none' : 'block';
     
-    const mediaLabel = document.getElementById('bc-media-group-label');
-    if (mediaLabel) {
-        mediaLabel.textContent = type === 'template' 
-            ? 'Attach Template Header IMAGE (Required by Meta)' 
-            : 'Attach Media';
-    }
-
-    if (type === 'image' || type === 'video' || type === 'template') {
+    if (type === 'image' || type === 'video') {
+        document.getElementById('bc-media-group').style.display = 'block';
+        const mediaLabel = document.getElementById('bc-media-group-label') || document.getElementById('bc-media-group')?.querySelector('label');
+        if (mediaLabel) mediaLabel.textContent = "Attach Media";
         loadMediaForSelect(type);
+    } else {
+        checkSelectedTemplateMediaRequirement();
     }
+});
+
+document.getElementById('bc-template')?.addEventListener('change', () => {
+    checkSelectedTemplateMediaRequirement();
 });
 
 document.getElementById('bc-media')?.addEventListener('change', (e) => {
@@ -4320,11 +4349,17 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
             }
         }
 
-        let template_name, template_language;
-        if(type === 'template') {
+        let template_name, template_language, media_type = null;
+        if (type === 'template') {
             const tSel = document.getElementById('bc-template');
             template_name = tSel.value;
             template_language = tSel.options[tSel.selectedIndex].getAttribute('data-lang');
+
+            const tmpl = (templatesCache || []).find(t => t.name === template_name);
+            const headerComp = tmpl && tmpl.components ? tmpl.components.find(c => c.type === 'HEADER') : null;
+            if (headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
+                media_type = headerComp.format.toLowerCase();
+            }
         }
 
         // Display Full-Screen Live Progress Overlay Modal
@@ -4353,7 +4388,7 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                 const res = await apiFetch('/api/broadcast', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ target: chunkIds, type, content, media_id, template_name, template_language })
+                    body: JSON.stringify({ target: chunkIds, type, content, media_id, media_type, template_name, template_language })
                 });
                 
                 const result = await res.json();
@@ -5047,8 +5082,8 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
                     </select>
                 </div>
 
-                <div style="border-top:1px solid var(--border); padding-top:0.85rem; margin-top:0.85rem;">
-                    <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.4rem; font-weight:600;">Attach Template Header IMAGE (Required by Meta):</label>
+                <div id="modal-template-media-group" style="display:none; border-top:1px solid var(--border); padding-top:0.85rem; margin-top:0.85rem;">
+                    <label id="modal-template-media-label" style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.4rem; font-weight:600;">Attach Template Header IMAGE (Required by Meta):</label>
                     
                     <div style="margin-bottom:0.75rem;">
                         <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Option 1: Choose from Media Library</label>
@@ -5077,17 +5112,27 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
             const templateName = selectEl.value;
             const templateLang = selectEl.options[selectEl.selectedIndex].getAttribute('data-lang') || 'en_US';
             
-            let media_id = mediaSelectEl?.value || null;
+            const tmpl = templates.find(t => t.name === templateName);
+            const headerComp = tmpl && tmpl.components ? tmpl.components.find(c => c.type === 'HEADER') : null;
+            const requiresMedia = headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format);
 
-            if (!media_id && fileInputEl && fileInputEl.files && fileInputEl.files.length > 0) {
-                try {
-                    const file = fileInputEl.files[0];
-                    const configRes = await apiFetch('/api/config');
-                    const config = await configRes.json();
-                    const metaData = await uploadMediaToMetaFast(file, config);
-                    media_id = metaData.id;
-                } catch (err) {
-                    console.error('Error uploading media for template modal:', err);
+            let media_id = null;
+            let media_type = null;
+
+            if (requiresMedia) {
+                media_type = headerComp.format.toLowerCase();
+                if (mediaSelectEl && mediaSelectEl.value) {
+                    media_id = mediaSelectEl.value;
+                } else if (fileInputEl && fileInputEl.files && fileInputEl.files.length > 0) {
+                    try {
+                        const file = fileInputEl.files[0];
+                        const configRes = await apiFetch('/api/config');
+                        const config = await configRes.json();
+                        const metaData = await uploadMediaToMetaFast(file, config);
+                        media_id = metaData.id;
+                    } catch (err) {
+                        console.error('Error uploading media for template modal:', err);
+                    }
                 }
             }
             
@@ -5099,7 +5144,8 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
                     type: 'template',
                     template_name: templateName,
                     template_language: templateLang,
-                    media_id: media_id
+                    media_id: media_id,
+                    media_type: media_type
                 })
             });
             const result = await sendRes.json();
@@ -5113,16 +5159,36 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
         const msgEl = document.getElementById('modal-message');
         if (msgEl) {
             msgEl.innerHTML = modalHtml;
+            const tSelect = document.getElementById('modal-template-select');
+            const mediaSelectEl = document.getElementById('modal-media-select');
             const fileInputEl = document.getElementById('modal-media-file');
+            const dropzoneText = document.getElementById('modal-dropzone-text');
+
             fileInputEl?.addEventListener('change', (e) => {
                 const file = e.target.files[0];
-                const dropzoneText = document.getElementById('modal-dropzone-text');
-                const mediaSelect = document.getElementById('modal-media-select');
-                if (mediaSelect) mediaSelect.value = '';
+                if (mediaSelectEl) mediaSelectEl.value = '';
                 if (file && dropzoneText) {
                     dropzoneText.textContent = `Attached: ${file.name}`;
                 }
             });
+
+            const updateModalMediaVisibility = () => {
+                const selName = tSelect ? tSelect.value : null;
+                const tmpl = templates.find(t => t.name === selName);
+                const headerComp = tmpl && tmpl.components ? tmpl.components.find(c => c.type === 'HEADER') : null;
+                const mg = document.getElementById('modal-template-media-group');
+                const lbl = document.getElementById('modal-template-media-label');
+
+                if (mg && headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
+                    mg.style.display = 'block';
+                    if (lbl) lbl.textContent = `Attach Template Header ${headerComp.format} (Required by Meta):`;
+                } else if (mg) {
+                    mg.style.display = 'none';
+                }
+            };
+
+            tSelect?.addEventListener('change', updateModalMediaVisibility);
+            updateModalMediaVisibility();
         }
     } catch(e) {
         showModal('Error', 'Failed to load templates: ' + e.message);

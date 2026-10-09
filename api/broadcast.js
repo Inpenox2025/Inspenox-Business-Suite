@@ -5,7 +5,7 @@ module.exports = async (req, res) => {
 
     try {
         const env = req.env || process.env || {};
-        const { target, type, content, media_id, template_name, template_language, company_id } = req.body;
+        const { target, type, content, media_id, media_type, template_name, template_language, company_id } = req.body;
 
         const sql = getDb(env);
         let customersToMessage = [];
