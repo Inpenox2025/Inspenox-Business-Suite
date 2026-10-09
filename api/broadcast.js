@@ -1,5 +1,28 @@
 const { getDb } = require('../lib/db');
 
+function formatMetaMediaObject(media_id, req) {
+    if (!media_id) return null;
+    const str = String(media_id).trim();
+    if (!str) return null;
+
+    if (/^\d+$/.test(str)) {
+        const num = parseInt(str, 10);
+        if (!isNaN(num) && num < Number.MAX_SAFE_INTEGER) {
+            return { id: num };
+        }
+        return { id: str };
+    }
+
+    let fullUrl = str;
+    if (!str.startsWith('http://') && !str.startsWith('https://')) {
+        const host = (req && req.headers && req.headers['host']) || 'marketing.inspenox.in';
+        const proto = (req && req.headers && req.headers['x-forwarded-proto']) || 'https';
+        const cleanPath = str.startsWith('/') ? str : '/' + str;
+        fullUrl = `${proto}://${host}${cleanPath}`;
+    }
+    return { link: fullUrl };
+}
+
 module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
@@ -81,12 +104,14 @@ module.exports = async (req, res) => {
                 type: type
             };
 
+            const mediaObjFormatted = formatMetaMediaObject(media_id, req);
+
             if (type === 'text') {
                 payload.text = { body: content };
             } else if (type === 'image') {
-                payload.image = (media_id && media_id.startsWith('http')) ? { link: media_id, caption: content } : { id: media_id, caption: content };
+                payload.image = mediaObjFormatted ? { ...mediaObjFormatted, caption: content } : { caption: content };
             } else if (type === 'video') {
-                payload.video = (media_id && media_id.startsWith('http')) ? { link: media_id, caption: content } : { id: media_id, caption: content };
+                payload.video = mediaObjFormatted ? { ...mediaObjFormatted, caption: content } : { caption: content };
             }
 
             let responseData = null;
@@ -113,12 +138,12 @@ module.exports = async (req, res) => {
                         let mediaObj = null;
 
                         if (media_id) {
-                            mediaObj = (typeof media_id === 'string' && media_id.startsWith('http')) ? { link: media_id } : { id: media_id };
+                            mediaObj = formatMetaMediaObject(media_id, req);
                         } else if (headerComp.example) {
                             if (headerComp.example.header_handle && headerComp.example.header_handle[0]) {
-                                mediaObj = { id: headerComp.example.header_handle[0] };
+                                mediaObj = formatMetaMediaObject(headerComp.example.header_handle[0], req);
                             } else if (headerComp.example.header_url && headerComp.example.header_url[0]) {
-                                mediaObj = { link: headerComp.example.header_url[0] };
+                                mediaObj = formatMetaMediaObject(headerComp.example.header_url[0], req);
                             }
                         }
 
@@ -218,14 +243,16 @@ module.exports = async (req, res) => {
                         const mType = (req.body.media_type || 'image').toLowerCase();
                         const isVid = (mType === 'video');
                         const isDoc = (mType === 'document');
-                        const mediaFormat = isVid ? 'video' : (isDoc ? 'document' : 'image');
-                        baseHeaderComp.push({
-                            type: "header",
-                            parameters: [{
-                                type: mediaFormat,
-                                [mediaFormat]: (typeof media_id === 'string' && media_id.startsWith('http')) ? { link: media_id } : { id: media_id }
-                            }]
-                        });
+                        const mediaObj = formatMetaMediaObject(media_id, req);
+                        if (mediaObj) {
+                            baseHeaderComp.push({
+                                type: "header",
+                                parameters: [{
+                                    type: mediaFormat,
+                                    [mediaFormat]: mediaObj
+                                }]
+                            });
+                        }
                     }
 
                     for (const langCode of langCodes) {
