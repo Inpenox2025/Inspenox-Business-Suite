@@ -5388,3 +5388,30 @@ window.deleteSecurityAttempt = async function deleteSecurityAttempt(id) {
         showModal('Error', err.message);
     }
 };
+
+window.purgeOldSecurityLogs = async function purgeOldSecurityLogs(days = 30) {
+    showModal(
+        'Database Optimization',
+        `Are you sure you want to delete all security attempt logs older than ${days} days? This helps maintain high database performance and scalability.`,
+        'confirm',
+        async () => {
+            try {
+                const res = await apiFetch(`/api/auth?action=purge-old-logs&days=${days}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ days })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showModal('Maintenance Complete', data.message || `Successfully purged logs older than ${days} days.`);
+                    loadSecurityLogs();
+                } else {
+                    showModal('Error', data.error || 'Failed to purge old logs.');
+                }
+            } catch (err) {
+                console.error('Error purging old logs:', err);
+                showModal('Error', err.message);
+            }
+        }
+    );
+};

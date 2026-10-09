@@ -1466,6 +1466,9 @@
                         <button class="btn secondary" onclick="loadSecurityLogs()">
                             🔄 Refresh Logs
                         </button>
+                        <button class="btn secondary" onclick="purgeOldSecurityLogs(30)" title="Delete authentication logs older than 30 days to maintain database scalability">
+                            🧹 Purge &gt;30 Days
+                        </button>
                         <button class="btn danger" onclick="clearAllLockouts()" style="background:rgba(239, 68, 68, 0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3);">
                             🔓 Clear All Lockouts
                         </button>
@@ -1540,6 +1543,9 @@
                     </div>
 
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn secondary" onclick="purgeOldSecurityLogs(30)" style="font-size:0.85rem;" title="Purge logs older than 30 days">
+                            🧹 Purge &gt;30 Days Logs
+                        </button>
                         <button class="btn secondary" onclick="promptManualLockout()" style="font-size:0.85rem;">
                             🚫 Manual IP/User Lockout
                         </button>

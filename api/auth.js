@@ -45,6 +45,12 @@ async function ensureUsersTable(sql) {
             WHERE attempt_time < '2026-10-09 12:00:00';
         `;
 
+        // Automated retention cleanup: purge logs older than 90 days for scalability
+        await sql`
+            DELETE FROM login_attempts 
+            WHERE attempt_time < (NOW() AT TIME ZONE 'Asia/Kolkata') - INTERVAL '90 days';
+        `;
+
         // Seed default admin user ONLY if users table is completely empty
         const countRes = await sql`SELECT COUNT(*)::int as count FROM users;`;
         if ((countRes[0]?.count || 0) === 0) {
@@ -368,6 +374,22 @@ module.exports = async (req, res) => {
                     `;
                 }
                 return res.status(200).json({ success: true, message: `Locked out "${cleanTarget}" for 15 minutes.` });
+            } catch (err) {
+                return res.status(500).json({ error: err.message });
+            }
+        }
+
+        if (action === 'purge-old-logs') {
+            try {
+                const daysParam = parseInt(req.query.days || body.days || '30') || 30;
+                await sql`
+                    DELETE FROM login_attempts 
+                    WHERE attempt_time < (NOW() AT TIME ZONE 'Asia/Kolkata') - (INTERVAL '1 day' * ${daysParam});
+                `;
+                return res.status(200).json({ 
+                    success: true, 
+                    message: `Successfully purged security attempt logs older than ${daysParam} days.` 
+                });
             } catch (err) {
                 return res.status(500).json({ error: err.message });
             }
