@@ -1471,7 +1471,7 @@ window.switchView = function switchView(target, pushHistory = true) {
     if (target === 'inbox') loadInboxSidebar();
     if (target === 'media') loadMedia();
     if (target === 'settings') loadCompaniesSettings();
-    if (target === 'security') loadSecurityLogs();
+    if (target === 'security') window.loadSecurityLogs?.();
 
     if (pushHistory && history.pushState) {
         history.pushState({ view: target }, '', `#${target}`);
@@ -5210,7 +5210,7 @@ window.escapeHtml = escapeHtml;
 
 window.allSecurityLogs = [];
 
-window.loadSecurityLogs = async function loadSecurityLogs() {
+async function loadSecurityLogs() {
     const tbody = document.getElementById('sec-logs-tbody');
     if (tbody) {
         tbody.innerHTML = `
@@ -5242,7 +5242,8 @@ window.loadSecurityLogs = async function loadSecurityLogs() {
         console.error('Error loading security logs:', err);
         showModal('Error', err.message);
     }
-};
+}
+window.loadSecurityLogs = loadSecurityLogs;
 
 window.filterSecurityLogs = function filterSecurityLogs() {
     const searchVal = (document.getElementById('sec-search-input')?.value || '').trim().toLowerCase();
