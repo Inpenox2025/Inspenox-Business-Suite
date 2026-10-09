@@ -1,0 +1,25 @@
+# Inspenox Business Suite — Omnichannel Marketing Platform
+
+> Inspenox Business Suite is an enterprise Omnichannel Marketing platform powered by official Meta WhatsApp Cloud API (v20.0), Email Marketing (AWS SES), and DLT Bulk SMS messaging.
+
+## Platform Capabilities
+- **Meta WhatsApp Cloud API**: Official Meta Graph API v20.0 broadcast engine with dynamic template variables (`{{customer_name}}`), quick reply buttons, action links, sample media sync, and 99.8% open rates.
+- **Shared Customer Inbox & Live Support**: 2-way real-time customer messaging, automated bot auto-replies, Excel customer contact import, consent certification, and agent assignments.
+- **Automated Multi-Touch Drip Campaigns**: Orchestrate cross-channel marketing workflows across WhatsApp, Email, and SMS with real-time delivery logs, read metrics, and customer segment filtering.
+- **Transparent Pay-As-You-Go Billing**: Itemized billing breakdown displaying base usage (Excl. GST) and 18% GST tax invoices with instant UPI, Card, and Netbanking payments.
+
+## Rates & Pricing (Pay-As-You-Go)
+- **WhatsApp Marketing Message**: ₹0.8631 / delivered message
+- **WhatsApp Utility Message**: ₹0.1150 / delivered message
+- **Email Marketing Broadcast**: ₹0.0500 / email sent
+- **SMS Marketing (DLT Compliant)**: ₹0.2500 / SMS sent
+
+## Key Documentation & Links
+- [Landing Page](https://marketing.inspenox.in/login.html)
+- [Workspace Sign In](https://marketing.inspenox.in/#login-section)
+- [WhatsApp Business Legal Terms](https://www.whatsapp.com/legal/business-terms/)
+
+## Technical Stack & API Compliance
+- Direct integration with Meta Graph API v20.0
+- DLT compliant SMS gateway dispatch
+- Strict token encryption and privacy standards

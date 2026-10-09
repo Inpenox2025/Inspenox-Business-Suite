@@ -1,0 +1,35 @@
+# Robots.txt for Inspenox Business Suite — Omnichannel Marketing Platform
+User-agent: *
+Allow: /
+Allow: /login.html
+Allow: /app.css
+Allow: /favicon.png
+Allow: /llms.txt
+
+# Protect backend endpoints and internal application data
+Disallow: /api/
+Disallow: /uploads/
+
+# Allow AI & LLM Search Crawlers
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /llms.txt
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: Google-Extended
+Allow: /
+Allow: /llms.txt
+
+# Sitemap Location
+Sitemap: https://marketing.inspenox.in/sitemap.xml
