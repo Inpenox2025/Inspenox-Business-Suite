@@ -1682,6 +1682,8 @@ window.editTemplate = function editTemplate(id) {
     const buttonsComp = comps.find(c => c.type === 'BUTTONS');
 
     // Populate Header Component
+    editingTemplateHeaderHandle = null;
+    editingTemplateHeaderUrl = null;
     if (headerComp) {
         const fmt = (headerComp.format || (headerComp.text ? 'TEXT' : 'NONE')).toUpperCase();
         if (headerTypeSelect) headerTypeSelect.value = fmt;
@@ -1692,6 +1694,29 @@ window.editTemplate = function editTemplate(id) {
         } else if (['IMAGE', 'VIDEO', 'DOCUMENT'].includes(fmt)) {
             if (headerTextGroup) headerTextGroup.style.display = 'none';
             if (mediaGroup) mediaGroup.style.display = 'block';
+
+            if (headerComp.example) {
+                if (Array.isArray(headerComp.example.header_handle) && headerComp.example.header_handle[0]) {
+                    editingTemplateHeaderHandle = headerComp.example.header_handle[0];
+                }
+                if (Array.isArray(headerComp.example.header_url) && headerComp.example.header_url[0]) {
+                    editingTemplateHeaderUrl = headerComp.example.header_url[0];
+                }
+            }
+
+            const dropzone = document.getElementById('tpl-media-dropzone');
+            const fileCardEl = document.getElementById('tpl-media-file-card');
+            const fileNameTextEl = document.getElementById('tpl-media-file-name-text');
+            const fileSizeTextEl = document.getElementById('tpl-media-file-size-text');
+            if (editingTemplateHeaderHandle || editingTemplateHeaderUrl) {
+                if (fileNameTextEl) fileNameTextEl.textContent = `Meta Sample ${fmt.toLowerCase()} (Synced from Meta)`;
+                if (fileSizeTextEl) fileSizeTextEl.textContent = `(Synced Handle)`;
+                if (dropzone) dropzone.style.display = 'none';
+                if (fileCardEl) fileCardEl.style.display = 'flex';
+            } else {
+                if (dropzone) dropzone.style.display = 'block';
+                if (fileCardEl) fileCardEl.style.display = 'none';
+            }
         } else {
             if (headerTextGroup) headerTextGroup.style.display = 'none';
             if (mediaGroup) mediaGroup.style.display = 'none';
@@ -2398,6 +2423,8 @@ window.removeTemplateButton = removeTemplateButton;
 // Global Media & Variable State
 let currentMediaSampleFile = null;
 let currentMediaSampleUrl = null;
+let editingTemplateHeaderHandle = null;
+let editingTemplateHeaderUrl = null;
 
 function attachStep2FormListeners() {
     const nameInput = document.getElementById('tpl-name');
@@ -2507,6 +2534,8 @@ function attachStep2FormListeners() {
 
     function removeMediaFile() {
         currentMediaSampleFile = null;
+        editingTemplateHeaderHandle = null;
+        editingTemplateHeaderUrl = null;
         if (currentMediaSampleUrl) {
             URL.revokeObjectURL(currentMediaSampleUrl);
             currentMediaSampleUrl = null;
@@ -2969,6 +2998,13 @@ function refreshVariableSampleFields(varType = 'TEXT') {
 
 function resetTemplateModal() {
     editingTemplateId = null;
+    editingTemplateHeaderHandle = null;
+    editingTemplateHeaderUrl = null;
+    currentMediaSampleFile = null;
+    if (currentMediaSampleUrl) {
+        URL.revokeObjectURL(currentMediaSampleUrl);
+        currentMediaSampleUrl = null;
+    }
     currentSelectedCategory = 'MARKETING';
     currentSelectedSubtype = 'default';
 
@@ -3191,26 +3227,42 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             components.push(headerComp);
         } else if (['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerType)) {
-            const headerComp = {
-                type: 'HEADER',
-                format: headerType
-            };
+            let handle = null;
+
             if (currentMediaSampleFile) {
                 try {
-                    const configRes = await apiFetch('/api/config');
-                    const config = await configRes.json();
-                    if (config.phoneNumberId && config.accessToken) {
-                        const metaData = await uploadMediaToMetaFast(currentMediaSampleFile, config);
-                        const handle = metaData.h || metaData.id;
-                        if (handle) {
-                            headerComp.example = { header_handle: [handle] };
-                        }
-                    }
+                    handle = await getMetaHeaderHandle(currentMediaSampleFile);
                 } catch (err) {
-                    console.warn('Sample media upload warning:', err);
+                    console.error('Sample media upload error:', err);
+                    showModal('Sample Media Upload Error', `Failed to upload sample ${headerType.toLowerCase()} to Meta: ${err.message}. Please select the file again.`);
+                    return;
+                }
+            } else if (editingTemplateHeaderHandle) {
+                handle = editingTemplateHeaderHandle;
+            } else if (editingTemplateId && typeof templatesCache !== 'undefined') {
+                const tpl = templatesCache.find(t => String(t.id || t.name) === String(editingTemplateId));
+                const oldHeader = tpl?.components?.find(c => c.type === 'HEADER');
+                if (oldHeader?.example?.header_handle?.[0]) {
+                    handle = oldHeader.example.header_handle[0];
                 }
             }
-            components.push(headerComp);
+
+            if (!handle && editingTemplateHeaderUrl) {
+                components.push({
+                    type: 'HEADER',
+                    format: headerType,
+                    example: { header_url: [editingTemplateHeaderUrl] }
+                });
+            } else if (handle) {
+                components.push({
+                    type: 'HEADER',
+                    format: headerType,
+                    example: { header_handle: [handle] }
+                });
+            } else {
+                showModal('Sample File Required', `Meta requires a sample ${headerType.toLowerCase()} file for template verification. Please drag & drop or select a sample ${headerType.toLowerCase()} file in the "Upload sample media file" box.`);
+                return;
+            }
         } else if (headerType === 'LOCATION') {
             components.push({
                 type: 'HEADER',
@@ -3590,6 +3642,31 @@ const getBase64 = (file) => new Promise((resolve, reject) => {
     reader.onload = () => resolve(reader.result);
     reader.onerror = error => reject(error);
 });
+
+// Obtain Meta Resumable Upload handle (header_handle) for Template Header sample media via server API
+async function getMetaHeaderHandle(file) {
+    if (!file) return null;
+    const base64Data = await getBase64(file);
+    const mimeType = file.type || (file.name && file.name.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg');
+
+    const res = await apiFetch('/api/upload-media', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            base64Data: base64Data,
+            fileName: file.name,
+            mimeType: mimeType
+        })
+    });
+
+    const data = await res.json();
+    if (data.error) {
+        throw new Error(data.error);
+    }
+    if (data.handle) return data.handle;
+    if (data.media_id) return data.media_id;
+    return null;
+}
 
 // Fast Binary Streaming Upload to Meta Cloud API with Live Progress
 function uploadMediaToMetaFast(file, config, onProgress) {
