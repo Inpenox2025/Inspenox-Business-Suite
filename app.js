@@ -737,6 +737,33 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
 };
 
 // --- Super Admin Manual Overrides Modals ---
+// Live Auto Calculation Helpers for Overrides
+window.autoCalcTplSpent = function() {
+    const del = parseFloat(document.getElementById('ov-tpl-delivered')?.value || 0);
+    const rate = parseFloat(document.getElementById('ov-tpl-rate')?.value || 0);
+    const spentEl = document.getElementById('ov-tpl-spent');
+    if (spentEl) {
+        spentEl.value = (del * rate).toFixed(4);
+    }
+};
+
+window.autoCalcCoCost = function() {
+    const m = parseInt(document.getElementById('ov-co-m')?.value || 0);
+    const u = parseInt(document.getElementById('ov-co-u')?.value || 0);
+    const a = parseInt(document.getElementById('ov-co-a')?.value || 0);
+    const email = parseInt(document.getElementById('ov-co-email')?.value || 0);
+    const sms = parseInt(document.getElementById('ov-co-sms')?.value || 0);
+    
+    // Rates: WA Mkt = 0.8631, WA Util = 0.115, WA Auth = 0.115, Email = 0.05, SMS = 0.25
+    const baseCost = (m * 0.8631) + (u * 0.115) + (a * 0.115) + (email * 0.05) + (sms * 0.25);
+    const costWithGst = baseCost * 1.18; // Includes 18% GST
+    
+    const costEl = document.getElementById('ov-co-cost');
+    if (costEl) {
+        costEl.value = costWithGst.toFixed(2);
+    }
+};
+
 window.editTemplateStatsModal = function(id, name, sent, delivered, read, replies, rate, amountSpent) {
     const contentHtml = `
         <div style="display:flex; flex-direction:column; gap:0.85rem;">
@@ -748,7 +775,7 @@ window.editTemplateStatsModal = function(id, name, sent, delivered, read, replie
                 </div>
                 <div class="form-group">
                     <label style="font-size:0.75rem; font-weight:600;">Delivered Count</label>
-                    <input type="number" id="ov-tpl-delivered" value="${delivered}" min="0" style="padding:0.4rem;">
+                    <input type="number" id="ov-tpl-delivered" value="${delivered}" min="0" oninput="autoCalcTplSpent()" style="padding:0.4rem;">
                 </div>
                 <div class="form-group">
                     <label style="font-size:0.75rem; font-weight:600;">Read Count</label>
@@ -760,7 +787,7 @@ window.editTemplateStatsModal = function(id, name, sent, delivered, read, replie
                 </div>
                 <div class="form-group">
                     <label style="font-size:0.75rem; font-weight:600;">Cost / Delivered (₹)</label>
-                    <input type="number" step="0.0001" id="ov-tpl-rate" value="${rate}" min="0" style="padding:0.4rem;">
+                    <input type="number" step="0.0001" id="ov-tpl-rate" value="${rate}" min="0" oninput="autoCalcTplSpent()" style="padding:0.4rem;">
                 </div>
                 <div class="form-group">
                     <label style="font-size:0.75rem; font-weight:600;">Amount Spent (₹)</label>
@@ -783,26 +810,26 @@ window.editCompanyUsageModal = function(id, name, m, u, a, email, sms, cost) {
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
                 <div class="form-group">
                     <label style="font-size:0.75rem; font-weight:600;">WA Marketing Count</label>
-                    <input type="number" id="ov-co-m" value="${m}" min="0" style="padding:0.4rem;">
+                    <input type="number" id="ov-co-m" value="${m}" min="0" oninput="autoCalcCoCost()" style="padding:0.4rem;">
                 </div>
                 <div class="form-group">
                     <label style="font-size:0.75rem; font-weight:600;">WA Utility Count</label>
-                    <input type="number" id="ov-co-u" value="${u}" min="0" style="padding:0.4rem;">
+                    <input type="number" id="ov-co-u" value="${u}" min="0" oninput="autoCalcCoCost()" style="padding:0.4rem;">
                 </div>
                 <div class="form-group">
                     <label style="font-size:0.75rem; font-weight:600;">WA Auth Count</label>
-                    <input type="number" id="ov-co-a" value="${a}" min="0" style="padding:0.4rem;">
+                    <input type="number" id="ov-co-a" value="${a}" min="0" oninput="autoCalcCoCost()" style="padding:0.4rem;">
                 </div>
                 <div class="form-group">
                     <label style="font-size:0.75rem; font-weight:600;">Email Sent Count</label>
-                    <input type="number" id="ov-co-email" value="${email}" min="0" style="padding:0.4rem;">
+                    <input type="number" id="ov-co-email" value="${email}" min="0" oninput="autoCalcCoCost()" style="padding:0.4rem;">
                 </div>
                 <div class="form-group">
                     <label style="font-size:0.75rem; font-weight:600;">SMS Sent Count</label>
-                    <input type="number" id="ov-co-sms" value="${sms}" min="0" style="padding:0.4rem;">
+                    <input type="number" id="ov-co-sms" value="${sms}" min="0" oninput="autoCalcCoCost()" style="padding:0.4rem;">
                 </div>
                 <div class="form-group">
-                    <label style="font-size:0.75rem; font-weight:600;">Estimated Cost (₹)</label>
+                    <label style="font-size:0.75rem; font-weight:600;">Estimated Cost (₹ + 18% GST)</label>
                     <input type="number" step="0.01" id="ov-co-cost" value="${cost}" min="0" style="padding:0.4rem;">
                 </div>
             </div>
@@ -1169,6 +1196,14 @@ let currentCustomersPage = 1;
 const CUSTOMERS_PER_PAGE = 10;
 
 // --- Modal Logic ---
+window.closeModal = function() {
+    const overlay = document.getElementById('app-modal');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.style.display = 'none';
+    }
+};
+
 function showModal(title, message, type = 'info', onConfirm = null, confirmText = 'OK', confirmClass = null) {
     const overlay = document.getElementById('app-modal');
     if (!overlay) return;
@@ -1906,6 +1941,7 @@ window.editTemplate = function editTemplate(id) {
     // Populate Header Component
     editingTemplateHeaderHandle = null;
     editingTemplateHeaderUrl = null;
+    currentMediaSampleUrl = null;
     if (headerComp) {
         const fmt = (headerComp.format || (headerComp.text ? 'TEXT' : 'NONE')).toUpperCase();
         if (headerTypeSelect) headerTypeSelect.value = fmt;
@@ -1917,12 +1953,39 @@ window.editTemplate = function editTemplate(id) {
             if (headerTextGroup) headerTextGroup.style.display = 'none';
             if (mediaGroup) mediaGroup.style.display = 'block';
 
+            let sampleUrl = null;
             if (headerComp.example) {
-                if (Array.isArray(headerComp.example.header_handle) && headerComp.example.header_handle[0]) {
-                    editingTemplateHeaderHandle = headerComp.example.header_handle[0];
-                }
                 if (Array.isArray(headerComp.example.header_url) && headerComp.example.header_url[0]) {
-                    editingTemplateHeaderUrl = headerComp.example.header_url[0];
+                    sampleUrl = headerComp.example.header_url[0];
+                } else if (Array.isArray(headerComp.example.header_handle) && headerComp.example.header_handle[0]) {
+                    const h = headerComp.example.header_handle[0];
+                    if (h.startsWith('http://') || h.startsWith('https://') || h.startsWith('data:')) {
+                        sampleUrl = h;
+                    }
+                    editingTemplateHeaderHandle = h;
+                }
+            }
+
+            // Fallback: Check local Media Library for matching file asset
+            if (!sampleUrl) {
+                try {
+                    apiFetch('/api/media').then(res => res.json()).then(mediaList => {
+                        if (Array.isArray(mediaList) && mediaList.length > 0) {
+                            const fmtLower = fmt.toLowerCase();
+                            const matched = mediaList.find(m => (m.type === fmtLower || (m.mime_type && m.mime_type.startsWith(fmtLower))) && m.file_url);
+                            if (matched && matched.file_url) {
+                                currentMediaSampleUrl = matched.file_url;
+                                const mediaThumbEl = document.getElementById('tpl-media-file-thumb');
+                                if (mediaThumbEl && fmt === 'IMAGE') {
+                                    mediaThumbEl.src = matched.file_url;
+                                    mediaThumbEl.style.display = 'block';
+                                }
+                                if (typeof updateLivePreview === 'function') updateLivePreview();
+                            }
+                        }
+                    }).catch(e => console.warn('Error matching media for edit preview:', e));
+                } catch (e) {
+                    console.warn('Error matching media for edit preview:', e);
                 }
             }
 
@@ -1930,11 +1993,35 @@ window.editTemplate = function editTemplate(id) {
             const fileCardEl = document.getElementById('tpl-media-file-card');
             const fileNameTextEl = document.getElementById('tpl-media-file-name-text');
             const fileSizeTextEl = document.getElementById('tpl-media-file-size-text');
-            if (editingTemplateHeaderHandle || editingTemplateHeaderUrl) {
-                if (fileNameTextEl) fileNameTextEl.textContent = `Meta Sample ${fmt.toLowerCase()} (Synced from Meta)`;
-                if (fileSizeTextEl) fileSizeTextEl.textContent = `(Synced Handle)`;
+            const mediaThumbEl = document.getElementById('tpl-media-file-thumb');
+            const mediaIconEl = document.getElementById('tpl-media-file-icon');
+
+            if (sampleUrl || editingTemplateHeaderHandle) {
+                if (sampleUrl) currentMediaSampleUrl = sampleUrl;
+                if (fileNameTextEl) fileNameTextEl.textContent = `Meta Sample ${fmt.toLowerCase()}`;
+                if (fileSizeTextEl) fileSizeTextEl.textContent = `(Synced from Meta)`;
                 if (dropzone) dropzone.style.display = 'none';
                 if (fileCardEl) fileCardEl.style.display = 'flex';
+
+                if (fmt === 'IMAGE') {
+                    if (mediaThumbEl && sampleUrl) {
+                        mediaThumbEl.src = sampleUrl;
+                        mediaThumbEl.style.display = 'block';
+                    }
+                    if (mediaIconEl) mediaIconEl.style.display = 'none';
+                } else if (fmt === 'VIDEO') {
+                    if (mediaThumbEl) mediaThumbEl.style.display = 'none';
+                    if (mediaIconEl) {
+                        mediaIconEl.textContent = '🎥';
+                        mediaIconEl.style.display = 'inline-block';
+                    }
+                } else {
+                    if (mediaThumbEl) mediaThumbEl.style.display = 'none';
+                    if (mediaIconEl) {
+                        mediaIconEl.textContent = '📄';
+                        mediaIconEl.style.display = 'inline-block';
+                    }
+                }
             } else {
                 if (dropzone) dropzone.style.display = 'block';
                 if (fileCardEl) fileCardEl.style.display = 'none';

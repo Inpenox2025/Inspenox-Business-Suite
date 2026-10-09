@@ -204,9 +204,9 @@ module.exports = async (req, res) => {
         const email_sent = channels['email'] || 0;
         const sms_sent = channels['sms'] || 0;
 
-        const est_wa_cost = (wa_marketing * RATES.whatsapp_marketing) + (wa_utility * RATES.whatsapp_utility) + (wa_auth * RATES.whatsapp_authentication);
-        const est_email_cost = email_sent * RATES.email;
-        const est_sms_cost = sms_sent * RATES.sms;
+        const est_wa_cost = ((wa_marketing * RATES.whatsapp_marketing) + (wa_utility * RATES.whatsapp_utility) + (wa_auth * RATES.whatsapp_authentication)) * 1.18;
+        const est_email_cost = (email_sent * RATES.email) * 1.18;
+        const est_sms_cost = (sms_sent * RATES.sms) * 1.18;
         const total_est_cost = est_wa_cost + est_email_cost + est_sms_cost;
 
         // Fetch Live Direct Meta Graph API Template List & Per-Template Analytics if credentials exist
@@ -409,7 +409,8 @@ module.exports = async (req, res) => {
             const e_cnt = parseInt(cu.email_count || 0);
             const s_cnt = parseInt(cu.sms_count || 0);
             const total_out = m_cnt + u_cnt + a_cnt + e_cnt + s_cnt;
-            const c_cost = (m_cnt * RATES.whatsapp_marketing) + (u_cnt * RATES.whatsapp_utility) + (a_cnt * RATES.whatsapp_authentication) + (e_cnt * RATES.email) + (s_cnt * RATES.sms);
+            const base_cost = (m_cnt * RATES.whatsapp_marketing) + (u_cnt * RATES.whatsapp_utility) + (a_cnt * RATES.whatsapp_authentication) + (e_cnt * RATES.email) + (s_cnt * RATES.sms);
+            const c_cost_with_gst = base_cost * 1.18; // Includes 18% GST
             return {
                 id: cu.id,
                 name: cu.name,
@@ -419,7 +420,7 @@ module.exports = async (req, res) => {
                 email_count: e_cnt,
                 sms_count: s_cnt,
                 total_outbound: total_out,
-                est_cost: parseFloat(c_cost.toFixed(4))
+                est_cost: parseFloat(c_cost_with_gst.toFixed(2))
             };
         });
 
@@ -450,9 +451,13 @@ module.exports = async (req, res) => {
                 if (ov.wa_auth_count !== undefined) cu.wa_auth_count = parseInt(ov.wa_auth_count);
                 if (ov.email_count !== undefined) cu.email_count = parseInt(ov.email_count);
                 if (ov.sms_count !== undefined) cu.sms_count = parseInt(ov.sms_count);
-                if (ov.total_outbound !== undefined) cu.total_outbound = parseInt(ov.total_outbound);
-                else cu.total_outbound = cu.wa_marketing_count + cu.wa_utility_count + cu.wa_auth_count + cu.email_count + cu.sms_count;
-                if (ov.est_cost !== undefined) cu.est_cost = parseFloat(ov.est_cost);
+                cu.total_outbound = cu.wa_marketing_count + cu.wa_utility_count + cu.wa_auth_count + cu.email_count + cu.sms_count;
+                if (ov.est_cost !== undefined) {
+                    cu.est_cost = parseFloat(ov.est_cost);
+                } else {
+                    const base_c = (cu.wa_marketing_count * RATES.whatsapp_marketing) + (cu.wa_utility_count * RATES.whatsapp_utility) + (cu.wa_auth_count * RATES.whatsapp_authentication) + (cu.email_count * RATES.email) + (cu.sms_count * RATES.sms);
+                    cu.est_cost = parseFloat((base_c * 1.18).toFixed(2));
+                }
             }
         });
 
