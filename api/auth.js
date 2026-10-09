@@ -27,6 +27,17 @@ async function ensureUsersTable(sql) {
             ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
         `;
 
+        // Create persistent login_attempts table for rate limiting across serverless instances
+        await sql`
+            CREATE TABLE IF NOT EXISTS login_attempts (
+                id SERIAL PRIMARY KEY,
+                ip_address TEXT NOT NULL,
+                username TEXT NOT NULL,
+                attempt_time TIMESTAMPTZ DEFAULT NOW(),
+                success BOOLEAN DEFAULT FALSE
+            );
+        `;
+
         // Seed default admin user ONLY if users table is completely empty
         const countRes = await sql`SELECT COUNT(*)::int as count FROM users;`;
         if ((countRes[0]?.count || 0) === 0) {
@@ -44,7 +55,20 @@ async function ensureUsersTable(sql) {
     }
 }
 
+function getClientIp(req) {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) {
+        return String(forwarded).split(',')[0].trim();
+    }
+    return req.socket?.remoteAddress || req.connection?.remoteAddress || '127.0.0.1';
+}
+
 module.exports = async (req, res) => {
+    // Security Headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+
     const env = req.env || process.env || {};
     const sql = getDb(env);
     await ensureUsersTable(sql);
@@ -93,11 +117,34 @@ module.exports = async (req, res) => {
         if (action === 'login') {
             try {
                 const { username, password } = body;
-                if (!username || !password) {
+                const cleanUser = String(username || '').trim().toLowerCase();
+
+                if (!cleanUser || !password) {
                     return res.status(400).json({ error: 'Username and password required' });
                 }
 
-                const cleanUser = username.trim().toLowerCase();
+                if (cleanUser.length > 100 || String(password).length > 128) {
+                    return res.status(400).json({ error: 'Input length exceeds security limit' });
+                }
+
+                const clientIp = getClientIp(req);
+
+                // Rate Limiting Check: Max 5 failed attempts per 15 minutes per IP or per Username
+                const failCheck = await sql`
+                    SELECT COUNT(*)::int as failures 
+                    FROM login_attempts 
+                    WHERE (ip_address = ${clientIp} OR username = ${cleanUser})
+                      AND success = FALSE 
+                      AND attempt_time > NOW() - INTERVAL '15 minutes';
+                `;
+
+                const failureCount = failCheck[0]?.failures || 0;
+                if (failureCount >= 5) {
+                    return res.status(429).json({ 
+                        error: '⚠️ Too many failed login attempts. Access temporarily locked for 15 minutes for security.' 
+                    });
+                }
+
                 const hash = hashPassword(password);
                 const legacyHash = legacyHashPassword(password);
 
@@ -107,9 +154,27 @@ module.exports = async (req, res) => {
                     WHERE LOWER(username) = ${cleanUser}
                 `;
 
-                if (users.length === 0 || (users[0].password_hash !== hash && users[0].password_hash !== legacyHash)) {
-                    return res.status(401).json({ error: 'Invalid username or password' });
+                const isAuthSuccess = users.length > 0 && (users[0].password_hash === hash || users[0].password_hash === legacyHash);
+
+                // Record attempt in database
+                await sql`
+                    INSERT INTO login_attempts (ip_address, username, success)
+                    VALUES (${clientIp}, ${cleanUser}, ${isAuthSuccess});
+                `;
+
+                if (!isAuthSuccess) {
+                    // Artificial 500ms delay to thwart automated brute-force timing attacks
+                    await new Promise(r => setTimeout(r, 500));
+                    const remaining = 5 - (failureCount + 1);
+                    const attemptWarning = remaining > 0 ? ` (${remaining} attempt${remaining === 1 ? '' : 's'} remaining)` : '';
+                    return res.status(401).json({ error: `Invalid username or password${attemptWarning}` });
                 }
+
+                // On successful login, clear past failed attempts for this IP and username
+                await sql`
+                    DELETE FROM login_attempts 
+                    WHERE (ip_address = ${clientIp} OR username = ${cleanUser}) AND success = FALSE;
+                `;
 
                 const user = users[0];
                 const token = crypto.randomBytes(32).toString('hex');
