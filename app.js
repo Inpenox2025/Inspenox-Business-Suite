@@ -1471,6 +1471,7 @@ window.switchView = function switchView(target, pushHistory = true) {
     if (target === 'inbox') loadInboxSidebar();
     if (target === 'media') loadMedia();
     if (target === 'settings') loadCompaniesSettings();
+    if (target === 'security') loadSecurityLogs();
 
     if (pushHistory && history.pushState) {
         history.pushState({ view: target }, '', `#${target}`);
@@ -5194,3 +5195,178 @@ document.getElementById('media-library-upload-input')?.addEventListener('change'
         document.getElementById('media-library-upload-input').value = '';
     }
 });
+
+/* Security & Rate Limits Control Center (Superadmin) */
+window.allSecurityLogs = [];
+
+window.loadSecurityLogs = async function loadSecurityLogs() {
+    const tbody = document.getElementById('sec-logs-tbody');
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                    <span class="spinner"></span> Fetching security attempt logs...
+                </td>
+            </tr>
+        `;
+    }
+
+    try {
+        const res = await apiFetch('/api/auth?action=security-logs');
+        const data = await res.json();
+        if (data.success) {
+            window.allSecurityLogs = data.attempts || [];
+            
+            const stats = data.stats || {};
+            if (document.getElementById('sec-stat-total')) document.getElementById('sec-stat-total').textContent = stats.total_attempts || 0;
+            if (document.getElementById('sec-stat-failed-15m')) document.getElementById('sec-stat-failed-15m').textContent = stats.active_failed_15m || 0;
+            if (document.getElementById('sec-stat-success')) document.getElementById('sec-stat-success').textContent = stats.total_successful || 0;
+            if (document.getElementById('sec-stat-locked-ips')) document.getElementById('sec-stat-locked-ips').textContent = stats.locked_ips || 0;
+
+            filterSecurityLogs();
+        } else {
+            showModal('Error', data.error || 'Failed to fetch security logs.');
+        }
+    } catch(err) {
+        console.error('Error loading security logs:', err);
+        showModal('Error', err.message);
+    }
+};
+
+window.filterSecurityLogs = function filterSecurityLogs() {
+    const searchVal = (document.getElementById('sec-search-input')?.value || '').trim().toLowerCase();
+    const statusVal = document.getElementById('sec-status-filter')?.value || 'all';
+
+    let filtered = window.allSecurityLogs || [];
+
+    if (searchVal) {
+        filtered = filtered.filter(item => 
+            (item.ip_address && item.ip_address.toLowerCase().includes(searchVal)) ||
+            (item.username && item.username.toLowerCase().includes(searchVal))
+        );
+    }
+
+    if (statusVal === 'failed') {
+        filtered = filtered.filter(item => !item.success);
+    } else if (statusVal === 'success') {
+        filtered = filtered.filter(item => item.success);
+    }
+
+    renderSecurityLogsTable(filtered);
+};
+
+window.renderSecurityLogsTable = function renderSecurityLogsTable(logs) {
+    const tbody = document.getElementById('sec-logs-tbody');
+    if (!tbody) return;
+
+    if (!logs || logs.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                    No security attempt logs found.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    let html = '';
+    logs.forEach(log => {
+        const timeStr = log.attempt_time ? new Date(log.attempt_time).toLocaleString() : 'N/A';
+        const isSuccess = log.success === true || log.success === 'true';
+        const statusBadge = isSuccess 
+            ? `<span style="padding:0.2rem 0.55rem; border-radius:12px; background:rgba(16,185,129,0.15); color:#10b981; font-size:0.75rem; font-weight:700;">🟢 Success</span>`
+            : `<span style="padding:0.2rem 0.55rem; border-radius:12px; background:rgba(239,68,68,0.15); color:#ef4444; font-size:0.75rem; font-weight:700;">🔴 Failed / Locked</span>`;
+
+        html += `
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem; font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">#${log.id}</td>
+                <td style="padding: 0.75rem; font-weight: 700; font-family: monospace;">${escapeHtml(log.ip_address || 'Unknown')}</td>
+                <td style="padding: 0.75rem; font-weight: 600;">${escapeHtml(log.username || 'N/A')}</td>
+                <td style="padding: 0.75rem; font-size: 0.825rem; color: var(--text-muted);">${timeStr}</td>
+                <td style="padding: 0.75rem;">${statusBadge}</td>
+                <td style="padding: 0.75rem; text-align: right;">
+                    <button class="btn secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-right: 0.35rem;" onclick="clearAllLockouts('${escapeHtml(log.ip_address)}')" title="Unlock IP address">
+                        🔓 Unlock IP
+                    </button>
+                    <button class="btn danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: rgba(239,68,68,0.12); color: #ef4444;" onclick="deleteSecurityAttempt(${log.id})" title="Delete log record">
+                        🗑️ Delete
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+};
+
+window.clearAllLockouts = async function clearAllLockouts(target = null) {
+    const msg = target ? `Are you sure you want to clear active lockouts & rate limits for "${target}"?` : `Are you sure you want to clear ALL active failed attempt lockouts across all IPs?`;
+    showModal('Clear Rate Limit Lockouts', msg, 'confirm', async () => {
+        try {
+            const res = await apiFetch('/api/auth?action=clear-lockouts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showModal('Success', data.message || 'Lockouts cleared successfully!');
+                loadSecurityLogs();
+            } else {
+                showModal('Error', data.error || 'Failed to clear lockouts.');
+            }
+        } catch(err) {
+            showModal('Error', err.message);
+        }
+    });
+};
+
+window.promptTargetUnlock = function promptTargetUnlock() {
+    const target = prompt("Enter IP Address or Username to unlock:");
+    if (target && target.trim()) {
+        clearAllLockouts(target.trim());
+    }
+};
+
+window.promptManualLockout = function promptManualLockout() {
+    const target = prompt("Enter IP Address or Username to manually lock out for 15 minutes:");
+    if (target && target.trim()) {
+        showModal('Manual Lockout', `Are you sure you want to lock out "${target.trim()}" for 15 minutes?`, 'confirm', async () => {
+            try {
+                const res = await apiFetch('/api/auth?action=manual-lock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target: target.trim() })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showModal('Success', data.message || 'Target locked out successfully.');
+                    loadSecurityLogs();
+                } else {
+                    showModal('Error', data.error || 'Failed to apply manual lockout.');
+                }
+            } catch(err) {
+                showModal('Error', err.message);
+            }
+        });
+    }
+};
+
+window.deleteSecurityAttempt = async function deleteSecurityAttempt(id) {
+    try {
+        const res = await apiFetch('/api/auth?action=delete-attempt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        if (data.success) {
+            loadSecurityLogs();
+        } else {
+            showModal('Error', data.error || 'Failed to delete record.');
+        }
+    } catch(err) {
+        showModal('Error', err.message);
+    }
+};

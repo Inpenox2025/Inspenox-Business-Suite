@@ -78,6 +78,28 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
         try {
+            if (action === 'security-logs') {
+                const attempts = await sql`
+                    SELECT id, ip_address, username, attempt_time, success 
+                    FROM login_attempts 
+                    ORDER BY attempt_time DESC 
+                    LIMIT 100;
+                `;
+                const stats = await sql`
+                    SELECT 
+                        COUNT(*)::int as total_attempts,
+                        COUNT(CASE WHEN success = FALSE AND attempt_time > NOW() - INTERVAL '15 minutes' THEN 1 END)::int as active_failed_15m,
+                        COUNT(CASE WHEN success = TRUE THEN 1 END)::int as total_successful,
+                        COUNT(DISTINCT CASE WHEN success = FALSE AND attempt_time > NOW() - INTERVAL '15 minutes' THEN ip_address END)::int as locked_ips
+                    FROM login_attempts;
+                `;
+                return res.status(200).json({
+                    success: true,
+                    attempts,
+                    stats: stats[0] || { total_attempts: 0, active_failed_15m: 0, total_successful: 0, locked_ips: 0 }
+                });
+            }
+
             const companyFilter = req.query.company_id;
             let users;
             if (req.query.all !== 'true' && companyFilter && companyFilter !== 'default' && companyFilter !== 'null' && companyFilter !== 'all') {
@@ -292,6 +314,52 @@ module.exports = async (req, res) => {
                 });
             } catch (err) {
                 console.error('Error updating password:', err);
+                return res.status(500).json({ error: err.message });
+            }
+        }
+
+        if (action === 'clear-lockouts') {
+            try {
+                const { target } = body;
+                if (target && target.trim()) {
+                    const cleanTarget = target.trim().toLowerCase();
+                    await sql`
+                        DELETE FROM login_attempts 
+                        WHERE (ip_address = ${cleanTarget} OR LOWER(username) = ${cleanTarget}) AND success = FALSE;
+                    `;
+                } else {
+                    await sql`DELETE FROM login_attempts WHERE success = FALSE;`;
+                }
+                return res.status(200).json({ success: true, message: 'Rate limits & lockouts cleared successfully.' });
+            } catch (err) {
+                return res.status(500).json({ error: err.message });
+            }
+        }
+
+        if (action === 'delete-attempt') {
+            try {
+                const { id } = body;
+                if (!id) return res.status(400).json({ error: 'Attempt ID is required' });
+                await sql`DELETE FROM login_attempts WHERE id = ${id}`;
+                return res.status(200).json({ success: true });
+            } catch (err) {
+                return res.status(500).json({ error: err.message });
+            }
+        }
+
+        if (action === 'manual-lock') {
+            try {
+                const { target } = body;
+                if (!target || !target.trim()) return res.status(400).json({ error: 'Target IP address or username is required' });
+                const cleanTarget = target.trim().toLowerCase();
+                for (let i = 0; i < 5; i++) {
+                    await sql`
+                        INSERT INTO login_attempts (ip_address, username, success)
+                        VALUES (${cleanTarget}, ${cleanTarget}, FALSE);
+                    `;
+                }
+                return res.status(200).json({ success: true, message: `Locked out "${cleanTarget}" for 15 minutes.` });
+            } catch (err) {
                 return res.status(500).json({ error: err.message });
             }
         }

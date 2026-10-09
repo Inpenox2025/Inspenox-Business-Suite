@@ -252,6 +252,12 @@
                     </svg>
                     <span>Settings</span>
                 </a>
+                <a href="#security" data-view="security" id="nav-item-security" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>Security & Rate Limits</span>
+                </a>
                 <a href="#" id="btn-logout-nav" class="nav-item" style="color: #ef4444;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -1443,6 +1449,126 @@
                         <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">Estimated Total Investment:</span>
                         <strong id="calc-result-total" style="font-size: 1.5rem; color: var(--primary); font-weight: 800;">₹1,068.60</strong>
                     </div>
+                </div>
+
+            <!-- Security & Rate Limits Control Center (Superadmin) -->
+            <section id="view-security" class="view">
+                <div class="page-header">
+                    <div>
+                        <h1 style="display:flex; align-items:center; gap:0.5rem;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="width:28px;height:28px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            Security & Rate Limits Control Center
+                        </h1>
+                        <p class="subtitle">Monitor authentication attempt logs, active rate limit lockouts, and manage IP/User access control.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn secondary" onclick="loadSecurityLogs()">
+                            🔄 Refresh Logs
+                        </button>
+                        <button class="btn danger" onclick="clearAllLockouts()" style="background:rgba(239, 68, 68, 0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3);">
+                            🔓 Clear All Lockouts
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Security Summary Cards -->
+                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-emerald">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total Login Attempts</h3>
+                            <p id="sec-stat-total">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-amber" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Active Failed (15m)</h3>
+                            <p id="sec-stat-failed-15m" style="color: #ef4444;">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-blue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Successful Logins</h3>
+                            <p id="sec-stat-success">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-purple">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Locked IP Addresses</h3>
+                            <p id="sec-stat-locked-ips">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Control & Filter Bar -->
+                <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; flex: 1;">
+                        <input type="text" id="sec-search-input" placeholder="🔍 Search IP or Username..." style="padding: 0.5rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.875rem; min-width: 240px;" onkeyup="filterSecurityLogs()">
+                        
+                        <select id="sec-status-filter" style="padding: 0.5rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.875rem;" onchange="filterSecurityLogs()">
+                            <option value="all">All Attempts</option>
+                            <option value="failed">🔴 Failed / Rate-Limited</option>
+                            <option value="success">🟢 Successful</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn secondary" onclick="promptManualLockout()" style="font-size:0.85rem;">
+                            🚫 Manual IP/User Lockout
+                        </button>
+                        <button class="btn primary" onclick="promptTargetUnlock()" style="font-size:0.85rem;">
+                            🔓 Unlock Specific Target
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Security Logs Data Table -->
+                <div class="card" style="overflow-x: auto; padding: 0.5rem;">
+                    <table class="data-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="padding:0.75rem;">ID</th>
+                                <th style="padding:0.75rem;">IP Address</th>
+                                <th style="padding:0.75rem;">Target Username</th>
+                                <th style="padding:0.75rem;">Timestamp</th>
+                                <th style="padding:0.75rem;">Auth Status</th>
+                                <th style="padding:0.75rem; text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sec-logs-tbody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                    Loading security logs...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 <footer class="page-footer">
