@@ -5284,7 +5284,13 @@ window.renderSecurityLogsTable = function renderSecurityLogsTable(logs) {
 
     let html = '';
     logs.forEach(log => {
-        const timeStr = log.attempt_time ? new Date(log.attempt_time).toLocaleString() : 'N/A';
+        let timeStr = 'N/A';
+        if (log.attempt_time) {
+            const parsed = new Date(String(log.attempt_time).replace(' ', 'T'));
+            timeStr = !isNaN(parsed.getTime())
+                ? parsed.toLocaleString('en-IN', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+                : String(log.attempt_time);
+        }
         const isSuccess = log.success === true || log.success === 'true';
         const statusBadge = isSuccess 
             ? `<span style="padding:0.2rem 0.55rem; border-radius:12px; background:rgba(16,185,129,0.15); color:#10b981; font-size:0.75rem; font-weight:700;">🟢 Success</span>`

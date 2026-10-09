@@ -33,9 +33,16 @@ async function ensureUsersTable(sql) {
                 id SERIAL PRIMARY KEY,
                 ip_address TEXT NOT NULL,
                 username TEXT NOT NULL,
-                attempt_time TIMESTAMPTZ DEFAULT NOW(),
+                attempt_time TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata'),
                 success BOOLEAN DEFAULT FALSE
             );
+        `;
+
+        // Migrate existing UTC timestamps in login_attempts to IST (+5.5 hours) if inserted as UTC
+        await sql`
+            UPDATE login_attempts 
+            SET attempt_time = attempt_time + INTERVAL '5 hours 30 minutes'
+            WHERE attempt_time < '2026-10-09 12:00:00';
         `;
 
         // Seed default admin user ONLY if users table is completely empty
@@ -80,17 +87,19 @@ module.exports = async (req, res) => {
         try {
             if (action === 'security-logs') {
                 const attempts = await sql`
-                    SELECT id, ip_address, username, attempt_time, success 
+                    SELECT id, ip_address, username, 
+                           TO_CHAR(attempt_time, 'YYYY-MM-DD HH24:MI:SS') as attempt_time, 
+                           success 
                     FROM login_attempts 
-                    ORDER BY attempt_time DESC 
+                    ORDER BY id DESC 
                     LIMIT 100;
                 `;
                 const stats = await sql`
                     SELECT 
                         COUNT(*)::int as total_attempts,
-                        COUNT(CASE WHEN success = FALSE AND attempt_time > NOW() - INTERVAL '15 minutes' THEN 1 END)::int as active_failed_15m,
+                        COUNT(CASE WHEN success = FALSE AND attempt_time > (NOW() AT TIME ZONE 'Asia/Kolkata') - INTERVAL '15 minutes' THEN 1 END)::int as active_failed_15m,
                         COUNT(CASE WHEN success = TRUE THEN 1 END)::int as total_successful,
-                        COUNT(DISTINCT CASE WHEN success = FALSE AND attempt_time > NOW() - INTERVAL '15 minutes' THEN ip_address END)::int as locked_ips
+                        COUNT(DISTINCT CASE WHEN success = FALSE AND attempt_time > (NOW() AT TIME ZONE 'Asia/Kolkata') - INTERVAL '15 minutes' THEN ip_address END)::int as locked_ips
                     FROM login_attempts;
                 `;
                 return res.status(200).json({
@@ -157,7 +166,7 @@ module.exports = async (req, res) => {
                     FROM login_attempts 
                     WHERE (ip_address = ${clientIp} OR username = ${cleanUser})
                       AND success = FALSE 
-                      AND attempt_time > NOW() - INTERVAL '15 minutes';
+                      AND attempt_time > (NOW() AT TIME ZONE 'Asia/Kolkata') - INTERVAL '15 minutes';
                 `;
 
                 const failureCount = failCheck[0]?.failures || 0;
@@ -178,10 +187,10 @@ module.exports = async (req, res) => {
 
                 const isAuthSuccess = users.length > 0 && (users[0].password_hash === hash || users[0].password_hash === legacyHash);
 
-                // Record attempt in database
+                // Record attempt in database using IST timestamp
                 await sql`
-                    INSERT INTO login_attempts (ip_address, username, success)
-                    VALUES (${clientIp}, ${cleanUser}, ${isAuthSuccess});
+                    INSERT INTO login_attempts (ip_address, username, attempt_time, success)
+                    VALUES (${clientIp}, ${cleanUser}, NOW() AT TIME ZONE 'Asia/Kolkata', ${isAuthSuccess});
                 `;
 
                 if (!isAuthSuccess) {
@@ -354,8 +363,8 @@ module.exports = async (req, res) => {
                 const cleanTarget = target.trim().toLowerCase();
                 for (let i = 0; i < 5; i++) {
                     await sql`
-                        INSERT INTO login_attempts (ip_address, username, success)
-                        VALUES (${cleanTarget}, ${cleanTarget}, FALSE);
+                        INSERT INTO login_attempts (ip_address, username, attempt_time, success)
+                        VALUES (${cleanTarget}, ${cleanTarget}, NOW() AT TIME ZONE 'Asia/Kolkata', FALSE);
                     `;
                 }
                 return res.status(200).json({ success: true, message: `Locked out "${cleanTarget}" for 15 minutes.` });
