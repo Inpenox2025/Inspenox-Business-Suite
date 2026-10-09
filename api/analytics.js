@@ -1,11 +1,51 @@
 const { getDb } = require('../lib/db');
 
 module.exports = async (req, res) => {
+    const env = req.env || process.env || {};
+    const sql = getDb(env);
+
+    // Auto-create analytics_overrides table
+    try {
+        await sql`
+            CREATE TABLE IF NOT EXISTS analytics_overrides (
+                id SERIAL PRIMARY KEY,
+                key TEXT UNIQUE NOT NULL,
+                data JSONB NOT NULL,
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+            );
+        `;
+    } catch(e) {}
+
+    // POST / PUT: Save or Reset Super Admin Analytics Manual Overrides
+    if (req.method === 'POST' || req.method === 'PUT') {
+        try {
+            const { action, type, target_id, data } = req.body || {};
+            if (!type || !target_id) {
+                return res.status(400).json({ error: 'type and target_id are required' });
+            }
+            const key = `${type}_${target_id}`;
+
+            if (action === 'reset_override') {
+                await sql`DELETE FROM analytics_overrides WHERE key = ${key}`;
+                return res.status(200).json({ success: true, reset: true });
+            }
+
+            const payloadJson = JSON.stringify(data || {});
+            await sql`
+                INSERT INTO analytics_overrides (key, data, updated_at)
+                VALUES (${key}, ${payloadJson}::jsonb, NOW())
+                ON CONFLICT (key) DO UPDATE 
+                SET data = EXCLUDED.data, updated_at = NOW()
+            `;
+            return res.status(200).json({ success: true, key });
+        } catch (err) {
+            return res.status(500).json({ error: err.message });
+        }
+    }
+
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
-        const env = req.env || process.env || {};
-        const sql = getDb(env);
         const companyId = req.query.company_id || null;
 
         let wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || null;
@@ -133,6 +173,15 @@ module.exports = async (req, res) => {
             uniqueInboundRepliesQuery
         ]);
 
+        // Fetch all active manual overrides
+        const overridesMap = {};
+        try {
+            const rows = await sql`SELECT key, data FROM analytics_overrides`;
+            rows.forEach(r => {
+                overridesMap[r.key] = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+            });
+        } catch(e) {}
+
         // Official Meta WhatsApp Pricing Rates in INR (₹) effective July 1, 2026
         const RATES = {
             whatsapp_marketing: 0.8631,
@@ -205,7 +254,6 @@ module.exports = async (req, res) => {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
                         const tplAnalyticsData = await templateAnalyticsRes.json();
-                        console.log('Meta template_analytics raw response:', JSON.stringify(tplAnalyticsData).slice(0, 500));
                         
                         if (tplAnalyticsData.data && Array.isArray(tplAnalyticsData.data)) {
                             tplAnalyticsData.data.forEach(entry => {
@@ -227,7 +275,6 @@ module.exports = async (req, res) => {
                             });
                         }
 
-                        // Also try mapping by template name from the data_points if structured differently
                         if (tplAnalyticsData.data_points && Array.isArray(tplAnalyticsData.data_points)) {
                             tplAnalyticsData.data_points.forEach(dp => {
                                 const tplId = String(dp.template_id || '');
@@ -246,8 +293,6 @@ module.exports = async (req, res) => {
                 metaError = err.message;
             }
         }
-
-        console.log('Meta template analytics resolved:', JSON.stringify(metaTemplateAnalytics));
 
         // Aggregate direct Meta WABA analytics metrics
         let metaDirectSent = 0;
@@ -282,7 +327,6 @@ module.exports = async (req, res) => {
                 const tNameLower = tName.toLowerCase().trim();
                 const tId = String(t.id || '');
 
-                // Priority: 1) Per-template Meta analytics, 2) DB stats, 3) zeros
                 const metaTplStat = metaTemplateAnalytics[tId] || null;
                 const dbStat = dbTemplateMap[tNameLower] || dbTemplateMap[tName] || null;
 
@@ -297,7 +341,6 @@ module.exports = async (req, res) => {
                     read = dbStat.read;
                 }
                 const replies = 0;
-
                 const category = (t.category || 'MARKETING').toUpperCase();
                 const rate = category === 'UTILITY' ? RATES.whatsapp_utility : (category === 'AUTHENTICATION' ? RATES.whatsapp_authentication : (category === 'SERVICE' ? RATES.whatsapp_service : RATES.whatsapp_marketing));
                 const amountSpent = parseFloat((delivered * rate).toFixed(2));
@@ -326,7 +369,6 @@ module.exports = async (req, res) => {
             });
         }
 
-        // If no templates from Meta, construct template metrics from database
         if (templateInsightsList.length === 0) {
             (templateStats || []).forEach((ts, idx) => {
                 const sent = parseInt(ts.sent_count || 0);
@@ -381,6 +423,39 @@ module.exports = async (req, res) => {
             };
         });
 
+        // Apply Superadmin Manual Overrides to Template Insights Breakdown
+        templateInsightsList.forEach(t => {
+            const key1 = `template_${t.id}`;
+            const key2 = `template_${t.name}`;
+            const ov = overridesMap[key1] || overridesMap[key2];
+            if (ov) {
+                if (ov.sent !== undefined) t.sent = parseInt(ov.sent);
+                if (ov.delivered !== undefined) t.delivered = parseInt(ov.delivered);
+                if (ov.read !== undefined) t.read = parseInt(ov.read);
+                if (ov.replies !== undefined) t.replies = parseInt(ov.replies);
+                if (ov.cost_per_delivered !== undefined) t.cost_per_delivered = parseFloat(ov.cost_per_delivered);
+                if (ov.amount_spent !== undefined) t.amount_spent = parseFloat(ov.amount_spent);
+                if (t.delivered > 0) t.read_percent = Math.round((t.read / t.delivered) * 100);
+            }
+        });
+
+        // Apply Superadmin Manual Overrides to Multi-Tenant Company Usage Breakdown
+        company_usage_list.forEach(cu => {
+            const key1 = `company_usage_${cu.id}`;
+            const key2 = `company_usage_${cu.name}`;
+            const ov = overridesMap[key1] || overridesMap[key2];
+            if (ov) {
+                if (ov.wa_marketing_count !== undefined) cu.wa_marketing_count = parseInt(ov.wa_marketing_count);
+                if (ov.wa_utility_count !== undefined) cu.wa_utility_count = parseInt(ov.wa_utility_count);
+                if (ov.wa_auth_count !== undefined) cu.wa_auth_count = parseInt(ov.wa_auth_count);
+                if (ov.email_count !== undefined) cu.email_count = parseInt(ov.email_count);
+                if (ov.sms_count !== undefined) cu.sms_count = parseInt(ov.sms_count);
+                if (ov.total_outbound !== undefined) cu.total_outbound = parseInt(ov.total_outbound);
+                else cu.total_outbound = cu.wa_marketing_count + cu.wa_utility_count + cu.wa_auth_count + cu.email_count + cu.sms_count;
+                if (ov.est_cost !== undefined) cu.est_cost = parseFloat(ov.est_cost);
+            }
+        });
+
         const analytics = {
             meta_connected: metaConnected,
             meta_error: metaError,
@@ -416,6 +491,19 @@ module.exports = async (req, res) => {
             company_usage: company_usage_list,
             recent_inbound: recentInbound || []
         };
+
+        // Apply Superadmin Manual Overrides to Overall Meta Direct Insights Summary Cards
+        const globalOv = overridesMap['meta_direct_global'];
+        if (globalOv) {
+            if (globalOv.total_amount_spent !== undefined) analytics.meta_direct_insights.total_amount_spent = parseFloat(globalOv.total_amount_spent);
+            if (globalOv.total_sent !== undefined) analytics.meta_direct_insights.total_sent = parseInt(globalOv.total_sent);
+            if (globalOv.total_delivered !== undefined) analytics.meta_direct_insights.total_delivered = parseInt(globalOv.total_delivered);
+            if (globalOv.total_read !== undefined) analytics.meta_direct_insights.total_read = parseInt(globalOv.total_read);
+            if (globalOv.unique_replies !== undefined) analytics.meta_direct_insights.unique_replies = parseInt(globalOv.unique_replies);
+            if (analytics.meta_direct_insights.total_delivered > 0) {
+                analytics.meta_direct_insights.total_read_percent = Math.round((analytics.meta_direct_insights.total_read / analytics.meta_direct_insights.total_delivered) * 100);
+            }
+        }
 
         return res.status(200).json(analytics);
     } catch (error) {

@@ -164,12 +164,14 @@ module.exports = async (req, res) => {
             if (targetComp.length > 0) {
                 const compName = (targetComp[0].name || '').toLowerCase();
                 const compSlug = (targetComp[0].slug || '').toLowerCase();
-                if (compName.includes('inspenox') || compSlug === 'inspenox' || String(targetComp[0].id) === 'default') {
+                if (compName.includes('inspenox') || compSlug === 'inspenox' || String(targetComp[0].id) === '1' || String(targetComp[0].id) === 'default') {
                     return res.status(403).json({ error: 'Inspenox Business Suite is the primary parent organization and cannot be deleted.' });
                 }
             }
 
-            await sql`UPDATE companies SET is_active = false WHERE id = ${id}`;
+            try { await sql`DELETE FROM messages WHERE company_id = ${id}`; } catch(e) {}
+            try { await sql`DELETE FROM customers WHERE company_id = ${id}`; } catch(e) {}
+            await sql`DELETE FROM companies WHERE id = ${id}`;
             return res.status(200).json({ success: true });
         } catch (error) {
             return res.status(500).json({ error: error.message });

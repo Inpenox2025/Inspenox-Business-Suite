@@ -622,29 +622,36 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
     const tbodyCompanies = document.getElementById('usage-company-table-body');
     const companyBreakdownCard = document.getElementById('usage-company-breakdown-card');
 
+    // Show/hide Superadmin action headers in table
+    document.querySelectorAll('.th-superadmin-action').forEach(el => {
+        el.style.display = isParent ? 'table-cell' : 'none';
+    });
+
     // Hide multi-tenant company breakdown card for child admins
     if (companyBreakdownCard) {
         companyBreakdownCard.style.display = isParent ? 'block' : 'none';
     }
 
-    if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="9"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading direct Meta template insights...</span></div></td></tr>`;
-    if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="8"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading API usage data...</span></div></td></tr>`;
+    const colspanVal = isParent ? 10 : 9;
+    const coColspanVal = isParent ? 9 : 8;
+
+    if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading direct Meta template insights...</span></div></td></tr>`;
+    if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading API usage data...</span></div></td></tr>`;
 
     try {
         const res = await apiFetch('/api/analytics');
         const data = await res.json();
 
-        // 1. Connection Status Badge
+        // 1. Connection Status Badge & Superadmin Edit Summary Button
         if (elBadge) {
-            if (data.meta_connected) {
-                elBadge.innerHTML = '⚡ Direct Meta Graph API v20.0';
-                elBadge.style.background = 'rgba(16, 185, 129, 0.15)';
-                elBadge.style.color = '#10b981';
-            } else {
-                elBadge.innerHTML = '📊 Local Database Analytics';
-                elBadge.style.background = 'rgba(234, 179, 8, 0.15)';
-                elBadge.style.color = '#eab308';
-            }
+            let badgeText = data.meta_connected ? '⚡ Direct Meta Graph API v20.0' : '📊 Local Database Analytics';
+            let badgeBg = data.meta_connected ? 'rgba(16, 185, 129, 0.15)' : 'rgba(234, 179, 8, 0.15)';
+            let badgeColor = data.meta_connected ? '#10b981' : '#eab308';
+            let superBtnHtml = isParent ? ` <button class="btn secondary sm" style="margin-left:0.5rem; padding:0.2rem 0.5rem; font-size:0.75rem; border-radius:6px;" onclick="editOverallMetaInsightsModal(${data.meta_direct_insights?.total_amount_spent || 0}, ${data.meta_direct_insights?.total_sent || 0}, ${data.meta_direct_insights?.total_delivered || 0}, ${data.meta_direct_insights?.total_read || 0}, ${data.meta_direct_insights?.unique_replies || 0})">✏️ Edit Summary</button>` : '';
+
+            elBadge.innerHTML = badgeText + superBtnHtml;
+            elBadge.style.background = badgeBg;
+            elBadge.style.color = badgeColor;
         }
 
         // 2. Direct Meta Summary Stat Cards
@@ -665,7 +672,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         if (tbodyTemplates) {
             const tList = metaInsights.templates || [];
             if (tList.length === 0) {
-                tbodyTemplates.innerHTML = `<tr><td colspan="9" class="empty-state">No Meta template analytics recorded yet.</td></tr>`;
+                tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">No Meta template analytics recorded yet.</td></tr>`;
             } else {
                 tbodyTemplates.innerHTML = tList.map(t => {
                     const statusBadge = t.status === 'APPROVED' || t.status === 'ACTIVE' ? 
@@ -673,6 +680,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                         '<span class="window-badge" style="background:rgba(234, 179, 8, 0.15); color:#eab308; font-weight:600;">Pending</span>';
                     const categoryBadge = `<span class="window-badge" style="background:var(--primary-light); color:var(--primary); font-size:0.75rem; text-transform:uppercase;">${t.category}</span>`;
                     const rateDisplay = (t.cost_per_delivered < 0.2 && t.cost_per_delivered > 0) ? `₹${t.cost_per_delivered.toFixed(4)}` : (t.cost_per_delivered === 0 ? 'FREE' : `₹${t.cost_per_delivered.toFixed(4)}`);
+                    const actionTd = isParent ? `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editTemplateStatsModal('${t.id}', '${t.name.replace(/'/g, "\\'")}', ${t.sent}, ${t.delivered}, ${t.read}, ${t.replies}, ${t.cost_per_delivered}, ${t.amount_spent})">✏️ Edit</button></td>` : '';
                     return `
                         <tr>
                             <td>
@@ -690,6 +698,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                             <td><strong style="color:#8b5cf6;">${t.replies}</strong></td>
                             <td><code style="color:var(--text-muted); font-weight:600;">${rateDisplay}</code></td>
                             <td style="text-align: right;"><strong style="color:var(--text-main); font-size:1.05rem;">₹${t.amount_spent.toFixed(2)}</strong></td>
+                            ${actionTd}
                         </tr>
                     `;
                 }).join('');
@@ -700,9 +709,11 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         if (tbodyCompanies) {
             const usageList = data.company_usage || [];
             if (usageList.length === 0) {
-                tbodyCompanies.innerHTML = `<tr><td colspan="8" class="empty-state">No company API usage data recorded yet.</td></tr>`;
+                tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">No company API usage data recorded yet.</td></tr>`;
             } else {
-                tbodyCompanies.innerHTML = usageList.map(u => `
+                tbodyCompanies.innerHTML = usageList.map(u => {
+                    const actionTd = isParent ? `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editCompanyUsageModal('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.wa_marketing_count}, ${u.wa_utility_count}, ${u.wa_auth_count}, ${u.email_count}, ${u.sms_count}, ${u.est_cost})">✏️ Edit</button></td>` : '';
+                    return `
                     <tr>
                         <td><strong style="color:var(--text-main);">${u.name}</strong></td>
                         <td><code style="color:var(--primary); font-weight:600;">${u.wa_marketing_count}</code></td>
@@ -712,15 +723,222 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                         <td><code>${u.sms_count}</code></td>
                         <td><strong>${u.total_outbound}</strong></td>
                         <td style="text-align: right;"><strong style="color:var(--primary);">₹${u.est_cost.toFixed(2)}</strong></td>
+                        ${actionTd}
                     </tr>
-                `).join('');
+                `;
+                }).join('');
             }
         }
     } catch(e) {
         console.error('Error loading usage analytics:', e);
-        if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="9" class="empty-state">Failed to load direct Meta template insights.</td></tr>`;
-        if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="8" class="empty-state">Failed to load API usage statistics.</td></tr>`;
+        if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">Failed to load direct Meta template insights.</td></tr>`;
+        if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">Failed to load API usage statistics.</td></tr>`;
     }
+};
+
+// --- Super Admin Manual Overrides Modals ---
+window.editTemplateStatsModal = function(id, name, sent, delivered, read, replies, rate, amountSpent) {
+    const contentHtml = `
+        <div style="display:flex; flex-direction:column; gap:0.85rem;">
+            <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Manually edit analytics stats for template <strong>${name}</strong>. Values set here will be saved in DB and served to all company users.</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Sent Count</label>
+                    <input type="number" id="ov-tpl-sent" value="${sent}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Delivered Count</label>
+                    <input type="number" id="ov-tpl-delivered" value="${delivered}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Read Count</label>
+                    <input type="number" id="ov-tpl-read" value="${read}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Replies Count</label>
+                    <input type="number" id="ov-tpl-replies" value="${replies}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Cost / Delivered (₹)</label>
+                    <input type="number" step="0.0001" id="ov-tpl-rate" value="${rate}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Amount Spent (₹)</label>
+                    <input type="number" step="0.01" id="ov-tpl-spent" value="${amountSpent}" min="0" style="padding:0.4rem;">
+                </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:0.5rem; gap:0.5rem;">
+                <button type="button" class="btn secondary sm" onclick="resetOverride('template', '${id}')">Reset Auto Calculation</button>
+                <button type="button" class="btn primary sm" onclick="submitTplOverride('${id}')">Save Override</button>
+            </div>
+        </div>
+    `;
+    showModal(`Edit Template Stats: ${name}`, contentHtml);
+};
+
+window.editCompanyUsageModal = function(id, name, m, u, a, email, sms, cost) {
+    const contentHtml = `
+        <div style="display:flex; flex-direction:column; gap:0.85rem;">
+            <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Manually edit API usage stats for company <strong>${name}</strong>.</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">WA Marketing Count</label>
+                    <input type="number" id="ov-co-m" value="${m}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">WA Utility Count</label>
+                    <input type="number" id="ov-co-u" value="${u}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">WA Auth Count</label>
+                    <input type="number" id="ov-co-a" value="${a}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Email Sent Count</label>
+                    <input type="number" id="ov-co-email" value="${email}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">SMS Sent Count</label>
+                    <input type="number" id="ov-co-sms" value="${sms}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Estimated Cost (₹)</label>
+                    <input type="number" step="0.01" id="ov-co-cost" value="${cost}" min="0" style="padding:0.4rem;">
+                </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:0.5rem; gap:0.5rem;">
+                <button type="button" class="btn secondary sm" onclick="resetOverride('company_usage', '${id}')">Reset Auto Calculation</button>
+                <button type="button" class="btn primary sm" onclick="submitCoOverride('${id}')">Save Override</button>
+            </div>
+        </div>
+    `;
+    showModal(`Edit Company Usage: ${name}`, contentHtml);
+};
+
+window.editOverallMetaInsightsModal = function(spent, sent, delivered, read, replies) {
+    const contentHtml = `
+        <div style="display:flex; flex-direction:column; gap:0.85rem;">
+            <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Manually edit overall Meta Direct Insights summary cards.</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Total Amount Spent (₹)</label>
+                    <input type="number" step="0.01" id="ov-global-spent" value="${spent}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Total Sent</label>
+                    <input type="number" id="ov-global-sent" value="${sent}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Total Delivered</label>
+                    <input type="number" id="ov-global-delivered" value="${delivered}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Total Read</label>
+                    <input type="number" id="ov-global-read" value="${read}" min="0" style="padding:0.4rem;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:0.75rem; font-weight:600;">Unique Replies</label>
+                    <input type="number" id="ov-global-replies" value="${replies}" min="0" style="padding:0.4rem;">
+                </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:0.5rem; gap:0.5rem;">
+                <button type="button" class="btn secondary sm" onclick="resetOverride('meta_direct', 'global')">Reset Auto Calculation</button>
+                <button type="button" class="btn primary sm" onclick="submitGlobalOverride()">Save Override</button>
+            </div>
+        </div>
+    `;
+    showModal(`Edit Overall Meta Insights Summary`, contentHtml);
+};
+
+window.submitTplOverride = async function(id) {
+    const data = {
+        sent: parseInt(document.getElementById('ov-tpl-sent')?.value || 0),
+        delivered: parseInt(document.getElementById('ov-tpl-delivered')?.value || 0),
+        read: parseInt(document.getElementById('ov-tpl-read')?.value || 0),
+        replies: parseInt(document.getElementById('ov-tpl-replies')?.value || 0),
+        cost_per_delivered: parseFloat(document.getElementById('ov-tpl-rate')?.value || 0),
+        amount_spent: parseFloat(document.getElementById('ov-tpl-spent')?.value || 0)
+    };
+    try {
+        const res = await apiFetch('/api/analytics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'save_override', type: 'template', target_id: id, data })
+        });
+        const result = await res.json();
+        if (result.success) {
+            closeModal();
+            loadUsageAnalytics();
+        } else {
+            showModal('Error', result.error || 'Failed to save template override');
+        }
+    } catch(e) { showModal('Error', e.message); }
+};
+
+window.submitCoOverride = async function(id) {
+    const data = {
+        wa_marketing_count: parseInt(document.getElementById('ov-co-m')?.value || 0),
+        wa_utility_count: parseInt(document.getElementById('ov-co-u')?.value || 0),
+        wa_auth_count: parseInt(document.getElementById('ov-co-a')?.value || 0),
+        email_count: parseInt(document.getElementById('ov-co-email')?.value || 0),
+        sms_count: parseInt(document.getElementById('ov-co-sms')?.value || 0),
+        est_cost: parseFloat(document.getElementById('ov-co-cost')?.value || 0)
+    };
+    try {
+        const res = await apiFetch('/api/analytics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'save_override', type: 'company_usage', target_id: id, data })
+        });
+        const result = await res.json();
+        if (result.success) {
+            closeModal();
+            loadUsageAnalytics();
+        } else {
+            showModal('Error', result.error || 'Failed to save company usage override');
+        }
+    } catch(e) { showModal('Error', e.message); }
+};
+
+window.submitGlobalOverride = async function() {
+    const data = {
+        total_amount_spent: parseFloat(document.getElementById('ov-global-spent')?.value || 0),
+        total_sent: parseInt(document.getElementById('ov-global-sent')?.value || 0),
+        total_delivered: parseInt(document.getElementById('ov-global-delivered')?.value || 0),
+        total_read: parseInt(document.getElementById('ov-global-read')?.value || 0),
+        unique_replies: parseInt(document.getElementById('ov-global-replies')?.value || 0)
+    };
+    try {
+        const res = await apiFetch('/api/analytics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'save_override', type: 'meta_direct', target_id: 'global', data })
+        });
+        const result = await res.json();
+        if (result.success) {
+            closeModal();
+            loadUsageAnalytics();
+        } else {
+            showModal('Error', result.error || 'Failed to save global insights override');
+        }
+    } catch(e) { showModal('Error', e.message); }
+};
+
+window.resetOverride = async function(type, targetId) {
+    try {
+        const res = await apiFetch('/api/analytics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'reset_override', type, target_id: targetId })
+        });
+        const result = await res.json();
+        if (result.success) {
+            closeModal();
+            loadUsageAnalytics();
+        } else {
+            showModal('Error', result.error || 'Failed to reset override');
+        }
+    } catch(e) { showModal('Error', e.message); }
 };
 
 window.calculateEstimatorCost = function calculateEstimatorCost() {
@@ -756,27 +974,6 @@ window.calculateEstimatorCost = function calculateEstimatorCost() {
 
 window.editCompany = function editCompany(id) {
     openCompanyModal(id);
-};
-
-window.deleteCompany = function deleteCompany(id) {
-    const comp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(id)) : null;
-    const compName = comp ? comp.name : `Company #${id}`;
-    
-    showModal('Delete Company Account', `Are you sure you want to delete company "${compName}"? This action will disable access for this tenant account.`, 'confirm', async () => {
-        try {
-            const res = await apiFetch(`/api/companies?id=${id}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.success) {
-                loadCompaniesSettings();
-                loadCompanies();
-                showModal('Success', `Company "${compName}" deleted successfully.`);
-            } else {
-                showModal('Error', data.error || 'Failed to delete company.');
-            }
-        } catch(e) {
-            showModal('Error', e.message || 'Error deleting company.');
-        }
-    }, 'Delete Company', 'btn danger');
 };
 
 window.saveCompany = async function saveCompany(e) {
@@ -825,29 +1022,33 @@ window.saveCompany = async function saveCompany(e) {
 };
 
 window.deleteCompany = function deleteCompany(id) {
-    const comp = allCompanies.find(c => String(c.id) === String(id));
-    if (comp && (comp.name.toLowerCase().includes('inspenox') || String(id) === 'default' || String(id) === '1')) {
+    const comp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(id)) : null;
+    if (comp && (comp.name.toLowerCase().includes('inspenox') || (comp.slug && comp.slug.toLowerCase() === 'inspenox') || String(id) === 'default' || String(id) === '1')) {
         showModal('Protected Company', 'Inspenox Business Suite is the primary parent organization and cannot be deleted.');
         return;
     }
-    showModal('Delete Company', `Are you sure you want to delete company "${comp ? comp.name : id}"? All associated settings will be removed.`, 'confirm', async () => {
+
+    const compName = comp ? comp.name : `Company #${id}`;
+
+    showModal('Delete Company Account', `Are you sure you want to permanently delete company "${compName}" and its WhatsApp API settings? This action cannot be undone.`, 'confirm', async () => {
         try {
             const res = await apiFetch(`/api/companies?id=${id}`, { method: 'DELETE' });
             const data = await res.json();
             if (data.success) {
-                if (currentCompanyId === id) {
+                if (currentCompanyId === String(id)) {
                     currentCompanyId = 'default';
                     localStorage.setItem('inspenox_company_id', 'default');
                 }
-                loadCompanies();
                 loadCompaniesSettings();
+                loadCompanies();
+                showModal('Success', `Company "${compName}" deleted permanently.`);
             } else {
                 showModal('Error', data.error || 'Failed to delete company.');
             }
         } catch(e) {
-            showModal('Error', 'Error deleting company.');
+            showModal('Error', e.message || 'Error deleting company.');
         }
-    });
+    }, 'Delete Company', 'btn danger');
 };
 
 // --- Globals ---
