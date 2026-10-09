@@ -86,29 +86,60 @@ module.exports = async (req, res) => {
                 `;
                 return res.status(200).json({ success: true, customer: updated[0] });
             } else {
-                // Upsert customer by phone
-                const result = await sql`
-                    INSERT INTO customers (
-                        name, phone, email, company_name, address, city, state, pincode, country, tags, notes, custom_fields, company_id, is_saved
-                    ) VALUES (
-                        ${name}, ${cleanPhone}, ${email || null}, ${company_name || null}, ${address || null}, ${city || null}, ${state || null}, ${pincode || null}, ${country || 'India'}, ${tags || null}, ${notes || null}, ${customJson}::jsonb, ${targetCompanyId}, true
-                    ) 
-                    ON CONFLICT (phone) DO UPDATE SET 
-                        name = EXCLUDED.name,
-                        email = COALESCE(EXCLUDED.email, customers.email),
-                        company_name = COALESCE(EXCLUDED.company_name, customers.company_name),
-                        address = COALESCE(EXCLUDED.address, customers.address),
-                        city = COALESCE(EXCLUDED.city, customers.city),
-                        state = COALESCE(EXCLUDED.state, customers.state),
-                        pincode = COALESCE(EXCLUDED.pincode, customers.pincode),
-                        tags = COALESCE(EXCLUDED.tags, customers.tags),
-                        notes = COALESCE(EXCLUDED.notes, customers.notes),
-                        custom_fields = COALESCE(EXCLUDED.custom_fields, customers.custom_fields),
-                        company_id = EXCLUDED.company_id,
-                        is_saved = true
-                    RETURNING *
+                const tenDigits = cleanPhone.slice(-10);
+                // Check if customer with cleanPhone or 10-digit phone already exists
+                const existing = await sql`
+                    SELECT id FROM customers 
+                    WHERE phone = ${cleanPhone} OR phone = ${tenDigits} 
+                    ORDER BY is_saved DESC, id ASC 
+                    LIMIT 1
                 `;
-                return res.status(200).json({ success: true, customer: result[0] });
+
+                if (existing.length > 0) {
+                    const updated = await sql`
+                        UPDATE customers 
+                        SET name = ${name},
+                            phone = ${cleanPhone},
+                            email = ${email || null},
+                            company_name = ${company_name || null},
+                            address = ${address || null},
+                            city = ${city || null},
+                            state = ${state || null},
+                            pincode = ${pincode || null},
+                            country = ${country || 'India'},
+                            tags = ${tags || null},
+                            notes = ${notes || null},
+                            custom_fields = ${customJson}::jsonb,
+                            company_id = ${targetCompanyId},
+                            is_saved = true
+                        WHERE id = ${existing[0].id}
+                        RETURNING *
+                    `;
+                    return res.status(200).json({ success: true, customer: updated[0] });
+                } else {
+                    const result = await sql`
+                        INSERT INTO customers (
+                            name, phone, email, company_name, address, city, state, pincode, country, tags, notes, custom_fields, company_id, is_saved
+                        ) VALUES (
+                            ${name}, ${cleanPhone}, ${email || null}, ${company_name || null}, ${address || null}, ${city || null}, ${state || null}, ${pincode || null}, ${country || 'India'}, ${tags || null}, ${notes || null}, ${customJson}::jsonb, ${targetCompanyId}, true
+                        ) 
+                        ON CONFLICT (phone) DO UPDATE SET 
+                            name = EXCLUDED.name,
+                            email = COALESCE(EXCLUDED.email, customers.email),
+                            company_name = COALESCE(EXCLUDED.company_name, customers.company_name),
+                            address = COALESCE(EXCLUDED.address, customers.address),
+                            city = COALESCE(EXCLUDED.city, customers.city),
+                            state = COALESCE(EXCLUDED.state, customers.state),
+                            pincode = COALESCE(EXCLUDED.pincode, customers.pincode),
+                            tags = COALESCE(EXCLUDED.tags, customers.tags),
+                            notes = COALESCE(EXCLUDED.notes, customers.notes),
+                            custom_fields = COALESCE(EXCLUDED.custom_fields, customers.custom_fields),
+                            company_id = EXCLUDED.company_id,
+                            is_saved = true
+                        RETURNING *
+                    `;
+                    return res.status(200).json({ success: true, customer: result[0] });
+                }
             }
         } catch (error) {
             return res.status(500).json({ error: error.message });

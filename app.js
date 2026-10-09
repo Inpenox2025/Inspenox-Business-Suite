@@ -4837,9 +4837,10 @@ function closeChat() {
 
 function renderTick(status, direction) {
     if (direction === 'inbound') return '';
-    if (status === 'read') return `<span class="tick-icon tick-read" title="Read">✓✓</span>`;
-    if (status === 'delivered') return `<span class="tick-icon tick-sent" title="Delivered">✓✓</span>`;
-    return `<span class="tick-icon tick-sent" title="Sent">✓</span>`;
+    if (status === 'read') return `<span class="tick-icon tick-read" title="Read (Seen)" style="color:#34b7f1; font-weight:800; font-size:0.85rem; margin-left:0.35rem; display:inline-block;">✓✓</span>`;
+    if (status === 'delivered') return `<span class="tick-icon tick-delivered" title="Delivered to Phone" style="color:var(--text-muted); font-weight:700; font-size:0.85rem; margin-left:0.35rem; display:inline-block;">✓✓</span>`;
+    if (status === 'failed') return `<span class="tick-icon tick-failed" title="Failed to deliver" style="color:#ef4444; font-weight:bold; font-size:0.85rem; margin-left:0.35rem; display:inline-block;">⚠️</span>`;
+    return `<span class="tick-icon tick-sent" title="Sent to Meta" style="color:var(--text-muted); font-size:0.85rem; margin-left:0.35rem; display:inline-block;">✓</span>`;
 }
 
 function update24hWindowBadge(messages) {
