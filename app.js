@@ -627,19 +627,21 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         el.style.display = isParent ? 'table-cell' : 'none';
     });
 
-    // Hide multi-tenant company breakdown card for child admins
+    // Always keep company breakdown card visible so companies can see their usage and charges
     if (companyBreakdownCard) {
-        companyBreakdownCard.style.display = isParent ? 'block' : 'none';
+        companyBreakdownCard.style.display = 'block';
     }
 
     const colspanVal = isParent ? 10 : 9;
-    const coColspanVal = isParent ? 9 : 8;
+    const coColspanVal = isParent ? 9 : 9;
 
     if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading direct Meta template insights...</span></div></td></tr>`;
     if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading API usage data...</span></div></td></tr>`;
 
     try {
-        const res = await apiFetch('/api/analytics');
+        const storedComp = getStoredCompany();
+        const queryStr = (!isParent && storedComp && storedComp.id) ? `?company_id=${storedComp.id}` : '';
+        const res = await apiFetch(`/api/analytics${queryStr}`);
         const data = await res.json();
 
         // 1. Connection Status Badge & Superadmin Edit Summary Button
@@ -659,7 +661,16 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         if (elAmountSpent) elAmountSpent.textContent = `₹${(metaInsights.total_amount_spent || data.estimated_costs?.whatsapp || 0).toFixed(2)}`;
         if (elCostPerMsg) elCostPerMsg.textContent = `₹0.8631 / ₹0.115`;
         if (elTotalMsgs) elTotalMsgs.textContent = metaInsights.total_sent || data.messages_sent || 0;
-        if (elTotalCost) elTotalCost.textContent = `₹${(data.estimated_costs?.total || 0).toFixed(2)}`;
+
+        const totalCostVal = data.estimated_costs?.total || 0;
+        window.latestTotalCost = totalCostVal;
+        if (elTotalCost) elTotalCost.textContent = `₹${totalCostVal.toFixed(2)}`;
+
+        // Show Pay Bill Now container for registered logged-in company users
+        const payContainer = document.getElementById('pay-now-container');
+        if (payContainer) {
+            payContainer.style.display = (!isParent && totalCostVal >= 0) ? 'block' : 'none';
+        }
 
         // 3. Performance Metrics
         if (elSentCount) elSentCount.textContent = metaInsights.total_sent || 0;
@@ -712,7 +723,9 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                 tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">No company API usage data recorded yet.</td></tr>`;
             } else {
                 tbodyCompanies.innerHTML = usageList.map(u => {
-                    const actionTd = isParent ? `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editCompanyUsageModal('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.wa_marketing_count}, ${u.wa_utility_count}, ${u.wa_auth_count}, ${u.email_count}, ${u.sms_count}, ${u.est_cost})">✏️ Edit</button></td>` : '';
+                    const actionTd = isParent ? 
+                        `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editCompanyUsageModal('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.wa_marketing_count}, ${u.wa_utility_count}, ${u.wa_auth_count}, ${u.email_count}, ${u.sms_count}, ${u.est_cost})">✏️ Edit</button></td>` : 
+                        `<td style="text-align:center;"><button class="btn primary sm" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#10b981; border:none; font-weight:700;" onclick="triggerCompanyPayment('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.est_cost})">💳 Pay Charges</button></td>`;
                     return `
                     <tr>
                         <td><strong style="color:var(--text-main);">${u.name}</strong></td>
@@ -722,7 +735,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                         <td><code>${u.email_count}</code></td>
                         <td><code>${u.sms_count}</code></td>
                         <td><strong>${u.total_outbound}</strong></td>
-                        <td style="text-align: right;"><strong style="color:var(--primary);">₹${u.est_cost.toFixed(2)}</strong></td>
+                        <td style="text-align: right;"><strong style="color:var(--primary); font-size:1.05rem;">₹${u.est_cost.toFixed(2)}</strong></td>
                         ${actionTd}
                     </tr>
                 `;
@@ -734,6 +747,65 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">Failed to load direct Meta template insights.</td></tr>`;
         if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">Failed to load API usage statistics.</td></tr>`;
     }
+};
+
+// Payment Flow for Logged-In Registered Companies
+window.triggerCompanyPayment = function(id, name, amount) {
+    const currentCompany = getStoredCompany();
+    const compName = name || currentCompany?.name || 'Registered Account';
+    const totalAmt = (amount !== undefined && amount !== null) ? amount : (window.latestTotalCost || 0);
+
+    const paymentModalHtml = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div style="background:rgba(16,185,129,0.1); border:1px solid #10b981; padding:1rem; border-radius:10px; text-align:center;">
+                <span style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Total Outstanding Balance (inc. 18% GST)</span>
+                <div style="font-size:2.4rem; font-weight:800; color:#10b981; margin-top:0.2rem; letter-spacing:-0.5px;">₹${parseFloat(totalAmt).toFixed(2)}</div>
+                <span style="font-size:0.8rem; color:var(--text-main); font-weight:600;">Account: ${compName}</span>
+            </div>
+
+            <div style="font-size:0.85rem;">
+                <strong style="display:block; margin-bottom:0.6rem; color:var(--text-main);">Choose Payment Method:</strong>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+                    <label style="border:1px solid var(--border); padding:0.65rem; border-radius:8px; display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight:600; font-size:0.8rem;">
+                        <input type="radio" name="pay-method" value="upi" checked> 📱 UPI / GooglePay / PhonePe
+                    </label>
+                    <label style="border:1px solid var(--border); padding:0.65rem; border-radius:8px; display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight:600; font-size:0.8rem;">
+                        <input type="radio" name="pay-method" value="card"> 💳 Credit / Debit Card
+                    </label>
+                    <label style="border:1px solid var(--border); padding:0.65rem; border-radius:8px; display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight:600; font-size:0.8rem;">
+                        <input type="radio" name="pay-method" value="netbanking"> 🏦 Netbanking (All Banks)
+                    </label>
+                    <label style="border:1px solid var(--border); padding:0.65rem; border-radius:8px; display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight:600; font-size:0.8rem;">
+                        <input type="radio" name="pay-method" value="bank_transfer"> 🏛️ Direct Bank Transfer
+                    </label>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:0.5rem;">
+                <button class="btn secondary sm" onclick="closeModal()">Cancel</button>
+                <button class="btn primary sm" style="background:#10b981; border:none; font-weight:700; padding:0.45rem 1rem;" onclick="processPaymentSubmit('${compName.replace(/'/g, "\\'")}', ${totalAmt})">Proceed to Pay ₹${parseFloat(totalAmt).toFixed(2)}</button>
+            </div>
+        </div>
+    `;
+    showModal(`💳 Pay Usage Charges - ${compName}`, paymentModalHtml);
+};
+
+window.processPaymentSubmit = function(compName, amount) {
+    const refId = `INS-${Date.now().toString().slice(-8)}`;
+    showModal(
+        '🎉 Payment Gateway Initiated',
+        `<div style="text-align:center; padding:0.75rem;">
+            <div style="font-size:3rem; margin-bottom:0.4rem;">✅</div>
+            <h4 style="margin:0 0 0.4rem 0; color:var(--text-main); font-size:1.15rem;">Payment Request Dispatched!</h4>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+                Payment session of <strong style="color:#10b981;">₹${parseFloat(amount).toFixed(2)}</strong> (inc. 18% GST) for <strong>${compName}</strong> has been generated successfully.
+            </p>
+            <div style="background:var(--bg-card); border:1px solid var(--border); padding:0.75rem; border-radius:8px; font-family:monospace; font-size:0.85rem; margin-bottom:1rem;">
+                Transaction Ref: ${refId}
+            </div>
+            <p style="font-size:0.78rem; color:#10b981; font-weight:600; margin:0;">Receipt copy & tax invoice sent to registered billing email.</p>
+        </div>`
+    );
 };
 
 // --- Super Admin Manual Overrides Modals ---

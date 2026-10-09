@@ -1236,9 +1236,14 @@
                     </div>
 
                     <div class="card" style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
-                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Multi-Channel Cost</span>
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Multi-Channel Cost (inc. 18% GST)</span>
                         <div id="usage-stat-total-cost" style="font-size: 2.2rem; font-weight: 800; color: #3b82f6; margin-top: 0.4rem; letter-spacing: -0.5px;">₹0.00</div>
-                        <span style="font-size: 0.725rem; color: var(--text-muted);">WhatsApp + Email + SMS</span>
+                        <div id="pay-now-container" style="margin-top: 0.5rem; display: none;">
+                            <button id="btn-pay-now" class="btn primary sm" style="width: 100%; font-weight: 700; background: #10b981; border: none; padding: 0.45rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem;" onclick="triggerCompanyPayment()">
+                                💳 Pay Bill Now
+                            </button>
+                        </div>
+                        <span style="font-size: 0.725rem; color: var(--text-muted);">WhatsApp + Email + SMS (inc. GST)</span>
                     </div>
                 </div>
 

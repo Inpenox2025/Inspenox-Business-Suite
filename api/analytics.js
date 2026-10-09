@@ -461,6 +461,18 @@ module.exports = async (req, res) => {
             }
         });
 
+        let calculated_total_est_cost = 0;
+        if (companyId && companyId !== 'default') {
+            const myCo = company_usage_list.find(cu => String(cu.id) === String(companyId));
+            if (myCo) {
+                calculated_total_est_cost = myCo.est_cost;
+            } else {
+                calculated_total_est_cost = total_est_cost;
+            }
+        } else {
+            calculated_total_est_cost = company_usage_list.reduce((acc, cu) => acc + (cu.est_cost || 0), 0);
+        }
+
         const analytics = {
             meta_connected: metaConnected,
             meta_error: metaError,
@@ -491,7 +503,7 @@ module.exports = async (req, res) => {
                 whatsapp: parseFloat(est_wa_cost.toFixed(4)),
                 email: parseFloat(est_email_cost.toFixed(4)),
                 sms: parseFloat(est_sms_cost.toFixed(4)),
-                total: parseFloat(total_est_cost.toFixed(4))
+                total: parseFloat(calculated_total_est_cost.toFixed(2))
             },
             company_usage: company_usage_list,
             recent_inbound: recentInbound || []
