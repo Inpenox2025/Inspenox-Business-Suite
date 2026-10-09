@@ -27,20 +27,16 @@ async function ensureUsersTable(sql) {
             ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
         `;
 
-        // Ensure admin user exists with known password (admin / admin123)
-        const adminUsers = await sql`SELECT id FROM users WHERE LOWER(username) = 'admin' LIMIT 1;`;
-        const defaultHash = hashPassword('admin123');
-        if (adminUsers.length === 0) {
+        // Seed default admin user ONLY if users table is completely empty
+        const countRes = await sql`SELECT COUNT(*)::int as count FROM users;`;
+        if ((countRes[0]?.count || 0) === 0) {
+            const defaultHash = hashPassword('admin123');
             await sql`
                 INSERT INTO users (username, password_hash, role)
                 VALUES ('admin', ${defaultHash}, 'admin')
                 ON CONFLICT (username) DO NOTHING;
             `;
             console.log('Default admin user initialized (admin / admin123)');
-        } else {
-            // Reset admin password to admin123 to recover from hash mismatch
-            await sql`UPDATE users SET password_hash = ${defaultHash} WHERE LOWER(username) = 'admin';`;
-            console.log('Admin password reset to default (admin123)');
         }
 
     } catch (e) {
@@ -158,21 +154,22 @@ module.exports = async (req, res) => {
 
                 const cleanUser = username.trim().toLowerCase();
                 const userRole = role || 'admin';
-                const coId = (company_id && company_id !== 'default' && company_id !== 'parent' && String(company_id).trim() !== '') ? parseInt(company_id) : null;
+                const coId = (company_id && company_id !== 'default' && company_id !== 'parent' && String(company_id).trim() !== '' && String(company_id) !== 'null') ? parseInt(company_id) : null;
+                const targetId = (id !== undefined && id !== null && String(id).trim() !== '' && String(id) !== '0' && String(id) !== 'null' && String(id) !== 'undefined') ? parseInt(id) : null;
 
-                if (id) {
+                if (targetId) {
                     if (password && password.trim()) {
                         const newHash = hashPassword(password);
                         await sql`
                             UPDATE users 
                             SET username = ${cleanUser}, company_id = ${coId}, role = ${userRole}, password_hash = ${newHash}
-                            WHERE id = ${id}
+                            WHERE id = ${targetId}
                         `;
                     } else {
                         await sql`
                             UPDATE users 
                             SET username = ${cleanUser}, company_id = ${coId}, role = ${userRole}
-                            WHERE id = ${id}
+                            WHERE id = ${targetId}
                         `;
                     }
                 } else {
@@ -221,10 +218,7 @@ module.exports = async (req, res) => {
                         WHERE id = ${users[0].id}
                     `;
                 } else {
-                    await sql`
-                        INSERT INTO users (username, password_hash, role)
-                        VALUES (${targetUser}, ${newHash}, 'admin')
-                    `;
+                    return res.status(404).json({ error: 'User account not found' });
                 }
 
                 return res.status(200).json({

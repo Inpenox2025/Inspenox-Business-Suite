@@ -537,6 +537,17 @@ window.saveUser = async function saveUser(e) {
         });
         const data = await res.json();
         if (data.success) {
+            const curUserStr = localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user');
+            if (curUserStr) {
+                try {
+                    const curUser = JSON.parse(curUserStr);
+                    if (String(curUser.id) === String(id) || (!id && curUser.username.toLowerCase() === username.toLowerCase())) {
+                        curUser.username = username;
+                        localStorage.setItem('inspenox_user', JSON.stringify(curUser));
+                        localStorage.setItem('induio_user', JSON.stringify(curUser));
+                    }
+                } catch(err) {}
+            }
             closeUserModal();
             loadUsersList();
             showModal('Success', `User "${username}" saved successfully!`);
