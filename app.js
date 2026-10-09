@@ -145,6 +145,16 @@ function apiFetch(url, options = {}) {
 }
 
 // --- Multi-Tenant Parent/Child Permissions & Company UI Management ---
+window.getStoredCompany = function getStoredCompany() {
+    try {
+        const u = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
+        const cId = localStorage.getItem('inspenox_company_id') || u.company_id;
+        return { id: cId, name: u.company_name || u.username || 'Registered Account' };
+    } catch(e) {
+        return { id: null, name: 'Registered Account' };
+    }
+};
+
 window.isParentAdmin = function isParentAdmin() {
     let user = {};
     try {
