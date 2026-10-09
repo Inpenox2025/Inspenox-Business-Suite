@@ -4060,10 +4060,17 @@ const bcType = document.getElementById('bc-type');
 bcType?.addEventListener('change', (e) => {
     const type = e.target.value;
     document.getElementById('bc-template-group').style.display = type === 'template' ? 'block' : 'none';
-    document.getElementById('bc-media-group').style.display = (type === 'image' || type === 'video') ? 'block' : 'none';
+    document.getElementById('bc-media-group').style.display = (type === 'image' || type === 'video' || type === 'template') ? 'block' : 'none';
     document.getElementById('bc-content-group').style.display = type === 'template' ? 'none' : 'block';
     
-    if (type === 'image' || type === 'video') {
+    const mediaLabel = document.getElementById('bc-media-group-label');
+    if (mediaLabel) {
+        mediaLabel.textContent = type === 'template' 
+            ? 'Attach Template Header IMAGE (Required by Meta)' 
+            : 'Attach Media';
+    }
+
+    if (type === 'image' || type === 'video' || type === 'template') {
         loadMediaForSelect(type);
     }
 });
@@ -4292,13 +4299,13 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
         const content = document.getElementById('bc-content').value;
         
         let media_id = null;
-        if (type === 'image' || type === 'video') {
+        if (type === 'image' || type === 'video' || type === 'template') {
             const librarySelectedUrl = document.getElementById('bc-media-select')?.value;
             const fileInput = document.getElementById('bc-media');
 
             if (librarySelectedUrl) {
                 media_id = librarySelectedUrl;
-            } else if (fileInput.files.length > 0) {
+            } else if (fileInput && fileInput.files && fileInput.files.length > 0) {
                 const file = fileInput.files[0];
                 const configRes = await apiFetch('/api/config');
                 const config = await configRes.json();
@@ -4308,7 +4315,7 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                     if (statusDiv) statusDiv.innerHTML = `<span class="spinner"></span> Streaming ${file.name} to Meta Cloud (${percent}%)...`;
                 });
                 media_id = metaData.id;
-            } else {
+            } else if (type === 'image' || type === 'video') {
                 throw new Error("Please select a media file from Library or upload a new file.");
             }
         }
@@ -5016,20 +5023,73 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
 
         const templateOptions = templates.map(t => `<option value="${t.name}" data-lang="${t.language}">${t.name} (${t.language})</option>`).join('');
         
+        // Fetch media library items for template header selection
+        let mediaOptions = '<option value="">-- Select from uploaded files --</option>';
+        try {
+            const mediaRes = await apiFetch('/api/media');
+            const mediaList = await mediaRes.json();
+            if (Array.isArray(mediaList)) {
+                mediaList.forEach(m => {
+                    const val = m.meta_media_id || m.file_url;
+                    if (val) {
+                        mediaOptions += `<option value="${val}">${m.name} (${m.type})</option>`;
+                    }
+                });
+            }
+        } catch (e) {}
+
         const modalHtml = `
             <div style="text-align:left; margin-top:0.75rem;">
-                <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.35rem;">Choose an Approved Meta Template to send:</label>
-                <select id="modal-template-select" style="width:100%; padding:0.6rem; border-radius:6px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border);">
-                    ${templateOptions}
-                </select>
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.35rem; font-weight:600;">Choose an Approved Meta Template to send:</label>
+                    <select id="modal-template-select" style="width:100%; padding:0.6rem; border-radius:6px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border);">
+                        ${templateOptions}
+                    </select>
+                </div>
+
+                <div style="border-top:1px solid var(--border); padding-top:0.85rem; margin-top:0.85rem;">
+                    <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.4rem; font-weight:600;">Attach Template Header IMAGE (Required by Meta):</label>
+                    
+                    <div style="margin-bottom:0.75rem;">
+                        <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Option 1: Choose from Media Library</label>
+                        <select id="modal-media-select" style="width:100%; padding:0.5rem; border-radius:6px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border); font-size:0.85rem;">
+                            ${mediaOptions}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Option 2: Or Upload New File</label>
+                        <div class="file-dropzone" style="padding:0.75rem; text-align:center; cursor:pointer;" onclick="document.getElementById('modal-media-file').click()">
+                            <span id="modal-dropzone-text" style="font-size:0.8rem; color:var(--text-muted);">Click to browse and upload media file</span>
+                            <input type="file" id="modal-media-file" accept="image/*,video/*" style="display:none">
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
         
         showModal('Send Template Message', 'Select a template to initiate conversation:', 'confirm', async () => {
             const selectEl = document.getElementById('modal-template-select');
+            const mediaSelectEl = document.getElementById('modal-media-select');
+            const fileInputEl = document.getElementById('modal-media-file');
+
             if (!selectEl) return;
             const templateName = selectEl.value;
             const templateLang = selectEl.options[selectEl.selectedIndex].getAttribute('data-lang') || 'en_US';
+            
+            let media_id = mediaSelectEl?.value || null;
+
+            if (!media_id && fileInputEl && fileInputEl.files && fileInputEl.files.length > 0) {
+                try {
+                    const file = fileInputEl.files[0];
+                    const configRes = await apiFetch('/api/config');
+                    const config = await configRes.json();
+                    const metaData = await uploadMediaToMetaFast(file, config);
+                    media_id = metaData.id;
+                } catch (err) {
+                    console.error('Error uploading media for template modal:', err);
+                }
+            }
             
             const sendRes = await apiFetch('/api/send-message', {
                 method: 'POST',
@@ -5038,7 +5098,8 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
                     customer_id: activeInboxCustomer,
                     type: 'template',
                     template_name: templateName,
-                    template_language: templateLang
+                    template_language: templateLang,
+                    media_id: media_id
                 })
             });
             const result = await sendRes.json();
@@ -5050,7 +5111,19 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
         }, 'Send Template', 'btn primary');
         
         const msgEl = document.getElementById('modal-message');
-        if (msgEl) msgEl.innerHTML = modalHtml;
+        if (msgEl) {
+            msgEl.innerHTML = modalHtml;
+            const fileInputEl = document.getElementById('modal-media-file');
+            fileInputEl?.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                const dropzoneText = document.getElementById('modal-dropzone-text');
+                const mediaSelect = document.getElementById('modal-media-select');
+                if (mediaSelect) mediaSelect.value = '';
+                if (file && dropzoneText) {
+                    dropzoneText.textContent = `Attached: ${file.name}`;
+                }
+            });
+        }
     } catch(e) {
         showModal('Error', 'Failed to load templates: ' + e.message);
     }
