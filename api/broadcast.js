@@ -31,9 +31,13 @@ module.exports = async (req, res) => {
             try {
                 const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
                 if (cos.length > 0) {
-                    if (cos[0].whatsapp_phone_number_id) phoneId = cos[0].whatsapp_phone_number_id;
-                    if (cos[0].whatsapp_access_token) token = cos[0].whatsapp_access_token;
-                    if (cos[0].whatsapp_business_account_id) wabaId = cos[0].whatsapp_business_account_id;
+                    if (cos[0].whatsapp_phone_number_id && cos[0].whatsapp_access_token) {
+                        phoneId = cos[0].whatsapp_phone_number_id;
+                        token = cos[0].whatsapp_access_token;
+                    }
+                    if (cos[0].whatsapp_business_account_id) {
+                        wabaId = cos[0].whatsapp_business_account_id;
+                    }
                 }
             } catch(e) {
                 console.error('Error fetching company Meta credentials for broadcast:', e);
@@ -41,6 +45,22 @@ module.exports = async (req, res) => {
         }
 
         const url = `https://graph.facebook.com/v19.0/${phoneId}/messages`;
+
+        // Fetch template metadata once from Meta WABA API if available for template broadcast
+        let templateMeta = null;
+        if (type === 'template' && wabaId && token && template_name) {
+            try {
+                const metaRes = await fetch(`https://graph.facebook.com/v19.0/${wabaId}/message_templates?name=${encodeURIComponent(template_name)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const metaData = await metaRes.json();
+                if (metaData.data && metaData.data.length > 0) {
+                    templateMeta = metaData.data[0];
+                }
+            } catch (e) {
+                console.error('Failed to pre-fetch template metadata for broadcast:', e);
+            }
+        }
 
         let sent = 0;
         let failed = 0;
@@ -73,31 +93,6 @@ module.exports = async (req, res) => {
 
             if (type === 'template') {
                 const custName = (cust.name && cust.name.trim()) ? cust.name.trim() : 'Customer';
-                let wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-                if (company_id) {
-                    try {
-                        const cos = await sql`SELECT * FROM companies WHERE id = ${company_id} LIMIT 1`;
-                        if (cos.length > 0 && cos[0].whatsapp_business_account_id) {
-                            wabaId = cos[0].whatsapp_business_account_id;
-                        }
-                    } catch(e) {}
-                }
-
-                // Fetch template metadata once from Meta WABA API if available
-                let templateMeta = null;
-                if (wabaId && token && template_name) {
-                    try {
-                        const metaRes = await fetch(`https://graph.facebook.com/v19.0/${wabaId}/message_templates?name=${encodeURIComponent(template_name)}`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        const metaData = await metaRes.json();
-                        if (metaData.data && metaData.data.length > 0) {
-                            templateMeta = metaData.data[0];
-                        }
-                    } catch (e) {
-                        console.error('Failed to fetch template metadata:', e);
-                    }
-                }
 
                 const primaryLang = template_language || (templateMeta ? templateMeta.language : 'en');
                 const langCodes = [primaryLang];
@@ -220,12 +215,15 @@ module.exports = async (req, res) => {
                 if (!responseData) {
                     const baseHeaderComp = [];
                     if (media_id) {
-                        const isVid = (req.body.media_type === 'video');
+                        const mType = (req.body.media_type || 'image').toLowerCase();
+                        const isVid = (mType === 'video');
+                        const isDoc = (mType === 'document');
+                        const mediaFormat = isVid ? 'video' : (isDoc ? 'document' : 'image');
                         baseHeaderComp.push({
                             type: "header",
                             parameters: [{
-                                type: isVid ? "video" : "image",
-                                [isVid ? "video" : "image"]: (typeof media_id === 'string' && media_id.startsWith('http')) ? { link: media_id } : { id: media_id }
+                                type: mediaFormat,
+                                [mediaFormat]: (typeof media_id === 'string' && media_id.startsWith('http')) ? { link: media_id } : { id: media_id }
                             }]
                         });
                     }

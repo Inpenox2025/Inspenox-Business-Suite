@@ -126,6 +126,8 @@ let allCompanies = [];
 function getCompanyId() {
     return currentCompanyId || 'default';
 }
+window.getCompanyId = getCompanyId;
+window.getActiveCompanyId = getCompanyId;
 
 function apiFetch(url, options = {}) {
     const opts = { ...options };
@@ -4079,11 +4081,16 @@ document.getElementById('bc-media-select')?.addEventListener('change', (e) => {
     if (fileInput) fileInput.value = ''; // Reset file input if library item chosen
     
     if (url && previewContainer) {
-        const isVideo = url.endsWith('.mp4');
-        previewContainer.style.display = 'block';
-        previewContainer.innerHTML = isVideo 
-            ? `<video src="${url}" controls style="max-height:120px;border-radius:8px;"></video>` 
-            : `<img src="${url}" style="max-height:120px;border-radius:8px;object-fit:cover;">`;
+        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('/')) {
+            const isVideo = url.endsWith('.mp4');
+            previewContainer.style.display = 'block';
+            previewContainer.innerHTML = isVideo 
+                ? `<video src="${url}" controls style="max-height:120px;border-radius:8px;"></video>` 
+                : `<img src="${url}" style="max-height:120px;border-radius:8px;object-fit:cover;">`;
+        } else {
+            previewContainer.style.display = 'block';
+            previewContainer.innerHTML = `<div style="padding:0.5rem 0.75rem; background:rgba(0,168,132,0.1); color:var(--primary); font-size:0.8rem; border-radius:6px; font-family:monospace; display:inline-flex; align-items:center; gap:0.35rem;">☁️ Meta Cloud Media ID: ${url}</div>`;
+        }
     } else if (previewContainer) {
         previewContainer.style.display = 'none';
     }
@@ -4390,7 +4397,7 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
             updateBcProgress(i, targetList.length, sentTotal, failedTotal, `⏳ Sending to ${chunkNames}...`);
 
             try {
-                const activeCoId = typeof getActiveCompanyId === 'function' ? getActiveCompanyId() : null;
+                const activeCoId = typeof getCompanyId === 'function' ? getCompanyId() : null;
                 const res = await apiFetch('/api/broadcast', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -4403,8 +4410,11 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                     failedTotal += result.failed || 0;
                     
                     if (result.errors && result.errors.length > 0) {
-                        updateBcProgress(i + chunk.length, targetList.length, sentTotal, failedTotal, `<span style="color:#ef4444;">⚠️ Batch error: ${result.errors[0]}</span>`);
-                    } else {
+                        result.errors.forEach(errStr => {
+                            updateBcProgress(i + chunk.length, targetList.length, sentTotal, failedTotal, `<span style="color:#ef4444;">⚠️ Error: ${errStr}</span>`);
+                        });
+                    }
+                    if ((result.sent || 0) > 0) {
                         updateBcProgress(i + chunk.length, targetList.length, sentTotal, failedTotal, `<span style="color:#10b981;">✅ Delivered to ${chunkNames}</span>`);
                     }
                 } else {
