@@ -1373,12 +1373,17 @@ function showModal(title, message, type = 'info', onConfirm = null, confirmText 
     newCancel.style.opacity = '1';
     newCancel.style.cursor = 'pointer';
 
-    if (type === 'confirm') {
+    if (type === 'loading') {
+        newCancel.style.display = 'none';
+        newConfirm.style.display = 'none';
+    } else if (type === 'confirm') {
         newCancel.style.display = 'inline-block';
+        newConfirm.style.display = 'inline-block';
         newConfirm.textContent = confirmText || 'Yes, Proceed';
         newConfirm.className = confirmClass || 'btn primary';
     } else {
         newCancel.style.display = 'none';
+        newConfirm.style.display = 'inline-block';
         newConfirm.textContent = 'OK';
         newConfirm.className = 'btn primary';
     }
@@ -5052,6 +5057,16 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
     document.getElementById('chat-dropdown-menu')?.classList.add('hidden');
     if (!activeInboxCustomer) return;
     
+    showModal(
+        'Loading Message Templates',
+        `<div style="padding:1.25rem 0.5rem; text-align:center;">
+            <div class="spinner" style="width:2.25rem; height:2.25rem; border-width:3px; margin:0 auto 1rem auto; display:block;"></div>
+            <p style="margin:0; font-size:0.95rem; font-weight:600; color:var(--text-main);">Fetching Approved Meta Templates...</p>
+            <p style="margin:0.35rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Please wait while template definitions & media library options are loaded.</p>
+        </div>`,
+        'loading'
+    );
+
     try {
         const res = await apiFetch('/api/templates');
         const templates = await res.json();
