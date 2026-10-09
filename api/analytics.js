@@ -440,6 +440,41 @@ module.exports = async (req, res) => {
             }
         });
 
+        // Compute aggregate template delivered/sent message counts
+        let tpl_marketing_cnt = 0;
+        let tpl_utility_cnt = 0;
+        let tpl_auth_cnt = 0;
+
+        templateInsightsList.forEach(t => {
+            const cat = (t.category || 'MARKETING').toUpperCase();
+            const cnt = parseInt(t.delivered || t.sent || 0);
+            if (cat === 'UTILITY') {
+                tpl_utility_cnt += cnt;
+            } else if (cat === 'AUTHENTICATION') {
+                tpl_auth_cnt += cnt;
+            } else {
+                tpl_marketing_cnt += cnt;
+            }
+        });
+
+        // Sync template message counts into company_usage_list & calculate totals with 18% GST
+        company_usage_list.forEach(cu => {
+            if (tpl_marketing_cnt > 0 && cu.wa_marketing_count < tpl_marketing_cnt) {
+                cu.wa_marketing_count = tpl_marketing_cnt;
+            }
+            if (tpl_utility_cnt > 0 && cu.wa_utility_count < tpl_utility_cnt) {
+                cu.wa_utility_count = tpl_utility_cnt;
+            }
+            if (tpl_auth_cnt > 0 && cu.wa_auth_count < tpl_auth_cnt) {
+                cu.wa_auth_count = tpl_auth_cnt;
+            }
+
+            cu.total_outbound = cu.wa_marketing_count + cu.wa_utility_count + cu.wa_auth_count + cu.email_count + cu.sms_count;
+
+            const base_c = (cu.wa_marketing_count * RATES.whatsapp_marketing) + (cu.wa_utility_count * RATES.whatsapp_utility) + (cu.wa_auth_count * RATES.whatsapp_authentication) + (cu.email_count * RATES.email) + (cu.sms_count * RATES.sms);
+            cu.est_cost = parseFloat((base_c * 1.18).toFixed(2));
+        });
+
         // Apply Superadmin Manual Overrides to Multi-Tenant Company Usage Breakdown
         company_usage_list.forEach(cu => {
             const key1 = `company_usage_${cu.id}`;

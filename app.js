@@ -642,6 +642,17 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         companyBreakdownCard.style.display = 'block';
     }
 
+    const cardTitleEl = document.getElementById('usage-breakdown-card-title');
+    const cardSubEl = document.getElementById('usage-breakdown-card-sub');
+    if (cardTitleEl) {
+        cardTitleEl.textContent = isParent ? 'Multi-Tenant Company Usage Breakdown' : 'Bills & Usage Summary';
+    }
+    if (cardSubEl) {
+        cardSubEl.textContent = isParent ? 
+            'Message counts and estimated charges broken down by company account.' : 
+            'Itemized message usage breakdown and outstanding bill charges for your account.';
+    }
+
     const colspanVal = isParent ? 10 : 9;
     const coColspanVal = isParent ? 9 : 9;
 
