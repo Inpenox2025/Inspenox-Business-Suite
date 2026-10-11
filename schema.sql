@@ -134,3 +134,46 @@ ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS channel TEXT DEFAULT 'whatsapp';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
 ALTER TABLE media_library ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
 ALTER TABLE companies RENAME COLUMN webhook_verify_token TO whatsapp_verify_token;
+
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_influencer TEXT DEFAULT 'FALSE';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS account_holder_name TEXT DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS bank_name TEXT DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS account_number TEXT DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ifsc_code TEXT DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS upi_id TEXT DEFAULT NULL;
+
+
+  
+
+CREATE TABLE coupons (
+  id SERIAL PRIMARY KEY,
+  coupon_code TEXT UNIQUE NOT NULL,
+  user_id INT REFERENCES users(id) ON DELETE CASCADE,
+  discount_percent NUMERIC DEFAULT 0,
+  commission_percent NUMERIC DEFAULT 0,
+  usage_limit INT,
+  used_count INT DEFAULT 0,
+  expiry_date TIMESTAMP,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+--  PAYMENT LOGS
+CREATE TABLE payment_logs (
+  id SERIAL PRIMARY KEY,
+  order_id TEXT,
+  payment_id TEXT,
+  user_email TEXT,
+  user_phone TEXT,
+  plan_name TEXT,
+  original_amount NUMERIC,
+  discount_amount NUMERIC,
+  final_amount NUMERIC,
+  coupon_code TEXT,
+  coupon_id INT REFERENCES coupons(id),
+  influencer_id INT REFERENCES users(id),
+  commission_amount NUMERIC,
+  status TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
