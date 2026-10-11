@@ -245,7 +245,7 @@
                     </svg>
                     <span>API Usage & Meta Insights</span>
                 </a>
-                <a href="#subscriptions" data-view="subscriptions" id="nav-item-subscriptions" class="nav-item">
+                <a href="#subscriptions" data-view="subscriptions" id="nav-item-subscriptions" class="nav-item" style="display: none;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="2" y="4" width="20" height="16" rx="2"></rect>
                         <line x1="2" y1="10" x2="22" y2="10"></line>
@@ -1615,72 +1615,106 @@
                 </header>
 
                 <!-- Subscriptions Top Stats Cards -->
-                <div class="stats-grid" style="margin-bottom: 1.5rem;">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-title">Active Workspace Plan</span>
-                            <span class="badge-tag" id="sub-stat-status-badge" style="background:rgba(16,185,129,0.15); color:#10b981;">Active</span>
+                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem;">
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-emerald">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
                         </div>
-                        <div class="stat-value" id="sub-stat-plan-name" style="color:var(--primary); font-size:1.5rem;">Starter Tier</div>
-                        <div class="stat-subtext" id="sub-stat-plan-cycle">Renewing monthly via Razorpay</div>
+                        <div class="stat-info" style="flex: 1;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                                <h3>Active Workspace Plan</h3>
+                                <span id="sub-stat-status-badge" class="badge-tag" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Active</span>
+                            </div>
+                            <p id="sub-stat-plan-name" style="color: var(--primary); font-size: 1.45rem; font-weight: 800; margin: 0.25rem 0;">Starter Tier</p>
+                            <span id="sub-stat-plan-cycle" style="font-size: 0.775rem; color: var(--text-muted); display: block;">Renewing monthly via Razorpay</span>
+                        </div>
                     </div>
 
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-title">Razorpay Gateway</span>
-                            <span class="badge-tag" id="sub-stat-rzp-badge" style="background:rgba(59,130,246,0.15); color:#3b82f6;">Razorpay Secure</span>
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-blue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                            </svg>
                         </div>
-                        <div class="stat-value" id="sub-stat-gateway-status" style="font-size:1.35rem;">Configured ✅</div>
-                        <div class="stat-subtext" id="sub-stat-key-info">Instant INR Checkout Active</div>
+                        <div class="stat-info" style="flex: 1;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                                <h3>Razorpay Gateway</h3>
+                                <span id="sub-stat-rzp-badge" class="badge-tag" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Live INR</span>
+                            </div>
+                            <p id="sub-stat-gateway-status" style="font-size: 1.35rem; font-weight: 800; margin: 0.25rem 0;">Configured ✅</p>
+                            <span id="sub-stat-key-info" style="font-size: 0.775rem; color: var(--text-muted); display: block;">Instant INR Checkout Active</span>
+                        </div>
                     </div>
 
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-title">Total Orders Paid</span>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary); width:18px; height:18px;">
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-teal">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                         </div>
-                        <div class="stat-value" id="sub-stat-orders-count">0</div>
-                        <div class="stat-subtext" id="sub-stat-total-revenue">Total Paid: ₹0.00</div>
+                        <div class="stat-info" style="flex: 1;">
+                            <h3>Total Orders Paid</h3>
+                            <p id="sub-stat-orders-count" style="font-size: 1.45rem; font-weight: 800; margin: 0.25rem 0;">0</p>
+                            <span id="sub-stat-total-revenue" style="font-size: 0.775rem; color: var(--text-muted); display: block;">Total Paid: ₹0.00</span>
+                        </div>
                     </div>
 
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-title">Coupon Savings Claimed</span>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#eab308; width:18px; height:18px;">
+                    <div class="stat-card card">
+                        <div class="stat-icon icon-amber">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                             </svg>
                         </div>
-                        <div class="stat-value" id="sub-stat-savings-claimed" style="color:#eab308;">₹0.00</div>
-                        <div class="stat-subtext" id="sub-stat-coupons-count">Across all redemptions</div>
+                        <div class="stat-info" style="flex: 1;">
+                            <h3>Coupon Savings Claimed</h3>
+                            <p id="sub-stat-savings-claimed" style="color: #eab308; font-size: 1.45rem; font-weight: 800; margin: 0.25rem 0;">₹0.00</p>
+                            <span id="sub-stat-coupons-count" style="font-size: 0.775rem; color: var(--text-muted); display: block;">Across all redemptions</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Subscriptions Tabs Navigation -->
-                <div style="display:flex; gap:0.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; flex-wrap:wrap;">
-                    <button type="button" id="tab-btn-sub-plans" class="btn primary sm" onclick="switchSubTab('plans')" style="border-radius:8px;">
-                        💎 Subscription Packages
+                <div class="sub-tabs-container">
+                    <button type="button" id="tab-btn-sub-plans" class="sub-tab-btn active" onclick="switchSubTab('plans')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        <span>Subscription Packages</span>
                     </button>
-                    <button type="button" id="tab-btn-sub-coupons" class="btn secondary sm" onclick="switchSubTab('coupons')" style="border-radius:8px;">
-                        🎟️ Coupons & Influencer Referral
+                    <button type="button" id="tab-btn-sub-coupons" class="sub-tab-btn" onclick="switchSubTab('coupons')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                        <span>Coupons & Influencer Referral</span>
                     </button>
-                    <button type="button" id="tab-btn-sub-logs" class="btn secondary sm" onclick="switchSubTab('logs')" style="border-radius:8px;">
-                        📜 Payment Logs & Receipts
+                    <button type="button" id="tab-btn-sub-logs" class="sub-tab-btn" onclick="switchSubTab('logs')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                        <span>Payment Logs & Receipts</span>
                     </button>
                 </div>
 
                 <!-- Tab 1: Pricing Plans Panel -->
                 <div id="sub-tab-panel-plans">
                     <!-- Billing Cycle Toggle -->
-                    <div style="display:flex; justify-content:center; align-items:center; gap:1rem; margin-bottom:2rem; background:var(--bg-card); padding:0.75rem 1.5rem; border-radius:12px; border:1px solid var(--border); width:fit-content; margin-left:auto; margin-right:auto;">
-                        <span id="label-cycle-monthly" style="font-weight:700; color:var(--text-main); font-size:0.9rem; cursor:pointer;" onclick="setBillingCycle('monthly')">Monthly Billing</span>
-                        <div style="position:relative; width:48px; height:24px; background:var(--bg-dark); border-radius:24px; border:1px solid var(--border); cursor:pointer;" onclick="toggleBillingCycle()">
-                            <div id="cycle-toggle-knob" style="position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:var(--primary); transition:all 0.2s ease;"></div>
+                    <div class="billing-toggle-container">
+                        <span id="label-cycle-monthly" class="billing-cycle-label active" onclick="setBillingCycle('monthly')">Monthly Billing</span>
+                        <div class="billing-toggle-switch" onclick="toggleBillingCycle()">
+                            <div id="cycle-toggle-knob" class="toggle-knob"></div>
                         </div>
-                        <span id="label-cycle-annual" style="font-weight:600; color:var(--text-muted); font-size:0.9rem; cursor:pointer;" onclick="setBillingCycle('annual')">
+                        <span id="label-cycle-annual" class="billing-cycle-label" onclick="setBillingCycle('annual')">
                             Annual Billing 
-                            <span style="background:rgba(234,179,8,0.18); color:#eab308; font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:12px; font-weight:700; margin-left:0.35rem;">Save 20% 🎉</span>
+                            <span class="save-badge">Save 20% 🎉</span>
                         </span>
                     </div>
 

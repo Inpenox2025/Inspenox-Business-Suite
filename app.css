@@ -2960,4 +2960,110 @@ tr:hover td {
     font-weight: 700;
     font-size: 0.85rem;
     letter-spacing: 0.5px;
+}
+
+/* Subscriptions Segmented Tab Navigation */
+.sub-tabs-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-card);
+    padding: 0.35rem 0.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.sub-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sub-tab-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sub-tab-btn.active {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0, 168, 132, 0.35);
+}
+
+/* Billing Cycle Toggle */
+.billing-toggle-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.25rem;
+    margin: 0 auto 2.25rem auto;
+    background: var(--bg-card);
+    padding: 0.75rem 1.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    width: fit-content;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.billing-cycle-label {
+    font-size: 0.925rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s ease, font-weight 0.2s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.billing-cycle-label.active {
+    color: var(--text-main) !important;
+    font-weight: 700 !important;
+}
+
+.billing-toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    background: var(--bg-dark);
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.save-badge {
+    background: rgba(234, 179, 8, 0.18);
+    color: #eab308;
+    border: 1px solid rgba(234, 179, 8, 0.35);
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-weight: 700;
+    margin-left: 0.45rem;
+    letter-spacing: 0.2px;
 }

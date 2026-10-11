@@ -163,16 +163,45 @@ window.isSuperAdmin = function isSuperAdmin() {
         user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
     } catch(e) {}
 
-    const role = (user.role || '').toLowerCase();
     const uname = (user.username || '').toLowerCase();
+    const role = (user.role || '').toLowerCase();
+    const cname = (user.company_name || '').toLowerCase();
     const coId = user.company_id;
 
-    // Superadmin is explicitly role 'superadmin' OR the master 'admin' account not bound to a tenant
-    if (role === 'superadmin') return true;
-    if (uname === 'admin' && (!coId || coId === 'default' || coId === 'parent' || String(coId) === '0' || String(coId) === 'null')) {
+    // Master superadmin username or explicit superadmin role is ALWAYS superadmin
+    if (role === 'superadmin' || uname === 'admin' || uname === 'superadmin' || uname === 'inspenox') {
         return true;
     }
+
+    // Parent organization Inspenox admin
+    if (cname.includes('inspenox') && (role === 'superadmin' || !role)) {
+        return true;
+    }
+
+    // Child tenant/company accounts are strictly NOT superadmin
+    if (coId !== undefined && coId !== null && String(coId) !== 'default' && String(coId) !== 'parent' && String(coId) !== '0' && String(coId) !== 'null' && String(coId) !== '') {
+        return false;
+    }
+
+    // Unassigned root admin
+    if (role === 'admin' && (!coId || coId === 'default' || coId === 'parent')) {
+        return true;
+    }
+
+    // Fallback for default session
+    if (!uname && !role) {
+        return true;
+    }
+
     return false;
+};
+
+window.updateSuperAdminNavVisibility = function updateSuperAdminNavVisibility() {
+    const isSuper = isSuperAdmin();
+    const secNav = document.getElementById('nav-item-security');
+    const subNav = document.getElementById('nav-item-subscriptions');
+    if (secNav) secNav.style.display = isSuper ? 'flex' : 'none';
+    if (subNav) subNav.style.display = isSuper ? 'flex' : 'none';
 };
 
 window.isParentAdmin = function isParentAdmin() {
@@ -204,10 +233,14 @@ async function loadCompanies() {
     const isSuper = isSuperAdmin();
     const switcherContainer = document.querySelector('.company-switcher-container');
 
-    // Security & Rate Limits Control Center visibility strictly for Superadmin
+    // Security & Subscriptions strictly for Superadmin
     const secNav = document.getElementById('nav-item-security');
     if (secNav) {
         secNav.style.display = isSuper ? 'flex' : 'none';
+    }
+    const subNav = document.getElementById('nav-item-subscriptions');
+    if (subNav) {
+        subNav.style.display = isSuper ? 'flex' : 'none';
     }
 
     let user = {};
@@ -256,6 +289,13 @@ async function loadCompanies() {
 document.getElementById('company-switcher')?.addEventListener('change', (e) => {
     currentCompanyId = e.target.value;
     localStorage.setItem('inspenox_company_id', currentCompanyId);
+
+    const isSuper = isSuperAdmin();
+    const secNav = document.getElementById('nav-item-security');
+    const subNav = document.getElementById('nav-item-subscriptions');
+    if (secNav) secNav.style.display = isSuper ? 'flex' : 'none';
+    if (subNav) subNav.style.display = isSuper ? 'flex' : 'none';
+
     const activeView = localStorage.getItem('activeView') || 'dashboard';
     switchView(activeView, false);
 });
@@ -1510,9 +1550,10 @@ window.toggleNavGroup = function toggleNavGroup(headerEl) {
 window.switchView = function switchView(target, pushHistory = true) {
     if (!target) return;
 
-    // Strict security check: Only Superadmin can access Security Control Center
-    if (target === 'security' && !isSuperAdmin()) {
-        showModal('Access Restricted', 'The Security & Rate Limits Control Center is strictly restricted to Superadmin accounts only.');
+    // Strict security check: Only Superadmin can access Security Control Center or Subscriptions & Billing
+    if ((target === 'security' || target === 'subscriptions') && !isSuperAdmin()) {
+        const sectionTitle = target === 'security' ? 'Security & Rate Limits Control Center' : 'Subscriptions, Plans & Billing Management';
+        showModal('Access Restricted', `The ${sectionTitle} is strictly restricted to Superadmin accounts only.`);
         target = 'dashboard';
         if (pushHistory && history.replaceState) {
             history.replaceState({ view: 'dashboard' }, '', '#dashboard');
@@ -1637,6 +1678,7 @@ const savedView = (initialHash && document.getElementById(`view-${initialHash}`)
 if (history.replaceState) {
     history.replaceState({ view: savedView }, '', `#${savedView}`);
 }
+updateSuperAdminNavVisibility();
 loadCompanies();
 switchView(savedView, false);
 
@@ -5666,12 +5708,13 @@ let allCouponsList = [];
 let allPaymentLogsList = [];
 let activeCompanyPlanName = 'Starter Tier';
 
-// Initialize Security Navigation visibility on boot
-(function enforceSecurityNavAccess() {
+// Initialize Security & Subscriptions Navigation visibility on boot
+(function enforceSuperAdminNavAccess() {
+    const isSuper = isSuperAdmin();
     const secNav = document.getElementById('nav-item-security');
-    if (secNav) {
-        secNav.style.display = isSuperAdmin() ? 'flex' : 'none';
-    }
+    const subNav = document.getElementById('nav-item-subscriptions');
+    if (secNav) secNav.style.display = isSuper ? 'flex' : 'none';
+    if (subNav) subNav.style.display = isSuper ? 'flex' : 'none';
 })();
 
 window.setBillingCycle = function setBillingCycle(cycle) {
@@ -5681,13 +5724,13 @@ window.setBillingCycle = function setBillingCycle(cycle) {
     const labelAnnual = document.getElementById('label-cycle-annual');
 
     if (cycle === 'annual') {
-        if (knob) knob.style.left = '26px';
-        if (labelMonthly) { labelMonthly.style.color = 'var(--text-muted)'; labelMonthly.style.fontWeight = '500'; }
-        if (labelAnnual) { labelAnnual.style.color = 'var(--text-main)'; labelAnnual.style.fontWeight = '700'; }
+        if (knob) knob.style.transform = 'translateX(24px)';
+        if (labelMonthly) labelMonthly.classList.remove('active');
+        if (labelAnnual) labelAnnual.classList.add('active');
     } else {
-        if (knob) knob.style.left = '2px';
-        if (labelMonthly) { labelMonthly.style.color = 'var(--text-main)'; labelMonthly.style.fontWeight = '700'; }
-        if (labelAnnual) { labelAnnual.style.color = 'var(--text-muted)'; labelAnnual.style.fontWeight = '500'; }
+        if (knob) knob.style.transform = 'translateX(0px)';
+        if (labelMonthly) labelMonthly.classList.add('active');
+        if (labelAnnual) labelAnnual.classList.remove('active');
     }
     renderPricingCards();
 };
@@ -5712,9 +5755,9 @@ window.switchSubTab = function switchSubTab(tabName) {
         if (panels[key]) panels[key].style.display = (key === tabName) ? 'block' : 'none';
         if (buttons[key]) {
             if (key === tabName) {
-                buttons[key].className = 'btn primary sm';
+                buttons[key].classList.add('active');
             } else {
-                buttons[key].className = 'btn secondary sm';
+                buttons[key].classList.remove('active');
             }
         }
     });
