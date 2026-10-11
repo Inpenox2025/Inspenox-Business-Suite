@@ -157,6 +157,24 @@ window.getStoredCompany = function getStoredCompany() {
     }
 };
 
+window.isSuperAdmin = function isSuperAdmin() {
+    let user = {};
+    try {
+        user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
+    } catch(e) {}
+
+    const role = (user.role || '').toLowerCase();
+    const uname = (user.username || '').toLowerCase();
+    const coId = user.company_id;
+
+    // Superadmin is explicitly role 'superadmin' OR the master 'admin' account not bound to a tenant
+    if (role === 'superadmin') return true;
+    if (uname === 'admin' && (!coId || coId === 'default' || coId === 'parent' || String(coId) === '0' || String(coId) === 'null')) {
+        return true;
+    }
+    return false;
+};
+
 window.isParentAdmin = function isParentAdmin() {
     let user = {};
     try {
@@ -166,8 +184,9 @@ window.isParentAdmin = function isParentAdmin() {
     const coId = user.company_id;
     const uname = (user.username || '').toLowerCase();
     const cname = (user.company_name || '').toLowerCase();
+    const role = (user.role || '').toLowerCase();
 
-    if (uname === 'admin' || uname === 'inspenox' || cname.includes('inspenox')) {
+    if (role === 'superadmin' || uname === 'admin' || uname === 'inspenox' || cname.includes('inspenox')) {
         return true;
     }
 
@@ -182,7 +201,14 @@ window.isParentAdmin = function isParentAdmin() {
 
 async function loadCompanies() {
     const isParent = isParentAdmin();
+    const isSuper = isSuperAdmin();
     const switcherContainer = document.querySelector('.company-switcher-container');
+
+    // Security & Rate Limits Control Center visibility strictly for Superadmin
+    const secNav = document.getElementById('nav-item-security');
+    if (secNav) {
+        secNav.style.display = isSuper ? 'flex' : 'none';
+    }
 
     let user = {};
     try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
@@ -281,7 +307,7 @@ async function loadCompaniesSettings() {
         if (Array.isArray(companies)) {
             allCompanies = companies;
             if (companies.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No custom companies created yet. Using System Environment credentials.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No custom companies created yet. Using System Environment credentials.</td></tr>`;
                 return;
             }
             tbody.innerHTML = '';
@@ -300,12 +326,27 @@ async function loadCompaniesSettings() {
                     actionHtml = `<button class="btn secondary sm" onclick="editCompany('${c.id}')">Edit Details</button>`;
                 }
 
+                const contactHtml = `
+                    <div style="font-size:0.8rem; line-height:1.35;">
+                        ${c.email ? `<div style="color:var(--text-main); font-weight:500;">✉️ ${c.email}</div>` : '<div style="color:var(--text-muted); font-size:0.75rem;">✉️ No email</div>'}
+                        ${c.phone ? `<div style="color:var(--text-muted); font-size:0.75rem; margin-top:2px;">📞 ${formatDisplayPhone(c.phone)}</div>` : ''}
+                    </div>
+                `;
+
+                const planBadge = `
+                    <span class="window-badge" style="background:rgba(0, 168, 132, 0.15); color:var(--primary); font-weight:600; font-size:0.75rem;">
+                        ${c.subscription_plan || 'Starter Tier'}
+                    </span>
+                `;
+
                 tr.innerHTML = `
                     <td>
                         <strong style="color:var(--text-main);">${c.name}</strong>
                         ${isInspenox ? ' <span class="window-badge" style="background:rgba(168, 85, 247, 0.15);color:#a855f7;">Parent</span>' : ' <span class="window-badge" style="background:rgba(255,255,255,0.08);color:var(--text-muted);">Child Company</span>'}
                     </td>
                     <td><code style="font-size:0.8rem;">${c.id}</code></td>
+                    <td>${contactHtml}</td>
+                    <td>${planBadge}</td>
                     <td><code style="font-size:0.8rem; color:var(--primary);">${c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id || 'Env Default'}</code></td>
                     <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id || 'Env Default'}</code></td>
                     <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_verify_token || systemEnv.whatsapp_verify_token || 'Env Default'}</code></td>
@@ -316,7 +357,7 @@ async function loadCompaniesSettings() {
         }
         loadUsersList();
     } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Failed to load companies settings.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Failed to load companies settings.</td></tr>`;
     }
 }
 
@@ -327,6 +368,8 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
     if (!modal) return;
     document.getElementById('company-form')?.reset();
     document.getElementById('company-id-edit').value = '';
+    if (document.getElementById('comp-email')) document.getElementById('comp-email').value = '';
+    if (document.getElementById('comp-phone')) document.getElementById('comp-phone').value = '';
     document.getElementById('company-modal-title').textContent = companyId ? '🏢 Edit Company Account' : '🏢 Add New Company Account';
     
     if (companyId !== null && companyId !== undefined) {
@@ -334,6 +377,8 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
         if (comp) {
             document.getElementById('company-id-edit').value = comp.id;
             document.getElementById('comp-name').value = comp.name || '';
+            if (document.getElementById('comp-email')) document.getElementById('comp-email').value = comp.email || '';
+            if (document.getElementById('comp-phone')) document.getElementById('comp-phone').value = comp.phone || '';
             document.getElementById('comp-phone-id').value = comp.whatsapp_phone_number_id || systemEnvGlobals.whatsapp_phone_number_id || '';
             document.getElementById('comp-waba-id').value = comp.whatsapp_business_account_id || systemEnvGlobals.whatsapp_business_account_id || '';
             document.getElementById('comp-access-token').value = comp.whatsapp_access_token || '';
@@ -371,7 +416,7 @@ let allUsersList = [];
 window.loadUsersList = async function loadUsersList() {
     const tbody = document.getElementById('users-table-body');
     if (!tbody) return;
-    tbody.innerHTML = `<tr><td colspan="6"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading user accounts...</span></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading user accounts...</span></div></td></tr>`;
     try {
         const isParent = isParentAdmin();
         let userUrl = '/api/auth';
@@ -385,16 +430,21 @@ window.loadUsersList = async function loadUsersList() {
         if (Array.isArray(users)) {
             allUsersList = users;
             if (users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No users registered for this company yet.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No users registered for this company yet.</td></tr>`;
                 return;
             }
             tbody.innerHTML = '';
             users.forEach(u => {
                 const tr = document.createElement('tr');
                 const coName = u.company_name || (u.company_id ? `Company #${u.company_id}` : 'Inspenox Parent (All Companies)');
+                const emailHtml = u.email ? `<span style="font-size:0.8rem; color:var(--text-main); font-weight:500;">${u.email}</span>` : `<span style="font-size:0.75rem; color:var(--text-muted);">-</span>`;
+                const phoneHtml = u.phone ? `<span style="font-size:0.8rem; color:var(--text-muted);">${formatDisplayPhone(u.phone)}</span>` : `<span style="font-size:0.75rem; color:var(--text-muted);">-</span>`;
+
                 tr.innerHTML = `
                     <td><code style="font-size:0.8rem;">${u.id}</code></td>
                     <td><strong style="color:var(--text-main);">${u.username}</strong></td>
+                    <td>${emailHtml}</td>
+                    <td>${phoneHtml}</td>
                     <td><span class="window-badge" style="background:var(--primary-light);color:var(--primary);">${coName}</span></td>
                     <td><code style="font-size:0.8rem; text-transform:uppercase;">${u.role || 'admin'}</code></td>
                     <td><span style="font-size:0.75rem; color:var(--text-muted);">${formatTime(u.created_at)}</span></td>
@@ -408,7 +458,7 @@ window.loadUsersList = async function loadUsersList() {
             });
         }
     } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Failed to load user accounts.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Failed to load user accounts.</td></tr>`;
     }
 };
 
@@ -471,6 +521,8 @@ window.openUserModal = function openUserModal(userId = null) {
     if (!modal) return;
     document.getElementById('user-form')?.reset();
     document.getElementById('user-id-edit').value = '';
+    if (document.getElementById('user-email-input')) document.getElementById('user-email-input').value = '';
+    if (document.getElementById('user-phone-input')) document.getElementById('user-phone-input').value = '';
     document.getElementById('user-modal-title').textContent = userId ? '👤 Edit User Account' : '👤 Add New User Account';
 
     const isParent = isParentAdmin();
@@ -500,6 +552,8 @@ window.openUserModal = function openUserModal(userId = null) {
         if (u) {
             document.getElementById('user-id-edit').value = u.id;
             document.getElementById('user-name-input').value = u.username || '';
+            if (document.getElementById('user-email-input')) document.getElementById('user-email-input').value = u.email || '';
+            if (document.getElementById('user-phone-input')) document.getElementById('user-phone-input').value = u.phone || '';
             document.getElementById('user-role-select').value = u.role || 'admin';
             if (selectCo) selectCo.value = u.company_id || 'default';
         }
@@ -521,6 +575,8 @@ window.saveUser = async function saveUser(e) {
     if (e) e.preventDefault();
     const id = document.getElementById('user-id-edit').value;
     const username = document.getElementById('user-name-input').value;
+    const email = document.getElementById('user-email-input')?.value || '';
+    const phone = document.getElementById('user-phone-input')?.value || '';
     const company_id = document.getElementById('user-company-select').value;
     const role = document.getElementById('user-role-select').value;
     const password = document.getElementById('user-password-input').value;
@@ -535,7 +591,7 @@ window.saveUser = async function saveUser(e) {
         const res = await apiFetch('/api/auth?action=save-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, username, company_id, role, password })
+            body: JSON.stringify({ id, username, email, phone, company_id, role, password })
         });
         const data = await res.json();
         if (data.success) {
@@ -545,6 +601,8 @@ window.saveUser = async function saveUser(e) {
                     const curUser = JSON.parse(curUserStr);
                     if (String(curUser.id) === String(id) || (!id && curUser.username.toLowerCase() === username.toLowerCase())) {
                         curUser.username = username;
+                        if (email) curUser.email = email;
+                        if (phone) curUser.phone = phone;
                         localStorage.setItem('inspenox_user', JSON.stringify(curUser));
                         localStorage.setItem('induio_user', JSON.stringify(curUser));
                     }
@@ -1143,6 +1201,8 @@ window.saveCompany = async function saveCompany(e) {
     if (e) e.preventDefault();
     const id = document.getElementById('company-id-edit').value;
     const name = document.getElementById('comp-name').value;
+    const email = document.getElementById('comp-email')?.value || '';
+    const phone = document.getElementById('comp-phone')?.value || '';
     const whatsapp_phone_number_id = document.getElementById('comp-phone-id').value;
     const whatsapp_business_account_id = document.getElementById('comp-waba-id').value;
     const whatsapp_access_token = document.getElementById('comp-access-token').value;
@@ -1156,7 +1216,7 @@ window.saveCompany = async function saveCompany(e) {
 
     try {
         const method = id ? 'PUT' : 'POST';
-        const body = { name, whatsapp_phone_number_id, whatsapp_business_account_id, whatsapp_access_token, whatsapp_verify_token };
+        const body = { name, email, phone, whatsapp_phone_number_id, whatsapp_business_account_id, whatsapp_access_token, whatsapp_verify_token };
         if (id) body.id = id;
 
         const res = await apiFetch('/api/companies', {
@@ -1449,6 +1509,16 @@ window.toggleNavGroup = function toggleNavGroup(headerEl) {
 
 window.switchView = function switchView(target, pushHistory = true) {
     if (!target) return;
+
+    // Strict security check: Only Superadmin can access Security Control Center
+    if (target === 'security' && !isSuperAdmin()) {
+        showModal('Access Restricted', 'The Security & Rate Limits Control Center is strictly restricted to Superadmin accounts only.');
+        target = 'dashboard';
+        if (pushHistory && history.replaceState) {
+            history.replaceState({ view: 'dashboard' }, '', '#dashboard');
+        }
+    }
+
     document.querySelectorAll('#sidebar-nav a[data-view]').forEach(a => a.classList.remove('active'));
     document.querySelectorAll('#sidebar-nav .nav-group').forEach(g => g.classList.remove('active-group'));
 
@@ -1478,6 +1548,7 @@ window.switchView = function switchView(target, pushHistory = true) {
     if (target === 'inbox') loadInboxSidebar();
     if (target === 'media') loadMedia();
     if (target === 'settings') loadCompaniesSettings();
+    if (target === 'subscriptions') window.loadSubscriptions?.();
     if (target === 'security') window.loadSecurityLogs?.();
 
     if (pushHistory && history.pushState) {
@@ -5584,4 +5655,750 @@ window.purgeOldSecurityLogs = async function purgeOldSecurityLogs(days = 30) {
             }
         }
     );
+};
+
+/* ========================================================
+   Subscriptions, Plans, Razorpay & Coupons Control System
+   ======================================================== */
+let currentBillingCycle = 'monthly';
+let allSubscriptionPlans = [];
+let allCouponsList = [];
+let allPaymentLogsList = [];
+let activeCompanyPlanName = 'Starter Tier';
+
+// Initialize Security Navigation visibility on boot
+(function enforceSecurityNavAccess() {
+    const secNav = document.getElementById('nav-item-security');
+    if (secNav) {
+        secNav.style.display = isSuperAdmin() ? 'flex' : 'none';
+    }
+})();
+
+window.setBillingCycle = function setBillingCycle(cycle) {
+    currentBillingCycle = cycle;
+    const knob = document.getElementById('cycle-toggle-knob');
+    const labelMonthly = document.getElementById('label-cycle-monthly');
+    const labelAnnual = document.getElementById('label-cycle-annual');
+
+    if (cycle === 'annual') {
+        if (knob) knob.style.left = '26px';
+        if (labelMonthly) { labelMonthly.style.color = 'var(--text-muted)'; labelMonthly.style.fontWeight = '500'; }
+        if (labelAnnual) { labelAnnual.style.color = 'var(--text-main)'; labelAnnual.style.fontWeight = '700'; }
+    } else {
+        if (knob) knob.style.left = '2px';
+        if (labelMonthly) { labelMonthly.style.color = 'var(--text-main)'; labelMonthly.style.fontWeight = '700'; }
+        if (labelAnnual) { labelAnnual.style.color = 'var(--text-muted)'; labelAnnual.style.fontWeight = '500'; }
+    }
+    renderPricingCards();
+};
+
+window.toggleBillingCycle = function toggleBillingCycle() {
+    window.setBillingCycle(currentBillingCycle === 'monthly' ? 'annual' : 'monthly');
+};
+
+window.switchSubTab = function switchSubTab(tabName) {
+    const panels = {
+        plans: document.getElementById('sub-tab-panel-plans'),
+        coupons: document.getElementById('sub-tab-panel-coupons'),
+        logs: document.getElementById('sub-tab-panel-logs')
+    };
+    const buttons = {
+        plans: document.getElementById('tab-btn-sub-plans'),
+        coupons: document.getElementById('tab-btn-sub-coupons'),
+        logs: document.getElementById('tab-btn-sub-logs')
+    };
+
+    Object.keys(panels).forEach(key => {
+        if (panels[key]) panels[key].style.display = (key === tabName) ? 'block' : 'none';
+        if (buttons[key]) {
+            if (key === tabName) {
+                buttons[key].className = 'btn primary sm';
+            } else {
+                buttons[key].className = 'btn secondary sm';
+            }
+        }
+    });
+
+    if (tabName === 'coupons') loadCouponsList();
+    if (tabName === 'logs') loadPaymentLogs();
+};
+
+window.loadSubscriptions = async function loadSubscriptions() {
+    const grid = document.getElementById('pricing-plans-grid');
+    if (grid) {
+        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2.5rem;"><div class="spinner-icon" style="margin: 0 auto 0.75rem auto;"></div>Loading subscription tiers & billing details...</div>';
+    }
+
+    try {
+        // Fetch plans from payments API
+        const res = await apiFetch('/api/payments?action=plans');
+        const data = await res.json();
+        
+        if (data.success && Array.isArray(data.plans)) {
+            allSubscriptionPlans = data.plans;
+        }
+
+        // Check active company's plan
+        const coId = getCompanyId();
+        const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
+        if (activeComp && activeComp.subscription_plan) {
+            activeCompanyPlanName = activeComp.subscription_plan;
+        } else {
+            activeCompanyPlanName = 'Starter Tier';
+        }
+
+        // Update badge and plan name in top widgets
+        const elActiveBadge = document.getElementById('sub-active-plan-badge');
+        const elStatPlanName = document.getElementById('sub-stat-plan-name');
+        if (elActiveBadge) elActiveBadge.textContent = `⚡ Active Plan: ${activeCompanyPlanName}`;
+        if (elStatPlanName) elStatPlanName.textContent = activeCompanyPlanName;
+
+        // Update Gateway Status
+        const elGateway = document.getElementById('sub-stat-gateway-status');
+        const elRzpBadge = document.getElementById('sub-stat-rzp-badge');
+        if (data.has_keys) {
+            if (elGateway) elGateway.textContent = 'Configured ✅';
+            if (elRzpBadge) {
+                elRzpBadge.textContent = 'Razorpay Live';
+                elRzpBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                elRzpBadge.style.color = '#10b981';
+            }
+        } else {
+            if (elGateway) elGateway.textContent = 'Test Mode 🧪';
+            if (elRzpBadge) {
+                elRzpBadge.textContent = 'Sandbox / Test';
+                elRzpBadge.style.background = 'rgba(234, 179, 8, 0.15)';
+                elRzpBadge.style.color = '#eab308';
+            }
+        }
+
+        // Fetch logs metrics for stats cards
+        try {
+            const logsRes = await apiFetch('/api/payments?action=logs');
+            const logsData = await logsRes.json();
+            if (logsData.success && logsData.stats) {
+                const s = logsData.stats;
+                const elOrders = document.getElementById('sub-stat-orders-count');
+                const elRevenue = document.getElementById('sub-stat-total-revenue');
+                const elSavings = document.getElementById('sub-stat-savings-claimed');
+                
+                if (elOrders) elOrders.textContent = s.total_orders || 0;
+                if (elRevenue) elRevenue.textContent = `Total Paid: ₹${Number(s.total_revenue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+                if (elSavings) elSavings.textContent = `₹${Number(s.total_discounts || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            }
+        } catch(e) {}
+
+        renderPricingCards();
+    } catch(err) {
+        console.error('Error loading subscriptions:', err);
+        if (grid) {
+            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--error); padding: 2rem;">Failed to load subscription plans. Please refresh or check connection.</div>';
+        }
+    }
+};
+
+window.renderPricingCards = function renderPricingCards() {
+    const grid = document.getElementById('pricing-plans-grid');
+    if (!grid || allSubscriptionPlans.length === 0) return;
+
+    const isAnnual = currentBillingCycle === 'annual';
+
+    grid.innerHTML = allSubscriptionPlans.map(plan => {
+        const price = isAnnual ? plan.price_annual : plan.price_monthly;
+        const periodText = isAnnual ? '/year' : '/month';
+        const isCurrentActive = (activeCompanyPlanName.toLowerCase().includes(plan.id) || activeCompanyPlanName.toLowerCase().includes(plan.name.toLowerCase()));
+
+        const featureItems = plan.features.map(f => `
+            <li class="pricing-feature-item">
+                <svg class="pricing-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>${f}</span>
+            </li>
+        `).join('');
+
+        return `
+            <div class="pricing-card ${plan.popular ? 'popular' : ''}">
+                ${plan.popular ? '<div class="pricing-badge-popular">⭐ Recommended</div>' : ''}
+                
+                <div class="pricing-card-header">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 class="pricing-title">${plan.name}</h3>
+                        ${isCurrentActive ? '<span class="window-badge" style="background:rgba(0,168,132,0.18); color:var(--primary); font-weight:700;">CURRENT PLAN</span>' : ''}
+                    </div>
+                    <p class="pricing-desc">${plan.description}</p>
+                </div>
+
+                <div class="pricing-price-box">
+                    <span class="pricing-amount">₹${price.toLocaleString('en-IN')}</span>
+                    <span class="pricing-period">${periodText}</span>
+                    ${isAnnual ? '<div style="font-size:0.75rem; color:#10b981; font-weight:600; margin-top:0.25rem;">✨ Includes 20% annual discount</div>' : ''}
+                </div>
+
+                <ul class="pricing-features-list">
+                    ${featureItems}
+                </ul>
+
+                <button type="button" class="btn ${plan.popular ? 'primary' : 'secondary'}" 
+                        onclick="openSubscribeModal('${plan.id}')" 
+                        style="width: 100%; justify-content: center; padding: 0.75rem; font-weight: 700; border-radius: 10px; font-size: 0.925rem;">
+                    ${isCurrentActive ? 'Renew / Extend Subscription 💳' : 'Subscribe with Razorpay 🚀'}
+                </button>
+            </div>
+        `;
+    }).join('');
+};
+
+window.openSubscribeModal = function openSubscribeModal(planId) {
+    const modal = document.getElementById('checkout-modal');
+    if (!modal) return;
+
+    const plan = allSubscriptionPlans.find(p => p.id === planId) || allSubscriptionPlans[0];
+    if (!plan) return;
+
+    const isAnnual = currentBillingCycle === 'annual';
+    const basePrice = isAnnual ? plan.price_annual : plan.price_monthly;
+
+    document.getElementById('checkout-plan-id').value = plan.id;
+    document.getElementById('checkout-plan-name').value = `${plan.name} (${isAnnual ? 'Annual' : 'Monthly'})`;
+    document.getElementById('checkout-plan-price').value = basePrice;
+    document.getElementById('checkout-applied-coupon-id').value = '';
+    document.getElementById('checkout-applied-discount-amount').value = '0';
+    document.getElementById('checkout-applied-final-amount').value = basePrice;
+
+    document.getElementById('checkout-display-plan').textContent = plan.name;
+    document.getElementById('checkout-display-cycle').textContent = isAnnual ? 'Annual (20% Off)' : 'Monthly';
+    document.getElementById('checkout-display-base-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    document.getElementById('checkout-display-final-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    
+    const rowDisc = document.getElementById('checkout-row-discount');
+    if (rowDisc) rowDisc.style.display = 'none';
+
+    const couponFeedback = document.getElementById('checkout-coupon-feedback');
+    if (couponFeedback) {
+        couponFeedback.style.display = 'none';
+        couponFeedback.innerHTML = '';
+    }
+    const couponInput = document.getElementById('checkout-coupon-code');
+    if (couponInput) couponInput.value = '';
+
+    // Auto-prefill subscriber email & phone
+    let user = {};
+    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+    const coId = getCompanyId();
+    const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
+
+    const emailInput = document.getElementById('checkout-email');
+    const phoneInput = document.getElementById('checkout-phone');
+
+    if (emailInput) emailInput.value = user.email || activeComp?.email || '';
+    if (phoneInput) phoneInput.value = user.phone || activeComp?.phone || '';
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+};
+
+window.closeCheckoutModal = function closeCheckoutModal() {
+    const modal = document.getElementById('checkout-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.applyCheckoutCoupon = async function applyCheckoutCoupon() {
+    const codeInput = document.getElementById('checkout-coupon-code');
+    const feedback = document.getElementById('checkout-coupon-feedback');
+    const btn = document.getElementById('btn-apply-coupon');
+    const basePrice = parseFloat(document.getElementById('checkout-plan-price').value) || 0;
+
+    if (!codeInput || !codeInput.value.trim()) {
+        if (feedback) {
+            feedback.style.display = 'block';
+            feedback.style.color = '#ef4444';
+            feedback.textContent = 'Please enter a coupon code.';
+        }
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Validating...';
+    }
+
+    try {
+        const res = await apiFetch('/api/payments?action=validate-coupon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                coupon_code: codeInput.value.trim(),
+                amount: basePrice
+            })
+        });
+        const data = await res.json();
+
+        if (data.success && data.valid) {
+            document.getElementById('checkout-applied-coupon-id').value = data.coupon_id;
+            document.getElementById('checkout-applied-discount-amount').value = data.discount_amount;
+            document.getElementById('checkout-applied-final-amount').value = data.final_amount;
+
+            // Update UI prices
+            const rowDisc = document.getElementById('checkout-row-discount');
+            const elDisc = document.getElementById('checkout-display-discount');
+            const elFinal = document.getElementById('checkout-display-final-price');
+
+            if (rowDisc) rowDisc.style.display = 'flex';
+            if (elDisc) elDisc.textContent = `- ₹${Number(data.discount_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })} (${data.discount_percent}% OFF)`;
+            if (elFinal) elFinal.textContent = `₹${Number(data.final_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+            if (feedback) {
+                feedback.style.display = 'block';
+                feedback.style.color = '#10b981';
+                feedback.innerHTML = `🎉 Coupon <strong>${data.coupon_code}</strong> applied! You saved ₹${data.discount_amount}.`;
+            }
+        } else {
+            if (feedback) {
+                feedback.style.display = 'block';
+                feedback.style.color = '#ef4444';
+                feedback.textContent = `⚠️ ${data.error || 'Invalid or expired coupon.'}`;
+            }
+        }
+    } catch(err) {
+        if (feedback) {
+            feedback.style.display = 'block';
+            feedback.style.color = '#ef4444';
+            feedback.textContent = `⚠️ Error checking coupon: ${err.message}`;
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Apply';
+        }
+    }
+};
+
+window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
+    if (e) e.preventDefault();
+
+    const planName = document.getElementById('checkout-plan-name').value;
+    const basePrice = parseFloat(document.getElementById('checkout-plan-price').value) || 0;
+    const couponCode = document.getElementById('checkout-coupon-code')?.value?.trim() || '';
+    const couponId = document.getElementById('checkout-applied-coupon-id').value;
+    const discountAmount = parseFloat(document.getElementById('checkout-applied-discount-amount').value) || 0;
+    const finalAmount = parseFloat(document.getElementById('checkout-applied-final-amount').value) || (basePrice - discountAmount);
+    const email = document.getElementById('checkout-email').value.trim();
+    const phone = document.getElementById('checkout-phone').value.trim();
+    const companyId = getCompanyId();
+
+    if (!email || !phone) {
+        showModal('Required Details', 'Please fill in both email and phone number to continue.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-proceed-payment');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Connecting Gateway...';
+    }
+
+    try {
+        // Step 1: Create Order on backend
+        const orderRes = await apiFetch('/api/payments?action=create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                plan_name: planName,
+                original_amount: basePrice,
+                coupon_code: couponCode,
+                email,
+                phone,
+                company_id: companyId
+            })
+        });
+
+        const orderData = await orderRes.json();
+        if (!orderData.success) {
+            throw new Error(orderData.error || 'Failed to initialize payment order');
+        }
+
+        // Step 2: Launch Razorpay Checkout Modal
+        if (orderData.is_live && window.Razorpay) {
+            const options = {
+                key: orderData.key_id,
+                amount: Math.round(orderData.amount * 100),
+                currency: 'INR',
+                name: 'Inspenox Business Suite',
+                description: `Subscription: ${planName}`,
+                image: '/favicon.png',
+                order_id: orderData.order_id,
+                prefill: {
+                    name: email.split('@')[0],
+                    email: email,
+                    contact: phone
+                },
+                theme: {
+                    color: '#00a884'
+                },
+                handler: async function (response) {
+                    try {
+                        const verifyRes = await apiFetch('/api/payments?action=verify-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                                plan_name: planName,
+                                original_amount: orderData.original_amount,
+                                discount_amount: orderData.discount_amount,
+                                final_amount: orderData.amount,
+                                coupon_code: orderData.coupon_code,
+                                coupon_id: orderData.coupon_id,
+                                influencer_id: orderData.influencer_id,
+                                commission_amount: orderData.commission_amount,
+                                user_email: email,
+                                user_phone: phone,
+                                company_id: companyId
+                            })
+                        });
+
+                        const verifyData = await verifyRes.json();
+                        if (verifyData.success) {
+                            closeCheckoutModal();
+                            showModal('Payment Successful! 🎉', `Thank you! Your payment of ₹${orderData.amount.toLocaleString('en-IN')} for ${planName} has been verified and active features unlocked!`);
+                            loadSubscriptions();
+                        } else {
+                            showModal('Verification Failed', verifyData.error || 'Unable to verify payment signature.');
+                        }
+                    } catch(err) {
+                        showModal('Error', err.message);
+                    }
+                },
+                modal: {
+                    ondismiss: function() {
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<span>Proceed to Pay</span> 💳';
+                        }
+                    }
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (failResp) {
+                showModal('Payment Failed', failResp.error.description || 'Payment was declined or cancelled.');
+            });
+            rzp.open();
+        } else {
+            // Simulated / Mock Sandbox Flow for Testing
+            showModal(
+                'Sandbox Payment Mode 🧪',
+                `Razorpay live keys are currently running in test sandbox mode.<br><br><strong>Order ID:</strong> <code>${orderData.order_id}</code><br><strong>Plan:</strong> ${planName}<br><strong>Amount:</strong> ₹${orderData.amount.toLocaleString('en-IN')}<br><br>Simulate successful payment confirmation now?`,
+                'confirm',
+                async () => {
+                    const mockPaymentId = `pay_sim_${Date.now()}`;
+                    const verifyRes = await apiFetch('/api/payments?action=verify-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            razorpay_payment_id: mockPaymentId,
+                            razorpay_order_id: orderData.order_id,
+                            razorpay_signature: 'mock_signature_verified',
+                            plan_name: planName,
+                            original_amount: orderData.original_amount,
+                            discount_amount: orderData.discount_amount,
+                            final_amount: orderData.amount,
+                            coupon_code: orderData.coupon_code,
+                            coupon_id: orderData.coupon_id,
+                            influencer_id: orderData.influencer_id,
+                            commission_amount: orderData.commission_amount,
+                            user_email: email,
+                            user_phone: phone,
+                            company_id: companyId
+                        })
+                    });
+
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.success) {
+                        closeCheckoutModal();
+                        showModal('Subscription Activated! 🎉', `Payment verified successfully! Subscription activated for <strong>${planName}</strong>.`);
+                        loadSubscriptions();
+                    } else {
+                        showModal('Error', verifyData.error || 'Verification failed.');
+                    }
+                }
+            );
+        }
+    } catch(err) {
+        showModal('Payment Error', err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span>Proceed to Pay</span> 💳';
+        }
+    }
+};
+
+window.loadCouponsList = async function loadCouponsList() {
+    const tbody = document.getElementById('coupons-table-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><span class="spinner"></span> Loading promotional coupons...</td></tr>';
+
+    try {
+        const res = await apiFetch('/api/payments?action=coupons');
+        const data = await res.json();
+
+        if (data.success && Array.isArray(data.coupons)) {
+            allCouponsList = data.coupons;
+
+            if (allCouponsList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No coupons created yet. Click "+ Create New Coupon" to generate discount codes.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = allCouponsList.map(c => {
+                const used = c.used_count || 0;
+                const limit = c.usage_limit ? c.usage_limit : '∞';
+                const usagePercent = c.usage_limit ? Math.min(100, Math.round((used / c.usage_limit) * 100)) : 0;
+                const isExpired = c.expiry_date && new Date(c.expiry_date) < new Date();
+                const influencer = c.influencer_username ? `<strong>@${c.influencer_username}</strong>` : '<span style="color:var(--text-muted);">Company Global</span>';
+
+                let statusBadge = '';
+                if (!c.is_active) {
+                    statusBadge = '<span class="window-badge" style="background:rgba(239,68,68,0.15); color:#ef4444;">Inactive</span>';
+                } else if (isExpired) {
+                    statusBadge = '<span class="window-badge" style="background:rgba(234,179,8,0.15); color:#eab308;">Expired</span>';
+                } else {
+                    statusBadge = '<span class="window-badge" style="background:rgba(16,185,129,0.15); color:#10b981;">Active ✅</span>';
+                }
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="coupon-code-pill" title="Click to copy" onclick="navigator.clipboard.writeText('${c.coupon_code}'); showModal('Copied', 'Coupon code copied to clipboard!')">
+                                <span>${c.coupon_code}</span> 📋
+                            </div>
+                        </td>
+                        <td><strong style="color:var(--primary); font-size:0.95rem;">${c.discount_percent}% OFF</strong></td>
+                        <td><span style="color:#eab308; font-weight:600;">${c.commission_percent || 0}% Cut</span></td>
+                        <td>
+                            <div style="font-size:0.8rem;">${used} / ${limit} used</div>
+                            ${c.usage_limit ? `<div style="width:70px; height:4px; background:var(--bg-dark); border-radius:2px; margin-top:4px; overflow:hidden;"><div style="width:${usagePercent}%; height:100%; background:var(--primary);"></div></div>` : ''}
+                        </td>
+                        <td>${influencer}</td>
+                        <td><span style="font-size:0.8rem; color:var(--text-muted);">${c.expiry_date ? new Date(c.expiry_date).toLocaleDateString() : 'No Expiry'}</span></td>
+                        <td>${statusBadge}</td>
+                        <td style="text-align:right; white-space:nowrap;">
+                            <button class="btn secondary sm" onclick="toggleCouponStatus(${c.id}, ${c.is_active})">
+                                ${c.is_active ? 'Pause' : 'Activate'}
+                            </button>
+                            <button class="btn danger sm" onclick="deleteCoupon(${c.id}, '${c.coupon_code}')">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    } catch(err) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load coupons.</td></tr>';
+    }
+};
+
+window.openCreateCouponModal = function openCreateCouponModal() {
+    const modal = document.getElementById('create-coupon-modal');
+    if (!modal) return;
+
+    document.getElementById('create-coupon-form')?.reset();
+
+    // Populate user/influencer select
+    const selectUser = document.getElementById('coupon-user-select');
+    if (selectUser) {
+        selectUser.innerHTML = '<option value="">None (General Company Coupon)</option>';
+        if (Array.isArray(allUsersList) && allUsersList.length > 0) {
+            allUsersList.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.id;
+                opt.textContent = `${u.username} (${u.role || 'user'})${u.email ? ' - ' + u.email : ''}`;
+                selectUser.appendChild(opt);
+            });
+        }
+    }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+};
+
+window.closeCreateCouponModal = function closeCreateCouponModal() {
+    const modal = document.getElementById('create-coupon-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.saveNewCoupon = async function saveNewCoupon(e) {
+    if (e) e.preventDefault();
+
+    const code = document.getElementById('coupon-code-input').value.trim();
+    const discount = document.getElementById('coupon-discount-input').value;
+    const commission = document.getElementById('coupon-commission-input').value || 0;
+    const userId = document.getElementById('coupon-user-select').value;
+    const limit = document.getElementById('coupon-limit-input').value;
+    const expiry = document.getElementById('coupon-expiry-input').value;
+
+    const btn = document.getElementById('btn-save-coupon');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Creating...';
+    }
+
+    try {
+        const res = await apiFetch('/api/payments?action=create-coupon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                coupon_code: code,
+                discount_percent: discount,
+                commission_percent: commission,
+                user_id: userId,
+                usage_limit: limit,
+                expiry_date: expiry || null
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            closeCreateCouponModal();
+            showModal('Coupon Created', `Promotional code "${code}" created successfully!`);
+            loadCouponsList();
+        } else {
+            showModal('Error', data.error || 'Failed to create coupon.');
+        }
+    } catch(err) {
+        showModal('Error', err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Create Coupon';
+        }
+    }
+};
+
+window.toggleCouponStatus = async function toggleCouponStatus(id, currentActive) {
+    try {
+        const res = await apiFetch('/api/payments?action=toggle-coupon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, is_active: !currentActive })
+        });
+        const data = await res.json();
+        if (data.success) {
+            loadCouponsList();
+        } else {
+            showModal('Error', data.error || 'Failed to update coupon status.');
+        }
+    } catch(err) {
+        showModal('Error', err.message);
+    }
+};
+
+window.deleteCoupon = function deleteCoupon(id, code) {
+    showModal('Delete Coupon', `Are you sure you want to permanently delete coupon "${code}"?`, 'confirm', async () => {
+        try {
+            const res = await apiFetch(`/api/payments?action=delete-coupon&id=${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                loadCouponsList();
+            } else {
+                showModal('Error', data.error || 'Failed to delete coupon.');
+            }
+        } catch(err) {
+            showModal('Error', err.message);
+        }
+    });
+};
+
+window.loadPaymentLogs = async function loadPaymentLogs() {
+    const tbody = document.getElementById('payment-logs-table-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="spinner"></span> Loading payment logs...</td></tr>';
+
+    try {
+        const res = await apiFetch('/api/payments?action=logs');
+        const data = await res.json();
+
+        if (data.success && Array.isArray(data.logs)) {
+            allPaymentLogsList = data.logs;
+
+            if (allPaymentLogsList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No payment transactions recorded yet. Payments processed via Razorpay will be logged here.</td></tr>';
+                return;
+            }
+
+            renderPaymentLogs(allPaymentLogsList);
+        }
+    } catch(err) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Failed to load payment transactions.</td></tr>';
+    }
+};
+
+function renderPaymentLogs(logs) {
+    const tbody = document.getElementById('payment-logs-table-body');
+    if (!tbody) return;
+
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No matching payment transactions found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = logs.map(p => {
+        const orderIdShort = p.order_id ? `<code>${p.order_id}</code>` : '-';
+        const payIdShort = p.payment_id ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><code>${p.payment_id}</code></div>` : '';
+        const userContact = `
+            <div style="font-size:0.8rem; line-height:1.35;">
+                <div style="color:var(--text-main); font-weight:500;">${p.user_email || 'No email'}</div>
+                ${p.user_phone ? `<div style="color:var(--text-muted); font-size:0.75rem;">${formatDisplayPhone(p.user_phone)}</div>` : ''}
+            </div>
+        `;
+        const couponInfo = p.coupon_code ? `
+            <div>
+                <span class="coupon-code-pill" style="font-size:0.75rem;">${p.coupon_code}</span>
+                ${p.commission_amount > 0 ? `<div style="font-size:0.725rem; color:#eab308; margin-top:2px;">Cut: ₹${Number(p.commission_amount).toFixed(2)}</div>` : ''}
+            </div>
+        ` : '<span style="color:var(--text-muted); font-size:0.75rem;">None</span>';
+
+        return `
+            <tr>
+                <td>${orderIdShort}${payIdShort}</td>
+                <td>${userContact}</td>
+                <td><strong style="color:var(--primary); font-size:0.85rem;">${p.plan_name || 'Standard'}</strong></td>
+                <td><span style="font-size:0.85rem; color:var(--text-muted);">₹${Number(p.original_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></td>
+                <td><span style="font-size:0.85rem; color:${p.discount_amount > 0 ? '#10b981' : 'var(--text-muted)'};">- ₹${Number(p.discount_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></td>
+                <td><strong style="color:var(--text-main); font-size:0.95rem;">₹${Number(p.final_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong></td>
+                <td>${couponInfo}</td>
+                <td><span class="window-badge" style="background:rgba(16,185,129,0.15); color:#10b981; font-weight:700; text-transform:uppercase;">${p.status || 'paid'}</span></td>
+                <td><span style="font-size:0.75rem; color:var(--text-muted);">${p.created_at_formatted || formatTime(p.created_at)}</span></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+window.filterPaymentLogs = function filterPaymentLogs() {
+    const q = (document.getElementById('search-payment-logs')?.value || '').toLowerCase().trim();
+    if (!q) {
+        renderPaymentLogs(allPaymentLogsList);
+        return;
+    }
+    const filtered = allPaymentLogsList.filter(p => {
+        return (p.order_id && p.order_id.toLowerCase().includes(q)) ||
+               (p.payment_id && p.payment_id.toLowerCase().includes(q)) ||
+               (p.user_email && p.user_email.toLowerCase().includes(q)) ||
+               (p.user_phone && p.user_phone.toLowerCase().includes(q)) ||
+               (p.plan_name && p.plan_name.toLowerCase().includes(q)) ||
+               (p.coupon_code && p.coupon_code.toLowerCase().includes(q));
+    });
+    renderPaymentLogs(filtered);
 };

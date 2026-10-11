@@ -22,9 +22,15 @@ async function ensureUsersTable(sql) {
             );
         `;
 
-        // Check if company_id column exists
+        // Check if company_id, email, phone columns exist
         await sql`
             ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
+        `;
+        await sql`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+        `;
+        await sql`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
         `;
 
         // Create persistent login_attempts table for rate limiting across serverless instances
@@ -119,7 +125,7 @@ module.exports = async (req, res) => {
             let users;
             if (req.query.all !== 'true' && companyFilter && companyFilter !== 'default' && companyFilter !== 'null' && companyFilter !== 'all') {
                 users = await sql`
-                    SELECT u.id, u.username, u.role, u.company_id, u.created_at, c.name as company_name 
+                    SELECT u.id, u.username, u.email, u.phone, u.role, u.company_id, u.created_at, c.name as company_name 
                     FROM users u 
                     LEFT JOIN companies c ON u.company_id = c.id 
                     WHERE u.company_id = ${parseInt(companyFilter)}
@@ -127,7 +133,7 @@ module.exports = async (req, res) => {
                 `;
             } else {
                 users = await sql`
-                    SELECT u.id, u.username, u.role, u.company_id, u.created_at, c.name as company_name 
+                    SELECT u.id, u.username, u.email, u.phone, u.role, u.company_id, u.created_at, c.name as company_name 
                     FROM users u 
                     LEFT JOIN companies c ON u.company_id = c.id 
                     ORDER BY u.id ASC
@@ -186,7 +192,7 @@ module.exports = async (req, res) => {
                 const legacyHash = legacyHashPassword(password);
 
                 const users = await sql`
-                    SELECT id, username, role, password_hash, company_id 
+                    SELECT id, username, email, phone, role, password_hash, company_id 
                     FROM users 
                     WHERE LOWER(username) = ${cleanUser}
                 `;
@@ -218,7 +224,7 @@ module.exports = async (req, res) => {
 
                 return res.status(200).json({
                     success: true,
-                    user: { id: user.id, username: user.username, role: user.role, company_id: user.company_id },
+                    user: { id: user.id, username: user.username, email: user.email, phone: user.phone, role: user.role, company_id: user.company_id },
                     token
                 });
             } catch (err) {
@@ -251,10 +257,12 @@ module.exports = async (req, res) => {
 
         if (action === 'save-user') {
             try {
-                const { id, username, company_id, password, role } = body;
+                const { id, username, email, phone, company_id, password, role } = body;
                 if (!username || !username.trim()) return res.status(400).json({ error: 'Username is required' });
 
                 const cleanUser = username.trim().toLowerCase();
+                const cleanEmail = email && String(email).trim() ? String(email).trim().toLowerCase() : null;
+                const cleanPhone = phone && String(phone).trim() ? String(phone).trim() : null;
                 const userRole = role || 'admin';
                 const coId = (company_id && company_id !== 'default' && company_id !== 'parent' && String(company_id).trim() !== '' && String(company_id) !== 'null') ? parseInt(company_id) : null;
                 const targetId = (id !== undefined && id !== null && String(id).trim() !== '' && String(id) !== '0' && String(id) !== 'null' && String(id) !== 'undefined') ? parseInt(id) : null;
@@ -264,13 +272,13 @@ module.exports = async (req, res) => {
                         const newHash = hashPassword(password);
                         await sql`
                             UPDATE users 
-                            SET username = ${cleanUser}, company_id = ${coId}, role = ${userRole}, password_hash = ${newHash}
+                            SET username = ${cleanUser}, email = ${cleanEmail}, phone = ${cleanPhone}, company_id = ${coId}, role = ${userRole}, password_hash = ${newHash}
                             WHERE id = ${targetId}
                         `;
                     } else {
                         await sql`
                             UPDATE users 
-                            SET username = ${cleanUser}, company_id = ${coId}, role = ${userRole}
+                            SET username = ${cleanUser}, email = ${cleanEmail}, phone = ${cleanPhone}, company_id = ${coId}, role = ${userRole}
                             WHERE id = ${targetId}
                         `;
                     }
@@ -280,8 +288,8 @@ module.exports = async (req, res) => {
                     }
                     const newHash = hashPassword(password);
                     await sql`
-                        INSERT INTO users (username, password_hash, role, company_id)
-                        VALUES (${cleanUser}, ${newHash}, ${userRole}, ${coId})
+                        INSERT INTO users (username, email, phone, password_hash, role, company_id)
+                        VALUES (${cleanUser}, ${cleanEmail}, ${cleanPhone}, ${newHash}, ${userRole}, ${coId})
                     `;
                 }
 

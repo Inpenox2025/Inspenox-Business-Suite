@@ -19,3 +19,9 @@ persist = true
 enabled = false
 head_sampling_rate = 1
 persist = true
+
+# ...
+[vars]
+RAZORPAY_KEY_ID = "rzp_live_SWiS28f7BcJLXD"
+RAZORPAY_KEY_SECRET = "kmj4ZTcglH8Q8tRv2xFTFlz9"
+# ...

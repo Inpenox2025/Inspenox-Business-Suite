@@ -30,6 +30,10 @@ module.exports = async (req, res) => {
                 END IF;
             END $$;
         `;
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS email TEXT;`;
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS phone TEXT;`;
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_plan TEXT DEFAULT 'Starter';`;
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'active';`;
     } catch(e) {
         console.error("Table creation error for companies:", e);
     }
@@ -45,7 +49,8 @@ module.exports = async (req, res) => {
             };
 
             let companies = await sql`
-                SELECT id, name, slug, whatsapp_phone_number_id, whatsapp_business_account_id, whatsapp_access_token, 
+                SELECT id, name, slug, email, phone, subscription_plan, subscription_status,
+                       whatsapp_phone_number_id, whatsapp_business_account_id, whatsapp_access_token, 
                        whatsapp_verify_token, is_active, created_at,
                        (SELECT COUNT(*) FROM customers c WHERE c.company_id = companies.id) as customer_count,
                        (SELECT COUNT(*) FROM messages m WHERE m.company_id = companies.id) as message_count
@@ -97,18 +102,20 @@ module.exports = async (req, res) => {
 
     if (req.method === 'POST') {
         try {
-            const { name, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token } = req.body || {};
+            const { name, email, phone, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token } = req.body || {};
 
             if (!name || !name.trim()) {
                 return res.status(400).json({ error: 'Company name is required' });
             }
 
             const cleanName = name.trim();
+            const cleanEmail = email && String(email).trim() ? String(email).trim().toLowerCase() : null;
+            const cleanPhone = phone && String(phone).trim() ? String(phone).trim() : null;
             const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `co-${Date.now()}`;
 
             const result = await sql`
-                INSERT INTO companies (name, slug, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token)
-                VALUES (${cleanName}, ${slug}, ${whatsapp_phone_number_id || null}, ${whatsapp_access_token || null}, ${whatsapp_business_account_id || null}, ${whatsapp_verify_token || 'manasageetha'})
+                INSERT INTO companies (name, slug, email, phone, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token)
+                VALUES (${cleanName}, ${slug}, ${cleanEmail}, ${cleanPhone}, ${whatsapp_phone_number_id || null}, ${whatsapp_access_token || null}, ${whatsapp_business_account_id || null}, ${whatsapp_verify_token || 'manasageetha'})
                 RETURNING *
             `;
 
@@ -120,7 +127,7 @@ module.exports = async (req, res) => {
 
     if (req.method === 'PUT') {
         try {
-            const { id, name, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token, is_active } = req.body || {};
+            const { id, name, email, phone, subscription_plan, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token, is_active } = req.body || {};
 
             if (!id) return res.status(400).json({ error: 'Company ID is required' });
 
@@ -129,6 +136,9 @@ module.exports = async (req, res) => {
 
             const oldComp = existing[0];
             const updatedName = (name && name.trim()) ? name.trim() : oldComp.name;
+            const updatedEmail = email !== undefined ? (email && String(email).trim() ? String(email).trim().toLowerCase() : null) : oldComp.email;
+            const updatedPhone = phone !== undefined ? (phone && String(phone).trim() ? String(phone).trim() : null) : oldComp.phone;
+            const updatedPlan = subscription_plan || oldComp.subscription_plan || 'Starter';
             const updatedPhoneId = (whatsapp_phone_number_id !== undefined && whatsapp_phone_number_id !== null && String(whatsapp_phone_number_id).trim() !== '') ? String(whatsapp_phone_number_id).trim() : oldComp.whatsapp_phone_number_id;
             const updatedWabaId = (whatsapp_business_account_id !== undefined && whatsapp_business_account_id !== null && String(whatsapp_business_account_id).trim() !== '') ? String(whatsapp_business_account_id).trim() : oldComp.whatsapp_business_account_id;
             const updatedToken = (whatsapp_access_token && String(whatsapp_access_token).trim() !== '') ? String(whatsapp_access_token).trim() : oldComp.whatsapp_access_token;
@@ -138,6 +148,9 @@ module.exports = async (req, res) => {
             const result = await sql`
                 UPDATE companies 
                 SET name = ${updatedName},
+                    email = ${updatedEmail},
+                    phone = ${updatedPhone},
+                    subscription_plan = ${updatedPlan},
                     whatsapp_phone_number_id = ${updatedPhoneId},
                     whatsapp_business_account_id = ${updatedWabaId},
                     whatsapp_access_token = ${updatedToken},

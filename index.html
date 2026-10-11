@@ -12,6 +12,8 @@
     <meta http-equiv="Expires" content="0">
     <!-- SheetJS for Excel parsing -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <!-- Razorpay Checkout Official Script -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <script>
@@ -243,6 +245,14 @@
                     </svg>
                     <span>API Usage & Meta Insights</span>
                 </a>
+                <a href="#subscriptions" data-view="subscriptions" id="nav-item-subscriptions" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                        <line x1="6" y1="15" x2="10" y2="15"></line>
+                    </svg>
+                    <span>Subscriptions & Billing</span>
+                </a>
                 <a href="#settings" data-view="settings" class="nav-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
@@ -252,7 +262,7 @@
                     </svg>
                     <span>Settings</span>
                 </a>
-                <a href="#security" data-view="security" id="nav-item-security" class="nav-item">
+                <a href="#security" data-view="security" id="nav-item-security" class="nav-item" style="display: none;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                     </svg>
@@ -1151,6 +1161,8 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
                                     <th>Assigned Company</th>
                                     <th>Role</th>
                                     <th>Created At</th>
@@ -1159,7 +1171,7 @@
                             </thead>
                             <tbody id="users-table-body">
                                 <tr>
-                                    <td colspan="6" class="empty-state">Loading user accounts...</td>
+                                    <td colspan="8" class="empty-state">Loading user accounts...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1184,6 +1196,8 @@
                                 <tr>
                                     <th>Company Name</th>
                                     <th>Company ID</th>
+                                    <th>Contact Details</th>
+                                    <th>Active Plan</th>
                                     <th>WhatsApp Phone ID</th>
                                     <th>WABA ID</th>
                                     <th>WhatsApp Verify Token</th>
@@ -1192,7 +1206,7 @@
                             </thead>
                             <tbody id="companies-table-body">
                                 <tr>
-                                    <td colspan="6" class="empty-state">Loading companies list...</td>
+                                    <td colspan="8" class="empty-state">Loading companies list...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1582,6 +1596,180 @@
                     <p>Inspenox Business Suite - Business Messaging Platform</p>
                 </footer>
             </section>
+
+            <!-- Subscriptions, Plans & Billing View -->
+            <section id="view-subscriptions" class="view">
+                <header class="view-header">
+                    <div class="view-title">
+                        <h2>💳 Subscriptions, Plans & Billing</h2>
+                        <p>Manage subscription packages, Razorpay billing cycles, affiliate coupons, and payment history.</p>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                        <span id="sub-active-plan-badge" class="window-badge" style="background:rgba(0,168,132,0.18); color:var(--primary); font-weight:700; font-size:0.85rem; padding:0.4rem 0.85rem; border-radius:20px; border:1px solid rgba(0,168,132,0.3);">
+                            ⚡ Current Plan: Loading...
+                        </span>
+                        <button type="button" class="btn secondary" onclick="loadSubscriptions()" style="font-size:0.825rem; padding:0.45rem 0.85rem;">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Subscriptions Top Stats Cards -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Active Workspace Plan</span>
+                            <span class="badge-tag" id="sub-stat-status-badge" style="background:rgba(16,185,129,0.15); color:#10b981;">Active</span>
+                        </div>
+                        <div class="stat-value" id="sub-stat-plan-name" style="color:var(--primary); font-size:1.5rem;">Starter Tier</div>
+                        <div class="stat-subtext" id="sub-stat-plan-cycle">Renewing monthly via Razorpay</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Razorpay Gateway</span>
+                            <span class="badge-tag" id="sub-stat-rzp-badge" style="background:rgba(59,130,246,0.15); color:#3b82f6;">Razorpay Secure</span>
+                        </div>
+                        <div class="stat-value" id="sub-stat-gateway-status" style="font-size:1.35rem;">Configured ✅</div>
+                        <div class="stat-subtext" id="sub-stat-key-info">Instant INR Checkout Active</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Total Orders Paid</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary); width:18px; height:18px;">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="stat-value" id="sub-stat-orders-count">0</div>
+                        <div class="stat-subtext" id="sub-stat-total-revenue">Total Paid: ₹0.00</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-title">Coupon Savings Claimed</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#eab308; width:18px; height:18px;">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                        </div>
+                        <div class="stat-value" id="sub-stat-savings-claimed" style="color:#eab308;">₹0.00</div>
+                        <div class="stat-subtext" id="sub-stat-coupons-count">Across all redemptions</div>
+                    </div>
+                </div>
+
+                <!-- Subscriptions Tabs Navigation -->
+                <div style="display:flex; gap:0.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem; flex-wrap:wrap;">
+                    <button type="button" id="tab-btn-sub-plans" class="btn primary sm" onclick="switchSubTab('plans')" style="border-radius:8px;">
+                        💎 Subscription Packages
+                    </button>
+                    <button type="button" id="tab-btn-sub-coupons" class="btn secondary sm" onclick="switchSubTab('coupons')" style="border-radius:8px;">
+                        🎟️ Coupons & Influencer Referral
+                    </button>
+                    <button type="button" id="tab-btn-sub-logs" class="btn secondary sm" onclick="switchSubTab('logs')" style="border-radius:8px;">
+                        📜 Payment Logs & Receipts
+                    </button>
+                </div>
+
+                <!-- Tab 1: Pricing Plans Panel -->
+                <div id="sub-tab-panel-plans">
+                    <!-- Billing Cycle Toggle -->
+                    <div style="display:flex; justify-content:center; align-items:center; gap:1rem; margin-bottom:2rem; background:var(--bg-card); padding:0.75rem 1.5rem; border-radius:12px; border:1px solid var(--border); width:fit-content; margin-left:auto; margin-right:auto;">
+                        <span id="label-cycle-monthly" style="font-weight:700; color:var(--text-main); font-size:0.9rem; cursor:pointer;" onclick="setBillingCycle('monthly')">Monthly Billing</span>
+                        <div style="position:relative; width:48px; height:24px; background:var(--bg-dark); border-radius:24px; border:1px solid var(--border); cursor:pointer;" onclick="toggleBillingCycle()">
+                            <div id="cycle-toggle-knob" style="position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:var(--primary); transition:all 0.2s ease;"></div>
+                        </div>
+                        <span id="label-cycle-annual" style="font-weight:600; color:var(--text-muted); font-size:0.9rem; cursor:pointer;" onclick="setBillingCycle('annual')">
+                            Annual Billing 
+                            <span style="background:rgba(234,179,8,0.18); color:#eab308; font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:12px; font-weight:700; margin-left:0.35rem;">Save 20% 🎉</span>
+                        </span>
+                    </div>
+
+                    <!-- Pricing Cards Grid -->
+                    <div id="pricing-plans-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
+                        <!-- Rendered dynamically by loadSubscriptions() -->
+                    </div>
+                </div>
+
+                <!-- Tab 2: Coupons Panel -->
+                <div id="sub-tab-panel-coupons" style="display:none;">
+                    <div class="card" style="margin-bottom:1.5rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
+                            <div>
+                                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">🎟️ Promotional Coupons & Affiliate Commissions</h3>
+                                <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Create discount codes for subscribers and track affiliate/influencer commission earnings.</p>
+                            </div>
+                            <button type="button" class="btn primary sm" onclick="openCreateCouponModal()">
+                                + Create New Coupon
+                            </button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Coupon Code</th>
+                                        <th>Discount %</th>
+                                        <th>Influencer Commission</th>
+                                        <th>Usage / Limit</th>
+                                        <th>Linked Influencer User</th>
+                                        <th>Expiry Date</th>
+                                        <th>Status</th>
+                                        <th style="text-align:right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="coupons-table-body">
+                                    <tr>
+                                        <td colspan="8" class="empty-state">Loading coupons...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Payment Logs Panel -->
+                <div id="sub-tab-panel-logs" style="display:none;">
+                    <div class="card" style="margin-bottom:1.5rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
+                            <div>
+                                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">📜 Razorpay Payment Logs & Transactions</h3>
+                                <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Real-time log of orders, verified payments, applied discount coupons, and influencer cuts.</p>
+                            </div>
+                            <div style="display:flex; gap:0.5rem;">
+                                <input type="text" id="search-payment-logs" placeholder="Search order, payment, email..." oninput="filterPaymentLogs()" style="padding:0.4rem 0.75rem; font-size:0.85rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); width:220px;">
+                                <button type="button" class="btn secondary sm" onclick="loadPaymentLogs()">🔄 Refresh</button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Order ID & Payment ID</th>
+                                        <th>Subscriber Info</th>
+                                        <th>Plan Name</th>
+                                        <th>Original Amount</th>
+                                        <th>Discount</th>
+                                        <th>Final Amount Paid</th>
+                                        <th>Coupon & Commission</th>
+                                        <th>Status</th>
+                                        <th>Date & Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payment-logs-table-body">
+                                    <tr>
+                                        <td colspan="9" class="empty-state">Loading payment transactions...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="page-footer">
+                    <p>Inspenox Business Suite - Razorpay Integrated Billing Platform</p>
+                </footer>
+            </section>
         </main>
     </div>
 
@@ -1594,6 +1782,135 @@
                 <button id="modal-cancel-btn" class="btn secondary">Cancel</button>
                 <button id="modal-confirm-btn" class="btn primary">OK</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Razorpay Checkout & Subscription Modal -->
+    <div id="checkout-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px);">
+        <div class="modal-content card" style="max-width: 500px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border);">
+                <div>
+                    <h3 id="checkout-modal-title" style="margin:0; font-size:1.15rem; color:var(--text-main);">💳 Complete Subscription</h3>
+                    <p id="checkout-modal-subtitle" style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Powered by Razorpay Secure Payments</p>
+                </div>
+                <button type="button" onclick="closeCheckoutModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem;">✕</button>
+            </div>
+
+            <form id="checkout-form" onsubmit="proceedToRazorpayPayment(event)">
+                <input type="hidden" id="checkout-plan-id">
+                <input type="hidden" id="checkout-plan-name">
+                <input type="hidden" id="checkout-plan-price">
+                <input type="hidden" id="checkout-applied-coupon-id">
+                <input type="hidden" id="checkout-applied-discount-amount" value="0">
+                <input type="hidden" id="checkout-applied-final-amount" value="0">
+
+                <div style="background:var(--bg-dark); padding:1rem; border-radius:10px; border:1px solid var(--border); margin-bottom:1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                        <span style="font-size:0.85rem; color:var(--text-muted);">Selected Package</span>
+                        <strong id="checkout-display-plan" style="color:var(--primary); font-size:1rem;">Growth Pro</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.85rem; color:var(--text-muted);">Billing Interval</span>
+                        <span id="checkout-display-cycle" class="window-badge" style="background:rgba(255,255,255,0.06); color:var(--text-main);">Monthly</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:0.85rem;">
+                    <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">SUBSCRIBER EMAIL *</label>
+                    <input type="email" id="checkout-email" placeholder="e.g. director@company.com" required style="width:100%; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                </div>
+
+                <div style="margin-bottom:0.85rem;">
+                    <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">PHONE NUMBER (FOR PAYMENT RECEIPT) *</label>
+                    <input type="tel" id="checkout-phone" placeholder="e.g. +91 9876543210" required style="width:100%; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                </div>
+
+                <!-- Coupon Section -->
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">HAVE A COUPON CODE?</label>
+                    <div style="display:flex; gap:0.5rem;">
+                        <input type="text" id="checkout-coupon-code" placeholder="Enter coupon (e.g. SAVE20)" style="flex:1; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); text-transform:uppercase;">
+                        <button type="button" id="btn-apply-coupon" onclick="applyCheckoutCoupon()" class="btn secondary" style="white-space:nowrap; padding:0.55rem 1rem;">
+                            Apply
+                        </button>
+                    </div>
+                    <div id="checkout-coupon-feedback" style="margin-top:0.35rem; font-size:0.775rem; display:none;"></div>
+                </div>
+
+                <!-- Price Breakdown Summary -->
+                <div style="background:var(--bg-dark); padding:1rem; border-radius:10px; border:1px solid var(--border); margin-bottom:1.25rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem; font-size:0.85rem;">
+                        <span style="color:var(--text-muted);">Base Package Price</span>
+                        <span id="checkout-display-base-price" style="color:var(--text-main);">₹0.00</span>
+                    </div>
+                    <div id="checkout-row-discount" style="display:none; justify-content:space-between; margin-bottom:0.35rem; font-size:0.85rem; color:#10b981;">
+                        <span>Coupon Discount</span>
+                        <span id="checkout-display-discount">- ₹0.00</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-top:1px solid var(--border); padding-top:0.5rem; margin-top:0.35rem; font-weight:700;">
+                        <span style="color:var(--text-main); font-size:1rem;">Final Payable Amount</span>
+                        <span id="checkout-display-final-price" style="color:var(--primary); font-size:1.25rem;">₹0.00</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                    <button type="button" onclick="closeCheckoutModal()" class="btn secondary">Cancel</button>
+                    <button type="submit" id="btn-proceed-payment" class="btn primary" style="background:#00a884; font-weight:700; gap:0.5rem;">
+                        <span>Proceed to Pay</span> 💳
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create / Edit Coupon Modal -->
+    <div id="create-coupon-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px);">
+        <div class="modal-content card" style="max-width: 480px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border);">
+                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">🎟️ Create Promotional Coupon</h3>
+                <button type="button" onclick="closeCreateCouponModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem;">✕</button>
+            </div>
+
+            <form id="create-coupon-form" onsubmit="saveNewCoupon(event)">
+                <div style="margin-bottom:0.85rem;">
+                    <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">COUPON CODE *</label>
+                    <input type="text" id="coupon-code-input" placeholder="e.g. FESTIVE20, PARTNER30" required style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); text-transform:uppercase;">
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem; margin-bottom:0.85rem;">
+                    <div>
+                        <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">DISCOUNT (%) *</label>
+                        <input type="number" id="coupon-discount-input" min="0" max="100" step="0.5" placeholder="e.g. 20" required style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">COMMISSION (%)</label>
+                        <input type="number" id="coupon-commission-input" min="0" max="100" step="0.5" placeholder="e.g. 10" style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    </div>
+                </div>
+
+                <div style="margin-bottom:0.85rem;">
+                    <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">LINKED USER / INFLUENCER</label>
+                    <select id="coupon-user-select" style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                        <option value="">None (General Company Coupon)</option>
+                    </select>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem; margin-bottom:1.25rem;">
+                    <div>
+                        <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">MAX USAGE LIMIT</label>
+                        <input type="number" id="coupon-limit-input" min="1" placeholder="Unlimited" style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">EXPIRY DATE</label>
+                        <input type="date" id="coupon-expiry-input" style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                    <button type="button" onclick="closeCreateCouponModal()" class="btn secondary">Cancel</button>
+                    <button type="submit" id="btn-save-coupon" class="btn primary">Create Coupon</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1969,6 +2286,19 @@
                         style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                 </div>
 
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">COMPANY EMAIL</label>
+                        <input type="email" id="comp-email" placeholder="contact@company.com"
+                            style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">PHONE NUMBER</label>
+                        <input type="tel" id="comp-phone" placeholder="e.g. +91 9876543210"
+                            style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    </div>
+                </div>
+
                 <div style="margin-bottom: 0.85rem;">
                     <label
                         style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">WHATSAPP
@@ -2027,6 +2357,19 @@
                     <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">USERNAME *</label>
                     <input type="text" id="user-name-input" placeholder="e.g. manaswini_admin" required
                         style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">EMAIL ADDRESS</label>
+                        <input type="email" id="user-email-input" placeholder="user@company.com"
+                            style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">PHONE NUMBER</label>
+                        <input type="tel" id="user-phone-input" placeholder="e.g. +91 9876543210"
+                            style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    </div>
                 </div>
 
                 <div style="margin-bottom: 0.85rem;">

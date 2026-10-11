@@ -13,6 +13,7 @@ const sendMessageHandler = require('../../api/send-message');
 const templatesHandler = require('../../api/templates');
 const uploadMediaHandler = require('../../api/upload-media');
 const webhookHandler = require('../../api/webhook');
+const paymentsHandler = require('../../api/payments');
 
 const routes = {
     'analytics': analyticsHandler,
@@ -27,7 +28,9 @@ const routes = {
     'send-message': sendMessageHandler,
     'templates': templatesHandler,
     'upload-media': uploadMediaHandler,
-    'webhook': webhookHandler
+    'webhook': webhookHandler,
+    'payments': paymentsHandler,
+    'subscriptions': paymentsHandler
 };
 
 async function handleApi(request, env, paramsPath = null) {
