@@ -32,8 +32,8 @@ module.exports = async (req, res) => {
         `;
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS email TEXT;`;
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS phone TEXT;`;
-        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_plan TEXT DEFAULT 'Starter';`;
-        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'active';`;
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_plan TEXT DEFAULT NULL;`;
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'inactive';`;
     } catch(e) {
         console.error("Table creation error for companies:", e);
     }

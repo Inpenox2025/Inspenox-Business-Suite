@@ -148,8 +148,8 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
 -- Add email, phone, subscription columns to companies
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS email TEXT;
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS phone TEXT;
-ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_plan TEXT DEFAULT 'Starter';
-ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'active';
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_plan TEXT DEFAULT NULL;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'inactive';
 
 
   

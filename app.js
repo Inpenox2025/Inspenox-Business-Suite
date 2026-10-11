@@ -201,7 +201,7 @@ window.updateSuperAdminNavVisibility = function updateSuperAdminNavVisibility() 
     const secNav = document.getElementById('nav-item-security');
     const subNav = document.getElementById('nav-item-subscriptions');
     if (secNav) secNav.style.display = isSuper ? 'flex' : 'none';
-    if (subNav) subNav.style.display = isSuper ? 'flex' : 'none';
+    if (subNav) subNav.style.display = 'flex';
 };
 
 window.isParentAdmin = function isParentAdmin() {
@@ -233,14 +233,14 @@ async function loadCompanies() {
     const isSuper = isSuperAdmin();
     const switcherContainer = document.querySelector('.company-switcher-container');
 
-    // Security & Subscriptions strictly for Superadmin
+    // Security strictly for Superadmin; Subscriptions enabled for all
     const secNav = document.getElementById('nav-item-security');
     if (secNav) {
         secNav.style.display = isSuper ? 'flex' : 'none';
     }
     const subNav = document.getElementById('nav-item-subscriptions');
     if (subNav) {
-        subNav.style.display = isSuper ? 'flex' : 'none';
+        subNav.style.display = 'flex';
     }
 
     let user = {};
@@ -294,7 +294,7 @@ document.getElementById('company-switcher')?.addEventListener('change', (e) => {
     const secNav = document.getElementById('nav-item-security');
     const subNav = document.getElementById('nav-item-subscriptions');
     if (secNav) secNav.style.display = isSuper ? 'flex' : 'none';
-    if (subNav) subNav.style.display = isSuper ? 'flex' : 'none';
+    if (subNav) subNav.style.display = 'flex';
 
     const activeView = localStorage.getItem('activeView') || 'dashboard';
     switchView(activeView, false);
@@ -373,9 +373,14 @@ async function loadCompaniesSettings() {
                     </div>
                 `;
 
-                const planBadge = `
+                const isPlanActive = c.subscription_status === 'active' && c.subscription_plan && c.subscription_plan.toLowerCase() !== 'none';
+                const planBadge = isPlanActive ? `
                     <span class="window-badge" style="background:rgba(0, 168, 132, 0.15); color:var(--primary); font-weight:600; font-size:0.75rem;">
-                        ${c.subscription_plan || 'Starter Tier'}
+                        ${c.subscription_plan}
+                    </span>
+                ` : `
+                    <span class="window-badge" style="background:rgba(239, 68, 68, 0.12); color:#ef4444; font-weight:600; font-size:0.75rem;">
+                        No Active Plan
                     </span>
                 `;
 
@@ -1550,10 +1555,8 @@ window.toggleNavGroup = function toggleNavGroup(headerEl) {
 window.switchView = function switchView(target, pushHistory = true) {
     if (!target) return;
 
-    // Strict security check: Only Superadmin can access Security Control Center or Subscriptions & Billing
-    if ((target === 'security' || target === 'subscriptions') && !isSuperAdmin()) {
-        const sectionTitle = target === 'security' ? 'Security & Rate Limits Control Center' : 'Subscriptions, Plans & Billing Management';
-        showModal('Access Restricted', `The ${sectionTitle} is strictly restricted to Superadmin accounts only.`);
+    // Security Control Center is strictly restricted to Superadmin; silently redirect non-superadmin without popup
+    if (target === 'security' && !isSuperAdmin()) {
         target = 'dashboard';
         if (pushHistory && history.replaceState) {
             history.replaceState({ view: 'dashboard' }, '', '#dashboard');
@@ -5714,7 +5717,7 @@ let activeCompanyPlanName = 'Starter Tier';
     const secNav = document.getElementById('nav-item-security');
     const subNav = document.getElementById('nav-item-subscriptions');
     if (secNav) secNav.style.display = isSuper ? 'flex' : 'none';
-    if (subNav) subNav.style.display = isSuper ? 'flex' : 'none';
+    if (subNav) subNav.style.display = 'flex';
 })();
 
 window.setBillingCycle = function setBillingCycle(cycle) {
@@ -5784,17 +5787,59 @@ window.loadSubscriptions = async function loadSubscriptions() {
         // Check active company's plan
         const coId = getCompanyId();
         const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
-        if (activeComp && activeComp.subscription_plan) {
-            activeCompanyPlanName = activeComp.subscription_plan;
-        } else {
-            activeCompanyPlanName = 'Starter Tier';
-        }
+        
+        // Strictly check if company has paid/subscribed
+        const hasActiveSub = !!(activeComp && activeComp.subscription_status === 'active' && activeComp.subscription_plan && activeComp.subscription_plan.toLowerCase() !== 'none');
+        activeCompanyPlanName = hasActiveSub ? activeComp.subscription_plan : null;
 
         // Update badge and plan name in top widgets
         const elActiveBadge = document.getElementById('sub-active-plan-badge');
         const elStatPlanName = document.getElementById('sub-stat-plan-name');
-        if (elActiveBadge) elActiveBadge.textContent = `⚡ Active Plan: ${activeCompanyPlanName}`;
-        if (elStatPlanName) elStatPlanName.textContent = activeCompanyPlanName;
+        const elStatBadge = document.getElementById('sub-stat-status-badge');
+        const elStatCycle = document.getElementById('sub-stat-plan-cycle');
+
+        if (hasActiveSub) {
+            if (elActiveBadge) {
+                elActiveBadge.textContent = `⚡ Active Plan: ${activeCompanyPlanName}`;
+                elActiveBadge.style.background = 'rgba(0,168,132,0.18)';
+                elActiveBadge.style.color = 'var(--primary)';
+                elActiveBadge.style.borderColor = 'rgba(0,168,132,0.3)';
+            }
+            if (elStatPlanName) {
+                elStatPlanName.textContent = activeCompanyPlanName;
+                elStatPlanName.style.color = 'var(--primary)';
+            }
+            if (elStatBadge) {
+                elStatBadge.textContent = 'Active';
+                elStatBadge.style.background = 'rgba(16,185,129,0.15)';
+                elStatBadge.style.color = '#10b981';
+            }
+            if (elStatCycle) elStatCycle.textContent = 'Renewing via Razorpay';
+        } else {
+            if (elActiveBadge) {
+                elActiveBadge.textContent = '⚡ No Active Plan (Unsubscribed)';
+                elActiveBadge.style.background = 'rgba(239, 68, 68, 0.12)';
+                elActiveBadge.style.color = '#ef4444';
+                elActiveBadge.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+            }
+            if (elStatPlanName) {
+                elStatPlanName.textContent = 'None';
+                elStatPlanName.style.color = 'var(--text-muted)';
+            }
+            if (elStatBadge) {
+                elStatBadge.textContent = 'Not Subscribed';
+                elStatBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+                elStatBadge.style.color = '#ef4444';
+            }
+            if (elStatCycle) elStatCycle.textContent = 'Select a package below to subscribe';
+        }
+
+        // Subscriptions tab controls: Coupons and Payment Logs tabs for Superadmin
+        const isSuper = isSuperAdmin();
+        const btnCoupons = document.getElementById('tab-btn-sub-coupons');
+        const btnLogs = document.getElementById('tab-btn-sub-logs');
+        if (btnCoupons) btnCoupons.style.display = isSuper ? 'inline-flex' : 'none';
+        if (btnLogs) btnLogs.style.display = isSuper ? 'inline-flex' : 'none';
 
         // Update Gateway Status
         const elGateway = document.getElementById('sub-stat-gateway-status');
@@ -5845,11 +5890,15 @@ window.renderPricingCards = function renderPricingCards() {
     if (!grid || allSubscriptionPlans.length === 0) return;
 
     const isAnnual = currentBillingCycle === 'annual';
+    const hasActiveSub = !!activeCompanyPlanName;
 
     grid.innerHTML = allSubscriptionPlans.map(plan => {
         const price = isAnnual ? plan.price_annual : plan.price_monthly;
         const periodText = isAnnual ? '/year' : '/month';
-        const isCurrentActive = (activeCompanyPlanName.toLowerCase().includes(plan.id) || activeCompanyPlanName.toLowerCase().includes(plan.name.toLowerCase()));
+        const isCurrentActive = hasActiveSub && (
+            activeCompanyPlanName.toLowerCase().includes(plan.id) || 
+            activeCompanyPlanName.toLowerCase().includes(plan.name.toLowerCase())
+        );
 
         const featureItems = plan.features.map(f => `
             <li class="pricing-feature-item">
