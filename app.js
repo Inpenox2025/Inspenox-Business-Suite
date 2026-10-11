@@ -1654,18 +1654,56 @@ function updateCompanySubscriptionStatusUI() {
     const hasActiveSub = !!(activeComp && activeComp.subscription_status === 'active' && activeComp.subscription_plan && activeComp.subscription_plan.toLowerCase() !== 'none');
     activeCompanyPlanName = hasActiveSub ? activeComp.subscription_plan : null;
 
-    const elActiveBadge = document.getElementById('sub-active-plan-badge');
+    // 1. Update Company Workspace Hero Banner (Shown for Child / Tenant Companies)
+    const elHeroPlanName = document.getElementById('sub-hero-plan-name');
+    const elHeroBadge = document.getElementById('sub-hero-status-badge');
+    const elHeroDesc = document.getElementById('sub-hero-plan-desc');
+    const elHeroIcon = document.getElementById('sub-hero-icon-container');
+
+    if (hasActiveSub) {
+        if (elHeroPlanName) {
+            elHeroPlanName.textContent = activeCompanyPlanName;
+            elHeroPlanName.style.color = '#10b981';
+        }
+        if (elHeroBadge) {
+            elHeroBadge.textContent = 'Active ✅';
+            elHeroBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+            elHeroBadge.style.color = '#10b981';
+        }
+        if (elHeroDesc) {
+            elHeroDesc.textContent = 'Verified subscription active via Razorpay. WhatsApp broadcast & marketing automation unlocked.';
+        }
+        if (elHeroIcon) {
+            elHeroIcon.style.color = '#10b981';
+            elHeroIcon.style.background = 'rgba(16, 185, 129, 0.15)';
+            elHeroIcon.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        }
+    } else {
+        if (elHeroPlanName) {
+            elHeroPlanName.textContent = 'No Active Plan (Unsubscribed)';
+            elHeroPlanName.style.color = 'var(--text-muted)';
+        }
+        if (elHeroBadge) {
+            elHeroBadge.textContent = 'Unsubscribed';
+            elHeroBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+            elHeroBadge.style.color = '#ef4444';
+        }
+        if (elHeroDesc) {
+            elHeroDesc.textContent = 'Subscribe to an Inspenox package below to activate WhatsApp broadcasts, templates, and contact automation.';
+        }
+        if (elHeroIcon) {
+            elHeroIcon.style.color = '#ef4444';
+            elHeroIcon.style.background = 'rgba(239, 68, 68, 0.12)';
+            elHeroIcon.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+        }
+    }
+
+    // 2. Update Superadmin Top Stat Cards
     const elStatPlanName = document.getElementById('sub-stat-plan-name');
     const elStatBadge = document.getElementById('sub-stat-status-badge');
     const elStatCycle = document.getElementById('sub-stat-plan-cycle');
 
     if (hasActiveSub) {
-        if (elActiveBadge) {
-            elActiveBadge.textContent = `⚡ Active Plan: ${activeCompanyPlanName}`;
-            elActiveBadge.style.background = 'rgba(0,168,132,0.18)';
-            elActiveBadge.style.color = 'var(--primary)';
-            elActiveBadge.style.borderColor = 'rgba(0,168,132,0.3)';
-        }
         if (elStatPlanName) {
             elStatPlanName.textContent = activeCompanyPlanName;
             elStatPlanName.style.color = 'var(--primary)';
@@ -1677,12 +1715,6 @@ function updateCompanySubscriptionStatusUI() {
         }
         if (elStatCycle) elStatCycle.textContent = 'Renewing via Razorpay';
     } else {
-        if (elActiveBadge) {
-            elActiveBadge.textContent = '⚡ No Active Plan (Unsubscribed)';
-            elActiveBadge.style.background = 'rgba(239, 68, 68, 0.12)';
-            elActiveBadge.style.color = '#ef4444';
-            elActiveBadge.style.borderColor = 'rgba(239, 68, 68, 0.25)';
-        }
         if (elStatPlanName) {
             elStatPlanName.textContent = 'None';
             elStatPlanName.style.color = 'var(--text-muted)';
@@ -1836,18 +1868,20 @@ window.toggleBillingCycle = toggleBillingCycle;
 
 function switchSubTab(tabName) {
     const isSuper = isSuperAdmin();
-    // Strictly prevent non-superadmin or other companies from accessing coupons or payment logs
+    // Strictly prevent non-superadmin or other companies from accessing coupons or platform audit logs
     if (!isSuper && (tabName === 'coupons' || tabName === 'logs')) {
         tabName = 'plans';
     }
 
     const panels = {
         plans: document.getElementById('sub-tab-panel-plans'),
+        receipts: document.getElementById('sub-tab-panel-receipts'),
         coupons: document.getElementById('sub-tab-panel-coupons'),
         logs: document.getElementById('sub-tab-panel-logs')
     };
     const buttons = {
         plans: document.getElementById('tab-btn-sub-plans'),
+        receipts: document.getElementById('tab-btn-sub-receipts'),
         coupons: document.getElementById('tab-btn-sub-coupons'),
         logs: document.getElementById('tab-btn-sub-logs')
     };
@@ -1863,6 +1897,7 @@ function switchSubTab(tabName) {
         }
     });
 
+    if (tabName === 'receipts' && typeof window.loadCompanyReceipts === 'function') window.loadCompanyReceipts();
     if (tabName === 'coupons' && isSuper && typeof window.loadCouponsList === 'function') window.loadCouponsList();
     if (tabName === 'logs' && isSuper && typeof window.loadPaymentLogs === 'function') window.loadPaymentLogs();
 }
@@ -1873,25 +1908,45 @@ async function loadSubscriptions() {
     updateCompanySubscriptionStatusUI();
     renderPricingCards();
 
-    // 2. Strict Superadmin Access Control: Coupons & Influencer Referral and Logs strictly for superadmin
+    // 2. Strict Superadmin vs Other Companies Configuration
     const isSuper = isSuperAdmin();
     const btnCoupons = document.getElementById('tab-btn-sub-coupons');
     const btnLogs = document.getElementById('tab-btn-sub-logs');
+    const btnReceipts = document.getElementById('tab-btn-sub-receipts');
     const panelCoupons = document.getElementById('sub-tab-panel-coupons');
     const panelLogs = document.getElementById('sub-tab-panel-logs');
     const statSavings = document.getElementById('sub-stat-card-coupons');
     const subTabsBar = document.getElementById('sub-tabs-container');
+    const adminStatsGrid = document.getElementById('sub-superadmin-stats-grid');
+    const companyHeroBanner = document.getElementById('sub-company-hero-banner');
 
-    if (btnCoupons) btnCoupons.style.display = isSuper ? 'inline-flex' : 'none';
-    if (btnLogs) btnLogs.style.display = isSuper ? 'inline-flex' : 'none';
-    if (statSavings) statSavings.style.display = isSuper ? 'flex' : 'none';
+    if (isSuper) {
+        // Superadmin: Show the full admin stats grid (Active Plan, Gateway, Total Orders, Savings)
+        if (adminStatsGrid) adminStatsGrid.style.display = 'grid';
+        if (companyHeroBanner) companyHeroBanner.style.display = 'none';
 
-    if (!isSuper) {
+        // Superadmin sees all 4 sub-tabs
+        if (btnCoupons) btnCoupons.style.display = 'inline-flex';
+        if (btnLogs) btnLogs.style.display = 'inline-flex';
+        if (statSavings) statSavings.style.display = 'flex';
+        if (btnReceipts) btnReceipts.style.display = 'inline-flex';
+        if (subTabsBar) subTabsBar.style.display = 'flex';
+    } else {
+        // Child / Tenant Company ("other companies"):
+        // Remove the 2 admin stat cards (Razorpay Gateway & Total Orders Paid) by hiding the admin stats grid
+        if (adminStatsGrid) adminStatsGrid.style.display = 'none';
+        // Show clean, uncluttered Company Workspace Hero Banner
+        if (companyHeroBanner) companyHeroBanner.style.display = 'flex';
+
+        // Strictly hide superadmin features
+        if (btnCoupons) btnCoupons.style.display = 'none';
+        if (btnLogs) btnLogs.style.display = 'none';
         if (panelCoupons) panelCoupons.style.display = 'none';
         if (panelLogs) panelLogs.style.display = 'none';
-        switchSubTab('plans');
-        if (subTabsBar) subTabsBar.style.display = 'none';
-    } else {
+        if (statSavings) statSavings.style.display = 'none';
+
+        // Show Subscription Packages & Payment Receipts tabs
+        if (btnReceipts) btnReceipts.style.display = 'inline-flex';
         if (subTabsBar) subTabsBar.style.display = 'flex';
     }
 
@@ -1905,28 +1960,30 @@ async function loadSubscriptions() {
             renderPricingCards();
         }
 
-        const elGateway = document.getElementById('sub-stat-gateway-status');
-        const elRzpBadge = document.getElementById('sub-stat-rzp-badge');
-        if (data.has_keys) {
-            if (elGateway) elGateway.textContent = 'Configured ✅';
-            if (elRzpBadge) {
-                elRzpBadge.textContent = 'Razorpay Live';
-                elRzpBadge.style.background = 'rgba(16, 185, 129, 0.15)';
-                elRzpBadge.style.color = '#10b981';
-            }
-        } else {
-            if (elGateway) elGateway.textContent = 'Test Mode 🧪';
-            if (elRzpBadge) {
-                elRzpBadge.textContent = 'Sandbox / Test';
-                elRzpBadge.style.background = 'rgba(234, 179, 8, 0.15)';
-                elRzpBadge.style.color = '#eab308';
+        if (isSuper) {
+            const elGateway = document.getElementById('sub-stat-gateway-status');
+            const elRzpBadge = document.getElementById('sub-stat-rzp-badge');
+            if (data.has_keys) {
+                if (elGateway) elGateway.textContent = 'Configured ✅';
+                if (elRzpBadge) {
+                    elRzpBadge.textContent = 'Razorpay Live';
+                    elRzpBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                    elRzpBadge.style.color = '#10b981';
+                }
+            } else {
+                if (elGateway) elGateway.textContent = 'Test Mode 🧪';
+                if (elRzpBadge) {
+                    elRzpBadge.textContent = 'Sandbox / Test';
+                    elRzpBadge.style.background = 'rgba(234, 179, 8, 0.15)';
+                    elRzpBadge.style.color = '#eab308';
+                }
             }
         }
     } catch(err) {
         console.warn('Live subscription plans check:', err);
     }
 
-    // 4. If superadmin, fetch aggregated payment statistics without blocking the cards
+    // 4. If superadmin, fetch aggregated payment statistics without blocking
     if (isSuper) {
         try {
             const logsRes = await apiFetch('/api/payments?action=logs');
@@ -6437,6 +6494,9 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                             loadCompanies().then(() => {
                                 updateCompanySubscriptionStatusUI();
                                 renderPricingCards();
+                                if (typeof loadCompanyReceipts === 'function') {
+                                    loadCompanyReceipts();
+                                }
                             });
 
                             const emailNotice = verifyData.email_sent 
@@ -6813,6 +6873,148 @@ window.filterPaymentLogs = function filterPaymentLogs() {
                (p.coupon_code && p.coupon_code.toLowerCase().includes(q));
     });
     renderPaymentLogs(filtered);
+};
+
+/* ========================================================
+   Company Workspace Payment Receipts & Official Invoices
+   ======================================================== */
+let allCompanyReceiptsList = [];
+
+window.loadCompanyReceipts = async function loadCompanyReceipts() {
+    const tbody = document.getElementById('company-receipts-table-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><span class="spinner-icon" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Loading payment receipts...</td></tr>';
+
+    const coId = getCompanyId();
+    let user = {};
+    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+    const email = user.email || '';
+
+    try {
+        const url = `/api/payments?action=receipts&company_id=${coId || ''}&email=${encodeURIComponent(email)}`;
+        const res = await apiFetch(url);
+        const data = await res.json();
+
+        if (data.success && Array.isArray(data.logs)) {
+            allCompanyReceiptsList = data.logs;
+
+            if (allCompanyReceiptsList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No payment receipts found for this workspace yet. When you subscribe or renew a package, official tax receipts will appear here.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = allCompanyReceiptsList.map(r => {
+                const formattedDate = r.created_at_formatted || (r.created_at ? new Date(r.created_at).toLocaleString('en-IN') : '-');
+                const orderIdShort = r.order_id ? `<code>${r.order_id}</code>` : '-';
+                const paymentIdShort = r.payment_id ? `<code>${r.payment_id}</code>` : '-';
+                const finalAmt = Number(r.final_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                const plan = r.plan_name || 'Standard Plan';
+                const statusBadge = '<span class="window-badge" style="background:rgba(16,185,129,0.15); color:#10b981; font-weight:700;">PAID ✅</span>';
+
+                return `
+                    <tr>
+                        <td><span style="font-size:0.825rem; color:var(--text-main); font-weight:500;">${formattedDate}</span></td>
+                        <td>${orderIdShort}</td>
+                        <td><span style="font-size:0.8rem; color:var(--text-muted);">${paymentIdShort}</span></td>
+                        <td><strong style="color:var(--primary); font-size:0.9rem;">${plan}</strong></td>
+                        <td><strong style="color:var(--text-main); font-size:0.95rem;">₹${finalAmt}</strong></td>
+                        <td>${statusBadge}</td>
+                        <td style="text-align:right;">
+                            <button type="button" class="btn secondary sm" onclick="viewCompanyReceipt(${r.id})" style="display:inline-flex; align-items:center; gap:5px; padding:0.35rem 0.75rem; font-size:0.775rem;">
+                                📜 <span>View Invoice</span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No payment receipts available.</td></tr>';
+        }
+    } catch(err) {
+        console.error('Error loading receipts:', err);
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load payment receipts.</td></tr>';
+    }
+};
+
+window.viewCompanyReceipt = function viewCompanyReceipt(receiptId) {
+    const receipt = allCompanyReceiptsList.find(r => String(r.id) === String(receiptId)) ||
+                    allPaymentLogsList.find(r => String(r.id) === String(receiptId));
+    if (!receipt) {
+        showModal('Receipt Not Found', 'Could not locate the requested transaction receipt.');
+        return;
+    }
+
+    const coId = getCompanyId();
+    const comp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
+    let user = {};
+    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+
+    const custName = comp?.name || user.company_name || user.username || 'Authorized Subscriber';
+    const custEmail = receipt.user_email || user.email || comp?.email || '-';
+    const custPhone = receipt.user_phone ? formatDisplayPhone(receipt.user_phone) : (user.phone || comp?.phone || '-');
+    const formattedDate = receipt.created_at_formatted || (receipt.created_at ? new Date(receipt.created_at).toLocaleString('en-IN') : '-');
+
+    const origAmount = Number(receipt.original_amount || receipt.final_amount || 0);
+    const discAmount = Number(receipt.discount_amount || 0);
+    const finalAmount = Number(receipt.final_amount || 0);
+
+    const isAnnual = (receipt.plan_name || '').toLowerCase().includes('annual');
+
+    const elDate = document.getElementById('rcpt-date-display');
+    const elName = document.getElementById('rcpt-customer-name');
+    const elEmail = document.getElementById('rcpt-customer-email');
+    const elPhone = document.getElementById('rcpt-customer-phone');
+    const elOrder = document.getElementById('rcpt-order-id');
+    const elPay = document.getElementById('rcpt-payment-id');
+    const elPlan = document.getElementById('rcpt-plan-name');
+    const elCycle = document.getElementById('rcpt-plan-cycle');
+    const elBase = document.getElementById('rcpt-base-amount');
+    const elSub = document.getElementById('rcpt-subtotal');
+    const rowDisc = document.getElementById('rcpt-row-discount');
+    const elDisc = document.getElementById('rcpt-discount');
+    const elTotal = document.getElementById('rcpt-total');
+
+    if (elDate) elDate.textContent = `Date: ${formattedDate}`;
+    if (elName) elName.textContent = custName;
+    if (elEmail) elEmail.textContent = custEmail;
+    if (elPhone) elPhone.textContent = custPhone;
+
+    if (elOrder) elOrder.textContent = receipt.order_id || '-';
+    if (elPay) elPay.textContent = receipt.payment_id || '-';
+
+    if (elPlan) elPlan.textContent = receipt.plan_name || 'Standard Plan';
+    if (elCycle) elCycle.textContent = isAnnual ? 'Annual (20% Off)' : 'Monthly';
+
+    if (elBase) elBase.textContent = `₹${origAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    if (elSub) elSub.textContent = `₹${origAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+    if (discAmount > 0) {
+        if (rowDisc) rowDisc.style.display = 'flex';
+        if (elDisc) elDisc.textContent = `- ₹${discAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}${receipt.coupon_code ? ` (${receipt.coupon_code})` : ''}`;
+    } else {
+        if (rowDisc) rowDisc.style.display = 'none';
+    }
+
+    if (elTotal) elTotal.textContent = `₹${finalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+    const modal = document.getElementById('company-receipt-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeCompanyReceiptModal = function closeCompanyReceiptModal() {
+    const modal = document.getElementById('company-receipt-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.printCompanyReceipt = function printCompanyReceipt() {
+    window.print();
 };
 
 // Ensure active view is synchronized upon full script execution

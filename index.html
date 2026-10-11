@@ -1602,20 +1602,46 @@
                 <header class="view-header">
                     <div class="view-title">
                         <h2>💳 Subscriptions, Plans & Billing</h2>
-                        <p>Manage subscription packages, Billing cycles, and payment history.</p>
+                        <p>Manage subscription packages, billing cycles, and payment history.</p>
                     </div>
-                    <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-                        <span id="sub-active-plan-badge" class="window-badge" style="background:rgba(239, 68, 68, 0.12); color:#ef4444; font-weight:700; font-size:0.85rem; padding:0.4rem 0.85rem; border-radius:20px; border:1px solid rgba(239, 68, 68, 0.25);">
-                            ⚡ No Active Plan (Unsubscribed)
-                        </span>
-                        <button type="button" class="btn secondary" onclick="loadSubscriptions()" style="font-size:0.825rem; padding:0.45rem 0.85rem;">
-                            🔄 Refresh
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <button type="button" class="btn secondary sm" onclick="loadSubscriptions()" style="display:inline-flex; align-items:center; gap:6px;">
+                            🔄 <span>Refresh Status</span>
                         </button>
                     </div>
                 </header>
 
-                <!-- Subscriptions Top Stats Cards -->
-                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem;">
+                <!-- Company Workspace Active Plan Hero Banner (Shown for Child / Tenant Companies) -->
+                <div id="sub-company-hero-banner" class="card" style="display: none; margin-bottom: 1.75rem; padding: 1.35rem 1.75rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.5) 100%); border: 1px solid rgba(16, 185, 129, 0.22); border-radius: 16px; align-items: center; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 1.15rem;">
+                        <div id="sub-hero-icon-container" style="width: 50px; height: 50px; border-radius: 14px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center; color: #10b981; flex-shrink: 0;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24" height="24">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                        </div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.2rem;">
+                                <span style="font-size: 0.725rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px;">Current Workspace Plan</span>
+                                <span id="sub-hero-status-badge" class="window-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 0.725rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Active ✅</span>
+                            </div>
+                            <h3 id="sub-hero-plan-name" style="margin: 0; font-size: 1.45rem; font-weight: 800; color: #10b981;">Growth Pro (Monthly)</h3>
+                            <span id="sub-hero-plan-desc" style="font-size: 0.825rem; color: var(--text-muted); display: block; margin-top: 3px;">
+                                Verified subscription active via Razorpay. WhatsApp broadcast & marketing automation unlocked.
+                            </span>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <button type="button" class="btn primary sm" onclick="switchSubTab('plans')" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem;">
+                            ⚡ <span>Upgrade / Renew</span>
+                        </button>
+                        <button type="button" class="btn secondary sm" onclick="switchSubTab('receipts')" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem;">
+                            📜 <span>Payment Receipts</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Superadmin Top Stats Cards (Shown Strictly for Master Superadmin on Parent Account) -->
+                <div id="sub-superadmin-stats-grid" class="stats-grid" style="display: none; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem;">
                     <div class="stat-card card">
                         <div class="stat-icon icon-emerald">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1632,7 +1658,7 @@
                         </div>
                     </div>
 
-                    <div class="stat-card card">
+                    <div class="stat-card card" id="sub-stat-card-gateway">
                         <div class="stat-icon icon-blue">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
@@ -1649,7 +1675,7 @@
                         </div>
                     </div>
 
-                    <div class="stat-card card">
+                    <div class="stat-card card" id="sub-stat-card-orders">
                         <div class="stat-icon icon-teal">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
@@ -1686,6 +1712,15 @@
                         </svg>
                         <span>Subscription Packages</span>
                     </button>
+                    <button type="button" id="tab-btn-sub-receipts" class="sub-tab-btn" onclick="switchSubTab('receipts')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                        <span>Payment Receipts & Invoices</span>
+                    </button>
                     <button type="button" id="tab-btn-sub-coupons" class="sub-tab-btn" onclick="switchSubTab('coupons')" style="display: none;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                             <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
@@ -1695,12 +1730,9 @@
                     </button>
                     <button type="button" id="tab-btn-sub-logs" class="sub-tab-btn" onclick="switchSubTab('logs')" style="display: none;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                         </svg>
-                        <span>Payment Logs & Receipts</span>
+                        <span>Platform Audit Logs</span>
                     </button>
                 </div>
 
@@ -1721,6 +1753,42 @@
                     <!-- Pricing Cards Grid -->
                     <div id="pricing-plans-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
                         <!-- Rendered dynamically by loadSubscriptions() -->
+                    </div>
+                </div>
+
+                <!-- Tab: Workspace Invoices & Receipts Panel -->
+                <div id="sub-tab-panel-receipts" style="display:none;">
+                    <div class="card" style="margin-bottom:1.5rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
+                            <div>
+                                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">📜 Workspace Payment Receipts & Invoices</h3>
+                                <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">View, print, and download official payment receipts for your workspace subscriptions.</p>
+                            </div>
+                            <button type="button" class="btn secondary sm" onclick="loadCompanyReceipts()">
+                                🔄 Refresh Receipts
+                            </button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date & Time</th>
+                                        <th>Order ID</th>
+                                        <th>Payment Reference</th>
+                                        <th>Plan Subscribed</th>
+                                        <th>Amount Paid</th>
+                                        <th>Status</th>
+                                        <th style="text-align:right;">Official Receipt</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="company-receipts-table-body">
+                                    <tr>
+                                        <td colspan="7" class="empty-state">Loading receipts...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -2486,6 +2554,161 @@
             </div>
         </div>
     </div>
+
+    <!-- Workspace Payment Receipt / Tax Invoice Modal -->
+    <div id="company-receipt-modal" class="modal-overlay hidden"
+        style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; position: fixed; inset: 0; padding: 1rem; overflow-y: auto;">
+        <div class="card" style="max-width: 680px; width: 100%; padding: 0; border-radius: 18px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden;">
+            <!-- Modal Header Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; background: var(--bg-dark); border-bottom: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <span style="font-size: 1.25rem;">📜</span>
+                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-main);">Official Payment Receipt</h3>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <button type="button" class="btn primary sm" onclick="printCompanyReceipt()" style="display: inline-flex; align-items: center; gap: 6px;">
+                        🖨️ <span>Print / Save PDF</span>
+                    </button>
+                    <button type="button" onclick="closeCompanyReceiptModal()"
+                        style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.3rem; padding: 0 4px; line-height: 1;">✕</button>
+                </div>
+            </div>
+
+            <!-- Printable Receipt Body -->
+            <div id="company-receipt-printable" style="padding: 2rem 2rem 1.5rem 2rem;">
+                <!-- Receipt Brand Header -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 1px dashed var(--border); margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                            <span style="font-size: 1.35rem; font-weight: 800; color: #10b981; letter-spacing: -0.5px;">Inspenox</span>
+                            <span style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 6px; font-weight: 700;">Business Suite</span>
+                        </div>
+                        <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Cloud WhatsApp Marketing & Automation Platform</p>
+                        <p style="margin: 2px 0 0 0; font-size: 0.775rem; color: var(--text-muted);">Website: marketing.inspenox.in | Support: support@inspenox.in</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="window-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 800; font-size: 0.85rem; padding: 4px 12px; border-radius: 20px; text-transform: uppercase;">PAID & VERIFIED ✅</span>
+                        <div style="margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-muted);" id="rcpt-date-display">Date: -</div>
+                    </div>
+                </div>
+
+                <!-- Invoice Meta Details Grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; padding: 1.25rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px;">
+                    <div>
+                        <span style="font-size: 0.725rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 4px;">CUSTOMER & WORKSPACE</span>
+                        <div id="rcpt-customer-name" style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">-</div>
+                        <div id="rcpt-customer-email" style="font-size: 0.825rem; color: var(--text-muted); margin-top: 2px;">-</div>
+                        <div id="rcpt-customer-phone" style="font-size: 0.825rem; color: var(--text-muted); margin-top: 2px;">-</div>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.725rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 4px;">PAYMENT TRANSACTION DETAILS</span>
+                        <div style="font-size: 0.825rem; color: var(--text-muted);">Order ID: <code id="rcpt-order-id" style="color: var(--text-main); font-weight: 600;">-</code></div>
+                        <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Payment Ref: <code id="rcpt-payment-id" style="color: var(--text-main); font-weight: 600;">-</code></div>
+                        <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Gateway: <span style="color: #3b82f6; font-weight: 600;">Razorpay Secure (INR)</span></div>
+                    </div>
+                </div>
+
+                <!-- Line Items Table -->
+                <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: var(--bg-dark); border-bottom: 1px solid var(--border); text-align: left; font-size: 0.775rem; color: var(--text-muted); text-transform: uppercase;">
+                                <th style="padding: 0.75rem 1rem;">Description / Subscription Package</th>
+                                <th style="padding: 0.75rem 1rem; text-align: right;">Billing Cycle</th>
+                                <th style="padding: 0.75rem 1rem; text-align: right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid var(--border); font-size: 0.875rem;">
+                                <td style="padding: 1rem;">
+                                    <strong id="rcpt-plan-name" style="color: #10b981; font-size: 0.95rem; display: block;">Growth Pro</strong>
+                                    <span style="font-size: 0.775rem; color: var(--text-muted);">Full access to WhatsApp Broadcasts, Cloud API & Contacts</span>
+                                </td>
+                                <td id="rcpt-plan-cycle" style="padding: 1rem; text-align: right; color: var(--text-muted); font-size: 0.85rem;">Monthly</td>
+                                <td id="rcpt-base-amount" style="padding: 1rem; text-align: right; font-weight: 600; color: var(--text-main);">₹2,499.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Pricing Breakdown -->
+                    <div style="padding: 1rem 1.25rem; background: rgba(255,255,255,0.015);">
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                            <span style="color: var(--text-muted); width: 160px;">Original Plan Price:</span>
+                            <span id="rcpt-subtotal" style="font-weight: 600; color: var(--text-main); width: 120px; text-align: right;">₹2,499.00</span>
+                        </div>
+                        <div id="rcpt-row-discount" style="display: flex; justify-content: flex-end; margin-bottom: 0.4rem; font-size: 0.85rem; color: #10b981;">
+                            <span style="width: 160px;">Coupon Discount:</span>
+                            <span id="rcpt-discount" style="font-weight: 600; width: 120px; text-align: right;">- ₹2,498.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; padding-top: 0.6rem; border-top: 1px solid var(--border); font-size: 1.05rem;">
+                            <span style="font-weight: 700; color: var(--text-main); width: 160px;">Total Paid:</span>
+                            <span id="rcpt-total" style="font-weight: 800; color: #10b981; width: 120px; text-align: right;">₹1.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Terms & Note -->
+                <div style="text-align: center; padding-top: 0.75rem; border-top: 1px dashed var(--border); font-size: 0.75rem; color: var(--text-muted); line-height: 1.45;">
+                    <p style="margin: 0;">This is a computer-generated tax receipt. Valid for business expense & GST accounting purposes.</p>
+                    <p style="margin: 3px 0 0 0;">Thank you for partnering with Inspenox Business Suite!</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer Close Button -->
+            <div style="padding: 1rem 1.5rem; background: var(--bg-dark); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="btn secondary" onclick="closeCompanyReceiptModal()">Close</button>
+                <button type="button" class="btn primary" onclick="printCompanyReceipt()" style="display: inline-flex; align-items: center; gap: 6px;">
+                    🖨️ <span>Print Receipt</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    @media print {
+        body * {
+            visibility: hidden !important;
+        }
+        #company-receipt-modal,
+        #company-receipt-modal * {
+            visibility: visible !important;
+        }
+        #company-receipt-modal {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+        }
+        #company-receipt-modal .card {
+            border: none !important;
+            box-shadow: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            background: white !important;
+            color: black !important;
+        }
+        #company-receipt-printable {
+            color: black !important;
+            padding: 20px !important;
+        }
+        #company-receipt-printable * {
+            color: black !important;
+        }
+        #company-receipt-printable .window-badge,
+        #company-receipt-printable strong,
+        #company-receipt-printable #rcpt-total {
+            color: #059669 !important;
+        }
+        #company-receipt-modal button {
+            display: none !important;
+        }
+    }
+    </style>
 
     <script type="module" src="/app.js"></script>
 </body>

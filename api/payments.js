@@ -22,6 +22,7 @@ async function ensurePaymentTables(sql) {
         await sql`
             CREATE TABLE IF NOT EXISTS payment_logs (
                 id SERIAL PRIMARY KEY,
+                company_id INT REFERENCES companies(id) ON DELETE SET NULL,
                 order_id TEXT,
                 payment_id TEXT,
                 user_email TEXT,
@@ -38,6 +39,8 @@ async function ensurePaymentTables(sql) {
                 created_at TIMESTAMP DEFAULT NOW()
             );
         `;
+
+        await sql`ALTER TABLE payment_logs ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;`;
 
         // Ensure users table has influencer & bank fields if referenced
         await sql`
@@ -158,19 +161,68 @@ module.exports = async (req, res) => {
                 return res.status(200).json({ success: true, coupons });
             }
 
-            if (action === 'logs') {
-                const logs = await sql`
-                    SELECT p.id, p.order_id, p.payment_id, p.user_email, p.user_phone,
-                           p.plan_name, p.original_amount, p.discount_amount, p.final_amount,
-                           p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
-                           p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
-                           p.created_at,
-                           u.username as influencer_username
-                    FROM payment_logs p
-                    LEFT JOIN users u ON p.influencer_id = u.id
-                    ORDER BY p.id DESC
-                    LIMIT 250;
-                `;
+            if (action === 'logs' || action === 'receipts') {
+                const companyIdParam = req.query.company_id;
+                const emailParam = req.query.email ? String(req.query.email).trim().toLowerCase() : null;
+                const coId = (companyIdParam && companyIdParam !== 'default' && companyIdParam !== 'null' && companyIdParam !== '0') ? parseInt(companyIdParam) : null;
+
+                let logs = [];
+                if (coId && emailParam) {
+                    logs = await sql`
+                        SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
+                               p.plan_name, p.original_amount, p.discount_amount, p.final_amount,
+                               p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
+                               p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
+                               p.created_at,
+                               u.username as influencer_username
+                        FROM payment_logs p
+                        LEFT JOIN users u ON p.influencer_id = u.id
+                        WHERE p.company_id = ${coId} OR LOWER(p.user_email) = ${emailParam}
+                        ORDER BY p.id DESC
+                        LIMIT 100;
+                    `;
+                } else if (coId) {
+                    logs = await sql`
+                        SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
+                               p.plan_name, p.original_amount, p.discount_amount, p.final_amount,
+                               p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
+                               p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
+                               p.created_at,
+                               u.username as influencer_username
+                        FROM payment_logs p
+                        LEFT JOIN users u ON p.influencer_id = u.id
+                        WHERE p.company_id = ${coId}
+                        ORDER BY p.id DESC
+                        LIMIT 100;
+                    `;
+                } else if (emailParam && action === 'receipts') {
+                    logs = await sql`
+                        SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
+                               p.plan_name, p.original_amount, p.discount_amount, p.final_amount,
+                               p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
+                               p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
+                               p.created_at,
+                               u.username as influencer_username
+                        FROM payment_logs p
+                        LEFT JOIN users u ON p.influencer_id = u.id
+                        WHERE LOWER(p.user_email) = ${emailParam}
+                        ORDER BY p.id DESC
+                        LIMIT 100;
+                    `;
+                } else {
+                    logs = await sql`
+                        SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
+                               p.plan_name, p.original_amount, p.discount_amount, p.final_amount,
+                               p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
+                               p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
+                               p.created_at,
+                               u.username as influencer_username
+                        FROM payment_logs p
+                        LEFT JOIN users u ON p.influencer_id = u.id
+                        ORDER BY p.id DESC
+                        LIMIT 250;
+                    `;
+                }
 
                 // Aggregate metrics
                 const stats = await sql`
@@ -424,14 +476,26 @@ module.exports = async (req, res) => {
                 const validInfluencerId = influencer_id ? parseInt(influencer_id) : null;
                 const paymentIdVal = razorpay_payment_id || `pay_mock_${Date.now()}`;
 
-                // Insert into payment_logs table
+                // Resolve company ID
+                let targetCompanyId = (company_id && company_id !== 'default' && company_id !== 'null') ? parseInt(company_id) : null;
+                if (!targetCompanyId) {
+                    try {
+                        const firstComp = await sql`SELECT id FROM companies ORDER BY id ASC LIMIT 1;`;
+                        if (firstComp.length > 0) {
+                            targetCompanyId = firstComp[0].id;
+                        }
+                    } catch(e) {}
+                }
+
+                // Insert into payment_logs table with company_id
                 const logResult = await sql`
                     INSERT INTO payment_logs (
-                        order_id, payment_id, user_email, user_phone, plan_name,
+                        company_id, order_id, payment_id, user_email, user_phone, plan_name,
                         original_amount, discount_amount, final_amount,
                         coupon_code, coupon_id, influencer_id, commission_amount,
                         status, created_at
                     ) VALUES (
+                        ${targetCompanyId},
                         ${razorpay_order_id},
                         ${paymentIdVal},
                         ${user_email || null},
@@ -464,17 +528,6 @@ module.exports = async (req, res) => {
                 }
 
                 // Update company subscription_plan and subscription_status in companies table
-                let targetCompanyId = (company_id && company_id !== 'default' && company_id !== 'null') ? parseInt(company_id) : null;
-                if (!targetCompanyId) {
-                    // Fallback: If user is parent admin or default company, update the primary company (id = 1 or first company)
-                    try {
-                        const firstComp = await sql`SELECT id FROM companies ORDER BY id ASC LIMIT 1;`;
-                        if (firstComp.length > 0) {
-                            targetCompanyId = firstComp[0].id;
-                        }
-                    } catch(e) {}
-                }
-
                 if (targetCompanyId) {
                     try {
                         await sql`
