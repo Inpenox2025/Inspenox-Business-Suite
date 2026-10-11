@@ -22,6 +22,8 @@ persist = true
 
 # ...
 [vars]
+GMAIL_APP_PASSWORD = "ltbdphavwduyubxv"
+GMAIL_USER = "inspenox@gmail.com"
 RAZORPAY_KEY_ID = "rzp_live_SWiS28f7BcJLXD"
 RAZORPAY_KEY_SECRET = "kmj4ZTcglH8Q8tRv2xFTFlz9"
 # ...

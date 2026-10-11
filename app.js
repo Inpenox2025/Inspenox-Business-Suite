@@ -280,6 +280,14 @@ async function loadCompanies() {
                     selectEl.appendChild(opt);
                 });
             }
+            if (typeof updateCompanySubscriptionStatusUI === 'function') {
+                updateCompanySubscriptionStatusUI();
+            }
+            if (localStorage.getItem('activeView') === 'subscriptions' || window.location.hash === '#subscriptions') {
+                if (typeof renderPricingCards === 'function') {
+                    renderPricingCards();
+                }
+            }
         }
     } catch(e) {
         console.error('Error loading companies:', e);
@@ -1552,6 +1560,350 @@ window.toggleNavGroup = function toggleNavGroup(headerEl) {
     }
 };
 
+/* ========================================================
+   Subscriptions & Billing State & Instant UI Engine
+   ======================================================== */
+const DEFAULT_SUBSCRIPTION_PLANS = [
+    {
+        id: 'starter',
+        name: 'Starter Tier',
+        description: 'Perfect for small businesses beginning their automated WhatsApp messaging journey.',
+        price_monthly: 999,
+        price_annual: 9590, // ~20% off
+        popular: false,
+        badge: 'Essential',
+        features: [
+            '1 Connected WhatsApp Business Number',
+            'Up to 1,500 Active Contacts',
+            'Pre-Approved WhatsApp Templates',
+            'Basic Direct Broadcast Campaigns',
+            'Customer Support (Standard Email)',
+            'Standard Delivery Speed'
+        ]
+    },
+    {
+        id: 'growth',
+        name: 'Growth Pro',
+        description: 'Built for scaling brands requiring multi-team access and intelligent broadcasts.',
+        price_monthly: 2499,
+        price_annual: 23990, // ~20% off
+        popular: true,
+        badge: 'Most Popular',
+        features: [
+            'Up to 3 WhatsApp Phone Numbers',
+            'Up to 15,000 Active Contacts',
+            'Dynamic Broadcast Variables & Tags',
+            'Multi-Channel Inbox (Live Chat & WhatsApp)',
+            '5 Team Members / Agent Accounts',
+            'Detailed Meta Delivery Analytics',
+            'Priority Queue Broadcast Engine'
+        ]
+    },
+    {
+        id: 'enterprise',
+        name: 'Enterprise Elite',
+        description: 'Complete multi-tenant ecosystem for corporate agencies and high-volume operations.',
+        price_monthly: 5999,
+        price_annual: 57590, // ~20% off
+        popular: false,
+        badge: 'Enterprise',
+        features: [
+            'Unlimited WhatsApp Business Accounts',
+            'Unlimited Active Customer Records',
+            'Multi-Tenant Company Workspace Switcher',
+            'Unlimited Team Members & Role Permissions',
+            'Dedicated Webhooks & Custom Meta System Tokens',
+            'White-Glove Onboarding & 24/7 SLA Support',
+            'Maximum Meta API Throughput (Tier 3/Unlimited)'
+        ]
+    }
+];
+
+let currentBillingCycle = 'monthly';
+let allSubscriptionPlans = [...DEFAULT_SUBSCRIPTION_PLANS];
+let allCouponsList = [];
+let allPaymentLogsList = [];
+let activeCompanyPlanName = null;
+
+function updateCompanySubscriptionStatusUI() {
+    const coId = getCompanyId();
+    const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
+    
+    // Strictly verify active paid subscription
+    const hasActiveSub = !!(activeComp && activeComp.subscription_status === 'active' && activeComp.subscription_plan && activeComp.subscription_plan.toLowerCase() !== 'none');
+    activeCompanyPlanName = hasActiveSub ? activeComp.subscription_plan : null;
+
+    const elActiveBadge = document.getElementById('sub-active-plan-badge');
+    const elStatPlanName = document.getElementById('sub-stat-plan-name');
+    const elStatBadge = document.getElementById('sub-stat-status-badge');
+    const elStatCycle = document.getElementById('sub-stat-plan-cycle');
+
+    if (hasActiveSub) {
+        if (elActiveBadge) {
+            elActiveBadge.textContent = `⚡ Active Plan: ${activeCompanyPlanName}`;
+            elActiveBadge.style.background = 'rgba(0,168,132,0.18)';
+            elActiveBadge.style.color = 'var(--primary)';
+            elActiveBadge.style.borderColor = 'rgba(0,168,132,0.3)';
+        }
+        if (elStatPlanName) {
+            elStatPlanName.textContent = activeCompanyPlanName;
+            elStatPlanName.style.color = 'var(--primary)';
+        }
+        if (elStatBadge) {
+            elStatBadge.textContent = 'Active';
+            elStatBadge.style.background = 'rgba(16,185,129,0.15)';
+            elStatBadge.style.color = '#10b981';
+        }
+        if (elStatCycle) elStatCycle.textContent = 'Renewing via Razorpay';
+    } else {
+        if (elActiveBadge) {
+            elActiveBadge.textContent = '⚡ No Active Plan (Unsubscribed)';
+            elActiveBadge.style.background = 'rgba(239, 68, 68, 0.12)';
+            elActiveBadge.style.color = '#ef4444';
+            elActiveBadge.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+        }
+        if (elStatPlanName) {
+            elStatPlanName.textContent = 'None';
+            elStatPlanName.style.color = 'var(--text-muted)';
+        }
+        if (elStatBadge) {
+            elStatBadge.textContent = 'Not Subscribed';
+            elStatBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+            elStatBadge.style.color = '#ef4444';
+        }
+        if (elStatCycle) elStatCycle.textContent = 'Select a package below to subscribe';
+    }
+}
+window.updateCompanySubscriptionStatusUI = updateCompanySubscriptionStatusUI;
+
+function getPlanRank(planIdOrName) {
+    if (!planIdOrName) return 0;
+    const str = String(planIdOrName).toLowerCase();
+    if (str.includes('enterprise')) return 3;
+    if (str.includes('growth')) return 2;
+    if (str.includes('starter')) return 1;
+    return 0;
+}
+window.getPlanRank = getPlanRank;
+
+function renderPricingCards() {
+    const grid = document.getElementById('pricing-plans-grid');
+    if (!grid) return;
+    
+    const plansToRender = (Array.isArray(allSubscriptionPlans) && allSubscriptionPlans.length > 0) 
+        ? allSubscriptionPlans 
+        : DEFAULT_SUBSCRIPTION_PLANS;
+
+    const isAnnual = currentBillingCycle === 'annual';
+    const hasActiveSub = !!activeCompanyPlanName;
+    const activeRank = hasActiveSub ? getPlanRank(activeCompanyPlanName) : 0;
+
+    grid.innerHTML = plansToRender.map(plan => {
+        const price = isAnnual ? plan.price_annual : plan.price_monthly;
+        const periodText = isAnnual ? '/year' : '/month';
+        
+        const planRank = getPlanRank(plan.id);
+        const isCurrentActive = hasActiveSub && (activeRank === planRank);
+        const isUpgrade = hasActiveSub && (planRank > activeRank);
+        const isDowngrade = hasActiveSub && (planRank < activeRank);
+
+        const featureItems = plan.features.map(f => `
+            <li class="pricing-feature-item">
+                <svg class="pricing-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>${f}</span>
+            </li>
+        `).join('');
+
+        let headerBadgeHtml = '';
+        if (isCurrentActive) {
+            headerBadgeHtml = '<span class="window-badge" style="background:rgba(0,168,132,0.18); color:var(--primary); font-weight:700;">CURRENT PLAN</span>';
+        } else if (isUpgrade) {
+            headerBadgeHtml = '<span class="window-badge" style="background:rgba(59,130,246,0.18); color:#3b82f6; font-weight:700;">UPGRADE AVAILABLE</span>';
+        } else if (isDowngrade) {
+            headerBadgeHtml = '<span class="window-badge" style="background:rgba(100,116,139,0.15); color:var(--text-muted); font-weight:600;">LOWER TIER</span>';
+        }
+
+        let actionButtonHtml = '';
+        if (!hasActiveSub) {
+            actionButtonHtml = `
+                <button type="button" class="btn ${plan.popular ? 'primary' : 'secondary'}" 
+                        onclick="openSubscribeModal('${plan.id}')" 
+                        style="width: 100%; justify-content: center; padding: 0.75rem; font-weight: 700; border-radius: 10px; font-size: 0.925rem;">
+                    Subscribe & Boost Sales 🚀
+                </button>
+            `;
+        } else if (isCurrentActive) {
+            actionButtonHtml = `
+                <button type="button" class="btn primary" 
+                        onclick="openSubscribeModal('${plan.id}')" 
+                        style="width: 100%; justify-content: center; padding: 0.75rem; font-weight: 700; border-radius: 10px; font-size: 0.925rem;">
+                    Renew / Extend Subscription 💳
+                </button>
+            `;
+        } else if (isUpgrade) {
+            actionButtonHtml = `
+                <button type="button" class="btn primary" 
+                        onclick="openSubscribeModal('${plan.id}')" 
+                        style="width: 100%; justify-content: center; padding: 0.75rem; font-weight: 700; border-radius: 10px; font-size: 0.925rem; background: linear-gradient(135deg, #00a884 0%, #3b82f6 100%); border: none;">
+                    Upgrade to ${plan.name} ⚡
+                </button>
+            `;
+        } else if (isDowngrade) {
+            actionButtonHtml = `
+                <button type="button" class="btn secondary" disabled 
+                        style="width: 100%; justify-content: center; padding: 0.75rem; font-weight: 600; border-radius: 10px; font-size: 0.85rem; opacity: 0.55; cursor: not-allowed; background: var(--bg-dark); border: 1px dashed var(--border); color: var(--text-muted);" 
+                        title="You are currently subscribed to a higher tier plan. Downgrades are disabled.">
+                    Current Plan is Higher (Downgrade Disabled) 🔒
+                </button>
+            `;
+        }
+
+        return `
+            <div class="pricing-card ${plan.popular && !isCurrentActive && !isDowngrade ? 'popular' : ''}" style="${isDowngrade ? 'opacity: 0.82;' : ''}">
+                ${plan.popular && !isCurrentActive && !isDowngrade ? '<div class="pricing-badge-popular">⭐ Recommended</div>' : ''}
+                
+                <div class="pricing-card-header">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 class="pricing-title">${plan.name}</h3>
+                        ${headerBadgeHtml}
+                    </div>
+                    <p class="pricing-desc">${plan.description}</p>
+                </div>
+
+                <div class="pricing-price-box">
+                    <span class="pricing-amount">₹${price.toLocaleString('en-IN')}</span>
+                    <span class="pricing-period">${periodText}</span>
+                    ${isAnnual ? '<div style="font-size:0.75rem; color:#10b981; font-weight:600; margin-top:0.25rem;">✨ Includes 20% annual discount</div>' : ''}
+                </div>
+
+                <ul class="pricing-features-list">
+                    ${featureItems}
+                </ul>
+
+                ${actionButtonHtml}
+            </div>
+        `;
+    }).join('');
+}
+window.renderPricingCards = renderPricingCards;
+
+function setBillingCycle(cycle) {
+    currentBillingCycle = cycle;
+    const knob = document.getElementById('cycle-toggle-knob');
+    const labelMonthly = document.getElementById('label-cycle-monthly');
+    const labelAnnual = document.getElementById('label-cycle-annual');
+
+    if (cycle === 'annual') {
+        if (knob) knob.style.transform = 'translateX(24px)';
+        if (labelMonthly) labelMonthly.classList.remove('active');
+        if (labelAnnual) labelAnnual.classList.add('active');
+    } else {
+        if (knob) knob.style.transform = 'translateX(0px)';
+        if (labelMonthly) labelMonthly.classList.add('active');
+        if (labelAnnual) labelAnnual.classList.remove('active');
+    }
+    renderPricingCards();
+}
+window.setBillingCycle = setBillingCycle;
+
+function toggleBillingCycle() {
+    setBillingCycle(currentBillingCycle === 'monthly' ? 'annual' : 'monthly');
+}
+window.toggleBillingCycle = toggleBillingCycle;
+
+function switchSubTab(tabName) {
+    const panels = {
+        plans: document.getElementById('sub-tab-panel-plans'),
+        coupons: document.getElementById('sub-tab-panel-coupons'),
+        logs: document.getElementById('sub-tab-panel-logs')
+    };
+    const buttons = {
+        plans: document.getElementById('tab-btn-sub-plans'),
+        coupons: document.getElementById('tab-btn-sub-coupons'),
+        logs: document.getElementById('tab-btn-sub-logs')
+    };
+
+    Object.keys(panels).forEach(key => {
+        if (panels[key]) panels[key].style.display = (key === tabName) ? 'block' : 'none';
+        if (buttons[key]) {
+            if (key === tabName) {
+                buttons[key].classList.add('active');
+            } else {
+                buttons[key].classList.remove('active');
+            }
+        }
+    });
+
+    if (tabName === 'coupons' && typeof window.loadCouponsList === 'function') window.loadCouponsList();
+    if (tabName === 'logs' && typeof window.loadPaymentLogs === 'function') window.loadPaymentLogs();
+}
+window.switchSubTab = switchSubTab;
+
+async function loadSubscriptions() {
+    // 1. Instantly render pricing cards and current active company plan without waiting for network
+    updateCompanySubscriptionStatusUI();
+    renderPricingCards();
+
+    // 2. Tab access control for superadmin
+    const isSuper = isSuperAdmin();
+    const btnCoupons = document.getElementById('tab-btn-sub-coupons');
+    const btnLogs = document.getElementById('tab-btn-sub-logs');
+    if (btnCoupons) btnCoupons.style.display = isSuper ? 'inline-flex' : 'none';
+    if (btnLogs) btnLogs.style.display = isSuper ? 'inline-flex' : 'none';
+
+    // 3. Asynchronously fetch live plans and gateway status
+    try {
+        const res = await apiFetch('/api/payments?action=plans');
+        const data = await res.json();
+        
+        if (data.success && Array.isArray(data.plans) && data.plans.length > 0) {
+            allSubscriptionPlans = data.plans;
+            renderPricingCards();
+        }
+
+        const elGateway = document.getElementById('sub-stat-gateway-status');
+        const elRzpBadge = document.getElementById('sub-stat-rzp-badge');
+        if (data.has_keys) {
+            if (elGateway) elGateway.textContent = 'Configured ✅';
+            if (elRzpBadge) {
+                elRzpBadge.textContent = 'Razorpay Live';
+                elRzpBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                elRzpBadge.style.color = '#10b981';
+            }
+        } else {
+            if (elGateway) elGateway.textContent = 'Test Mode 🧪';
+            if (elRzpBadge) {
+                elRzpBadge.textContent = 'Sandbox / Test';
+                elRzpBadge.style.background = 'rgba(234, 179, 8, 0.15)';
+                elRzpBadge.style.color = '#eab308';
+            }
+        }
+    } catch(err) {
+        console.warn('Live subscription plans check:', err);
+    }
+
+    // 4. If superadmin, fetch aggregated payment statistics without blocking the cards
+    if (isSuper) {
+        try {
+            const logsRes = await apiFetch('/api/payments?action=logs');
+            const logsData = await logsRes.json();
+            if (logsData.success && logsData.stats) {
+                const s = logsData.stats;
+                const elOrders = document.getElementById('sub-stat-orders-count');
+                const elRevenue = document.getElementById('sub-stat-total-revenue');
+                const elSavings = document.getElementById('sub-stat-savings-claimed');
+                
+                if (elOrders) elOrders.textContent = s.total_orders || 0;
+                if (elRevenue) elRevenue.textContent = `Total Paid: ₹${Number(s.total_revenue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+                if (elSavings) elSavings.textContent = `₹${Number(s.total_discounts || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            }
+        } catch(e) {}
+    }
+}
+window.loadSubscriptions = loadSubscriptions;
+
 window.switchView = function switchView(target, pushHistory = true) {
     if (!target) return;
 
@@ -1592,8 +1944,20 @@ window.switchView = function switchView(target, pushHistory = true) {
     if (target === 'inbox') loadInboxSidebar();
     if (target === 'media') loadMedia();
     if (target === 'settings') loadCompaniesSettings();
-    if (target === 'subscriptions') window.loadSubscriptions?.();
-    if (target === 'security') window.loadSecurityLogs?.();
+    if (target === 'subscriptions') {
+        if (typeof loadSubscriptions === 'function') {
+            loadSubscriptions();
+        } else if (typeof window.loadSubscriptions === 'function') {
+            window.loadSubscriptions();
+        }
+    }
+    if (target === 'security') {
+        if (typeof loadSecurityLogs === 'function') {
+            loadSecurityLogs();
+        } else if (typeof window.loadSecurityLogs === 'function') {
+            window.loadSecurityLogs();
+        }
+    }
 
     if (pushHistory && history.pushState) {
         history.pushState({ view: target }, '', `#${target}`);
@@ -5703,244 +6067,8 @@ window.purgeOldSecurityLogs = async function purgeOldSecurityLogs(days = 30) {
 };
 
 /* ========================================================
-   Subscriptions, Plans, Razorpay & Coupons Control System
+   Subscriptions Checkout, Coupons & Management Handlers
    ======================================================== */
-let currentBillingCycle = 'monthly';
-let allSubscriptionPlans = [];
-let allCouponsList = [];
-let allPaymentLogsList = [];
-let activeCompanyPlanName = 'Starter Tier';
-
-// Initialize Security & Subscriptions Navigation visibility on boot
-(function enforceSuperAdminNavAccess() {
-    const isSuper = isSuperAdmin();
-    const secNav = document.getElementById('nav-item-security');
-    const subNav = document.getElementById('nav-item-subscriptions');
-    if (secNav) secNav.style.display = isSuper ? 'flex' : 'none';
-    if (subNav) subNav.style.display = 'flex';
-})();
-
-window.setBillingCycle = function setBillingCycle(cycle) {
-    currentBillingCycle = cycle;
-    const knob = document.getElementById('cycle-toggle-knob');
-    const labelMonthly = document.getElementById('label-cycle-monthly');
-    const labelAnnual = document.getElementById('label-cycle-annual');
-
-    if (cycle === 'annual') {
-        if (knob) knob.style.transform = 'translateX(24px)';
-        if (labelMonthly) labelMonthly.classList.remove('active');
-        if (labelAnnual) labelAnnual.classList.add('active');
-    } else {
-        if (knob) knob.style.transform = 'translateX(0px)';
-        if (labelMonthly) labelMonthly.classList.add('active');
-        if (labelAnnual) labelAnnual.classList.remove('active');
-    }
-    renderPricingCards();
-};
-
-window.toggleBillingCycle = function toggleBillingCycle() {
-    window.setBillingCycle(currentBillingCycle === 'monthly' ? 'annual' : 'monthly');
-};
-
-window.switchSubTab = function switchSubTab(tabName) {
-    const panels = {
-        plans: document.getElementById('sub-tab-panel-plans'),
-        coupons: document.getElementById('sub-tab-panel-coupons'),
-        logs: document.getElementById('sub-tab-panel-logs')
-    };
-    const buttons = {
-        plans: document.getElementById('tab-btn-sub-plans'),
-        coupons: document.getElementById('tab-btn-sub-coupons'),
-        logs: document.getElementById('tab-btn-sub-logs')
-    };
-
-    Object.keys(panels).forEach(key => {
-        if (panels[key]) panels[key].style.display = (key === tabName) ? 'block' : 'none';
-        if (buttons[key]) {
-            if (key === tabName) {
-                buttons[key].classList.add('active');
-            } else {
-                buttons[key].classList.remove('active');
-            }
-        }
-    });
-
-    if (tabName === 'coupons') loadCouponsList();
-    if (tabName === 'logs') loadPaymentLogs();
-};
-
-window.loadSubscriptions = async function loadSubscriptions() {
-    const grid = document.getElementById('pricing-plans-grid');
-    if (grid) {
-        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2.5rem;"><div class="spinner-icon" style="margin: 0 auto 0.75rem auto;"></div>Loading subscription tiers & billing details...</div>';
-    }
-
-    try {
-        // Fetch plans from payments API
-        const res = await apiFetch('/api/payments?action=plans');
-        const data = await res.json();
-        
-        if (data.success && Array.isArray(data.plans)) {
-            allSubscriptionPlans = data.plans;
-        }
-
-        // Check active company's plan
-        const coId = getCompanyId();
-        const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
-        
-        // Strictly check if company has paid/subscribed
-        const hasActiveSub = !!(activeComp && activeComp.subscription_status === 'active' && activeComp.subscription_plan && activeComp.subscription_plan.toLowerCase() !== 'none');
-        activeCompanyPlanName = hasActiveSub ? activeComp.subscription_plan : null;
-
-        // Update badge and plan name in top widgets
-        const elActiveBadge = document.getElementById('sub-active-plan-badge');
-        const elStatPlanName = document.getElementById('sub-stat-plan-name');
-        const elStatBadge = document.getElementById('sub-stat-status-badge');
-        const elStatCycle = document.getElementById('sub-stat-plan-cycle');
-
-        if (hasActiveSub) {
-            if (elActiveBadge) {
-                elActiveBadge.textContent = `⚡ Active Plan: ${activeCompanyPlanName}`;
-                elActiveBadge.style.background = 'rgba(0,168,132,0.18)';
-                elActiveBadge.style.color = 'var(--primary)';
-                elActiveBadge.style.borderColor = 'rgba(0,168,132,0.3)';
-            }
-            if (elStatPlanName) {
-                elStatPlanName.textContent = activeCompanyPlanName;
-                elStatPlanName.style.color = 'var(--primary)';
-            }
-            if (elStatBadge) {
-                elStatBadge.textContent = 'Active';
-                elStatBadge.style.background = 'rgba(16,185,129,0.15)';
-                elStatBadge.style.color = '#10b981';
-            }
-            if (elStatCycle) elStatCycle.textContent = 'Renewing via Razorpay';
-        } else {
-            if (elActiveBadge) {
-                elActiveBadge.textContent = '⚡ No Active Plan (Unsubscribed)';
-                elActiveBadge.style.background = 'rgba(239, 68, 68, 0.12)';
-                elActiveBadge.style.color = '#ef4444';
-                elActiveBadge.style.borderColor = 'rgba(239, 68, 68, 0.25)';
-            }
-            if (elStatPlanName) {
-                elStatPlanName.textContent = 'None';
-                elStatPlanName.style.color = 'var(--text-muted)';
-            }
-            if (elStatBadge) {
-                elStatBadge.textContent = 'Not Subscribed';
-                elStatBadge.style.background = 'rgba(239, 68, 68, 0.15)';
-                elStatBadge.style.color = '#ef4444';
-            }
-            if (elStatCycle) elStatCycle.textContent = 'Select a package below to subscribe';
-        }
-
-        // Subscriptions tab controls: Coupons and Payment Logs tabs for Superadmin
-        const isSuper = isSuperAdmin();
-        const btnCoupons = document.getElementById('tab-btn-sub-coupons');
-        const btnLogs = document.getElementById('tab-btn-sub-logs');
-        if (btnCoupons) btnCoupons.style.display = isSuper ? 'inline-flex' : 'none';
-        if (btnLogs) btnLogs.style.display = isSuper ? 'inline-flex' : 'none';
-
-        // Update Gateway Status
-        const elGateway = document.getElementById('sub-stat-gateway-status');
-        const elRzpBadge = document.getElementById('sub-stat-rzp-badge');
-        if (data.has_keys) {
-            if (elGateway) elGateway.textContent = 'Configured ✅';
-            if (elRzpBadge) {
-                elRzpBadge.textContent = 'Razorpay Live';
-                elRzpBadge.style.background = 'rgba(16, 185, 129, 0.15)';
-                elRzpBadge.style.color = '#10b981';
-            }
-        } else {
-            if (elGateway) elGateway.textContent = 'Test Mode 🧪';
-            if (elRzpBadge) {
-                elRzpBadge.textContent = 'Sandbox / Test';
-                elRzpBadge.style.background = 'rgba(234, 179, 8, 0.15)';
-                elRzpBadge.style.color = '#eab308';
-            }
-        }
-
-        // Fetch logs metrics for stats cards
-        try {
-            const logsRes = await apiFetch('/api/payments?action=logs');
-            const logsData = await logsRes.json();
-            if (logsData.success && logsData.stats) {
-                const s = logsData.stats;
-                const elOrders = document.getElementById('sub-stat-orders-count');
-                const elRevenue = document.getElementById('sub-stat-total-revenue');
-                const elSavings = document.getElementById('sub-stat-savings-claimed');
-                
-                if (elOrders) elOrders.textContent = s.total_orders || 0;
-                if (elRevenue) elRevenue.textContent = `Total Paid: ₹${Number(s.total_revenue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-                if (elSavings) elSavings.textContent = `₹${Number(s.total_discounts || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-            }
-        } catch(e) {}
-
-        renderPricingCards();
-    } catch(err) {
-        console.error('Error loading subscriptions:', err);
-        if (grid) {
-            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--error); padding: 2rem;">Failed to load subscription plans. Please refresh or check connection.</div>';
-        }
-    }
-};
-
-window.renderPricingCards = function renderPricingCards() {
-    const grid = document.getElementById('pricing-plans-grid');
-    if (!grid || allSubscriptionPlans.length === 0) return;
-
-    const isAnnual = currentBillingCycle === 'annual';
-    const hasActiveSub = !!activeCompanyPlanName;
-
-    grid.innerHTML = allSubscriptionPlans.map(plan => {
-        const price = isAnnual ? plan.price_annual : plan.price_monthly;
-        const periodText = isAnnual ? '/year' : '/month';
-        const isCurrentActive = hasActiveSub && (
-            activeCompanyPlanName.toLowerCase().includes(plan.id) || 
-            activeCompanyPlanName.toLowerCase().includes(plan.name.toLowerCase())
-        );
-
-        const featureItems = plan.features.map(f => `
-            <li class="pricing-feature-item">
-                <svg class="pricing-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                <span>${f}</span>
-            </li>
-        `).join('');
-
-        return `
-            <div class="pricing-card ${plan.popular ? 'popular' : ''}">
-                ${plan.popular ? '<div class="pricing-badge-popular">⭐ Recommended</div>' : ''}
-                
-                <div class="pricing-card-header">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3 class="pricing-title">${plan.name}</h3>
-                        ${isCurrentActive ? '<span class="window-badge" style="background:rgba(0,168,132,0.18); color:var(--primary); font-weight:700;">CURRENT PLAN</span>' : ''}
-                    </div>
-                    <p class="pricing-desc">${plan.description}</p>
-                </div>
-
-                <div class="pricing-price-box">
-                    <span class="pricing-amount">₹${price.toLocaleString('en-IN')}</span>
-                    <span class="pricing-period">${periodText}</span>
-                    ${isAnnual ? '<div style="font-size:0.75rem; color:#10b981; font-weight:600; margin-top:0.25rem;">✨ Includes 20% annual discount</div>' : ''}
-                </div>
-
-                <ul class="pricing-features-list">
-                    ${featureItems}
-                </ul>
-
-                <button type="button" class="btn ${plan.popular ? 'primary' : 'secondary'}" 
-                        onclick="openSubscribeModal('${plan.id}')" 
-                        style="width: 100%; justify-content: center; padding: 0.75rem; font-weight: 700; border-radius: 10px; font-size: 0.925rem;">
-                    ${isCurrentActive ? 'Renew / Extend Subscription 💳' : 'Subscribe with Razorpay 🚀'}
-                </button>
-            </div>
-        `;
-    }).join('');
-};
-
 window.openSubscribeModal = function openSubscribeModal(planId) {
     const modal = document.getElementById('checkout-modal');
     if (!modal) return;
@@ -5998,14 +6126,62 @@ window.closeCheckoutModal = function closeCheckoutModal() {
     }
 };
 
-window.applyCheckoutCoupon = async function applyCheckoutCoupon() {
+/* ========================================================
+   Payment Overlay & Instant UI Feedback
+   ======================================================== */
+function showPaymentOverlay(title, desc, icon = '🔒') {
+    const overlay = document.getElementById('payment-processing-overlay');
+    const t = document.getElementById('pay-overlay-title');
+    const d = document.getElementById('pay-overlay-desc');
+    const i = document.getElementById('pay-overlay-icon');
+    if (t) t.textContent = title;
+    if (d) d.textContent = desc;
+    if (i) i.textContent = icon;
+    if (overlay) {
+        overlay.classList.remove('hidden');
+        overlay.style.display = 'flex';
+    }
+}
+window.showPaymentOverlay = showPaymentOverlay;
+
+function hidePaymentOverlay() {
+    const overlay = document.getElementById('payment-processing-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.style.display = 'none';
+    }
+}
+window.hidePaymentOverlay = hidePaymentOverlay;
+
+window.resetCheckoutDiscount = function resetCheckoutDiscount() {
+    const basePrice = parseFloat(document.getElementById('checkout-plan-price')?.value) || 0;
+    const appliedCoupon = document.getElementById('checkout-applied-coupon-id');
+    const appliedDisc = document.getElementById('checkout-applied-discount-amount');
+    const appliedFinal = document.getElementById('checkout-applied-final-amount');
+    const rowDisc = document.getElementById('checkout-row-discount');
+    const elFinal = document.getElementById('checkout-display-final-price');
+    const feedback = document.getElementById('checkout-coupon-feedback');
+
+    if (appliedCoupon) appliedCoupon.value = '';
+    if (appliedDisc) appliedDisc.value = '0';
+    if (appliedFinal) appliedFinal.value = basePrice;
+    if (rowDisc) rowDisc.style.display = 'none';
+    if (elFinal) elFinal.textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    if (feedback) {
+        feedback.style.display = 'none';
+        feedback.innerHTML = '';
+    }
+};
+
+window.applyCheckoutCoupon = async function applyCheckoutCoupon(isAuto = false) {
     const codeInput = document.getElementById('checkout-coupon-code');
     const feedback = document.getElementById('checkout-coupon-feedback');
     const btn = document.getElementById('btn-apply-coupon');
-    const basePrice = parseFloat(document.getElementById('checkout-plan-price').value) || 0;
+    const basePrice = parseFloat(document.getElementById('checkout-plan-price')?.value) || 0;
 
     if (!codeInput || !codeInput.value.trim()) {
-        if (feedback) {
+        resetCheckoutDiscount();
+        if (!isAuto && feedback) {
             feedback.style.display = 'block';
             feedback.style.color = '#ef4444';
             feedback.textContent = 'Please enter a coupon code.';
@@ -6015,7 +6191,13 @@ window.applyCheckoutCoupon = async function applyCheckoutCoupon() {
 
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Validating...';
+        btn.innerHTML = '<span class="spinner-icon" style="width:12px;height:12px;border-width:2px;display:inline-block;vertical-align:middle;"></span>';
+    }
+
+    if (isAuto && feedback) {
+        feedback.style.display = 'block';
+        feedback.style.color = 'var(--text-muted)';
+        feedback.innerHTML = '<span class="spinner-icon" style="width:12px;height:12px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:4px;"></span> Validating coupon...';
     }
 
     try {
@@ -6046,9 +6228,10 @@ window.applyCheckoutCoupon = async function applyCheckoutCoupon() {
             if (feedback) {
                 feedback.style.display = 'block';
                 feedback.style.color = '#10b981';
-                feedback.innerHTML = `🎉 Coupon <strong>${data.coupon_code}</strong> applied! You saved ₹${data.discount_amount}.`;
+                feedback.innerHTML = `🎉 Coupon <strong>${data.coupon_code}</strong> applied! You saved ₹${Number(data.discount_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}.`;
             }
         } else {
+            resetCheckoutDiscount();
             if (feedback) {
                 feedback.style.display = 'block';
                 feedback.style.color = '#ef4444';
@@ -6068,6 +6251,33 @@ window.applyCheckoutCoupon = async function applyCheckoutCoupon() {
         }
     }
 };
+
+// Automatic coupon check on typing (debounced)
+let couponAutoTimer = null;
+document.addEventListener('input', (e) => {
+    if (e.target && e.target.id === 'checkout-coupon-code') {
+        clearTimeout(couponAutoTimer);
+        const val = e.target.value.trim();
+        if (!val) {
+            resetCheckoutDiscount();
+            return;
+        }
+        couponAutoTimer = setTimeout(() => {
+            applyCheckoutCoupon(true);
+        }, 400);
+    }
+});
+
+document.addEventListener('change', (e) => {
+    if (e.target && e.target.id === 'checkout-coupon-code') {
+        clearTimeout(couponAutoTimer);
+        if (e.target.value.trim()) {
+            applyCheckoutCoupon(true);
+        } else {
+            resetCheckoutDiscount();
+        }
+    }
+});
 
 window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
     if (e) e.preventDefault();
@@ -6090,8 +6300,11 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
     const btn = document.getElementById('btn-proceed-payment');
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Connecting Gateway...';
+        btn.innerHTML = '<span class="spinner-icon" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Initializing Secure Checkout...';
     }
+
+    // Launch fullscreen loading overlay immediately
+    showPaymentOverlay('Initializing Secure Checkout', 'Connecting to Razorpay gateway & preparing 256-bit encrypted session...', '🔒');
 
     try {
         // Step 1: Create Order on backend
@@ -6110,6 +6323,7 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
 
         const orderData = await orderRes.json();
         if (!orderData.success) {
+            hidePaymentOverlay();
             throw new Error(orderData.error || 'Failed to initialize payment order');
         }
 
@@ -6132,6 +6346,8 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                     color: '#00a884'
                 },
                 handler: async function (response) {
+                    // Show verification animation overlay immediately
+                    showPaymentOverlay('Verifying Payment Signature', 'Confirming payment with Razorpay & activating your subscription tier...', '⚡');
                     try {
                         const verifyRes = await apiFetch('/api/payments?action=verify-payment', {
                             method: 'POST',
@@ -6155,19 +6371,51 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                         });
 
                         const verifyData = await verifyRes.json();
+                        hidePaymentOverlay();
+
                         if (verifyData.success) {
                             closeCheckoutModal();
-                            showModal('Payment Successful! 🎉', `Thank you! Your payment of ₹${orderData.amount.toLocaleString('en-IN')} for ${planName} has been verified and active features unlocked!`);
-                            loadSubscriptions();
+
+                            // 1. Instantly update active company plan in memory
+                            activeCompanyPlanName = planName;
+                            const coId = getCompanyId();
+                            if (Array.isArray(allCompanies)) {
+                                const comp = allCompanies.find(c => String(c.id) === String(coId)) || allCompanies[0];
+                                if (comp) {
+                                    comp.subscription_plan = planName;
+                                    comp.subscription_status = 'active';
+                                }
+                            }
+
+                            // 2. Refresh UI immediately without hard refresh
+                            updateCompanySubscriptionStatusUI();
+                            renderPricingCards();
+
+                            // 3. Asynchronously sync latest company state from API
+                            loadCompanies().then(() => {
+                                updateCompanySubscriptionStatusUI();
+                                renderPricingCards();
+                            });
+
+                            const emailNotice = verifyData.email_sent 
+                                ? `<br><br>📧 A detailed payment receipt and plan validity confirmation has been sent to <strong>${email}</strong>.` 
+                                : '';
+
+                            showModal(
+                                'Payment Successful! 🎉', 
+                                `Thank you! Your payment of ₹${orderData.amount.toLocaleString('en-IN')} for <strong>${planName}</strong> has been verified and active features unlocked!${emailNotice}`
+                            );
                         } else {
                             showModal('Verification Failed', verifyData.error || 'Unable to verify payment signature.');
                         }
                     } catch(err) {
+                        hidePaymentOverlay();
                         showModal('Error', err.message);
                     }
                 },
                 modal: {
                     ondismiss: function() {
+                        hidePaymentOverlay();
                         if (btn) {
                             btn.disabled = false;
                             btn.innerHTML = '<span>Proceed to Pay</span> 💳';
@@ -6176,18 +6424,23 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                 }
             };
 
+            // Hide processing overlay right as Razorpay opens
+            hidePaymentOverlay();
             const rzp = new window.Razorpay(options);
             rzp.on('payment.failed', function (failResp) {
-                showModal('Payment Failed', failResp.error.description || 'Payment was declined or cancelled.');
+                hidePaymentOverlay();
+                showModal('Payment Failed', failResp.error?.description || 'Payment was declined or cancelled.');
             });
             rzp.open();
         } else {
             // Simulated / Mock Sandbox Flow for Testing
+            hidePaymentOverlay();
             showModal(
                 'Sandbox Payment Mode 🧪',
                 `Razorpay live keys are currently running in test sandbox mode.<br><br><strong>Order ID:</strong> <code>${orderData.order_id}</code><br><strong>Plan:</strong> ${planName}<br><strong>Amount:</strong> ₹${orderData.amount.toLocaleString('en-IN')}<br><br>Simulate successful payment confirmation now?`,
                 'confirm',
                 async () => {
+                    showPaymentOverlay('Activating Sandbox Subscription', 'Verifying simulated payment signature...', '⚡');
                     const mockPaymentId = `pay_sim_${Date.now()}`;
                     const verifyRes = await apiFetch('/api/payments?action=verify-payment', {
                         method: 'POST',
@@ -6211,10 +6464,34 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                     });
 
                     const verifyData = await verifyRes.json();
+                    hidePaymentOverlay();
+
                     if (verifyData.success) {
                         closeCheckoutModal();
-                        showModal('Subscription Activated! 🎉', `Payment verified successfully! Subscription activated for <strong>${planName}</strong>.`);
-                        loadSubscriptions();
+
+                        // Update in-memory state
+                        activeCompanyPlanName = planName;
+                        const coId = getCompanyId();
+                        if (Array.isArray(allCompanies)) {
+                            const comp = allCompanies.find(c => String(c.id) === String(coId)) || allCompanies[0];
+                            if (comp) {
+                                comp.subscription_plan = planName;
+                                comp.subscription_status = 'active';
+                            }
+                        }
+                        updateCompanySubscriptionStatusUI();
+                        renderPricingCards();
+
+                        loadCompanies().then(() => {
+                            updateCompanySubscriptionStatusUI();
+                            renderPricingCards();
+                        });
+
+                        const emailNotice = verifyData.email_sent 
+                            ? `<br><br>📧 A detailed payment receipt and plan validity confirmation has been sent to <strong>${email}</strong>.` 
+                            : '';
+
+                        showModal('Subscription Activated! 🎉', `Payment verified successfully! Subscription activated for <strong>${planName}</strong>.${emailNotice}`);
                     } else {
                         showModal('Error', verifyData.error || 'Verification failed.');
                     }
@@ -6222,6 +6499,7 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
             );
         }
     } catch(err) {
+        hidePaymentOverlay();
         showModal('Payment Error', err.message);
     } finally {
         if (btn) {
@@ -6494,3 +6772,11 @@ window.filterPaymentLogs = function filterPaymentLogs() {
     });
     renderPaymentLogs(filtered);
 };
+
+// Ensure active view is synchronized upon full script execution
+(function syncBootView() {
+    const curView = localStorage.getItem('activeView') || window.location.hash.replace('#', '') || 'dashboard';
+    if (curView === 'subscriptions' && typeof loadSubscriptions === 'function') {
+        loadSubscriptions();
+    }
+})();

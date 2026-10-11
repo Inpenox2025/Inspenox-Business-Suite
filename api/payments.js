@@ -1,5 +1,6 @@
 const { getDb } = require('../lib/db');
 const crypto = require('crypto');
+const { sendSubscriptionReceiptEmail } = require('../lib/email');
 
 async function ensurePaymentTables(sql) {
     try {
@@ -462,24 +463,58 @@ module.exports = async (req, res) => {
                     }
                 }
 
-                // If company_id was provided, update company subscription_plan
-                if (company_id && company_id !== 'default') {
+                // Update company subscription_plan and subscription_status in companies table
+                let targetCompanyId = (company_id && company_id !== 'default' && company_id !== 'null') ? parseInt(company_id) : null;
+                if (!targetCompanyId) {
+                    // Fallback: If user is parent admin or default company, update the primary company (id = 1 or first company)
+                    try {
+                        const firstComp = await sql`SELECT id FROM companies ORDER BY id ASC LIMIT 1;`;
+                        if (firstComp.length > 0) {
+                            targetCompanyId = firstComp[0].id;
+                        }
+                    } catch(e) {}
+                }
+
+                if (targetCompanyId) {
                     try {
                         await sql`
                             UPDATE companies 
-                            SET subscription_plan = ${plan_name || 'Pro'},
+                            SET subscription_plan = ${plan_name || 'Growth Pro'},
                                 subscription_status = 'active'
-                            WHERE id = ${parseInt(company_id)};
+                            WHERE id = ${targetCompanyId};
                         `;
                     } catch (e) {
                         console.error('Error updating company subscription status:', e);
                     }
                 }
 
+                // Send email receipt to user with plan details, pricing and validity
+                let emailSent = false;
+                if (user_email && user_email.includes('@')) {
+                    try {
+                        const emailRes = await sendSubscriptionReceiptEmail({
+                            to: user_email,
+                            phone: user_phone,
+                            plan_name: plan_name || 'Inspenox Business Plan',
+                            original_amount: numOrig,
+                            discount_amount: numDisc,
+                            final_amount: numFinal,
+                            coupon_code,
+                            order_id: razorpay_order_id,
+                            payment_id: paymentIdVal,
+                            env
+                        });
+                        emailSent = !!emailRes.success;
+                    } catch (e) {
+                        console.error('Error sending subscription receipt email:', e);
+                    }
+                }
+
                 return res.status(200).json({
                     success: true,
-                    message: 'Payment verified and logged successfully!',
-                    payment: logResult[0]
+                    message: 'Payment verified and subscription activated successfully!',
+                    payment: logResult[0],
+                    email_sent: emailSent
                 });
             }
 

@@ -12,6 +12,7 @@
     "@neondatabase/serverless": "^0.9.3",
     "busboy": "^1.6.0",
     "jsdom": "^29.1.1",
+    "nodemailer": "^10.1.0",
     "xlsx": "^0.18.5"
   },
   "engines": {
