@@ -6304,7 +6304,7 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
     }
 
     // Launch fullscreen loading overlay immediately
-    showPaymentOverlay('Initializing Secure Checkout', 'Connecting to Razorpay gateway & preparing 256-bit encrypted session...', '🔒');
+    showPaymentOverlay('Initializing Secure Checkout', 'Connecting to Razorpay gateway...', '🔒');
 
     try {
         // Step 1: Create Order on backend
