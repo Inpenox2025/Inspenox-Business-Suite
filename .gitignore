@@ -13,3 +13,4 @@
 .env*.local
 Induio/
 .gitmodules
+_worker.bundle

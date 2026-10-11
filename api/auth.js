@@ -1,5 +1,5 @@
 const { getDb } = require('../lib/db');
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 
 function hashPassword(password) {
     return crypto.createHash('sha256').update(password + '_inspenox_salt_2026').digest('hex');

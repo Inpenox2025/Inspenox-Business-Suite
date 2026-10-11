@@ -1,5 +1,5 @@
 const { getDb } = require('../lib/db');
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const { sendSubscriptionReceiptEmail } = require('../lib/email');
 
 async function ensurePaymentTables(sql) {

@@ -168,28 +168,42 @@ window.isSuperAdmin = function isSuperAdmin() {
     const cname = (user.company_name || '').toLowerCase();
     const coId = user.company_id;
 
-    // Master superadmin username or explicit superadmin role is ALWAYS superadmin
-    if (role === 'superadmin' || uname === 'admin' || uname === 'superadmin' || uname === 'inspenox') {
-        return true;
-    }
-
-    // Parent organization Inspenox admin
-    if (cname.includes('inspenox') && (role === 'superadmin' || !role)) {
-        return true;
-    }
-
-    // Child tenant/company accounts are strictly NOT superadmin
+    // 1. Strict check: Child tenant/company accounts are strictly NOT superadmin
     if (coId !== undefined && coId !== null && String(coId) !== 'default' && String(coId) !== 'parent' && String(coId) !== '0' && String(coId) !== 'null' && String(coId) !== '') {
         return false;
     }
 
-    // Unassigned root admin
+    // 2. If user's company name is explicitly a child company
+    if (cname && !cname.includes('inspenox') && !cname.includes('parent')) {
+        return false;
+    }
+
+    // 3. If currently switched to a child company workspace
+    if (typeof currentCompanyId !== 'undefined' && currentCompanyId && String(currentCompanyId) !== 'default' && String(currentCompanyId) !== 'parent' && String(currentCompanyId) !== '0' && String(currentCompanyId) !== 'null') {
+        return false;
+    }
+
+    // 4. Master superadmin username or explicit superadmin role in parent context
+    if (role === 'superadmin' || uname === 'admin' || uname === 'superadmin' || uname === 'inspenox') {
+        return true;
+    }
+
+    // 5. Parent organization Inspenox admin
+    if (cname.includes('inspenox') && (role === 'superadmin' || !role)) {
+        return true;
+    }
+
+    // 6. Unassigned root admin
     if (role === 'admin' && (!coId || coId === 'default' || coId === 'parent')) {
         return true;
     }
 
-    // Fallback for default session
+    // 7. Fallback for default session (only if no child company is active)
     if (!uname && !role) {
+        const storedCo = localStorage.getItem('inspenox_company_id');
+        if (storedCo && String(storedCo) !== 'default' && String(storedCo) !== 'parent' && String(storedCo) !== '0' && String(storedCo) !== 'null') {
+            return false;
+        }
         return true;
     }
 
@@ -215,18 +229,25 @@ window.isParentAdmin = function isParentAdmin() {
     const cname = (user.company_name || '').toLowerCase();
     const role = (user.role || '').toLowerCase();
 
-    if (role === 'superadmin' || uname === 'admin' || uname === 'inspenox' || cname.includes('inspenox')) {
-        return true;
-    }
-
-    // If user has an explicit non-parent company_id (e.g. 1, 2), they are a child tenant admin
-    if (coId !== undefined && coId !== null && String(coId) !== 'default' && String(coId) !== 'null' && String(coId) !== '' && String(coId) !== '0') {
+    // 1. If user has an explicit non-parent company_id (e.g. 1, 2), they are a child tenant admin
+    if (coId !== undefined && coId !== null && String(coId) !== 'default' && String(coId) !== 'parent' && String(coId) !== 'null' && String(coId) !== '' && String(coId) !== '0') {
         return false;
     }
 
-    // Null or default company_id or admin username -> Master Parent Admin
+    // 2. If user's company name is explicitly a child company
+    if (cname && !cname.includes('inspenox') && !cname.includes('parent')) {
+        return false;
+    }
+
+    // 3. Parent organization or superadmin role
+    if (role === 'superadmin' || uname === 'admin' || uname === 'inspenox' || uname === 'superadmin' || cname.includes('inspenox')) {
+        return true;
+    }
+
+    // 4. Null or default company_id or admin username -> Master Parent Admin
     return true;
 };
+
 
 async function loadCompanies() {
     const isParent = isParentAdmin();
@@ -1814,6 +1835,12 @@ function toggleBillingCycle() {
 window.toggleBillingCycle = toggleBillingCycle;
 
 function switchSubTab(tabName) {
+    const isSuper = isSuperAdmin();
+    // Strictly prevent non-superadmin or other companies from accessing coupons or payment logs
+    if (!isSuper && (tabName === 'coupons' || tabName === 'logs')) {
+        tabName = 'plans';
+    }
+
     const panels = {
         plans: document.getElementById('sub-tab-panel-plans'),
         coupons: document.getElementById('sub-tab-panel-coupons'),
@@ -1836,8 +1863,8 @@ function switchSubTab(tabName) {
         }
     });
 
-    if (tabName === 'coupons' && typeof window.loadCouponsList === 'function') window.loadCouponsList();
-    if (tabName === 'logs' && typeof window.loadPaymentLogs === 'function') window.loadPaymentLogs();
+    if (tabName === 'coupons' && isSuper && typeof window.loadCouponsList === 'function') window.loadCouponsList();
+    if (tabName === 'logs' && isSuper && typeof window.loadPaymentLogs === 'function') window.loadPaymentLogs();
 }
 window.switchSubTab = switchSubTab;
 
@@ -1846,12 +1873,27 @@ async function loadSubscriptions() {
     updateCompanySubscriptionStatusUI();
     renderPricingCards();
 
-    // 2. Tab access control for superadmin
+    // 2. Strict Superadmin Access Control: Coupons & Influencer Referral and Logs strictly for superadmin
     const isSuper = isSuperAdmin();
     const btnCoupons = document.getElementById('tab-btn-sub-coupons');
     const btnLogs = document.getElementById('tab-btn-sub-logs');
+    const panelCoupons = document.getElementById('sub-tab-panel-coupons');
+    const panelLogs = document.getElementById('sub-tab-panel-logs');
+    const statSavings = document.getElementById('sub-stat-card-coupons');
+    const subTabsBar = document.getElementById('sub-tabs-container');
+
     if (btnCoupons) btnCoupons.style.display = isSuper ? 'inline-flex' : 'none';
     if (btnLogs) btnLogs.style.display = isSuper ? 'inline-flex' : 'none';
+    if (statSavings) statSavings.style.display = isSuper ? 'flex' : 'none';
+
+    if (!isSuper) {
+        if (panelCoupons) panelCoupons.style.display = 'none';
+        if (panelLogs) panelLogs.style.display = 'none';
+        switchSubTab('plans');
+        if (subTabsBar) subTabsBar.style.display = 'none';
+    } else {
+        if (subTabsBar) subTabsBar.style.display = 'flex';
+    }
 
     // 3. Asynchronously fetch live plans and gateway status
     try {
