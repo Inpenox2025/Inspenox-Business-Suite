@@ -5,6 +5,7 @@
     --bg-dark: #0b141a;
     --bg-sidebar: #111b21;
     --bg-card: #202c33;
+    --bg-surface: #202c33;
     --bg-chat: #0b141a;
     --bubble-out: #005c4b;
     --bubble-out-text: #e9edef;
@@ -28,6 +29,7 @@
     --bg-dark: #f0f2f5;
     --bg-sidebar: #ffffff;
     --bg-card: #ffffff;
+    --bg-surface: #ffffff;
     --bg-chat: #efeae2;
     --bubble-out: #d9fdd3;
     --bubble-out-text: #111b21;
@@ -3193,10 +3195,11 @@ tr:hover td {
     z-index: 1050;
     width: 290px;
     max-width: 90vw;
-    background: var(--bg-surface);
+    background: var(--bg-card) !important;
+    background-color: var(--bg-card) !important;
     border: 1px solid var(--border);
     border-radius: 12px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28), 0 4px 12px rgba(0, 0, 0, 0.15);
     padding: 0.65rem;
     display: none;
     flex-direction: column;
@@ -3205,6 +3208,13 @@ tr:hover td {
 }
 .tag-dropdown-menu.show {
     display: flex;
+}
+
+[data-theme="light"] .tag-dropdown-menu {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.06);
+    border-color: #d1d7db;
 }
 
 @keyframes fadeInTagDropdown {
@@ -3245,7 +3255,7 @@ tr:hover td {
     transition: background 0.15s ease;
 }
 .tag-item-row:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--primary-light);
 }
 
 .tag-checkbox {
@@ -3266,9 +3276,9 @@ tr:hover td {
 }
 
 .btn-new-tag-action {
-    background: #ecfdf5 !important;
-    border: 1px solid #a7f3d0 !important;
-    color: #065f46 !important;
+    background: var(--primary-light) !important;
+    border: 1px solid rgba(0, 168, 132, 0.3) !important;
+    color: var(--primary) !important;
     font-weight: 600;
     padding: 0.5rem 0.85rem;
     border-radius: 8px;
@@ -3283,8 +3293,8 @@ tr:hover td {
     transition: all 0.15s ease;
 }
 .btn-new-tag-action:hover {
-    background: #d1fae5 !important;
-    border-color: #6ee7b7 !important;
+    background: rgba(0, 168, 132, 0.2) !important;
+    border-color: var(--primary) !important;
 }
 
 .new-tag-create-box {
