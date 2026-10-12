@@ -2,7 +2,7 @@ const { getDb } = require('../lib/db');
 
 module.exports = async (req, res) => {
     const env = req.env || process.env || {};
-    const companyId = req.query.company_id || (req.body && req.body.company_id);
+    const companyId = req.query.company_id || (req.body && req.body.company_id) || (req.headers && req.headers['x-company-id']);
 
     let isMaster = false;
     let company = null;
@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
             const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
             if (cos.length > 0) {
                 company = cos[0];
-                isMaster = (company.slug && company.slug.toLowerCase() === 'inspenox') || (company.name && company.name.toLowerCase() === 'inspenox');
+                isMaster = (company.slug && company.slug.toLowerCase() === 'inspenox') || (company.name && company.name.toLowerCase() === 'inspenox') || company.is_parent === true || company.is_master === true;
             }
         } catch(e) {}
     } else {
@@ -55,23 +55,21 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
         try {
-            let activeWabaId = wabaId;
-            let activeToken = token;
-
-            // If not configured, fetch default ENV templates for View-Only access
-            if (isViewOnly) {
-                activeWabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-                activeToken = env.WHATSAPP_ACCESS_TOKEN;
-            }
-
-            if (!activeWabaId || !activeToken) {
+            // For companies without configured Meta credentials, return view-only mode with empty list.
+            // NEVER fall back to expired system ENV token!
+            if (!isConfigured) {
                 return res.status(200).json({
                     is_view_only: true,
                     is_configured: false,
-                    message: 'Configure Meta app details in Settings to create or manage templates for other companies.',
+                    message: isMaster 
+                        ? 'Meta WhatsApp credentials are not configured in system environment.' 
+                        : 'Configure Meta WhatsApp credentials in Settings to create or manage templates for this company.',
                     data: []
                 });
             }
+
+            const activeWabaId = wabaId;
+            const activeToken = token;
 
             const url = `https://graph.facebook.com/v19.0/${activeWabaId}/message_templates?limit=100`;
             const response = await fetch(url, {
@@ -80,7 +78,17 @@ module.exports = async (req, res) => {
 
             const data = await response.json();
             if (data.error) {
-                return res.status(500).json({ error: data.error.message || JSON.stringify(data.error) });
+                const errMsg = data.error.message || JSON.stringify(data.error);
+                const isTokenExpired = data.error.code === 190 || errMsg.toLowerCase().includes('session has expired') || errMsg.toLowerCase().includes('access token');
+                return res.status(200).json({
+                    is_view_only: true,
+                    is_configured: false,
+                    is_token_expired: isTokenExpired,
+                    error: isTokenExpired 
+                        ? 'Meta WhatsApp Access Token has expired. Please update or refresh your Access Token in Settings -> Meta Credentials.'
+                        : errMsg,
+                    data: []
+                });
             }
 
             let libraryMedia = [];

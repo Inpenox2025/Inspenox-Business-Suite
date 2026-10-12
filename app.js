@@ -3425,7 +3425,16 @@ async function loadTemplates() {
         
         if (json.error) {
             templatesCache = [];
-            if (grid) grid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">Failed to load templates: ${json.error}</div>`;
+            if (grid) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1; max-width: 600px; margin: 2rem auto; text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 0.75rem;">⚠️</div>
+                        <div style="font-weight: 600; font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--text-primary);">${json.error}</div>
+                        <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">Meta WhatsApp requires an active access token to sync message templates.</div>
+                        <button class="btn primary" onclick="navigateToSettingsMeta()" style="padding: 0.6rem 1.4rem;">Go to Meta Credentials Settings</button>
+                    </div>
+                `;
+            }
             return;
         }
         
