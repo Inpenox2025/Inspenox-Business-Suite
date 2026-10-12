@@ -852,10 +852,97 @@
                                 <div id="bc-media-preview-container" style="margin-top: 0.75rem; display:none;"></div>
                             </div>
 
-                            <div class="form-group" id="bc-content-group">
-                                <label>Message Text / Media Caption</label>
+                            <div class="form-group" id="bc-content-group" style="position:relative;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                                    <label style="margin:0;">Message Text / Media Caption</label>
+                                    <div style="position:relative;">
+                                        <button type="button" id="btn-bc-add-var" class="btn secondary sm" style="font-size:0.75rem; padding:0.25rem 0.6rem;">+ Add variable ℹ</button>
+                                        <div id="bc-var-picker" class="tpl-var-picker-popover" style="display:none; right:0;" data-target="bc-content">
+                                            <div class="tpl-var-picker-header">
+                                                <h5>⚡ Dynamic Broadcast Variables</h5>
+                                                <p>Insert customer columns or business name. When broadcasting, these placeholders dynamically resolve per recipient.</p>
+                                            </div>
+                                            <div class="tpl-var-group-title">👤 Customers Table Columns</div>
+                                            <div class="tpl-var-list">
+                                                <div class="tpl-var-item" data-var-tag="{{name}}">
+                                                    <div class="tpl-var-item-info">
+                                                        <span class="tpl-var-item-label">👤 Customer Name</span>
+                                                        <span class="tpl-var-item-desc">Full customer name from directory</span>
+                                                    </div>
+                                                    <code class="tpl-var-badge">{{name}}</code>
+                                                </div>
+                                                <div class="tpl-var-item" data-var-tag="{{phone}}">
+                                                    <div class="tpl-var-item-info">
+                                                        <span class="tpl-var-item-label">📞 Phone Number</span>
+                                                        <span class="tpl-var-item-desc">WhatsApp / mobile number</span>
+                                                    </div>
+                                                    <code class="tpl-var-badge">{{phone}}</code>
+                                                </div>
+                                                <div class="tpl-var-item" data-var-tag="{{email}}">
+                                                    <div class="tpl-var-item-info">
+                                                        <span class="tpl-var-item-label">✉️ Email Address</span>
+                                                        <span class="tpl-var-item-desc">Recipient email address</span>
+                                                    </div>
+                                                    <code class="tpl-var-badge">{{email}}</code>
+                                                </div>
+                                                <div class="tpl-var-item" data-var-tag="{{city}}">
+                                                    <div class="tpl-var-item-info">
+                                                        <span class="tpl-var-item-label">🏙️ City / Location</span>
+                                                        <span class="tpl-var-item-desc">Customer city column</span>
+                                                    </div>
+                                                    <code class="tpl-var-badge">{{city}}</code>
+                                                </div>
+                                                <div class="tpl-var-item" data-var-tag="{{state}}">
+                                                    <div class="tpl-var-item-info">
+                                                        <span class="tpl-var-item-label">📍 State / Province</span>
+                                                        <span class="tpl-var-item-desc">Customer state column</span>
+                                                    </div>
+                                                    <code class="tpl-var-badge">{{state}}</code>
+                                                </div>
+                                                <div class="tpl-var-item" data-var-tag="{{tags}}">
+                                                    <div class="tpl-var-item-info">
+                                                        <span class="tpl-var-item-label">🏷️ Segment Tags</span>
+                                                        <span class="tpl-var-item-desc">Customer tags and categories</span>
+                                                    </div>
+                                                    <code class="tpl-var-badge">{{tags}}</code>
+                                                </div>
+                                                <div class="tpl-var-item" data-var-tag="{{customer_id}}">
+                                                    <div class="tpl-var-item-info">
+                                                        <span class="tpl-var-item-label">🆔 Customer ID</span>
+                                                        <span class="tpl-var-item-desc">Unique database ID / S.No</span>
+                                                    </div>
+                                                    <code class="tpl-var-badge">{{customer_id}}</code>
+                                                </div>
+                                                <div class="tpl-var-item" data-var-tag="{{address}}">
+                                                    <div class="tpl-var-item-info">
+                                                        <span class="tpl-var-item-label">🏠 Street Address</span>
+                                                        <span class="tpl-var-item-desc">Customer street address</span>
+                                                    </div>
+                                                    <code class="tpl-var-badge">{{address}}</code>
+                                                </div>
+                                                <div class="tpl-var-item" data-var-tag="{{pincode}}">
+                                                    <div class="tpl-var-item-info">
+                                                        <span class="tpl-var-item-label">📮 Pincode / ZIP</span>
+                                                        <span class="tpl-var-item-desc">Postal code column</span>
+                                                    </div>
+                                                    <code class="tpl-var-badge">{{pincode}}</code>
+                                                </div>
+                                            </div>
+                                            <div class="tpl-var-group-title">🏢 Company Profile</div>
+                                            <div class="tpl-var-list">
+                                                <div class="tpl-var-item" data-var-tag="{{company_name}}">
+                                                    <div class="tpl-var-item-info">
+                                                        <span class="tpl-var-item-label">🏢 Company Name</span>
+                                                        <span class="tpl-var-item-desc">Your active business name</span>
+                                                    </div>
+                                                    <code class="tpl-var-badge">{{company_name}}</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <textarea id="bc-content" rows="4"
-                                    placeholder="Write your broadcast message here..."></textarea>
+                                    placeholder="Write your broadcast message here... e.g. Hello {{name}}, welcome to {{company_name}}!"></textarea>
                             </div>
 
                             <button type="submit" class="btn primary w-full" id="btn-broadcast">

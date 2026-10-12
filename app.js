@@ -2760,6 +2760,7 @@ window.switchView = function switchView(target, pushHistory = true) {
         loadCustomersForSelect(); 
         loadTemplatesForSelect(); 
         if (typeof updateBroadcastSenderPhoneSelect === 'function') updateBroadcastSenderPhoneSelect();
+        if (typeof initVarPickers === 'function') initVarPickers();
     }
     if (target === 'inbox') loadInboxSidebar();
     if (target === 'media') loadMedia();
@@ -2868,6 +2869,7 @@ if (history.replaceState) {
 updateSuperAdminNavVisibility();
 loadCompanies();
 switchView(savedView, false);
+if (typeof initVarPickers === 'function') initVarPickers();
 
 
 // --- Customer Tags Management & Lifecycle Segmentation System ---
@@ -4279,6 +4281,190 @@ function goToStep(step) {
 }
 window.goToStep = goToStep;
 
+function getSmartSample(varKey, varType = 'TEXT') {
+    const k = String(varKey || '').toLowerCase();
+    if (['name', 'customer_name', 'customer'].includes(k)) return 'Rajesh Sharma';
+    if (['phone', 'phone_number', 'mobile'].includes(k)) return '+91 98765 43210';
+    if (['email'].includes(k)) return 'rajesh@example.com';
+    if (['city', 'town', 'location'].includes(k)) return 'Hyderabad';
+    if (['state'].includes(k)) return 'Telangana';
+    if (['company_name', 'company', 'business_name'].includes(k)) {
+        const stored = (typeof getStoredCompany === 'function') ? getStoredCompany() : null;
+        return (stored && stored.name) ? stored.name : 'Manaswini Enterprises';
+    }
+    if (['tags', 'tag'].includes(k)) return 'VIP Client';
+    if (['customer_id', 'id'].includes(k)) return 'CUST-1001';
+    if (['address'].includes(k)) return 'Road No. 12, Banjara Hills';
+    if (['pincode', 'zip'].includes(k)) return '500034';
+    if (k === '1') return varType === 'NUMBER' ? '123' : 'Customer';
+    if (k === '2') return varType === 'NUMBER' ? '456' : '10% OFF';
+    if (k === '3') return varType === 'NUMBER' ? '789' : 'Special Offer';
+    return varKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function getVariablePickerHtml(pickerId = 'tpl-var-picker', targetInputId = 'tpl-body') {
+    return `
+        <div id="${pickerId}" class="tpl-var-picker-popover" style="display:none;" data-target="${targetInputId}">
+            <div class="tpl-var-picker-header">
+                <h5>⚡ Dynamic Broadcast Variables</h5>
+                <p>Select customer table columns or business name. When broadcasting, these placeholders dynamically resolve per recipient.</p>
+            </div>
+            
+            <div class="tpl-var-group-title">👤 Customers Table Columns</div>
+            <div class="tpl-var-list">
+                <div class="tpl-var-item" data-var-tag="{{name}}">
+                    <div class="tpl-var-item-info">
+                        <span class="tpl-var-item-label">👤 Customer Name</span>
+                        <span class="tpl-var-item-desc">Full customer name from directory</span>
+                    </div>
+                    <code class="tpl-var-badge">{{name}}</code>
+                </div>
+                <div class="tpl-var-item" data-var-tag="{{phone}}">
+                    <div class="tpl-var-item-info">
+                        <span class="tpl-var-item-label">📞 Phone Number</span>
+                        <span class="tpl-var-item-desc">Customer WhatsApp/mobile number</span>
+                    </div>
+                    <code class="tpl-var-badge">{{phone}}</code>
+                </div>
+                <div class="tpl-var-item" data-var-tag="{{email}}">
+                    <div class="tpl-var-item-info">
+                        <span class="tpl-var-item-label">✉️ Email Address</span>
+                        <span class="tpl-var-item-desc">Recipient email address</span>
+                    </div>
+                    <code class="tpl-var-badge">{{email}}</code>
+                </div>
+                <div class="tpl-var-item" data-var-tag="{{city}}">
+                    <div class="tpl-var-item-info">
+                        <span class="tpl-var-item-label">🏙️ City / Location</span>
+                        <span class="tpl-var-item-desc">Customer city column</span>
+                    </div>
+                    <code class="tpl-var-badge">{{city}}</code>
+                </div>
+                <div class="tpl-var-item" data-var-tag="{{state}}">
+                    <div class="tpl-var-item-info">
+                        <span class="tpl-var-item-label">📍 State / Province</span>
+                        <span class="tpl-var-item-desc">Customer state column</span>
+                    </div>
+                    <code class="tpl-var-badge">{{state}}</code>
+                </div>
+                <div class="tpl-var-item" data-var-tag="{{tags}}">
+                    <div class="tpl-var-item-info">
+                        <span class="tpl-var-item-label">🏷️ Segment Tags</span>
+                        <span class="tpl-var-item-desc">Customer tags and categories</span>
+                    </div>
+                    <code class="tpl-var-badge">{{tags}}</code>
+                </div>
+                <div class="tpl-var-item" data-var-tag="{{customer_id}}">
+                    <div class="tpl-var-item-info">
+                        <span class="tpl-var-item-label">🆔 Customer ID</span>
+                        <span class="tpl-var-item-desc">Unique database ID / S.No</span>
+                    </div>
+                    <code class="tpl-var-badge">{{customer_id}}</code>
+                </div>
+                <div class="tpl-var-item" data-var-tag="{{address}}">
+                    <div class="tpl-var-item-info">
+                        <span class="tpl-var-item-label">🏠 Street Address</span>
+                        <span class="tpl-var-item-desc">Customer street address</span>
+                    </div>
+                    <code class="tpl-var-badge">{{address}}</code>
+                </div>
+                <div class="tpl-var-item" data-var-tag="{{pincode}}">
+                    <div class="tpl-var-item-info">
+                        <span class="tpl-var-item-label">📮 Pincode / ZIP</span>
+                        <span class="tpl-var-item-desc">Postal code column</span>
+                    </div>
+                    <code class="tpl-var-badge">{{pincode}}</code>
+                </div>
+            </div>
+
+            <div class="tpl-var-group-title">🏢 Company Profile</div>
+            <div class="tpl-var-list">
+                <div class="tpl-var-item" data-var-tag="{{company_name}}">
+                    <div class="tpl-var-item-info">
+                        <span class="tpl-var-item-label">🏢 Company Name</span>
+                        <span class="tpl-var-item-desc">Your active business / account name</span>
+                    </div>
+                    <code class="tpl-var-badge">{{company_name}}</code>
+                </div>
+            </div>
+
+            <div class="tpl-var-group-title">#️⃣ Meta Custom Token</div>
+            <div class="tpl-var-list">
+                <div class="tpl-var-item" data-var-tag="{{1}}">
+                    <div class="tpl-var-item-info">
+                        <span class="tpl-var-item-label">#️⃣ Positional Variable</span>
+                        <span class="tpl-var-item-desc">Standard Meta {{1}} numbered placeholder</span>
+                    </div>
+                    <code class="tpl-var-badge">{{1}}</code>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function initVarPickers() {
+    ['btn-add-var', 'btn-add-header-var', 'btn-bc-add-var'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        const pickerId = btnId === 'btn-add-header-var' ? 'tpl-header-var-picker' : (btnId === 'btn-bc-add-var' ? 'bc-var-picker' : 'tpl-var-picker');
+        const picker = document.getElementById(pickerId);
+        if (!picker) return;
+
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const emojiPicker = document.getElementById('tpl-emoji-picker');
+            if (emojiPicker) emojiPicker.style.display = 'none';
+
+            const isShown = picker.style.display === 'flex';
+            document.querySelectorAll('.tpl-var-picker-popover').forEach(p => p.style.display = 'none');
+            picker.style.display = isShown ? 'none' : 'flex';
+        };
+
+        picker.querySelectorAll('.tpl-var-item').forEach(item => {
+            item.onclick = (e) => {
+                e.stopPropagation();
+                const tag = item.dataset.varTag;
+                const targetInputId = picker.dataset.target || (btnId === 'btn-add-header-var' ? 'tpl-header-text' : (btnId === 'btn-bc-add-var' ? 'bc-content' : 'tpl-body'));
+                const targetEl = document.getElementById(targetInputId);
+                if (!targetEl) return;
+
+                if (targetInputId === 'tpl-header-text' && (targetEl.value.match(/\{\{([^}]+)\}\}/g) || []).length >= 1) {
+                    alert('Meta only allows 1 variable in the header text.');
+                    picker.style.display = 'none';
+                    return;
+                }
+
+                let insertTag = tag;
+                if (tag === '{{1}}') {
+                    const matches = targetEl.value.match(/\{\{(\d+)\}\}/g) || [];
+                    const nextNum = matches.length + 1;
+                    insertTag = `{{${nextNum}}}`;
+                }
+
+                const start = targetEl.selectionStart || targetEl.value.length;
+                const end = targetEl.selectionEnd || targetEl.value.length;
+                targetEl.value = targetEl.value.substring(0, start) + insertTag + targetEl.value.substring(end);
+                targetEl.focus();
+                targetEl.setSelectionRange(start + insertTag.length, start + insertTag.length);
+                picker.style.display = 'none';
+                if (typeof updateLivePreview === 'function') updateLivePreview();
+                if (typeof refreshVariableSampleFields === 'function') refreshVariableSampleFields();
+            };
+        });
+    });
+
+    if (!window._varPickerGlobalClickAdded) {
+        window._varPickerGlobalClickAdded = true;
+        document.addEventListener('click', (e) => {
+            document.querySelectorAll('.tpl-var-picker-popover').forEach(picker => {
+                if (picker.style.display === 'flex' && !picker.contains(e.target) && !e.target.closest('#btn-add-var, #btn-add-header-var, #btn-bc-add-var')) {
+                    picker.style.display = 'none';
+                }
+            });
+        });
+    }
+}
+
 function renderStep2Form(category, subtype) {
     const form = document.getElementById('template-builder-form');
     const bannerTitle = document.getElementById('tpl-banner-title');
@@ -4460,7 +4646,8 @@ function renderStep2Form(category, subtype) {
                         <button type="button" class="btn secondary sm" id="btn-fmt-italic"><i>I</i></button>
                         <button type="button" class="btn secondary sm" id="btn-fmt-strike"><s>S</s></button>
                         <button type="button" class="btn secondary sm" id="btn-fmt-code">&lt;/&gt;</button>
-                        <button type="button" id="btn-add-var" class="btn secondary sm" style="margin-left:auto; font-size:0.75rem;">+ Add variable</button>
+                        <button type="button" id="btn-add-var" class="btn secondary sm" style="margin-left:auto; font-size:0.75rem;">+ Add variable ℹ</button>
+                        ${getVariablePickerHtml('tpl-var-picker', 'tpl-body')}
                     </div>
                 </div>
                 <div class="form-group">
@@ -4489,12 +4676,13 @@ function renderStep2Form(category, subtype) {
                         <span id="tpl-body-count" style="font-size:0.725rem; color:var(--text-muted)">0/1024</span>
                     </div>
                     <textarea id="tpl-body" rows="4" required maxlength="1024">Can Jasper's Market call you? You can update your preference anytime in the business profile.</textarea>
-                    <div class="meta-editor-toolbar" style="display:flex; gap:0.35rem; align-items:center; margin-top:0.35rem;">
+                    <div class="meta-editor-toolbar" style="display:flex; gap:0.35rem; align-items:center; margin-top:0.35rem; position:relative;">
                         <button type="button" class="btn secondary sm" id="btn-fmt-bold"><b>B</b></button>
                         <button type="button" class="btn secondary sm" id="btn-fmt-italic"><i>I</i></button>
                         <button type="button" class="btn secondary sm" id="btn-fmt-strike"><s>S</s></button>
                         <button type="button" class="btn secondary sm" id="btn-fmt-code">&lt;/&gt;</button>
-                        <button type="button" id="btn-add-var" class="btn secondary sm" style="margin-left:auto; font-size:0.75rem;">+ Add variable</button>
+                        <button type="button" id="btn-add-var" class="btn secondary sm" style="margin-left:auto; font-size:0.75rem;">+ Add variable ℹ</button>
+                        ${getVariablePickerHtml('tpl-var-picker', 'tpl-body')}
                     </div>
                 </div>
             </div>
@@ -4562,8 +4750,9 @@ function renderStep2Form(category, subtype) {
                         <span id="tpl-header-count" style="font-size:0.725rem; color:var(--text-muted)">0/60</span>
                     </div>
                     <input type="text" id="tpl-header-text" placeholder="Add a short line of text to the header of your message" maxlength="60">
-                    <div style="display:flex; justify-content:flex-end; margin-top:0.25rem;">
-                        <button type="button" id="btn-add-header-var" class="btn secondary sm" style="font-size:0.725rem;">+ Add variable</button>
+                    <div style="display:flex; justify-content:flex-end; margin-top:0.25rem; position:relative;">
+                        <button type="button" id="btn-add-header-var" class="btn secondary sm" style="font-size:0.725rem;">+ Add variable ℹ</button>
+                        ${getVariablePickerHtml('tpl-header-var-picker', 'tpl-header-text')}
                     </div>
                 </div>
 
@@ -4583,6 +4772,9 @@ function renderStep2Form(category, subtype) {
                         <button type="button" class="btn secondary sm" id="btn-fmt-code" title="Monospace">&lt;/&gt;</button>
                         <button type="button" id="btn-add-var" class="btn secondary sm" style="margin-left:auto; font-size:0.75rem;">+ Add variable ℹ</button>
                         
+                        <!-- Dynamic Variable Popover -->
+                        ${getVariablePickerHtml('tpl-var-picker', 'tpl-body')}
+
                         <!-- Emoji Popover -->
                         <div id="tpl-emoji-picker" class="emoji-picker-popover" style="display:none;">
                             <span class="emoji-picker-item">😊</span>
@@ -4936,21 +5128,7 @@ function attachStep2FormListeners() {
         updateLivePreview();
     }
 
-    // Header Text variable button
-    document.getElementById('btn-add-header-var')?.addEventListener('click', () => {
-        const headerEl = document.getElementById('tpl-header-text');
-        if (!headerEl) return;
-        const text = headerEl.value;
-        if (text.includes('{{1}}')) {
-            alert('Meta only allows 1 variable in the header text.');
-            return;
-        }
-        const start = headerEl.selectionStart || text.length;
-        const end = headerEl.selectionEnd || text.length;
-        headerEl.value = text.substring(0, start) + '{{1}}' + text.substring(end);
-        headerEl.focus();
-        updateLivePreview();
-    });
+    // Header and Body Variable pickers handled via initVarPickers()
 
     // Utility validity period toggle listener
     document.getElementById('tpl-validity-toggle')?.addEventListener('change', (e) => {
@@ -5040,18 +5218,8 @@ function attachStep2FormListeners() {
     document.getElementById('btn-fmt-strike')?.addEventListener('click', () => applyFormat('~'));
     document.getElementById('btn-fmt-code')?.addEventListener('click', () => applyFormat('`', true));
 
-    document.getElementById('btn-add-var')?.addEventListener('click', () => {
-        const bodyEl = document.getElementById('tpl-body');
-        if (!bodyEl) return;
-        const text = bodyEl.value;
-        const matches = text.match(/\{\{(\d+)\}\}/g) || [];
-        const nextNum = matches.length + 1;
-        const start = bodyEl.selectionStart || text.length;
-        const end = bodyEl.selectionEnd || text.length;
-        bodyEl.value = text.substring(0, start) + `{{${nextNum}}}` + text.substring(end);
-        bodyEl.focus();
-        updateLivePreview();
-    });
+    // Wire Dynamic Broadcast Variable Pickers
+    initVarPickers();
 }
 
 function updateLivePreview() {
@@ -5081,7 +5249,8 @@ function updateLivePreview() {
     // Collect Variable Samples Values
     const sampleValues = {};
     document.querySelectorAll('.tpl-var-sample-input').forEach(inp => {
-        sampleValues[inp.dataset.varKey] = inp.value;
+        if (inp.dataset.varKey) sampleValues[inp.dataset.varKey] = inp.value;
+        if (inp.dataset.var) sampleValues[inp.dataset.var] = inp.value;
     });
 
     // Header Element
@@ -5100,9 +5269,10 @@ function updateLivePreview() {
             `;
         } else if (headerType === 'TEXT' && headerTextVal.trim()) {
             headerEl.style.display = 'block';
-            let formattedHeader = headerTextVal;
-            const headerSample = sampleValues['header_1'] || (varType === 'NUMBER' ? '123' : 'Sample Header');
-            formattedHeader = formattedHeader.replace(/\{\{1\}\}/g, `<span style="background:rgba(0,168,132,0.15);color:#00a884;padding:0.1rem 0.35rem;border-radius:4px;font-weight:700;">${headerSample}</span>`);
+            let formattedHeader = headerTextVal.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, p1) => {
+                const sample = sampleValues[`header_${p1}`] || sampleValues[p1] || getSmartSample(p1, varType);
+                return `<span style="background:rgba(0,168,132,0.15);color:#00a884;padding:0.1rem 0.35rem;border-radius:4px;font-weight:700;">${sample}</span>`;
+            });
             headerEl.innerHTML = formattedHeader;
         } else if (headerType === 'IMAGE') {
             headerEl.style.display = 'block';
@@ -5188,8 +5358,8 @@ function updateLivePreview() {
             }
         }
 
-        let formatted = textToDisplay.replace(/\{\{(\d+)\}\}/g, (match, p1) => {
-            const sample = sampleValues[`body_${p1}`] || (varType === 'NUMBER' ? `{{${p1}}}` : `{{${p1}}}`);
+        let formatted = textToDisplay.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, p1) => {
+            const sample = sampleValues[`body_${p1}`] || sampleValues[p1] || getSmartSample(p1, varType);
             return `<span style="background:rgba(0,168,132,0.15);color:#00a884;padding:0.1rem 0.35rem;border-radius:4px;font-weight:700;">${sample}</span>`;
         });
 
@@ -5297,10 +5467,10 @@ function refreshVariableSampleFields(varType = 'TEXT') {
     const headerText = document.getElementById('tpl-header-text')?.value || '';
     const bodyText = document.getElementById('tpl-body')?.value || '';
 
-    const hasHeaderVar = headerText.includes('{{1}}');
-    const bodyMatches = Array.from(new Set(bodyText.match(/\{\{(\d+)\}\}/g) || []));
+    const headerMatches = Array.from(new Set([...headerText.matchAll(/\{\{([a-zA-Z0-9_]+)\}\}/g)].map(m => m[1])));
+    const bodyMatches = Array.from(new Set([...bodyText.matchAll(/\{\{([a-zA-Z0-9_]+)\}\}/g)].map(m => m[1])));
 
-    if (!hasHeaderVar && bodyMatches.length === 0) {
+    if (headerMatches.length === 0 && bodyMatches.length === 0) {
         container.innerHTML = '';
         container.style.display = 'none';
         return;
@@ -5310,35 +5480,58 @@ function refreshVariableSampleFields(varType = 'TEXT') {
 
     const existingValues = {};
     container.querySelectorAll('.tpl-var-sample-input').forEach(inp => {
-        existingValues[inp.dataset.varKey] = inp.value;
+        if (inp.dataset.varKey) existingValues[inp.dataset.varKey] = inp.value;
+        if (inp.dataset.var) existingValues[inp.dataset.var] = inp.value;
     });
 
     let html = `
         <div class="tpl-sample-box">
-            <h5 style="font-size:0.8rem; font-weight:600; margin:0 0 0.5rem 0; color:var(--text-main);">Samples for parameters</h5>
-            <p style="font-size:0.725rem; color:var(--text-muted); margin-bottom:0.6rem;">To help Meta review your template, specify an example value for each variable.</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                <h5 style="font-size:0.825rem; font-weight:700; margin:0; color:var(--text-main); display:flex; align-items:center; gap:0.4rem;">
+                    <span>⚡</span> Samples for Dynamic Variables
+                </h5>
+                <span class="badge" style="font-size:0.68rem; background:rgba(0,168,132,0.12); color:#00a884; font-weight:700;">Meta Requirement</span>
+            </div>
+            <p style="font-size:0.725rem; color:var(--text-muted); margin-bottom:0.75rem; line-height:1.35;">
+                Specify example values for Meta template verification. When launching broadcasts, these variables automatically pull live data from your customers table and company profile.
+            </p>
             <div style="display:flex; flex-direction:column; gap:0.5rem;">
     `;
 
-    if (hasHeaderVar) {
-        const val = existingValues['header_1'] || (varType === 'NUMBER' ? '123' : 'John');
+    headerMatches.forEach(varKey => {
+        const smart = getSmartSample(varKey, varType);
+        const val = existingValues[`header_${varKey}`] || existingValues[varKey] || smart;
         html += `
             <div style="display:flex; align-items:center; gap:0.5rem;">
-                <label style="font-size:0.75rem; font-weight:600; width:120px; color:var(--primary);">Header {{1}}</label>
-                <input type="text" class="tpl-var-sample-input" data-var-key="header_1" value="${val.replace(/"/g, '&quot;')}" placeholder="${varType === 'NUMBER' ? 'e.g. 123' : 'e.g. John'}" style="flex:1; padding:0.4rem 0.6rem; font-size:0.8rem;">
+                <label style="font-size:0.75rem; font-weight:600; width:130px; color:var(--primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Header {{${varKey}}}">
+                    Header {{${varKey}}}
+                </label>
+                <input type="text" class="tpl-var-sample-input" 
+                       data-var="${varKey}" 
+                       data-var-key="header_${varKey}" 
+                       name="var_${varKey}" 
+                       value="${val.replace(/"/g, '&quot;')}" 
+                       placeholder="e.g. ${smart}" 
+                       style="flex:1; padding:0.4rem 0.6rem; font-size:0.8rem; border-radius:6px; border:1px solid var(--border); background:var(--bg-input);">
             </div>
         `;
-    }
+    });
 
-    bodyMatches.sort((a, b) => parseInt(a.replace(/\D/g, '')) - parseInt(b.replace(/\D/g, ''))).forEach(m => {
-        const num = m.replace(/\D/g, '');
-        const key = `body_${num}`;
-        const defaultSample = varType === 'NUMBER' ? (100 * parseInt(num)).toString() : (num === '1' ? 'John' : num === '2' ? '10% OFF' : `Sample ${num}`);
-        const val = existingValues[key] || defaultSample;
+    bodyMatches.forEach(varKey => {
+        const smart = getSmartSample(varKey, varType);
+        const val = existingValues[`body_${varKey}`] || existingValues[varKey] || smart;
         html += `
             <div style="display:flex; align-items:center; gap:0.5rem;">
-                <label style="font-size:0.75rem; font-weight:600; width:120px; color:var(--primary);">Body {{${num}}}</label>
-                <input type="text" class="tpl-var-sample-input" data-var-key="${key}" value="${val.replace(/"/g, '&quot;')}" placeholder="${varType === 'NUMBER' ? `e.g. ${100 * parseInt(num)}` : `e.g. Sample ${num}`}" style="flex:1; padding:0.4rem 0.6rem; font-size:0.8rem;">
+                <label style="font-size:0.75rem; font-weight:600; width:130px; color:var(--primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Body {{${varKey}}}">
+                    Body {{${varKey}}}
+                </label>
+                <input type="text" class="tpl-var-sample-input" 
+                       data-var="${varKey}" 
+                       data-var-key="body_${varKey}" 
+                       name="var_${varKey}" 
+                       value="${val.replace(/"/g, '&quot;')}" 
+                       placeholder="e.g. ${smart}" 
+                       style="flex:1; padding:0.4rem 0.6rem; font-size:0.8rem; border-radius:6px; border:1px solid var(--border); background:var(--bg-input);">
             </div>
         `;
     });
@@ -5352,24 +5545,27 @@ function refreshVariableSampleFields(varType = 'TEXT') {
 
     container.querySelectorAll('.tpl-var-sample-input').forEach(inp => {
         inp.addEventListener('input', () => {
-            const sampleValues = {};
+            const currentSamples = {};
             container.querySelectorAll('.tpl-var-sample-input').forEach(i => {
-                sampleValues[i.dataset.varKey] = i.value;
+                if (i.dataset.varKey) currentSamples[i.dataset.varKey] = i.value;
+                if (i.dataset.var) currentSamples[i.dataset.var] = i.value;
             });
 
             const headerEl = document.getElementById('wa-preview-header');
             const headerType = document.getElementById('tpl-header-type')?.value;
             const headerTextVal = document.getElementById('tpl-header-text')?.value || '';
             if (headerEl && headerType === 'TEXT' && headerTextVal.trim()) {
-                const headerSample = sampleValues['header_1'] || (varType === 'NUMBER' ? '123' : 'Sample Header');
-                headerEl.innerHTML = headerTextVal.replace(/\{\{1\}\}/g, `<span style="background:rgba(0,168,132,0.15);color:#00a884;padding:0.1rem 0.35rem;border-radius:4px;font-weight:700;">${headerSample}</span>`);
+                headerEl.innerHTML = headerTextVal.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, p1) => {
+                    const sample = currentSamples[`header_${p1}`] || currentSamples[p1] || getSmartSample(p1, varType);
+                    return `<span style="background:rgba(0,168,132,0.15);color:#00a884;padding:0.1rem 0.35rem;border-radius:4px;font-weight:700;">${sample}</span>`;
+                });
             }
 
             const bodyEl = document.getElementById('wa-preview-body');
             const bodyVal = document.getElementById('tpl-body')?.value || '';
             if (bodyEl && bodyVal.trim()) {
-                let formatted = bodyVal.replace(/\{\{(\d+)\}\}/g, (match, p1) => {
-                    const sample = sampleValues[`body_${p1}`] || (varType === 'NUMBER' ? `{{${p1}}}` : `{{${p1}}}`);
+                let formatted = bodyVal.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, p1) => {
+                    const sample = currentSamples[`body_${p1}`] || currentSamples[p1] || getSmartSample(p1, varType);
                     return `<span style="background:rgba(0,168,132,0.15);color:#00a884;padding:0.1rem 0.35rem;border-radius:4px;font-weight:700;">${sample}</span>`;
                 });
                 formatted = formatted
@@ -5538,21 +5734,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-fmt-strike')?.addEventListener('click', () => applyFormat('~'));
     document.getElementById('btn-fmt-code')?.addEventListener('click', () => applyFormat('`', true));
 
-    // Add Variable Helper
-    document.getElementById('btn-add-var')?.addEventListener('click', () => {
-        const bodyEl = document.getElementById('tpl-body');
-        if (!bodyEl) return;
-        
-        const text = bodyEl.value;
-        const matches = text.match(/\{\{(\d+)\}\}/g) || [];
-        const nextNum = matches.length + 1;
-        
-        const start = bodyEl.selectionStart || text.length;
-        const end = bodyEl.selectionEnd || text.length;
-        bodyEl.value = text.substring(0, start) + `{{${nextNum}}}` + text.substring(end);
-        bodyEl.focus();
-        updateLivePreview();
-    });
+    // Wire Dynamic Broadcast Variable Pickers
+    initVarPickers();
 
     // Submit Template for Review
     document.getElementById('btn-submit-tpl')?.addEventListener('click', async () => {
@@ -5627,12 +5810,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const hPosMatches = [...headerText.matchAll(/\{\{(\d+)\}\}/g)];
             const hNamedMatches = [...headerText.matchAll(/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g)];
             if (hPosMatches.length > 0) {
-                headerComp.example = { header_text: ["Sample Header"] };
+                const domHeaderSample = document.querySelector('input[data-var-key="header_1"], input[data-var="1"]')?.value.trim();
+                headerComp.example = { header_text: [domHeaderSample || "Sample Header"] };
             } else if (hNamedMatches.length > 0) {
+                const pName = hNamedMatches[0][1];
+                const domHeaderSample = document.querySelector(`input[data-var-key="header_${pName}"], input[data-var="${pName}"]`)?.value.trim();
                 headerComp.example = {
                     header_text_named_params: [{
-                        param_name: hNamedMatches[0][1],
-                        example: "Sample Header"
+                        param_name: pName,
+                        example: domHeaderSample || getSmartSample(pName, 'TEXT')
                     }]
                 };
             }

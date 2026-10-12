@@ -46,19 +46,20 @@ module.exports = async (req, res) => {
             : (rawCompanyHeader ? parseInt(rawCompanyHeader) : 1);
 
         let customersToMessage = [];
+        const custCols = sql`id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id`;
         if (target === 'all') {
             if (req.body.tag && String(req.body.tag).trim()) {
                 const tagPattern = `%${String(req.body.tag).trim()}%`;
-                customersToMessage = await sql`SELECT id, name, phone, company_id FROM customers WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}`;
+                customersToMessage = await sql`SELECT ${custCols} FROM customers WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}`;
             } else {
-                customersToMessage = await sql`SELECT id, name, phone, company_id FROM customers WHERE company_id = ${companyId} OR company_id IS NULL`;
+                customersToMessage = await sql`SELECT ${custCols} FROM customers WHERE company_id = ${companyId} OR company_id IS NULL`;
             }
         } else if (Array.isArray(target)) {
-            customersToMessage = await sql`SELECT id, name, phone, company_id FROM customers WHERE id = ANY(${target})`;
+            customersToMessage = await sql`SELECT ${custCols} FROM customers WHERE id = ANY(${target})`;
         } else if (typeof target === 'string' && target.startsWith('tag:')) {
             const rawTag = target.replace('tag:', '').trim();
             const tagPattern = `%${rawTag}%`;
-            customersToMessage = await sql`SELECT id, name, phone, company_id FROM customers WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}`;
+            customersToMessage = await sql`SELECT ${custCols} FROM customers WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}`;
         } else {
             return res.status(400).json({ error: 'Invalid target' });
         }
@@ -68,12 +69,15 @@ module.exports = async (req, res) => {
         let wabaId = null;
 
         let isMaster = false;
+        let sendingCompanyName = 'Our Company';
         if (!companyId || String(companyId) === 'default' || String(companyId) === 'parent') {
             isMaster = true;
+            sendingCompanyName = 'Inspenox Solutions';
         } else {
             try {
                 const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
                 if (cos.length > 0) {
+                    sendingCompanyName = cos[0].name || 'Our Company';
                     isMaster = (cos[0].slug || '').toLowerCase() === 'inspenox' || (cos[0].name || '').toLowerCase() === 'inspenox';
                     const isPaid = cos[0].subscription_status === 'active' && cos[0].subscription_plan && cos[0].subscription_plan.toLowerCase() !== 'none';
 
@@ -179,19 +183,49 @@ module.exports = async (req, res) => {
 
             const mediaObjFormatted = formatMetaMediaObject(media_id, req);
 
+            const custName = (cust.name && cust.name.trim()) ? cust.name.trim() : 'Customer';
+            const compName = sendingCompanyName || cust.cust_company_name || 'Our Company';
+
+            // Resolve dynamic broadcast variables from customer table columns and company profile
+            const resolveVar = (rawKey, index = 0) => {
+                const k = String(rawKey || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+                if (['name', 'customer_name', 'customer', 'first_name', 'client_name'].includes(k)) return custName;
+                if (['phone', 'phone_number', 'mobile', 'contact'].includes(k)) return cust.phone || '';
+                if (['email', 'email_address'].includes(k)) return cust.email || '';
+                if (['city', 'town', 'location'].includes(k)) return cust.city || '';
+                if (['state', 'province'].includes(k)) return cust.state || '';
+                if (['company_name', 'company', 'business_name', 'business', 'org', 'organization'].includes(k)) return compName;
+                if (['address', 'street'].includes(k)) return cust.address || '';
+                if (['pincode', 'pin', 'zip', 'zipcode', 'postal_code'].includes(k)) return cust.pincode || '';
+                if (['tag', 'tags', 'segment'].includes(k)) return cust.tags || '';
+                if (['customer_id', 'id', 'cust_id', 'client_id'].includes(k)) return String(cust.id || '');
+
+                // Positional fallback
+                if (k === '1' || index === 0) return custName;
+                if (k === '2' || index === 1) return compName || cust.city || 'Our Company';
+                if (k === '3' || index === 2) return cust.city || '';
+                return custName;
+            };
+
+            const replaceDynamicVars = (text) => {
+                if (!text || typeof text !== 'string') return text;
+                return text.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, p1) => {
+                    const val = resolveVar(p1);
+                    return (val !== undefined && val !== null) ? val : match;
+                });
+            };
+
             if (type === 'text') {
-                payload.text = { body: content };
+                payload.text = { body: replaceDynamicVars(content) };
             } else if (type === 'image') {
-                payload.image = mediaObjFormatted ? { ...mediaObjFormatted, caption: content } : { caption: content };
+                payload.image = mediaObjFormatted ? { ...mediaObjFormatted, caption: replaceDynamicVars(content) } : { caption: replaceDynamicVars(content) };
             } else if (type === 'video') {
-                payload.video = mediaObjFormatted ? { ...mediaObjFormatted, caption: content } : { caption: content };
+                payload.video = mediaObjFormatted ? { ...mediaObjFormatted, caption: replaceDynamicVars(content) } : { caption: replaceDynamicVars(content) };
             }
 
             let responseData = null;
 
             if (type === 'template') {
-                const custName = (cust.name && cust.name.trim()) ? cust.name.trim() : 'Customer';
-
                 const primaryLang = template_language || (templateMeta ? templateMeta.language : 'en');
                 const langCodes = [primaryLang];
                 if (primaryLang === 'en') langCodes.push('en_US');
@@ -204,7 +238,7 @@ module.exports = async (req, res) => {
                     const componentsPayload = [];
                     const tmplComponents = templateMeta ? (templateMeta.components || []) : [];
 
-                    // 1. HEADER component (IMAGE, VIDEO, DOCUMENT)
+                    // 1. HEADER component (IMAGE, VIDEO, DOCUMENT, or TEXT with variables)
                     const headerComp = tmplComponents.find(c => c.type === 'HEADER');
                     if (headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
                         const format = headerComp.format.toLowerCase();
@@ -225,6 +259,35 @@ module.exports = async (req, res) => {
                                 }]
                             });
                         }
+                    } else if (headerComp && headerComp.format === 'TEXT' && headerComp.text) {
+                        const hParams = [];
+                        if (headerComp.example && headerComp.example.header_text_named_params) {
+                            headerComp.example.header_text_named_params.forEach((p, idx) => {
+                                hParams.push({
+                                    type: "text",
+                                    parameter_name: p.param_name || "name",
+                                    text: resolveVar(p.param_name, idx)
+                                });
+                            });
+                        } else {
+                            const hMatches = headerComp.text.match(/\{\{([^}]+)\}\}/g);
+                            if (hMatches) {
+                                hMatches.forEach((m, idx) => {
+                                    const pName = m.replace(/[\{\}]/g, '').trim();
+                                    if (/^\d+$/.test(pName)) {
+                                        hParams.push({ type: "text", text: resolveVar(pName, idx) });
+                                    } else {
+                                        hParams.push({ type: "text", parameter_name: pName, text: resolveVar(pName, idx) });
+                                    }
+                                });
+                            }
+                        }
+                        if (hParams.length > 0) {
+                            componentsPayload.push({
+                                type: "header",
+                                parameters: hParams
+                            });
+                        }
                     }
 
                     // 2. BODY component (NAMED vs POSITIONAL)
@@ -237,22 +300,22 @@ module.exports = async (req, res) => {
                         if (isNamed) {
                             const namedParams = (bodyComp.example && bodyComp.example.body_text_named_params) || [];
                             if (namedParams.length > 0) {
-                                namedParams.forEach(p => {
+                                namedParams.forEach((p, idx) => {
                                     bodyParams.push({
                                         type: "text",
-                                        parameter_name: p.param_name || "customer_name",
-                                        text: custName
+                                        parameter_name: p.param_name || "name",
+                                        text: resolveVar(p.param_name, idx)
                                     });
                                 });
                             } else if (bodyComp.text) {
                                 const matches = bodyComp.text.match(/\{\{([^}]+)\}\}/g);
                                 if (matches) {
-                                    matches.forEach(m => {
+                                    matches.forEach((m, idx) => {
                                         const pName = m.replace(/[\{\}]/g, '').trim();
                                         bodyParams.push({
                                             type: "text",
                                             parameter_name: pName,
-                                            text: custName
+                                            text: resolveVar(pName, idx)
                                         });
                                     });
                                 }
@@ -260,8 +323,9 @@ module.exports = async (req, res) => {
                         } else if (bodyComp.text) {
                             const matches = bodyComp.text.match(/\{\{\d+\}\}/g);
                             if (matches) {
-                                matches.forEach(() => {
-                                    bodyParams.push({ type: "text", text: custName });
+                                matches.forEach((m, idx) => {
+                                    const num = m.replace(/[\{\}]/g, '').trim();
+                                    bodyParams.push({ type: "text", text: resolveVar(num, idx) });
                                 });
                             }
                         }
@@ -403,7 +467,7 @@ module.exports = async (req, res) => {
             } else {
                 sent++;
                 const wa_message_id = (data.messages && data.messages[0]) ? data.messages[0].id : 'sent_' + Date.now();
-                const saveContent = type === 'template' ? `[Template] ${template_name}` : content;
+                const saveContent = type === 'template' ? `[Template] ${template_name}` : replaceDynamicVars(content);
                 await sql`
                     INSERT INTO messages (company_id, customer_id, direction, type, content, wa_message_id, status) 
                     VALUES (${companyId}, ${cust.id}, 'outbound', ${type}, ${saveContent}, ${wa_message_id}, 'sent')

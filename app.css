@@ -2851,6 +2851,113 @@ tr:hover td {
     transform: scale(1.15);
 }
 
+/* Dynamic Broadcast Variable Picker Popover */
+.tpl-var-picker-popover {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 0.4rem;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
+    padding: 0.75rem;
+    z-index: 120;
+    width: 320px;
+    max-width: 92vw;
+    display: none;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+.tpl-var-picker-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.tpl-var-picker-header h5 {
+    margin: 0;
+    font-size: 0.825rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.tpl-var-picker-header p {
+    margin: 0.2rem 0 0 0;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+
+.tpl-var-group-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin: 0.35rem 0 0.25rem 0;
+    padding-left: 0.2rem;
+}
+
+.tpl-var-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.tpl-var-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+}
+
+.tpl-var-item:hover {
+    background: var(--primary-light, rgba(0, 168, 132, 0.08));
+    border-color: rgba(0, 168, 132, 0.2);
+}
+
+.tpl-var-item-info {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.tpl-var-item-label {
+    font-size: 0.775rem;
+    font-weight: 600;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.tpl-var-item-desc {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+}
+
+.tpl-var-badge {
+    font-family: monospace;
+    font-size: 0.725rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    background: rgba(0, 168, 132, 0.12);
+    color: #00a884;
+}
+
 .tpl-sample-box {
     background: var(--bg-card);
     border: 1px solid var(--border);
