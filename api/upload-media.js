@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
         let token = null;
         let appId = 'app';
 
-        const companyId = req.query.company_id || (req.body && req.body.company_id);
+        const companyId = req.query.company_id || (req.body && req.body.company_id) || (req.headers && req.headers['x-company-id']);
         if (String(companyId) === 'default' || String(companyId) === 'parent' || !companyId) {
             phoneId = env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID;
             token = env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN;

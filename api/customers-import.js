@@ -22,7 +22,24 @@ module.exports = async (req, res) => {
         }
 
         const sql = getDb(env);
-        const targetCompanyId = company_id || 1;
+
+        // Resolve company_id from body, query, or x-company-id header
+        const rawCo = (req.body && req.body.company_id) || req.query.company_id || (req.headers && req.headers['x-company-id']) || null;
+        let targetCompanyId = null;
+        if (rawCo && String(rawCo).trim() !== '' && String(rawCo).trim() !== 'default' && String(rawCo).trim() !== 'parent') {
+            const p = parseInt(rawCo, 10);
+            if (!isNaN(p)) targetCompanyId = p;
+        }
+        if (!targetCompanyId) {
+            // Default/parent Inspenox fallback: look up parent Inspenox company ID
+            try {
+                const parentRow = await sql`SELECT id FROM companies WHERE slug = 'inspenox' OR LOWER(name) = 'inspenox' OR is_parent = true LIMIT 1`;
+                if (parentRow.length > 0) {
+                    targetCompanyId = parentRow[0].id;
+                }
+            } catch (e) {}
+        }
+
         let added = 0;
 
         for (const cust of customers) {

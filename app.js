@@ -3172,7 +3172,8 @@ document.getElementById('add-customer-form')?.addEventListener('submit', async (
                 state,
                 pincode,
                 tags,
-                notes
+                notes,
+                company_id: getCompanyId()
             })
         });
         document.getElementById('btn-cancel-edit').click();
@@ -3302,6 +3303,7 @@ window.executeExcelImport = async function executeExcelImport() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ 
                 customers: pendingExcelCustomers,
+                company_id: getCompanyId(),
                 default_tags: defaultTags,
                 tag_mode: appendMode ? 'append' : 'replace'
             })
@@ -5969,7 +5971,8 @@ async function getMetaHeaderHandle(file) {
         body: JSON.stringify({
             base64Data: base64Data,
             fileName: file.name,
-            mimeType: mimeType
+            mimeType: mimeType,
+            company_id: getCompanyId()
         })
     });
 
@@ -6523,7 +6526,7 @@ function openSaveUnsavedLeadsModal() {
                 const res = await apiFetch('/api/customers', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ name: newName, phone: formattedPhone })
+                    body: JSON.stringify({ name: newName, phone: formattedPhone, company_id: getCompanyId() })
                 });
                 const data = await res.json();
 
@@ -6600,7 +6603,7 @@ document.getElementById('btn-save-all-unsaved-leads')?.addEventListener('click',
         const res = await apiFetch('/api/customers-import', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ customers: toSave })
+            body: JSON.stringify({ customers: toSave, company_id: getCompanyId() })
         });
         const result = await res.json();
 
@@ -7292,7 +7295,8 @@ document.getElementById('media-library-upload-input')?.addEventListener('change'
                 name: file.name,
                 type: fileType,
                 meta_media_id: metaData.id,
-                file_url: fileUrl
+                file_url: fileUrl,
+                company_id: getCompanyId()
             })
         });
 
