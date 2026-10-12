@@ -249,10 +249,67 @@ window.isParentAdmin = function isParentAdmin() {
 };
 
 
+function updateBrandingForActiveCompany() {
+    const brandNameEl = document.getElementById('nav-active-company-name') || document.querySelector('.sidebar-header .logo-text');
+    const poweredByBadgeEl = document.getElementById('nav-powered-by-badge');
+    const footerStatusEl = document.getElementById('app-footer-system-status');
+    const footerCreditsEl = document.getElementById('app-footer-brand-credits');
+
+    let user = {};
+    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+
+    // Find the current active company object from allCompanies
+    const activeCo = (allCompanies || []).find(c => String(c.id) === String(currentCompanyId));
+
+    // Determine whether this is the parent company:
+    // It's the parent if:
+    // - currentCompanyId is 'default' or '1'
+    // - OR activeCo name includes 'inspenox' or slug is 'inspenox'
+    const isParentCo = !currentCompanyId || currentCompanyId === 'default' || String(currentCompanyId) === '1' ||
+        (activeCo && (activeCo.name.toLowerCase().includes('inspenox') || String(activeCo.slug || '').toLowerCase() === 'inspenox'));
+
+    if (isParentCo) {
+        if (brandNameEl) {
+            brandNameEl.textContent = 'Inspenox';
+            brandNameEl.title = 'Inspenox Business Suite';
+        }
+        if (poweredByBadgeEl) poweredByBadgeEl.style.display = 'none';
+        if (footerStatusEl) footerStatusEl.textContent = 'Inspenox Business API';
+        if (footerCreditsEl) footerCreditsEl.textContent = 'Inspenox Business Suite For Marketing Platform';
+
+        document.querySelectorAll('.page-footer p').forEach(p => {
+            p.textContent = 'Inspenox Business Suite For Marketing';
+        });
+    } else {
+        const coName = (activeCo && activeCo.name) ? activeCo.name : (user.company_name || 'Workspace');
+        if (brandNameEl) {
+            brandNameEl.textContent = coName;
+            brandNameEl.title = coName;
+        }
+        if (poweredByBadgeEl) {
+            poweredByBadgeEl.style.display = 'flex';
+        }
+        if (footerStatusEl) {
+            footerStatusEl.textContent = `${coName} API`;
+        }
+        if (footerCreditsEl) {
+            footerCreditsEl.innerHTML = `${coName} Platform &bull; <span style="color: #10b981; font-weight: 700;">Powered by Inspenox</span>`;
+        }
+
+        document.querySelectorAll('.page-footer p').forEach(p => {
+            p.innerHTML = `${coName} &bull; <span style="color: #10b981; font-weight: 600;">Powered by Inspenox</span>`;
+        });
+    }
+}
+window.updateBrandingForActiveCompany = updateBrandingForActiveCompany;
+
 async function loadCompanies() {
     const isParent = isParentAdmin();
     const isSuper = isSuperAdmin();
     const switcherContainer = document.querySelector('.company-switcher-container');
+
+    // Update branding immediately with cached state
+    updateBrandingForActiveCompany();
 
     // Security strictly for Superadmin; Subscriptions enabled for all
     const secNav = document.getElementById('nav-item-security');
@@ -307,6 +364,10 @@ async function loadCompanies() {
                     selectEl.appendChild(opt);
                 });
             }
+
+            // Re-apply branding once companies are loaded
+            updateBrandingForActiveCompany();
+
             if (typeof updateCompanySubscriptionStatusUI === 'function') {
                 updateCompanySubscriptionStatusUI();
             }
@@ -324,6 +385,8 @@ async function loadCompanies() {
 document.getElementById('company-switcher')?.addEventListener('change', (e) => {
     currentCompanyId = e.target.value;
     localStorage.setItem('inspenox_company_id', currentCompanyId);
+
+    updateBrandingForActiveCompany();
 
     const isSuper = isSuperAdmin();
     const secNav = document.getElementById('nav-item-security');

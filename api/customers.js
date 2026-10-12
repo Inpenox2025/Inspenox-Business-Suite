@@ -14,12 +14,19 @@ function formatIndiaPhone(phone) {
 module.exports = async (req, res) => {
     const env = req.env || process.env || {};
     const sql = getDb(env);
-    const companyId = req.query.company_id || (req.body && req.body.company_id) || null;
+    const rawCompanyId = req.query.company_id || (req.body && req.body.company_id) || (req.headers && req.headers['x-company-id']) || null;
+    let companyId = null;
+    if (rawCompanyId && String(rawCompanyId).trim() !== '' && String(rawCompanyId).trim() !== 'default') {
+        const parsed = parseInt(rawCompanyId, 10);
+        if (!isNaN(parsed)) {
+            companyId = parsed;
+        }
+    }
 
     if (req.method === 'GET') {
         try {
             let customers;
-            if (companyId) {
+            if (companyId && companyId !== 1) {
                 customers = await sql`
                     SELECT c.*, 
                            (SELECT COUNT(*) FROM messages m WHERE m.customer_id = c.id) as message_count,
@@ -29,7 +36,7 @@ module.exports = async (req, res) => {
                            (SELECT COUNT(*) FROM messages m WHERE m.customer_id = c.id AND m.direction = 'outbound') as outbound_count,
                            (SELECT m.direction FROM messages m WHERE m.customer_id = c.id ORDER BY m.created_at ASC LIMIT 1) as first_message_direction
                     FROM customers c 
-                    WHERE c.company_id = ${companyId} OR c.company_id IS NULL
+                    WHERE c.company_id = ${companyId}
                     ORDER BY c.created_at DESC
                 `;
             } else {
@@ -42,6 +49,7 @@ module.exports = async (req, res) => {
                            (SELECT COUNT(*) FROM messages m WHERE m.customer_id = c.id AND m.direction = 'outbound') as outbound_count,
                            (SELECT m.direction FROM messages m WHERE m.customer_id = c.id ORDER BY m.created_at ASC LIMIT 1) as first_message_direction
                     FROM customers c 
+                    WHERE c.company_id = 1 OR c.company_id IS NULL
                     ORDER BY c.created_at DESC
                 `;
             }
@@ -73,7 +81,12 @@ module.exports = async (req, res) => {
             if (!name || !phone) return res.status(400).json({ error: 'Name and phone required' });
             
             const cleanPhone = formatIndiaPhone(phone);
-            const targetCompanyId = company_id || companyId || 1;
+            let targetCompanyId = 1;
+            const rawTarget = company_id || companyId;
+            if (rawTarget && String(rawTarget).trim() !== 'default') {
+                const p = parseInt(rawTarget, 10);
+                if (!isNaN(p)) targetCompanyId = p;
+            }
             const customJson = typeof custom_fields === 'object' ? JSON.stringify(custom_fields) : (custom_fields || '{}');
 
             if (id) {
