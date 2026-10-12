@@ -35,6 +35,24 @@ module.exports = async (req, res) => {
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_plan TEXT DEFAULT NULL;`;
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'inactive';`;
 
+        // Auto-ensure default parent company Inspenox exists in DB with NULL DB credentials (loaded from ENV only)
+        try {
+            const inspenoxRow = await sql`SELECT id FROM companies WHERE slug = 'inspenox' OR LOWER(name) = 'inspenox' LIMIT 1`;
+            if (inspenoxRow.length === 0) {
+                await sql`
+                    INSERT INTO companies (name, slug, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token, is_active)
+                    VALUES ('Inspenox', 'inspenox', NULL, NULL, NULL, NULL, true);
+                `;
+            } else {
+                // Keep credentials strictly NULL in DB for Inspenox parent company
+                await sql`
+                    UPDATE companies 
+                    SET whatsapp_phone_number_id = NULL, whatsapp_access_token = NULL, whatsapp_business_account_id = NULL, whatsapp_verify_token = NULL
+                    WHERE slug = 'inspenox' OR LOWER(name) = 'inspenox';
+                `;
+            }
+        } catch(e) {}
+
         // Reset any child companies that inadvertently received 'Starter' plan default without payment
         try {
             await sql`
@@ -55,7 +73,7 @@ module.exports = async (req, res) => {
                 whatsapp_phone_number_id: env.WHATSAPP_PHONE_NUMBER_ID || '',
                 whatsapp_business_account_id: env.WHATSAPP_BUSINESS_ACCOUNT_ID || '',
                 whatsapp_access_token: env.WHATSAPP_ACCESS_TOKEN || '',
-                whatsapp_verify_token: env.WHATSAPP_VERIFY_TOKEN || 'manasageetha',
+                whatsapp_verify_token: env.WHATSAPP_VERIFY_TOKEN || 'marketinginspenox',
                 has_access_token: !!(env.WHATSAPP_ACCESS_TOKEN)
             };
 
@@ -69,16 +87,11 @@ module.exports = async (req, res) => {
                 ORDER BY id ASC
             `;
 
-            // If no companies exist, seed default Inspenox parent company
+            // If no companies exist, seed default Inspenox parent company without credentials in DB
             if (companies.length === 0) {
-                const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || null;
-                const token = env.WHATSAPP_ACCESS_TOKEN || null;
-                const wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || null;
-                const verifyToken = env.WHATSAPP_VERIFY_TOKEN || 'manasageetha';
-
                 const defaultCo = await sql`
-                    INSERT INTO companies (name, slug, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token)
-                    VALUES ('Inspenox Business Suite', 'inspenox', ${phoneId}, ${token}, ${wabaId}, ${verifyToken})
+                    INSERT INTO companies (name, slug, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token, is_active)
+                    VALUES ('Inspenox', 'inspenox', NULL, NULL, NULL, NULL, true)
                     RETURNING *
                 `;
                 companies = [defaultCo[0]];
@@ -86,22 +99,29 @@ module.exports = async (req, res) => {
 
             // Hydrate environment variable fallbacks ONLY for primary parent Inspenox master company
             let resolvedCompanies = companies.map(c => {
-                const isMaster = (c.name || '').toLowerCase().includes('inspenox') || (c.slug && c.slug.toLowerCase() === 'inspenox') || String(c.id) === '1' || String(c.id) === 'default';
+                const isMaster = (c.slug && c.slug.toLowerCase() === 'inspenox') || (c.name && c.name.toLowerCase() === 'inspenox');
                 const isPaid = c.subscription_status === 'active' && c.subscription_plan && c.subscription_plan.toLowerCase() !== 'none';
 
                 if (isMaster) {
                     return {
                         ...c,
-                        whatsapp_phone_number_id: c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id,
-                        whatsapp_business_account_id: c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id,
-                        whatsapp_access_token: c.whatsapp_access_token || systemEnv.whatsapp_access_token,
-                        whatsapp_verify_token: c.whatsapp_verify_token || systemEnv.whatsapp_verify_token
+                        name: 'Inspenox',
+                        slug: 'inspenox',
+                        whatsapp_phone_number_id: systemEnv.whatsapp_phone_number_id,
+                        whatsapp_business_account_id: systemEnv.whatsapp_business_account_id,
+                        whatsapp_access_token: systemEnv.whatsapp_access_token,
+                        whatsapp_verify_token: systemEnv.whatsapp_verify_token,
+                        is_parent: true,
+                        is_master: true,
+                        is_env_loaded: true
                     };
                 }
 
                 // For other companies: NEVER fall back to system ENV defaults for unpaid or child accounts!
                 return {
                     ...c,
+                    is_parent: false,
+                    is_master: false,
                     whatsapp_phone_number_id: isPaid ? (c.whatsapp_phone_number_id || null) : null,
                     whatsapp_business_account_id: isPaid ? (c.whatsapp_business_account_id || null) : null,
                     whatsapp_access_token: isPaid ? (c.whatsapp_access_token || null) : null,
@@ -140,6 +160,10 @@ module.exports = async (req, res) => {
             const cleanPhone = phone && String(phone).trim() ? String(phone).trim() : null;
             const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `co-${Date.now()}`;
 
+            try {
+                await sql`SELECT setval(pg_get_serial_sequence('companies', 'id'), COALESCE((SELECT MAX(id) FROM companies), 1));`;
+            } catch(e) {}
+
             // Newly created companies must NOT be assigned any subscription plan or Meta credentials until subscribed!
             const result = await sql`
                 INSERT INTO companies (name, slug, email, phone, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token, subscription_plan, subscription_status)
@@ -163,7 +187,7 @@ module.exports = async (req, res) => {
             if (existing.length === 0) return res.status(404).json({ error: 'Company not found' });
 
             const oldComp = existing[0];
-            const isMaster = (oldComp.name || '').toLowerCase().includes('inspenox') || (oldComp.slug && oldComp.slug.toLowerCase() === 'inspenox') || String(oldComp.id) === '1' || String(oldComp.id) === 'default';
+            const isMaster = (oldComp.slug && oldComp.slug.toLowerCase() === 'inspenox') || (oldComp.name && oldComp.name.toLowerCase() === 'inspenox');
             const isPaid = oldComp.subscription_status === 'active' && oldComp.subscription_plan && oldComp.subscription_plan.toLowerCase() !== 'none';
 
             // Check if user is attempting to configure Meta credentials without an active paid subscription
@@ -177,7 +201,7 @@ module.exports = async (req, res) => {
                 });
             }
 
-            const updatedName = (name && name.trim()) ? name.trim() : oldComp.name;
+            const updatedName = isMaster ? 'Inspenox' : ((name && name.trim()) ? name.trim() : oldComp.name);
             const updatedEmail = email !== undefined ? (email && String(email).trim() ? String(email).trim().toLowerCase() : null) : oldComp.email;
             const updatedPhone = phone !== undefined ? (phone && String(phone).trim() ? String(phone).trim() : null) : oldComp.phone;
             
@@ -185,10 +209,11 @@ module.exports = async (req, res) => {
             const updatedPlan = subscription_plan !== undefined ? (subscription_plan || null) : (oldComp.subscription_plan || null);
             const updatedStatus = updatedPlan ? 'active' : (oldComp.subscription_status || 'inactive');
 
-            const updatedPhoneId = (!isMaster && !isPaid) ? null : ((whatsapp_phone_number_id !== undefined && whatsapp_phone_number_id !== null && String(whatsapp_phone_number_id).trim() !== '') ? String(whatsapp_phone_number_id).trim() : oldComp.whatsapp_phone_number_id);
-            const updatedWabaId = (!isMaster && !isPaid) ? null : ((whatsapp_business_account_id !== undefined && whatsapp_business_account_id !== null && String(whatsapp_business_account_id).trim() !== '') ? String(whatsapp_business_account_id).trim() : oldComp.whatsapp_business_account_id);
-            const updatedToken = (!isMaster && !isPaid) ? null : ((whatsapp_access_token && String(whatsapp_access_token).trim() !== '') ? String(whatsapp_access_token).trim() : oldComp.whatsapp_access_token);
-            const updatedVerify = (!isMaster && !isPaid) ? null : ((whatsapp_verify_token && String(whatsapp_verify_token).trim() !== '') ? String(whatsapp_verify_token).trim() : oldComp.whatsapp_verify_token);
+            // Parent Inspenox WhatsApp configuration strictly goes from ENV only, NEVER stored in DB!
+            const updatedPhoneId = isMaster ? null : ((!isPaid) ? null : ((whatsapp_phone_number_id !== undefined && whatsapp_phone_number_id !== null && String(whatsapp_phone_number_id).trim() !== '') ? String(whatsapp_phone_number_id).trim() : oldComp.whatsapp_phone_number_id));
+            const updatedWabaId = isMaster ? null : ((!isPaid) ? null : ((whatsapp_business_account_id !== undefined && whatsapp_business_account_id !== null && String(whatsapp_business_account_id).trim() !== '') ? String(whatsapp_business_account_id).trim() : oldComp.whatsapp_business_account_id));
+            const updatedToken = isMaster ? null : ((!isPaid) ? null : ((whatsapp_access_token && String(whatsapp_access_token).trim() !== '') ? String(whatsapp_access_token).trim() : oldComp.whatsapp_access_token));
+            const updatedVerify = isMaster ? null : ((!isPaid) ? null : ((whatsapp_verify_token && String(whatsapp_verify_token).trim() !== '') ? String(whatsapp_verify_token).trim() : oldComp.whatsapp_verify_token));
             const updatedActive = is_active !== undefined ? is_active : oldComp.is_active;
 
             const result = await sql`
@@ -209,7 +234,20 @@ module.exports = async (req, res) => {
 
             if (result.length === 0) return res.status(404).json({ error: 'Company not found' });
 
-            return res.status(200).json({ success: true, company: result[0] });
+            const returnComp = isMaster ? {
+                ...result[0],
+                name: 'Inspenox',
+                slug: 'inspenox',
+                whatsapp_phone_number_id: env.WHATSAPP_PHONE_NUMBER_ID || '',
+                whatsapp_business_account_id: env.WHATSAPP_BUSINESS_ACCOUNT_ID || '',
+                whatsapp_access_token: env.WHATSAPP_ACCESS_TOKEN || '',
+                whatsapp_verify_token: env.WHATSAPP_VERIFY_TOKEN || 'marketinginspenox',
+                is_parent: true,
+                is_master: true,
+                is_env_loaded: true
+            } : result[0];
+
+            return res.status(200).json({ success: true, company: returnComp });
         } catch (error) {
             return res.status(500).json({ error: error.message });
         }
@@ -224,8 +262,8 @@ module.exports = async (req, res) => {
             if (targetComp.length > 0) {
                 const compName = (targetComp[0].name || '').toLowerCase();
                 const compSlug = (targetComp[0].slug || '').toLowerCase();
-                if (compName.includes('inspenox') || compSlug === 'inspenox' || String(targetComp[0].id) === '1' || String(targetComp[0].id) === 'default') {
-                    return res.status(403).json({ error: 'Inspenox Business Suite is the primary parent organization and cannot be deleted.' });
+                if (compName === 'inspenox' || compSlug === 'inspenox') {
+                    return res.status(403).json({ error: 'Inspenox is the primary parent organization and cannot be deleted.' });
                 }
             }
 

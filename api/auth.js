@@ -268,6 +268,42 @@ module.exports = async (req, res) => {
                 const targetId = (id !== undefined && id !== null && String(id).trim() !== '' && String(id) !== '0' && String(id) !== 'null' && String(id) !== 'undefined') ? parseInt(id) : null;
 
                 if (targetId) {
+                    // Check limit if reassigning to a different company
+                    if (coId) {
+                        const oldUserRes = await sql`SELECT company_id FROM users WHERE id = ${targetId} LIMIT 1`;
+                        const oldCoId = oldUserRes[0]?.company_id;
+                        if (oldCoId !== coId) {
+                            const compRows = await sql`
+                                SELECT id, name, slug, subscription_plan, subscription_status 
+                                FROM companies 
+                                WHERE id = ${coId} 
+                                LIMIT 1
+                            `;
+                            if (compRows.length > 0) {
+                                const comp = compRows[0];
+                                const isParent = (comp.slug && comp.slug.toLowerCase() === 'inspenox') || (comp.name && comp.name.toLowerCase() === 'inspenox');
+                                if (!isParent) {
+                                    const planStr = (comp.subscription_plan || '').toLowerCase();
+                                    const isPaid = comp.subscription_status === 'active' && planStr && planStr !== 'none';
+                                    let maxAllowedUsers = 1;
+                                    if (isPaid) {
+                                        if (planStr.includes('enterprise')) maxAllowedUsers = 999999;
+                                        else if (planStr.includes('growth')) maxAllowedUsers = 5;
+                                        else if (planStr.includes('starter')) maxAllowedUsers = 2;
+                                    }
+                                    const userCountRes = await sql`SELECT COUNT(*)::int as count FROM users WHERE company_id = ${coId}`;
+                                    const currentCount = userCountRes[0]?.count || 0;
+                                    if (currentCount >= maxAllowedUsers) {
+                                        const planDisplayName = comp.subscription_plan || 'Unsubscribed (Free)';
+                                        return res.status(403).json({
+                                            error: `User creation limit reached (${currentCount}/${maxAllowedUsers} users for ${planDisplayName}). Cannot reassign user. Upgrade plan in Subscriptions & Billing.`
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if (password && password.trim()) {
                         const newHash = hashPassword(password);
                         await sql`
@@ -286,6 +322,51 @@ module.exports = async (req, res) => {
                     if (!password || password.trim().length < 6) {
                         return res.status(400).json({ error: 'Password of min 6 characters is required for new users' });
                     }
+
+                    // Enforce Plan Limits for User Creation
+                    if (coId) {
+                        const compRows = await sql`
+                            SELECT id, name, slug, subscription_plan, subscription_status 
+                            FROM companies 
+                            WHERE id = ${coId} 
+                            LIMIT 1
+                        `;
+                        if (compRows.length > 0) {
+                            const comp = compRows[0];
+                            const isParent = (comp.slug && comp.slug.toLowerCase() === 'inspenox') || (comp.name && comp.name.toLowerCase() === 'inspenox');
+
+                            if (!isParent) {
+                                const planStr = (comp.subscription_plan || '').toLowerCase();
+                                const isPaid = comp.subscription_status === 'active' && planStr && planStr !== 'none';
+                                let maxAllowedUsers = 1; // Default for unpaid / no plan: 1 user account
+
+                                if (isPaid) {
+                                    if (planStr.includes('enterprise')) {
+                                        maxAllowedUsers = 999999;
+                                    } else if (planStr.includes('growth')) {
+                                        maxAllowedUsers = 5;
+                                    } else if (planStr.includes('starter')) {
+                                        maxAllowedUsers = 2;
+                                    }
+                                }
+
+                                const userCountRes = await sql`
+                                    SELECT COUNT(*)::int as count 
+                                    FROM users 
+                                    WHERE company_id = ${coId}
+                                `;
+                                const currentCount = userCountRes[0]?.count || 0;
+
+                                if (currentCount >= maxAllowedUsers) {
+                                    const planDisplayName = comp.subscription_plan || 'Unsubscribed (Free)';
+                                    return res.status(403).json({
+                                        error: `User creation limit reached (${currentCount}/${maxAllowedUsers} users for ${planDisplayName} plan). Please upgrade your subscription plan in Subscriptions & Billing to add more team members.`
+                                    });
+                                }
+                            }
+                        }
+                    }
+
                     const newHash = hashPassword(password);
                     await sql`
                         INSERT INTO users (username, email, phone, password_hash, role, company_id)

@@ -1,30 +1,81 @@
+const { getDb } = require('../lib/db');
+
 module.exports = async (req, res) => {
     const env = req.env || process.env || {};
-    let wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-    let token = env.WHATSAPP_ACCESS_TOKEN;
-
     const companyId = req.query.company_id || (req.body && req.body.company_id);
-    if (companyId) {
+
+    let isMaster = false;
+    let company = null;
+
+    if (companyId && companyId !== 'default' && companyId !== 'parent' && companyId !== 'all') {
         try {
-            const { getDb } = require('../lib/db');
             const sql = getDb(env);
             const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
             if (cos.length > 0) {
-                if (cos[0].whatsapp_business_account_id) wabaId = cos[0].whatsapp_business_account_id;
-                if (cos[0].whatsapp_access_token) token = cos[0].whatsapp_access_token;
+                company = cos[0];
+                isMaster = (company.slug && company.slug.toLowerCase() === 'inspenox') || (company.name && company.name.toLowerCase() === 'inspenox');
             }
         } catch(e) {}
+    } else {
+        isMaster = true;
     }
 
-    if (!wabaId || !token) {
-        return res.status(400).json({ error: 'WhatsApp credentials not fully configured for this company.' });
+    let phoneId = null;
+    let wabaId = null;
+    let token = null;
+    let verifyToken = null;
+    let isConfigured = false;
+
+    if (isMaster) {
+        // Parent company Inspenox credentials strictly come from ENV
+        phoneId = env.WHATSAPP_PHONE_NUMBER_ID;
+        wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+        token = env.WHATSAPP_ACCESS_TOKEN;
+        verifyToken = env.WHATSAPP_VERIFY_TOKEN;
+        isConfigured = !!(phoneId && wabaId && token && verifyToken);
+    } else if (company) {
+        // Child companies credentials strictly come from DB
+        phoneId = company.whatsapp_phone_number_id;
+        wabaId = company.whatsapp_business_account_id;
+        token = company.whatsapp_access_token;
+        verifyToken = company.whatsapp_verify_token;
+        isConfigured = !!(phoneId && wabaId && token && verifyToken);
+    }
+
+    const isViewOnly = !isConfigured;
+
+    // Mutating actions (Create, Edit, Delete) are strictly disallowed if not configured
+    if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
+        if (isViewOnly) {
+            return res.status(403).json({
+                error: 'Templates are in view-only access. Configure Meta app details in Settings to create or manage templates for other companies.'
+            });
+        }
     }
 
     if (req.method === 'GET') {
         try {
-            const url = `https://graph.facebook.com/v19.0/${wabaId}/message_templates?limit=100`;
+            let activeWabaId = wabaId;
+            let activeToken = token;
+
+            // If not configured, fetch default ENV templates for View-Only access
+            if (isViewOnly) {
+                activeWabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+                activeToken = env.WHATSAPP_ACCESS_TOKEN;
+            }
+
+            if (!activeWabaId || !activeToken) {
+                return res.status(200).json({
+                    is_view_only: true,
+                    is_configured: false,
+                    message: 'Configure Meta app details in Settings to create or manage templates for other companies.',
+                    data: []
+                });
+            }
+
+            const url = `https://graph.facebook.com/v19.0/${activeWabaId}/message_templates?limit=100`;
             const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${activeToken}` }
             });
 
             const data = await response.json();
@@ -32,7 +83,17 @@ module.exports = async (req, res) => {
                 return res.status(500).json({ error: data.error.message || JSON.stringify(data.error) });
             }
 
-            return res.status(200).json(data.data || []);
+            const templates = (data.data || []).map(t => ({
+                ...t,
+                is_view_only: isViewOnly
+            }));
+
+            return res.status(200).json({
+                is_view_only: isViewOnly,
+                is_configured: isConfigured,
+                message: isViewOnly ? 'Configure Meta app details in Settings to create or manage templates for other companies.' : null,
+                data: templates
+            });
         } catch (error) {
             return res.status(500).json({ error: error.message });
         }
@@ -112,7 +173,6 @@ module.exports = async (req, res) => {
                 }
             }
 
-            
             const payloadToMeta = {
                 name: formattedName,
                 category: category.toUpperCase(),
@@ -208,4 +268,3 @@ module.exports = async (req, res) => {
 
     res.status(405).send('Method Not Allowed');
 };
-

@@ -347,20 +347,32 @@ async function loadCompanies() {
             const selectEl = document.getElementById('company-switcher');
             if (selectEl) {
                 selectEl.innerHTML = '';
-                if (isParent) {
+                // Sort so parent Inspenox is always top
+                const sortedCos = [...companies].sort((a, b) => {
+                    const aMaster = (a.slug && a.slug.toLowerCase() === 'inspenox') || (a.name && a.name.toLowerCase() === 'inspenox');
+                    const bMaster = (b.slug && b.slug.toLowerCase() === 'inspenox') || (b.name && b.name.toLowerCase() === 'inspenox');
+                    if (aMaster && !bMaster) return -1;
+                    if (!aMaster && bMaster) return 1;
+                    return a.id - b.id;
+                });
+
+                const hasInspenox = sortedCos.some(c => (c.slug && c.slug.toLowerCase() === 'inspenox') || (c.name && c.name.toLowerCase() === 'inspenox'));
+                if (!hasInspenox && isParent) {
                     const optDef = document.createElement('option');
                     optDef.value = 'default';
-                    optDef.textContent = 'Inspenox Business Suite (Parent - All Companies)';
+                    optDef.textContent = 'Inspenox (Parent)';
                     if (!currentCompanyId || currentCompanyId === 'default') optDef.selected = true;
                     selectEl.appendChild(optDef);
                 }
 
-                companies.forEach(comp => {
+                sortedCos.forEach(comp => {
                     const opt = document.createElement('option');
                     opt.value = comp.id;
-                    const isParentCo = comp.name.toLowerCase().includes('inspenox') || String(comp.slug || '').toLowerCase() === 'inspenox';
-                    opt.textContent = comp.name + (isParentCo ? ' (Parent)' : '');
-                    if (String(comp.id) === String(currentCompanyId)) opt.selected = true;
+                    const isMaster = (comp.slug && comp.slug.toLowerCase() === 'inspenox') || (comp.name && comp.name.toLowerCase() === 'inspenox');
+                    opt.textContent = isMaster ? 'Inspenox (Parent)' : comp.name;
+                    if (String(comp.id) === String(currentCompanyId) || (isMaster && (!currentCompanyId || currentCompanyId === 'default'))) {
+                        opt.selected = true;
+                    }
                     selectEl.appendChild(opt);
                 });
             }
@@ -475,7 +487,7 @@ async function loadCompaniesSettings() {
             tbody.innerHTML = '';
             companies.forEach(c => {
                 const tr = document.createElement('tr');
-                const isInspenox = (c.name || '').toLowerCase().includes('inspenox') || String(c.slug || '').toLowerCase() === 'inspenox' || String(c.id) === 'default' || String(c.id) === '1';
+                const isInspenox = (c.slug && c.slug.toLowerCase() === 'inspenox') || (c.name && c.name.toLowerCase() === 'inspenox');
                 const isPlanActive = c.subscription_status === 'active' && c.subscription_plan && c.subscription_plan.toLowerCase() !== 'none';
 
                 let actionHtml = '';
@@ -580,7 +592,7 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
     if (companyId !== null && companyId !== undefined) {
         const comp = allCompanies.find(c => String(c.id) === String(companyId));
         if (comp) {
-            const isMaster = (comp.name || '').toLowerCase().includes('inspenox') || (comp.slug && comp.slug.toLowerCase() === 'inspenox') || String(comp.id) === 'default' || String(comp.id) === '1';
+            const isMaster = (comp.slug && comp.slug.toLowerCase() === 'inspenox') || (comp.name && comp.name.toLowerCase() === 'inspenox');
             const isPaid = comp.subscription_status === 'active' && comp.subscription_plan && comp.subscription_plan.toLowerCase() !== 'none';
 
             if (titleEl) {
@@ -598,8 +610,17 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
             tokenInput.value = comp.whatsapp_access_token || '';
             verifyInput.value = comp.whatsapp_verify_token || (isMaster ? systemEnvGlobals.whatsapp_verify_token : '') || '';
 
-            // If not master inspenox and not paid: LOCK Meta WhatsApp credentials fields
-            if (!isMaster && !isPaid) {
+            if (isMaster) {
+                if (subAlert) {
+                    subAlert.style.display = 'flex';
+                    subAlert.innerHTML = `
+                        <div style="font-size: 0.825rem; color: #10b981; line-height: 1.45;">
+                            <strong>⚡ Inspenox Parent Organization:</strong><br>
+                            WhatsApp API credentials for Inspenox are loaded directly from server environment variables and not stored in DB columns.
+                        </div>
+                    `;
+                }
+            } else if (!isPaid) {
                 if (subAlert) subAlert.style.display = 'flex';
                 if (phoneInput) { phoneInput.disabled = true; phoneInput.style.opacity = '0.55'; phoneInput.placeholder = '🔒 Locked - Subscription Required'; }
                 if (wabaInput) { wabaInput.disabled = true; wabaInput.style.opacity = '0.55'; wabaInput.placeholder = '🔒 Locked - Subscription Required'; }
@@ -725,6 +746,42 @@ window.loadUsersList = async function loadUsersList() {
                 `;
                 tbody.appendChild(tr);
             });
+
+            // Update User Plan Limit Badge
+            const badgeEl = document.getElementById('user-plan-limit-badge');
+            if (badgeEl) {
+                const activeCo = (allCompanies || []).find(c => String(c.id) === String(currentCompanyId));
+                const isMaster = !currentCompanyId || currentCompanyId === 'default' || (activeCo && ((activeCo.slug && activeCo.slug.toLowerCase() === 'inspenox') || (activeCo.name && activeCo.name.toLowerCase() === 'inspenox')));
+
+                if (isMaster) {
+                    badgeEl.style.display = 'inline-block';
+                    badgeEl.textContent = '👥 Inspenox Parent (Unlimited Users)';
+                    badgeEl.style.borderColor = 'var(--border)';
+                    badgeEl.style.color = 'var(--text-main)';
+                } else if (activeCo) {
+                    const planStr = (activeCo.subscription_plan || '').toLowerCase();
+                    const isPaid = activeCo.subscription_status === 'active' && planStr && planStr !== 'none';
+                    let limit = 1;
+                    let limitLabel = '1 User';
+                    if (isPaid) {
+                        if (planStr.includes('enterprise')) { limit = 999999; limitLabel = 'Unlimited'; }
+                        else if (planStr.includes('growth')) { limit = 5; limitLabel = '5 Users'; }
+                        else if (planStr.includes('starter')) { limit = 2; limitLabel = '2 Users'; }
+                    }
+                    const coUsers = users.filter(u => String(u.company_id) === String(activeCo.id));
+                    badgeEl.style.display = 'inline-block';
+                    badgeEl.textContent = `👥 Plan Limit: ${coUsers.length} / ${limitLabel} (${activeCo.subscription_plan || 'No Active Plan'})`;
+                    if (typeof limit === 'number' && coUsers.length >= limit) {
+                        badgeEl.style.borderColor = '#ef4444';
+                        badgeEl.style.color = '#ef4444';
+                    } else {
+                        badgeEl.style.borderColor = 'var(--border)';
+                        badgeEl.style.color = 'var(--text-main)';
+                    }
+                } else {
+                    badgeEl.style.display = 'none';
+                }
+            }
         }
     } catch(e) {
         tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Failed to load user accounts.</td></tr>`;
@@ -786,6 +843,32 @@ window.submitAdminResetPass = async function submitAdminResetPass(e) {
 };
 
 window.openUserModal = function openUserModal(userId = null) {
+    // If adding a new user, enforce subscription plan limits
+    if (!userId) {
+        const activeCo = (allCompanies || []).find(c => String(c.id) === String(currentCompanyId));
+        const isMaster = !currentCompanyId || currentCompanyId === 'default' || (activeCo && ((activeCo.slug && activeCo.slug.toLowerCase() === 'inspenox') || (activeCo.name && activeCo.name.toLowerCase() === 'inspenox')));
+
+        if (!isMaster && activeCo) {
+            const planStr = (activeCo.subscription_plan || '').toLowerCase();
+            const isPaid = activeCo.subscription_status === 'active' && planStr && planStr !== 'none';
+            let limit = 1;
+            let limitLabel = '1 user';
+            if (isPaid) {
+                if (planStr.includes('enterprise')) { limit = 999999; limitLabel = 'unlimited users'; }
+                else if (planStr.includes('growth')) { limit = 5; limitLabel = '5 users'; }
+                else if (planStr.includes('starter')) { limit = 2; limitLabel = '2 users'; }
+            }
+            const coUsers = (allUsersList || []).filter(u => String(u.company_id) === String(activeCo.id));
+            if (typeof limit === 'number' && coUsers.length >= limit) {
+                showModal(
+                    'User Limit Reached',
+                    `Your current plan (${activeCo.subscription_plan || 'No Active Plan'}) allows a maximum of ${limitLabel}. You currently have ${coUsers.length} active user(s).\n\nPlease upgrade your subscription in Subscriptions & Billing to add more team members.`
+                );
+                return;
+            }
+        }
+    }
+
     const modal = document.getElementById('user-modal');
     if (!modal) return;
     document.getElementById('user-form')?.reset();
@@ -797,17 +880,32 @@ window.openUserModal = function openUserModal(userId = null) {
     const isParent = isParentAdmin();
     const selectCo = document.getElementById('user-company-select');
     if (selectCo) {
-        selectCo.innerHTML = isParent ? '<option value="default">Inspenox Business Suite (Parent)</option>' : '';
-        if (Array.isArray(allCompanies)) {
-            allCompanies.forEach(c => {
-                if (isParent || String(c.id) === String(currentCompanyId)) {
-                    const opt = document.createElement('option');
-                    opt.value = c.id;
-                    opt.textContent = c.name;
-                    selectCo.appendChild(opt);
-                }
-            });
+        selectCo.innerHTML = '';
+        const sortedCos = [...(allCompanies || [])].sort((a, b) => {
+            const aMaster = (a.slug && a.slug.toLowerCase() === 'inspenox') || (a.name && a.name.toLowerCase() === 'inspenox');
+            const bMaster = (b.slug && b.slug.toLowerCase() === 'inspenox') || (b.name && b.name.toLowerCase() === 'inspenox');
+            if (aMaster && !bMaster) return -1;
+            if (!aMaster && bMaster) return 1;
+            return a.id - b.id;
+        });
+
+        const hasInspenox = sortedCos.some(c => (c.slug && c.slug.toLowerCase() === 'inspenox') || (c.name && c.name.toLowerCase() === 'inspenox'));
+        if (!hasInspenox && isParent) {
+            const optDef = document.createElement('option');
+            optDef.value = 'default';
+            optDef.textContent = 'Inspenox (Parent)';
+            selectCo.appendChild(optDef);
         }
+
+        sortedCos.forEach(c => {
+            if (isParent || String(c.id) === String(currentCompanyId)) {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                const isMaster = (c.slug && c.slug.toLowerCase() === 'inspenox') || (c.name && c.name.toLowerCase() === 'inspenox');
+                opt.textContent = isMaster ? 'Inspenox (Parent)' : c.name;
+                selectCo.appendChild(opt);
+            }
+        });
         if (!isParent) {
             selectCo.value = currentCompanyId;
             selectCo.disabled = true;
@@ -3191,12 +3289,37 @@ async function loadTemplates() {
     }
     try {
         const res = await apiFetch('/api/templates');
-        templatesCache = await res.json();
+        const json = await res.json();
         
-        if (templatesCache.error) {
+        if (json.error) {
             templatesCache = [];
-            if (grid) grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">Failed to load templates.</div>';
+            if (grid) grid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">Failed to load templates: ${json.error}</div>`;
             return;
+        }
+        
+        const isViewOnly = json.is_view_only === true;
+        const isConfigured = json.is_configured !== false;
+        const list = Array.isArray(json) ? json : (json.data || json.templates || []);
+        templatesCache = list;
+        templatesCache.is_view_only = isViewOnly;
+        templatesCache.is_configured = isConfigured;
+
+        // Toggle View-Only Notification Banner
+        const bannerEl = document.getElementById('templates-view-only-banner');
+        if (bannerEl) {
+            bannerEl.style.display = isViewOnly ? 'flex' : 'none';
+        }
+
+        // Toggle Create Template button visual state
+        const createBtn = document.getElementById('btn-create-template');
+        if (createBtn) {
+            if (isViewOnly) {
+                createBtn.style.opacity = '0.5';
+                createBtn.title = 'Configure Meta app details in Settings to create templates';
+            } else {
+                createBtn.style.opacity = '1';
+                createBtn.title = 'Create Template';
+            }
         }
         
         if (grid) {
@@ -3209,16 +3332,18 @@ async function loadTemplates() {
                     const safeName = (t.name || '').replace(/'/g, "\\'");
                     const safeId = (t.id || '').replace(/'/g, "\\'");
                     
-                    grid.innerHTML += `
-                        <div class="template-card">
-                            <div>
-                                <div class="template-card-header">
-                                    <h4 class="template-card-title" title="${t.name}">${t.name}</h4>
-                                    <span class="badge-status ${statusClass}">${t.status || 'APPROVED'}</span>
+                    let actionHtml = '';
+                    if (isViewOnly) {
+                        actionHtml = `
+                            <div class="tpl-actions-row">
+                                <div class="tpl-action-group">
+                                    <span class="window-badge" style="background:rgba(245, 158, 11, 0.15); color:#f59e0b; font-weight:600; font-size:0.75rem; padding:4px 10px;">🔒 View Access Only</span>
                                 </div>
-                                <span class="template-card-meta">${t.language} • ${t.category || 'UTILITY'}</span>
-                                <p class="template-card-body">${bodySnippet}</p>
+                                <span class="template-id-tag" title="Template ID">${t.id || ''}</span>
                             </div>
+                        `;
+                    } else {
+                        actionHtml = `
                             <div class="tpl-actions-row">
                                 <div class="tpl-action-group">
                                     <button class="tpl-action-btn copy" onclick="navigator.clipboard.writeText('${safeName}'); showModal('Copied', 'Template name copied to clipboard!');" title="Copy template name">
@@ -3236,17 +3361,41 @@ async function loadTemplates() {
                                 </div>
                                 <span class="template-id-tag" title="Template ID">${t.id || ''}</span>
                             </div>
+                        `;
+                    }
+
+                    grid.innerHTML += `
+                        <div class="template-card">
+                            <div>
+                                <div class="template-card-header">
+                                    <h4 class="template-card-title" title="${t.name}">${t.name}</h4>
+                                    <span class="badge-status ${statusClass}">${t.status || 'APPROVED'}</span>
+                                </div>
+                                <span class="template-card-meta">${t.language} • ${t.category || 'UTILITY'}</span>
+                                <p class="template-card-body">${bodySnippet}</p>
+                            </div>
+                            ${actionHtml}
                         </div>
                     `;
                 });
             } else {
-                grid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No templates found. Click "+ Create Template" above to build your first template.</div>';
+                grid.innerHTML = isViewOnly 
+                    ? '<div class="empty-state" style="grid-column: 1 / -1;">No templates available. Configure Meta app details in Settings to create and manage templates.</div>'
+                    : '<div class="empty-state" style="grid-column: 1 / -1;">No templates found. Click "+ Create Template" above to build your first template.</div>';
             }
         }
     } catch (e) { console.error('Templates fetch error', e); }
 }
 
 window.loadTemplates = loadTemplates;
+
+window.navigateToSettingsMeta = function() {
+    switchView('settings');
+    setTimeout(() => {
+        const target = document.getElementById('panel-companies-title') || document.getElementById('env-credentials-card');
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+    }, 150);
+};
 
 function updateBannerTitle() {
     const titleEl = document.getElementById('tpl-banner-title');
@@ -3263,6 +3412,10 @@ function updateBannerTitle() {
 window.updateBannerTitle = updateBannerTitle;
 
 window.editTemplate = function editTemplate(id) {
+    if (templatesCache && templatesCache.is_view_only) {
+        showModal('View-Only Access', 'Templates are view-only for this company. Configure Meta app details in Settings to manage templates.');
+        return;
+    }
     if (!templatesCache || !Array.isArray(templatesCache) || templatesCache.length === 0) {
         showModal('Error', 'Templates data is loading. Please try clicking "Refresh Statuses" to sync templates.');
         return;
@@ -3464,6 +3617,10 @@ window.editTemplate = function editTemplate(id) {
 };
 
 window.deleteTemplate = function deleteTemplate(name, id) {
+    if (templatesCache && templatesCache.is_view_only) {
+        showModal('View-Only Access', 'Templates are in view-only access. Configure Meta app details in Settings to create or manage templates for other companies.');
+        return;
+    }
     if (name && name.toLowerCase().startsWith('hello_world')) {
         showModal('System Template Locked', 'Meta Cloud API Notice: "hello_world" is a default system sample template pre-provisioned and locked by Meta. It cannot be deleted from your account. Any custom templates you create can be deleted freely.');
         return;
@@ -4781,6 +4938,10 @@ function resetTemplateModal() {
 }
 
 function openTemplateModal() {
+    if (templatesCache && templatesCache.is_view_only) {
+        showModal('Meta Setup Required', 'This company is in View-Only mode because Meta WhatsApp credentials have not been configured. Configure Meta app details in Settings to create or manage templates for other companies.');
+        return;
+    }
     const modal = document.getElementById('template-create-modal');
     if (modal) {
         resetTemplateModal();

@@ -53,14 +53,14 @@ module.exports = async (req, res) => {
         let phoneId = null;
         let token = null;
 
-        if (String(companyId) === '1' || String(companyId) === 'default') {
-            phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
-            token = env.WHATSAPP_ACCESS_TOKEN;
+        let isMaster = false;
+        if (!companyId || String(companyId) === 'default' || String(companyId) === 'parent') {
+            isMaster = true;
         } else {
             try {
                 const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
                 if (cos.length > 0) {
-                    const isMaster = (cos[0].name || '').toLowerCase().includes('inspenox') || (cos[0].slug || '').toLowerCase() === 'inspenox' || String(cos[0].id) === '1';
+                    isMaster = (cos[0].slug || '').toLowerCase() === 'inspenox' || (cos[0].name || '').toLowerCase() === 'inspenox';
                     const isPaid = cos[0].subscription_status === 'active' && cos[0].subscription_plan && cos[0].subscription_plan.toLowerCase() !== 'none';
 
                     if (!isMaster && !isPaid) {
@@ -71,13 +71,18 @@ module.exports = async (req, res) => {
                         phoneId = cos[0].whatsapp_phone_number_id;
                         token = cos[0].whatsapp_access_token;
                     } else if (isMaster) {
-                        phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
+                        phoneId = env.WHATSAPP_PHONE_NUMBER_ID;
                         token = env.WHATSAPP_ACCESS_TOKEN;
                     } else {
                         return res.status(400).json({ error: 'Meta WhatsApp credentials are not configured for your workspace. Please configure Phone ID and Access Token in Meta Credentials.' });
                     }
                 }
             } catch(e) {}
+        }
+
+        if (isMaster) {
+            phoneId = env.WHATSAPP_PHONE_NUMBER_ID;
+            token = env.WHATSAPP_ACCESS_TOKEN;
         }
 
         if (!phoneId || !token) {

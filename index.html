@@ -43,7 +43,8 @@
                     <div class="logo-icon">
                         <img src="/favicon.png" alt="Inspenox Business Suite Logo">
                     </div>
-                    <div class="logo-brand-details" style="display: flex; flex-direction: column; min-width: 0; line-height: 1.2;">
+                    <div class="logo-brand-details"
+                        style="display: flex; flex-direction: column; min-width: 0; line-height: 1.2;">
                         <span class="logo-text" id="nav-active-company-name">Inspenox</span>
                         <div id="nav-powered-by-badge" style="display: none; margin-top: 2px;">
                             <span class="powered-by-tag">⚡ Powered by Inspenox</span>
@@ -301,7 +302,8 @@
                 <div class="page-header">
                     <div>
                         <h1>Inspenox Business Suite For Marketing</h1>
-                        <p class="subtitle">Overview of your Inspenox Business Suite For Marketing workspace & real-time messaging
+                        <p class="subtitle">Overview of your Inspenox Business Suite For Marketing workspace & real-time
+                            messaging
                             stats.</p>
                     </div>
                     <div class="header-actions">
@@ -316,7 +318,8 @@
                     </div>
                 </div>
 
-                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="stats-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                     <div class="stat-card card">
                         <div class="stat-icon icon-emerald">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -333,7 +336,9 @@
                     <div class="stat-card card">
                         <div class="stat-icon icon-teal">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                                <path
+                                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                                </path>
                             </svg>
                         </div>
                         <div class="stat-info">
@@ -345,7 +350,8 @@
                     <div class="stat-card card">
                         <div class="stat-icon icon-blue">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                </path>
                                 <polyline points="22,6 12,13 2,6"></polyline>
                             </svg>
                         </div>
@@ -511,26 +517,36 @@
                             style="padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.85rem;">
                         <input type="text" id="cust-pincode" placeholder="Pincode"
                             style="padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.85rem;">
-                        
+
                         <!-- Rich Interactive Tag Selector Component -->
                         <div style="position: relative;" id="cust-tag-selector-wrapper">
                             <input type="hidden" id="cust-tags">
-                            <div class="tag-selector-box" id="cust-tag-selector-box" onclick="toggleTagDropdown('form', event)" title="Click to select or create customer tags">
-                                <div id="cust-selected-tags-container" style="display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;"></div>
-                                <span class="tag-selector-placeholder" id="cust-tags-placeholder">🏷️ Select / Add Tags...</span>
+                            <div class="tag-selector-box" id="cust-tag-selector-box"
+                                onclick="toggleTagDropdown('form', event)"
+                                title="Click to select or create customer tags">
+                                <div id="cust-selected-tags-container"
+                                    style="display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;"></div>
+                                <span class="tag-selector-placeholder" id="cust-tags-placeholder">🏷️ Select / Add
+                                    Tags...</span>
                             </div>
                             <div class="tag-dropdown-menu" id="form-tag-dropdown-menu">
-                                <input type="text" class="tag-search-input" id="form-tag-search" placeholder="Search or filter tags..." oninput="filterTagDropdown('form')">
+                                <input type="text" class="tag-search-input" id="form-tag-search"
+                                    placeholder="Search or filter tags..." oninput="filterTagDropdown('form')">
                                 <div class="tag-items-list" id="form-tag-items-list"></div>
                                 <div class="tag-dropdown-divider"></div>
                                 <div class="new-tag-create-box" id="form-new-tag-box">
-                                    <input type="text" class="tag-search-input" id="form-new-tag-name" placeholder="Tag name (e.g. VIP, Wholesale)" onkeydown="if(event.key==='Enter'){event.preventDefault();submitNewTag('form');}">
+                                    <input type="text" class="tag-search-input" id="form-new-tag-name"
+                                        placeholder="Tag name (e.g. VIP, Wholesale)"
+                                        onkeydown="if(event.key==='Enter'){event.preventDefault();submitNewTag('form');}">
                                     <div style="display: flex; gap: 0.35rem; margin-top: 4px;">
-                                        <button type="button" class="btn primary sm" onclick="submitNewTag('form')" style="flex:1; padding: 0.25rem 0.5rem; font-size: 0.75rem;">Add</button>
-                                        <button type="button" class="btn secondary sm" onclick="cancelNewTag('form')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Cancel</button>
+                                        <button type="button" class="btn primary sm" onclick="submitNewTag('form')"
+                                            style="flex:1; padding: 0.25rem 0.5rem; font-size: 0.75rem;">Add</button>
+                                        <button type="button" class="btn secondary sm" onclick="cancelNewTag('form')"
+                                            style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Cancel</button>
                                     </div>
                                 </div>
-                                <button type="button" class="btn-new-tag-action" id="form-btn-show-new-tag" onclick="showNewTagInput('form')">
+                                <button type="button" class="btn-new-tag-action" id="form-btn-show-new-tag"
+                                    onclick="showNewTagInput('form')">
                                     <span style="font-size:1rem; font-weight:700;">+</span> <span>New Tag</span>
                                 </button>
                             </div>
@@ -571,7 +587,8 @@
                             placeholder="Search customer by name, phone, email, company or tags...">
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <select id="customers-tag-filter" onchange="filterCustomersByTag(this.value)" style="padding: 0.5rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.825rem; cursor: pointer; outline: none;">
+                        <select id="customers-tag-filter" onchange="filterCustomersByTag(this.value)"
+                            style="padding: 0.5rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.825rem; cursor: pointer; outline: none;">
                             <option value="">🏷️ All Tags (Filter)</option>
                         </select>
                     </div>
@@ -646,6 +663,27 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- View-Only Templates Notification Banner -->
+                <div id="templates-view-only-banner"
+                    style="display:none; background:rgba(245, 158, 11, 0.08); border:1px solid rgba(245, 158, 11, 0.28); border-radius:12px; padding:1.1rem 1.4rem; margin-bottom:1.5rem; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:0.9rem;">
+                        <span style="font-size:1.6rem; line-height:1;">🔒</span>
+                        <div>
+                            <h4 style="margin:0; font-size:0.95rem; font-weight:700; color:#f59e0b;">View-Only Mode
+                                &bull; Templates Preview</h4>
+                            <p style="margin:0.25rem 0 0 0; font-size:0.825rem; color:var(--text-muted);">This company
+                                has not configured official Meta WhatsApp credentials. Showing default system templates
+                                in view-only mode. Configure Meta app details in Settings to create or manage templates
+                                for Your company.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn primary sm" onclick="navigateToSettingsMeta()"
+                        style="background:#f59e0b; border-color:#f59e0b; color:#fff; font-weight:600; text-decoration:none; white-space:nowrap;">
+                        ⚙️ Configure Meta in Settings
+                    </button>
+                </div>
+
                 <div class="grid" id="templates-grid">
                     <!-- Populated via JS -->
                 </div>
@@ -691,14 +729,21 @@
                     <div class="card broadcast-card">
                         <form id="broadcast-form">
                             <div class="form-group">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; flex-wrap: wrap; gap: 0.5rem;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; flex-wrap: wrap; gap: 0.5rem;">
                                     <label style="margin: 0; font-weight: 600;">Target Audience</label>
                                     <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
-                                        <span style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600;">🏷️ Filter / Send by Tag:</span>
-                                        <select id="bc-tag-filter-select" onchange="applyBroadcastTagFilter(this.value, true)" style="padding: 0.25rem 0.65rem; border-radius: 6px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.775rem; cursor: pointer; outline: none; min-width: 170px;">
+                                        <span
+                                            style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600;">🏷️
+                                            Filter / Send by Tag:</span>
+                                        <select id="bc-tag-filter-select"
+                                            onchange="applyBroadcastTagFilter(this.value, true)"
+                                            style="padding: 0.25rem 0.65rem; border-radius: 6px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.775rem; cursor: pointer; outline: none; min-width: 170px;">
                                             <option value="">-- All Tags (Show All) --</option>
                                         </select>
-                                        <button type="button" class="btn secondary sm" id="btn-bc-clear-tag-filter" onclick="clearBroadcastTagFilter()" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.725rem;">
+                                        <button type="button" class="btn secondary sm" id="btn-bc-clear-tag-filter"
+                                            onclick="clearBroadcastTagFilter()"
+                                            style="display: none; padding: 0.2rem 0.5rem; font-size: 0.725rem;">
                                             ✕ Clear
                                         </button>
                                     </div>
@@ -708,20 +753,27 @@
                                     <div class="select-box" id="bc-target-display">Select Audience...</div>
                                     <div class="options-container" id="bc-target-options">
                                         <!-- Search & Tag Filter Inside Options Box -->
-                                        <div style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.45rem; background: var(--bg-dark);">
-                                            <input type="text" id="bc-customer-search" placeholder="Search by name, phone or tag..." oninput="filterBroadcastCustomerList()" style="width: 100%; padding: 0.35rem 0.6rem; font-size: 0.775rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); outline: none;">
-                                            
-                                            <div style="display: flex; align-items: center; gap: 0.35rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin;" id="bc-tag-chips-container">
+                                        <div
+                                            style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.45rem; background: var(--bg-dark);">
+                                            <input type="text" id="bc-customer-search"
+                                                placeholder="Search by name, phone or tag..."
+                                                oninput="filterBroadcastCustomerList()"
+                                                style="width: 100%; padding: 0.35rem 0.6rem; font-size: 0.775rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); outline: none;">
+
+                                            <div style="display: flex; align-items: center; gap: 0.35rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin;"
+                                                id="bc-tag-chips-container">
                                                 <!-- Dynamic tag quick chips: All, Repeat Buyers, Recovered, etc. -->
                                             </div>
                                         </div>
 
-                                        <label class="option-item select-all-item" style="border-bottom: 1px solid var(--border); padding: 0.6rem 0.85rem;">
+                                        <label class="option-item select-all-item"
+                                            style="border-bottom: 1px solid var(--border); padding: 0.6rem 0.85rem;">
                                             <div style="display: flex; align-items: center; gap: 0.6rem; flex: 1;">
                                                 <input type="checkbox" id="bc-select-all" value="all">
                                                 <strong id="bc-select-all-label">Select All Customers</strong>
                                             </div>
-                                            <span id="bc-matching-count-badge" style="font-size: 0.725rem; color: var(--primary); font-weight: 600;"></span>
+                                            <span id="bc-matching-count-badge"
+                                                style="font-size: 0.725rem; color: var(--primary); font-weight: 600;"></span>
                                         </label>
                                         <div id="bc-target-list"></div>
                                         <div class="bc-target-footer">
@@ -946,14 +998,16 @@
                 <div class="page-header">
                     <div>
                         <h1>Privacy Policy</h1>
-                        <p class="subtitle">Compliance & data protection policy for Inspenox Business Suite For Marketing messaging
+                        <p class="subtitle">Compliance & data protection policy for Inspenox Business Suite For
+                            Marketing messaging
                             platform.</p>
                     </div>
                 </div>
 
                 <div class="card" style="line-height: 1.6; font-size: 0.925rem;">
                     <h3 style="color: var(--primary); margin-bottom: 0.5rem;">1. Application & Ownership</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 1.25rem;">The Inspenox Business Suite For Marketing platform is
+                    <p style="color: var(--text-muted); margin-bottom: 1.25rem;">The Inspenox Business Suite For
+                        Marketing platform is
                         operated for business communications and omni-channel customer engagement by
                         <strong>Inspenox</strong>.
                     </p>
@@ -967,7 +1021,8 @@
                     </h3>
                     <p style="color: var(--text-muted); margin-bottom: 1.25rem;">In compliance with messaging policies
                         and data protection regulations, all contacts agree: <em>"I agree to receive WhatsApp, Email,
-                            and SMS promotional updates & service announcements from Inspenox Business Suite For Marketing."</em>
+                            and SMS promotional updates & service announcements from Inspenox Business Suite For
+                            Marketing."</em>
                         Explicit consent is collected during contact submission and bulk import.</p>
 
                     <h3 style="color: var(--primary); margin-bottom: 0.5rem;">4. Data Storage & Security</h3>
@@ -976,7 +1031,8 @@
 
                     <h3 style="color: var(--primary); margin-bottom: 0.5rem;">5. Data Sharing & Protection</h3>
                     <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Data is managed strictly for legitimate
-                        business messaging via Inspenox Business Suite For Marketing. We do not sell or rent contact data to
+                        business messaging via Inspenox Business Suite For Marketing. We do not sell or rent contact
+                        data to
                         unauthorized third parties.</p>
 
                     <h3 style="color: var(--primary); margin-bottom: 0.5rem;">6. Customer Opt-Out Rights</h3>
@@ -1129,7 +1185,8 @@
                     style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
                     <div>
                         <h1 id="settings-page-title">Settings & Preferences</h1>
-                        <p class="subtitle" id="settings-page-subtitle">Manage multi-tenant companies, WhatsApp Cloud API credentials, and security settings.</p>
+                        <p class="subtitle" id="settings-page-subtitle">Manage multi-tenant companies, WhatsApp Cloud
+                            API credentials, and security settings.</p>
                     </div>
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                         <button type="button" class="btn primary" onclick="openCompanyModal()" style="gap:0.4rem;">
@@ -1200,10 +1257,13 @@
 
                 <!-- Company User Management Panel -->
                 <div class="card" style="margin-bottom: 1.5rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
                         <div>
-                            <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">👥 Company User Management & Authentication</h3>
-                            <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Manage login credentials, user access roles, and company assignments for multi-tenant accounts.</p>
+                            <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">👥 Company User Management &
+                                Authentication</h3>
+                            <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Manage login
+                                credentials, user access roles, and company assignments for multi-tenant accounts.</p>
                         </div>
                         <button type="button" class="btn primary sm" onclick="openUserModal()" style="gap:0.4rem;">
                             + Add New User
@@ -1238,9 +1298,11 @@
                     <div
                         style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">
                         <div>
-                            <h3 id="panel-companies-title" style="margin:0; font-size:1.1rem; color:var(--text-main);">Multi-Tenant Companies &
+                            <h3 id="panel-companies-title" style="margin:0; font-size:1.1rem; color:var(--text-main);">
+                                Multi-Tenant Companies &
                                 WhatsApp API Accounts</h3>
-                            <p id="panel-companies-desc" style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Each company has
+                            <p id="panel-companies-desc"
+                                style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Each company has
                                 isolated customers, templates, broadcast logs, and custom Meta WhatsApp credentials.</p>
                         </div>
                     </div>
@@ -1275,17 +1337,21 @@
 
             <!-- API Usage & Direct Meta Insights View -->
             <section id="view-usage" class="view">
-                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <div class="page-header"
+                    style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
                     <div>
                         <h1>API Usage & Meta Insights</h1>
-                        <p class="subtitle">Direct real-time WhatsApp Cloud API consumption, template insights, and message costs from Meta.</p>
+                        <p class="subtitle">Direct real-time WhatsApp Cloud API consumption, template insights, and
+                            message costs from Meta.</p>
                     </div>
                     <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                        <span id="usage-meta-badge" class="window-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; padding: 0.4rem 0.85rem; font-size: 0.85rem;">
+                        <span id="usage-meta-badge" class="window-badge"
+                            style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; padding: 0.4rem 0.85rem; font-size: 0.85rem;">
                             ⚡ Direct Meta Graph API v20.0
                         </span>
                         <button class="btn secondary" onclick="loadUsageAnalytics()" style="gap: 0.4rem;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="width: 14px; height: 14px;">
                                 <path d="M23 4v6h-6"></path>
                                 <path d="M1 20v-6h6"></path>
                                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
@@ -1298,99 +1364,178 @@
 
 
                 <!-- Top Direct Meta Metric Cards Grid -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                    <div class="card" style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
-                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 0.4rem;">
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="card"
+                        style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
+                        <span
+                            style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 0.4rem;">
                             Amount spent
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="width: 14px; height: 14px;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
                         </span>
-                        <div id="meta-stat-amount-spent" style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 0.4rem; letter-spacing: -0.5px;">₹0.00</div>
-                        <span style="font-size: 0.725rem; color: var(--primary); font-weight: 600;">Direct Meta Cloud Spend</span>
+                        <div id="meta-stat-amount-spent"
+                            style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 0.4rem; letter-spacing: -0.5px;">
+                            ₹0.00</div>
+                        <span style="font-size: 0.725rem; color: var(--primary); font-weight: 600;">Direct Meta Cloud
+                            Spend</span>
                     </div>
 
-                    <div class="card" style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
-                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 0.4rem;">
+                    <div class="card"
+                        style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
+                        <span
+                            style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 0.4rem;">
                             Cost per message delivered
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="width: 14px; height: 14px;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
                         </span>
-                        <div id="meta-stat-cost-per-msg" style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 0.4rem; letter-spacing: -0.5px;">₹0.86</div>
+                        <div id="meta-stat-cost-per-msg"
+                            style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 0.4rem; letter-spacing: -0.5px;">
+                            ₹0.86</div>
                         <span style="font-size: 0.725rem; color: var(--text-muted);">Marketing Rate (India)</span>
                     </div>
 
-                    <div class="card" style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
-                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Messages Sent</span>
-                        <div id="usage-stat-total-msgs" style="font-size: 2.2rem; font-weight: 800; color: #10b981; margin-top: 0.4rem; letter-spacing: -0.5px;">0</div>
+                    <div class="card"
+                        style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
+                        <span
+                            style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total
+                            Messages Sent</span>
+                        <div id="usage-stat-total-msgs"
+                            style="font-size: 2.2rem; font-weight: 800; color: #10b981; margin-top: 0.4rem; letter-spacing: -0.5px;">
+                            0</div>
                         <span style="font-size: 0.725rem; color: var(--text-muted);">Cloud API Broadcasts</span>
                     </div>
 
-                    <div class="card" style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
-                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Multi-Channel Cost (inc. 18% GST)</span>
-                        <div id="usage-stat-total-cost" style="font-size: 2.2rem; font-weight: 800; color: #3b82f6; margin-top: 0.4rem; letter-spacing: -0.5px;">₹0.00</div>
+                    <div class="card"
+                        style="background: var(--bg-card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border);">
+                        <span
+                            style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total
+                            Multi-Channel Cost (inc. 18% GST)</span>
+                        <div id="usage-stat-total-cost"
+                            style="font-size: 2.2rem; font-weight: 800; color: #3b82f6; margin-top: 0.4rem; letter-spacing: -0.5px;">
+                            ₹0.00</div>
                         <div id="pay-now-container" style="margin-top: 0.5rem; display: none;">
-                            <button id="btn-pay-now" class="btn primary sm" style="width: 100%; font-weight: 700; background: #10b981; border: none; padding: 0.45rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem;" onclick="triggerCompanyPayment()">
+                            <button id="btn-pay-now" class="btn primary sm"
+                                style="width: 100%; font-weight: 700; background: #10b981; border: none; padding: 0.45rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem;"
+                                onclick="triggerCompanyPayment()">
                                 💳 Pay Bill Now
                             </button>
                         </div>
-                        <span id="usage-stat-cost-subtext" style="font-size: 0.725rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">WhatsApp + Email + SMS (inc. GST)</span>
+                        <span id="usage-stat-cost-subtext"
+                            style="font-size: 0.725rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">WhatsApp
+                            + Email + SMS (inc. GST)</span>
                     </div>
                 </div>
 
                 <!-- Meta Performance Card Grid -->
                 <div class="card" style="margin-bottom: 1.5rem; padding: 1.35rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
                         <div>
-                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            <h3
+                                style="margin: 0; font-size: 1.1rem; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
                                 Performance Insights
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; color: var(--text-muted);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    style="width: 16px; height: 16px; color: var(--text-muted);">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
                             </h3>
-                            <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Real-time message delivery, read receipts, and response rates from Meta WhatsApp Manager.</p>
+                            <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Real-time
+                                message delivery, read receipts, and response rates from Meta WhatsApp Manager.</p>
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
-                        <div style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
-                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                        <div
+                            style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
+                            <span
+                                style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
                                 Messages sent
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    style="width: 12px; height: 12px;">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
                             </span>
-                            <div id="meta-stat-sent-count" style="font-size: 2rem; font-weight: 800; color: var(--text-main); margin-top: 0.35rem;">0</div>
+                            <div id="meta-stat-sent-count"
+                                style="font-size: 2rem; font-weight: 800; color: var(--text-main); margin-top: 0.35rem;">
+                                0</div>
                         </div>
 
-                        <div style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
-                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                        <div
+                            style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
+                            <span
+                                style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
                                 Messages delivered
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    style="width: 12px; height: 12px;">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
                             </span>
-                            <div id="meta-stat-delivered-count" style="font-size: 2rem; font-weight: 800; color: #10b981; margin-top: 0.35rem;">0</div>
+                            <div id="meta-stat-delivered-count"
+                                style="font-size: 2rem; font-weight: 800; color: #10b981; margin-top: 0.35rem;">0</div>
                         </div>
 
-                        <div style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
-                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                        <div
+                            style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
+                            <span
+                                style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
                                 Messages read
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    style="width: 12px; height: 12px;">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
                             </span>
                             <div style="display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.35rem;">
-                                <div id="meta-stat-read-count" style="font-size: 2rem; font-weight: 800; color: #3b82f6;">0</div>
-                                <span id="meta-stat-read-percent" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">(0%)</span>
+                                <div id="meta-stat-read-count"
+                                    style="font-size: 2rem; font-weight: 800; color: #3b82f6;">0</div>
+                                <span id="meta-stat-read-percent"
+                                    style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">(0%)</span>
                             </div>
                         </div>
 
-                        <div style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
-                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+                        <div
+                            style="background: var(--bg-dark); padding: 1rem; border-radius: 10px; border: 1px solid var(--border);">
+                            <span
+                                style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
                                 Unique replies
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    style="width: 12px; height: 12px;">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
                             </span>
-                            <div id="meta-stat-unique-replies" style="font-size: 2rem; font-weight: 800; color: #8b5cf6; margin-top: 0.35rem;">0</div>
+                            <div id="meta-stat-unique-replies"
+                                style="font-size: 2rem; font-weight: 800; color: #8b5cf6; margin-top: 0.35rem;">0</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Live Meta Template Insights Breakdown Table -->
                 <div class="card" style="margin-bottom: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
                         <div>
-                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main); font-weight: 700;">Template Insights Breakdown</h3>
-                            <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Direct performance stats, read rates, and exact spend per message template.</p>
+                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main); font-weight: 700;">
+                                Template Insights Breakdown</h3>
+                            <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Direct
+                                performance stats, read rates, and exact spend per message template.</p>
                         </div>
                     </div>
 
@@ -1407,11 +1552,14 @@
                                     <th>Replies</th>
                                     <th>Cost / Msg</th>
                                     <th style="text-align: right;">Amount Spent</th>
-                                    <th class="th-superadmin-action" style="display:none; text-align:center;">Super Admin</th>
+                                    <th class="th-superadmin-action" style="display:none; text-align:center;">Super
+                                        Admin</th>
                                 </tr>
                             </thead>
                             <tbody id="meta-templates-insights-body">
-                                <tr><td colspan="10" class="empty-state">Loading template insights...</td></tr>
+                                <tr>
+                                    <td colspan="10" class="empty-state">Loading template insights...</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -1419,10 +1567,15 @@
 
                 <!-- Multi-Tenant Company API Usage Breakdown Table -->
                 <div class="card" id="usage-company-breakdown-card" style="margin-bottom: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
                         <div>
-                            <h3 id="usage-breakdown-card-title" style="margin: 0; font-size: 1.1rem; color: var(--text-main);">Multi-Tenant Company Usage Breakdown</h3>
-                            <p id="usage-breakdown-card-sub" style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Message counts and estimated charges.</p>
+                            <h3 id="usage-breakdown-card-title"
+                                style="margin: 0; font-size: 1.1rem; color: var(--text-main);">Multi-Tenant Company
+                                Usage Breakdown</h3>
+                            <p id="usage-breakdown-card-sub"
+                                style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Message
+                                counts and estimated charges.</p>
                         </div>
                     </div>
 
@@ -1438,11 +1591,14 @@
                                     <th>SMS Msgs</th>
                                     <th>Total Outbound</th>
                                     <th style="text-align: right;">Estimated Cost</th>
-                                    <th class="th-superadmin-action" style="display:none; text-align:center;">Super Admin</th>
+                                    <th class="th-superadmin-action" style="display:none; text-align:center;">Super
+                                        Admin</th>
                                 </tr>
                             </thead>
                             <tbody id="usage-company-table-body">
-                                <tr><td colspan="9" class="empty-state">Loading company usage data...</td></tr>
+                                <tr>
+                                    <td colspan="9" class="empty-state">Loading company usage data...</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -1451,72 +1607,104 @@
                 <!-- Interactive Pricing Calculator Card -->
                 <div class="card">
                     <div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
-                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">🧮 Meta & Multi-Channel Pricing Calculator</h3>
-                        <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Calculate exact estimated costs across WhatsApp (Marketing, Utility, Auth, Service), Email, and SMS based on official Meta India rates.</p>
+                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">🧮 Meta & Multi-Channel
+                            Pricing Calculator</h3>
+                        <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Calculate exact
+                            estimated costs across WhatsApp (Marketing, Utility, Auth, Service), Email, and SMS based on
+                            official Meta India rates.</p>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
                         <div>
-                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Market / Region</label>
-                            <select id="calc-market" onchange="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
-                                <option value="IN" data-m="0.8631" data-u="0.1150" data-a="0.1150" selected>India (₹0.8631 Mkt / ₹0.1150 Util & Auth)</option>
-                                <option value="US" data-m="2.0000" data-u="0.5000" data-a="0.5000">North America ($0.025 Mkt / $0.006 Util)</option>
-                                <option value="AE" data-m="2.5000" data-u="0.7500" data-a="0.7500">UAE & Gulf ($0.030 Mkt / $0.009 Util)</option>
+                            <label
+                                style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Market
+                                / Region</label>
+                            <select id="calc-market" onchange="calculateEstimatorCost()"
+                                style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                                <option value="IN" data-m="0.8631" data-u="0.1150" data-a="0.1150" selected>India
+                                    (₹0.8631 Mkt / ₹0.1150 Util & Auth)</option>
+                                <option value="US" data-m="2.0000" data-u="0.5000" data-a="0.5000">North America ($0.025
+                                    Mkt / $0.006 Util)</option>
+                                <option value="AE" data-m="2.5000" data-u="0.7500" data-a="0.7500">UAE & Gulf ($0.030
+                                    Mkt / $0.009 Util)</option>
                             </select>
                         </div>
 
                         <div>
-                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label
+                                style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
                                 <span>WA Marketing</span>
-                                <span style="font-size: 0.65rem; color: var(--primary); font-weight: 700;">₹0.8631/msg</span>
+                                <span
+                                    style="font-size: 0.65rem; color: var(--primary); font-weight: 700;">₹0.8631/msg</span>
                             </label>
-                            <input type="number" id="calc-wa-marketing" value="1000" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                            <input type="number" id="calc-wa-marketing" value="1000" min="0"
+                                oninput="calculateEstimatorCost()"
+                                style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
                         </div>
 
                         <div>
-                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label
+                                style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
                                 <span>WA Utility</span>
                                 <span style="font-size: 0.65rem; color: #10b981; font-weight: 700;">₹0.1150/msg</span>
                             </label>
-                            <input type="number" id="calc-wa-utility" value="500" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                            <input type="number" id="calc-wa-utility" value="500" min="0"
+                                oninput="calculateEstimatorCost()"
+                                style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
                         </div>
 
                         <div>
-                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label
+                                style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
                                 <span>WA Authentication</span>
                                 <span style="font-size: 0.65rem; color: #3b82f6; font-weight: 700;">₹0.1150/msg</span>
                             </label>
-                            <input type="number" id="calc-wa-auth" value="200" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                            <input type="number" id="calc-wa-auth" value="200" min="0"
+                                oninput="calculateEstimatorCost()"
+                                style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
                         </div>
 
                         <div>
-                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label
+                                style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
                                 <span>WA Service (Inbound)</span>
                                 <span style="font-size: 0.65rem; color: #8b5cf6; font-weight: 700;">FREE (₹0.00)</span>
                             </label>
-                            <input type="number" id="calc-wa-service" value="300" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                            <input type="number" id="calc-wa-service" value="300" min="0"
+                                oninput="calculateEstimatorCost()"
+                                style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
                         </div>
 
                         <div>
-                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label
+                                style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
                                 <span>Email Broadcast</span>
                                 <span style="font-size: 0.65rem; color: #eab308; font-weight: 700;">₹0.0500/msg</span>
                             </label>
-                            <input type="number" id="calc-email-count" value="2000" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                            <input type="number" id="calc-email-count" value="2000" min="0"
+                                oninput="calculateEstimatorCost()"
+                                style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
                         </div>
 
                         <div>
-                            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label
+                                style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
                                 <span>SMS Broadcast</span>
                                 <span style="font-size: 0.65rem; color: #ec4899; font-weight: 700;">₹0.2500/msg</span>
                             </label>
-                            <input type="number" id="calc-sms-count" value="500" min="0" oninput="calculateEstimatorCost()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                            <input type="number" id="calc-sms-count" value="500" min="0"
+                                oninput="calculateEstimatorCost()"
+                                style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
                         </div>
                     </div>
 
-                    <div style="background: var(--bg-dark); padding: 1rem 1.25rem; border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
-                        <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">Estimated Total Investment:</span>
-                        <strong id="calc-result-total" style="font-size: 1.5rem; color: var(--primary); font-weight: 800;">₹1,068.60</strong>
+                    <div
+                        style="background: var(--bg-dark); padding: 1rem 1.25rem; border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                        <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">Estimated Total
+                            Investment:</span>
+                        <strong id="calc-result-total"
+                            style="font-size: 1.5rem; color: var(--primary); font-weight: 800;">₹1,068.60</strong>
                     </div>
                 </div>
             </section>
@@ -1526,26 +1714,33 @@
                 <div class="page-header">
                     <div>
                         <h1 style="display:flex; align-items:center; gap:0.5rem;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="width:28px;height:28px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"
+                                style="width:28px;height:28px;">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
                             Security & Rate Limits Control Center
                         </h1>
-                        <p class="subtitle">Monitor authentication attempt logs, active rate limit lockouts, and manage IP/User access control.</p>
+                        <p class="subtitle">Monitor authentication attempt logs, active rate limit lockouts, and manage
+                            IP/User access control.</p>
                     </div>
                     <div class="header-actions">
                         <button class="btn secondary" onclick="loadSecurityLogs()">
                             🔄 Refresh Logs
                         </button>
-                        <button class="btn secondary" onclick="purgeOldSecurityLogs(30)" title="Delete authentication logs older than 30 days to maintain database scalability">
+                        <button class="btn secondary" onclick="purgeOldSecurityLogs(30)"
+                            title="Delete authentication logs older than 30 days to maintain database scalability">
                             🧹 Purge &gt;30 Days
                         </button>
-                        <button class="btn danger" onclick="clearAllLockouts()" style="background:rgba(239, 68, 68, 0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3);">
+                        <button class="btn danger" onclick="clearAllLockouts()"
+                            style="background:rgba(239, 68, 68, 0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3);">
                             🔓 Clear All Lockouts
                         </button>
                     </div>
                 </div>
 
                 <!-- Security Summary Cards -->
-                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="stats-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                     <div class="stat-card card">
                         <div class="stat-icon icon-emerald">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1600,11 +1795,16 @@
                 </div>
 
                 <!-- Manual Control & Filter Bar -->
-                <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+                <div class="card"
+                    style="padding: 1.25rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
                     <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; flex: 1;">
-                        <input type="text" id="sec-search-input" placeholder="🔍 Search IP or Username..." style="padding: 0.5rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.875rem; min-width: 240px;" onkeyup="filterSecurityLogs()">
-                        
-                        <select id="sec-status-filter" style="padding: 0.5rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.875rem;" onchange="filterSecurityLogs()">
+                        <input type="text" id="sec-search-input" placeholder="🔍 Search IP or Username..."
+                            style="padding: 0.5rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.875rem; min-width: 240px;"
+                            onkeyup="filterSecurityLogs()">
+
+                        <select id="sec-status-filter"
+                            style="padding: 0.5rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.875rem;"
+                            onchange="filterSecurityLogs()">
                             <option value="all">All Attempts</option>
                             <option value="failed">🔴 Failed / Rate-Limited</option>
                             <option value="success">🟢 Successful</option>
@@ -1612,7 +1812,8 @@
                     </div>
 
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <button class="btn secondary" onclick="purgeOldSecurityLogs(30)" style="font-size:0.85rem;" title="Purge logs older than 30 days">
+                        <button class="btn secondary" onclick="purgeOldSecurityLogs(30)" style="font-size:0.85rem;"
+                            title="Purge logs older than 30 days">
                             🧹 Purge &gt;30 Days Logs
                         </button>
                         <button class="btn secondary" onclick="promptManualLockout()" style="font-size:0.85rem;">
@@ -1660,43 +1861,58 @@
                         <p>Manage subscription packages, billing cycles, and payment history.</p>
                     </div>
                     <div style="display:flex; align-items:center; gap:0.75rem;">
-                        <button type="button" class="btn secondary sm" onclick="loadSubscriptions()" style="display:inline-flex; align-items:center; gap:6px;">
+                        <button type="button" class="btn secondary sm" onclick="loadSubscriptions()"
+                            style="display:inline-flex; align-items:center; gap:6px;">
                             🔄 <span>Refresh Status</span>
                         </button>
                     </div>
                 </header>
 
                 <!-- Company Workspace Active Plan Hero Banner (Shown for Child / Tenant Companies) -->
-                <div id="sub-company-hero-banner" class="card" style="display: none; margin-bottom: 1.75rem; padding: 1.35rem 1.75rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.5) 100%); border: 1px solid rgba(16, 185, 129, 0.22); border-radius: 16px; align-items: center; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap;">
+                <div id="sub-company-hero-banner" class="card"
+                    style="display: none; margin-bottom: 1.75rem; padding: 1.35rem 1.75rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.5) 100%); border: 1px solid rgba(16, 185, 129, 0.22); border-radius: 16px; align-items: center; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 1.15rem;">
-                        <div id="sub-hero-icon-container" style="width: 50px; height: 50px; border-radius: 14px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center; color: #10b981; flex-shrink: 0;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24" height="24">
+                        <div id="sub-hero-icon-container"
+                            style="width: 50px; height: 50px; border-radius: 14px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center; color: #10b981; flex-shrink: 0;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24"
+                                height="24">
                                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                             </svg>
                         </div>
                         <div>
                             <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.2rem;">
-                                <span style="font-size: 0.725rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px;">Current Workspace Plan</span>
-                                <span id="sub-hero-status-badge" class="window-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 0.725rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Active ✅</span>
+                                <span
+                                    style="font-size: 0.725rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px;">Current
+                                    Workspace Plan</span>
+                                <span id="sub-hero-status-badge" class="window-badge"
+                                    style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 0.725rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Active
+                                    ✅</span>
                             </div>
-                            <h3 id="sub-hero-plan-name" style="margin: 0; font-size: 1.45rem; font-weight: 800; color: #10b981;">Growth Pro (Monthly)</h3>
-                            <span id="sub-hero-plan-desc" style="font-size: 0.825rem; color: var(--text-muted); display: block; margin-top: 3px;">
-                                Verified subscription active via Razorpay. WhatsApp broadcast & marketing automation unlocked.
+                            <h3 id="sub-hero-plan-name"
+                                style="margin: 0; font-size: 1.45rem; font-weight: 800; color: #10b981;">Growth Pro
+                                (Monthly)</h3>
+                            <span id="sub-hero-plan-desc"
+                                style="font-size: 0.825rem; color: var(--text-muted); display: block; margin-top: 3px;">
+                                Verified subscription active via Razorpay. WhatsApp broadcast & marketing automation
+                                unlocked.
                             </span>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <button type="button" class="btn primary sm" onclick="switchSubTab('plans')" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem;">
+                        <button type="button" class="btn primary sm" onclick="switchSubTab('plans')"
+                            style="display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem;">
                             ⚡ <span>Upgrade / Renew</span>
                         </button>
-                        <button type="button" class="btn secondary sm" onclick="switchSubTab('receipts')" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem;">
+                        <button type="button" class="btn secondary sm" onclick="switchSubTab('receipts')"
+                            style="display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem;">
                             📜 <span>Payment Receipts</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Superadmin Top Stats Cards (Shown Strictly for Master Superadmin on Parent Account) -->
-                <div id="sub-superadmin-stats-grid" class="stats-grid" style="display: none; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem;">
+                <div id="sub-superadmin-stats-grid" class="stats-grid"
+                    style="display: none; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem;">
                     <div class="stat-card card">
                         <div class="stat-icon icon-emerald">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1704,12 +1920,19 @@
                             </svg>
                         </div>
                         <div class="stat-info" style="flex: 1;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                            <div
+                                style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
                                 <h3>Active Workspace Plan</h3>
-                                <span id="sub-stat-status-badge" class="badge-tag" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Not Subscribed</span>
+                                <span id="sub-stat-status-badge" class="badge-tag"
+                                    style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Not
+                                    Subscribed</span>
                             </div>
-                            <p id="sub-stat-plan-name" style="color: var(--text-muted); font-size: 1.45rem; font-weight: 800; margin: 0.25rem 0;">None</p>
-                            <span id="sub-stat-plan-cycle" style="font-size: 0.775rem; color: var(--text-muted); display: block;">Select a package below to subscribe</span>
+                            <p id="sub-stat-plan-name"
+                                style="color: var(--text-muted); font-size: 1.45rem; font-weight: 800; margin: 0.25rem 0;">
+                                None</p>
+                            <span id="sub-stat-plan-cycle"
+                                style="font-size: 0.775rem; color: var(--text-muted); display: block;">Select a package
+                                below to subscribe</span>
                         </div>
                     </div>
 
@@ -1721,12 +1944,18 @@
                             </svg>
                         </div>
                         <div class="stat-info" style="flex: 1;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                            <div
+                                style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
                                 <h3>Razorpay Gateway</h3>
-                                <span id="sub-stat-rzp-badge" class="badge-tag" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Live INR</span>
+                                <span id="sub-stat-rzp-badge" class="badge-tag"
+                                    style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Live
+                                    INR</span>
                             </div>
-                            <p id="sub-stat-gateway-status" style="font-size: 1.35rem; font-weight: 800; margin: 0.25rem 0;">Configured ✅</p>
-                            <span id="sub-stat-key-info" style="font-size: 0.775rem; color: var(--text-muted); display: block;">Instant INR Checkout Active</span>
+                            <p id="sub-stat-gateway-status"
+                                style="font-size: 1.35rem; font-weight: 800; margin: 0.25rem 0;">Configured ✅</p>
+                            <span id="sub-stat-key-info"
+                                style="font-size: 0.775rem; color: var(--text-muted); display: block;">Instant INR
+                                Checkout Active</span>
                         </div>
                     </div>
 
@@ -1738,37 +1967,50 @@
                         </div>
                         <div class="stat-info" style="flex: 1;">
                             <h3>Total Orders Paid</h3>
-                            <p id="sub-stat-orders-count" style="font-size: 1.45rem; font-weight: 800; margin: 0.25rem 0;">0</p>
-                            <span id="sub-stat-total-revenue" style="font-size: 0.775rem; color: var(--text-muted); display: block;">Total Paid: ₹0.00</span>
+                            <p id="sub-stat-orders-count"
+                                style="font-size: 1.45rem; font-weight: 800; margin: 0.25rem 0;">0</p>
+                            <span id="sub-stat-total-revenue"
+                                style="font-size: 0.775rem; color: var(--text-muted); display: block;">Total Paid:
+                                ₹0.00</span>
                         </div>
                     </div>
 
                     <div class="stat-card card" id="sub-stat-card-coupons" style="display: none;">
                         <div class="stat-icon icon-amber">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                </polygon>
                             </svg>
                         </div>
                         <div class="stat-info" style="flex: 1;">
                             <h3>Coupon Savings Claimed</h3>
-                            <p id="sub-stat-savings-claimed" style="color: #eab308; font-size: 1.45rem; font-weight: 800; margin: 0.25rem 0;">₹0.00</p>
-                            <span id="sub-stat-coupons-count" style="font-size: 0.775rem; color: var(--text-muted); display: block;">Across all redemptions</span>
+                            <p id="sub-stat-savings-claimed"
+                                style="color: #eab308; font-size: 1.45rem; font-weight: 800; margin: 0.25rem 0;">₹0.00
+                            </p>
+                            <span id="sub-stat-coupons-count"
+                                style="font-size: 0.775rem; color: var(--text-muted); display: block;">Across all
+                                redemptions</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Subscriptions Tabs Navigation -->
                 <div class="sub-tabs-container" id="sub-tabs-container">
-                    <button type="button" id="tab-btn-sub-plans" class="sub-tab-btn active" onclick="switchSubTab('plans')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <button type="button" id="tab-btn-sub-plans" class="sub-tab-btn active"
+                        onclick="switchSubTab('plans')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"
+                            height="16">
                             <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                             <polyline points="2 17 12 22 22 17"></polyline>
                             <polyline points="2 12 12 17 22 12"></polyline>
                         </svg>
                         <span>Subscription Packages</span>
                     </button>
-                    <button type="button" id="tab-btn-sub-receipts" class="sub-tab-btn" onclick="switchSubTab('receipts')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <button type="button" id="tab-btn-sub-receipts" class="sub-tab-btn"
+                        onclick="switchSubTab('receipts')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"
+                            height="16">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                             <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -1776,15 +2018,19 @@
                         </svg>
                         <span>Payment Receipts & Invoices</span>
                     </button>
-                    <button type="button" id="tab-btn-sub-coupons" class="sub-tab-btn" onclick="switchSubTab('coupons')" style="display: none;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <button type="button" id="tab-btn-sub-coupons" class="sub-tab-btn" onclick="switchSubTab('coupons')"
+                        style="display: none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"
+                            height="16">
                             <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                             <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                         </svg>
                         <span>Coupons & Influencer Referral</span>
                     </button>
-                    <button type="button" id="tab-btn-sub-logs" class="sub-tab-btn" onclick="switchSubTab('logs')" style="display: none;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <button type="button" id="tab-btn-sub-logs" class="sub-tab-btn" onclick="switchSubTab('logs')"
+                        style="display: none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"
+                            height="16">
                             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                         </svg>
                         <span>Platform Audit Logs</span>
@@ -1795,18 +2041,20 @@
                 <div id="sub-tab-panel-plans">
                     <!-- Billing Cycle Toggle -->
                     <div class="billing-toggle-container">
-                        <span id="label-cycle-monthly" class="billing-cycle-label active" onclick="setBillingCycle('monthly')">Monthly Billing</span>
+                        <span id="label-cycle-monthly" class="billing-cycle-label active"
+                            onclick="setBillingCycle('monthly')">Monthly Billing</span>
                         <div class="billing-toggle-switch" onclick="toggleBillingCycle()">
                             <div id="cycle-toggle-knob" class="toggle-knob"></div>
                         </div>
                         <span id="label-cycle-annual" class="billing-cycle-label" onclick="setBillingCycle('annual')">
-                            Annual Billing 
+                            Annual Billing
                             <span class="save-badge">Save 20% 🎉</span>
                         </span>
                     </div>
 
                     <!-- Pricing Cards Grid -->
-                    <div id="pricing-plans-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
+                    <div id="pricing-plans-grid"
+                        style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
                         <!-- Rendered dynamically by loadSubscriptions() -->
                     </div>
                 </div>
@@ -1814,10 +2062,13 @@
                 <!-- Tab: Workspace Invoices & Receipts Panel -->
                 <div id="sub-tab-panel-receipts" style="display:none;">
                     <div class="card" style="margin-bottom:1.5rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
                             <div>
-                                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">📜 Workspace Payment Receipts & Invoices</h3>
-                                <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">View, print, and download official payment receipts for your workspace subscriptions.</p>
+                                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">📜 Workspace Payment
+                                    Receipts & Invoices</h3>
+                                <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">View, print,
+                                    and download official payment receipts for your workspace subscriptions.</p>
                             </div>
                             <button type="button" class="btn secondary sm" onclick="loadCompanyReceipts()">
                                 🔄 Refresh Receipts
@@ -1850,10 +2101,14 @@
                 <!-- Tab 2: Coupons Panel -->
                 <div id="sub-tab-panel-coupons" style="display:none;">
                     <div class="card" style="margin-bottom:1.5rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
                             <div>
-                                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">🎟️ Promotional Coupons & Affiliate Commissions</h3>
-                                <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Create discount codes for subscribers and track affiliate/influencer commission earnings.</p>
+                                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">🎟️ Promotional Coupons
+                                    & Affiliate Commissions</h3>
+                                <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Create
+                                    discount codes for subscribers and track affiliate/influencer commission earnings.
+                                </p>
                             </div>
                             <button type="button" class="btn primary sm" onclick="openCreateCouponModal()">
                                 + Create New Coupon
@@ -1887,14 +2142,20 @@
                 <!-- Tab 3: Payment Logs Panel -->
                 <div id="sub-tab-panel-logs" style="display:none;">
                     <div class="card" style="margin-bottom:1.5rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:0.5rem;">
                             <div>
-                                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">📜 Razorpay Payment Logs & Transactions</h3>
-                                <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Real-time log of orders, verified payments, applied discount coupons, and influencer cuts.</p>
+                                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">📜 Razorpay Payment Logs
+                                    & Transactions</h3>
+                                <p style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Real-time log
+                                    of orders, verified payments, applied discount coupons, and influencer cuts.</p>
                             </div>
                             <div style="display:flex; gap:0.5rem;">
-                                <input type="text" id="search-payment-logs" placeholder="Search order, payment, email..." oninput="filterPaymentLogs()" style="padding:0.4rem 0.75rem; font-size:0.85rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); width:220px;">
-                                <button type="button" class="btn secondary sm" onclick="loadPaymentLogs()">🔄 Refresh</button>
+                                <input type="text" id="search-payment-logs"
+                                    placeholder="Search order, payment, email..." oninput="filterPaymentLogs()"
+                                    style="padding:0.4rem 0.75rem; font-size:0.85rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); width:220px;">
+                                <button type="button" class="btn secondary sm" onclick="loadPaymentLogs()">🔄
+                                    Refresh</button>
                             </div>
                         </div>
 
@@ -1943,14 +2204,21 @@
     </div>
 
     <!-- Razorpay Checkout & Subscription Modal -->
-    <div id="checkout-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px);">
-        <div class="modal-content card" style="max-width: 500px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border);">
+    <div id="checkout-modal" class="modal-overlay hidden"
+        style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px);">
+        <div class="modal-content card"
+            style="max-width: 500px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border);">
                 <div>
-                    <h3 id="checkout-modal-title" style="margin:0; font-size:1.15rem; color:var(--text-main);">💳 Complete Subscription</h3>
-                    <p id="checkout-modal-subtitle" style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Powered by Razorpay Secure Payments</p>
+                    <h3 id="checkout-modal-title" style="margin:0; font-size:1.15rem; color:var(--text-main);">💳
+                        Complete Subscription</h3>
+                    <p id="checkout-modal-subtitle"
+                        style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Powered by Razorpay
+                        Secure Payments</p>
                 </div>
-                <button type="button" onclick="closeCheckoutModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem;">✕</button>
+                <button type="button" onclick="closeCheckoutModal()"
+                    style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem;">✕</button>
             </div>
 
             <form id="checkout-form" onsubmit="proceedToRazorpayPayment(event)">
@@ -1961,58 +2229,78 @@
                 <input type="hidden" id="checkout-applied-discount-amount" value="0">
                 <input type="hidden" id="checkout-applied-final-amount" value="0">
 
-                <div style="background:var(--bg-dark); padding:1rem; border-radius:10px; border:1px solid var(--border); margin-bottom:1rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                <div
+                    style="background:var(--bg-dark); padding:1rem; border-radius:10px; border:1px solid var(--border); margin-bottom:1rem;">
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
                         <span style="font-size:0.85rem; color:var(--text-muted);">Selected Package</span>
-                        <strong id="checkout-display-plan" style="color:var(--primary); font-size:1rem;">Growth Pro</strong>
+                        <strong id="checkout-display-plan" style="color:var(--primary); font-size:1rem;">Growth
+                            Pro</strong>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="font-size:0.85rem; color:var(--text-muted);">Billing Interval</span>
-                        <span id="checkout-display-cycle" class="window-badge" style="background:rgba(255,255,255,0.06); color:var(--text-main);">Monthly</span>
+                        <span id="checkout-display-cycle" class="window-badge"
+                            style="background:rgba(255,255,255,0.06); color:var(--text-main);">Monthly</span>
                     </div>
                 </div>
 
                 <div style="margin-bottom:0.85rem;">
-                    <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">SUBSCRIBER EMAIL *</label>
-                    <input type="email" id="checkout-email" placeholder="e.g. director@company.com" required style="width:100%; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    <label
+                        style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">SUBSCRIBER
+                        EMAIL *</label>
+                    <input type="email" id="checkout-email" placeholder="e.g. director@company.com" required
+                        style="width:100%; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                 </div>
 
                 <div style="margin-bottom:0.85rem;">
-                    <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">PHONE NUMBER (FOR PAYMENT RECEIPT) *</label>
-                    <input type="tel" id="checkout-phone" placeholder="e.g. +91 9876543210" required style="width:100%; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    <label
+                        style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">PHONE
+                        NUMBER (FOR PAYMENT RECEIPT) *</label>
+                    <input type="tel" id="checkout-phone" placeholder="e.g. +91 9876543210" required
+                        style="width:100%; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                 </div>
 
                 <!-- Coupon Section -->
                 <div style="margin-bottom:1rem;">
-                    <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">HAVE A COUPON CODE?</label>
+                    <label
+                        style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">HAVE
+                        A COUPON CODE?</label>
                     <div style="display:flex; gap:0.5rem;">
-                        <input type="text" id="checkout-coupon-code" placeholder="Enter coupon (e.g. SAVE20)" style="flex:1; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); text-transform:uppercase;">
-                        <button type="button" id="btn-apply-coupon" onclick="applyCheckoutCoupon()" class="btn secondary" style="white-space:nowrap; padding:0.55rem 1rem;">
+                        <input type="text" id="checkout-coupon-code" placeholder="Enter coupon (e.g. SAVE20)"
+                            style="flex:1; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); text-transform:uppercase;">
+                        <button type="button" id="btn-apply-coupon" onclick="applyCheckoutCoupon()"
+                            class="btn secondary" style="white-space:nowrap; padding:0.55rem 1rem;">
                             Apply
                         </button>
                     </div>
-                    <div id="checkout-coupon-feedback" style="margin-top:0.35rem; font-size:0.775rem; display:none;"></div>
+                    <div id="checkout-coupon-feedback" style="margin-top:0.35rem; font-size:0.775rem; display:none;">
+                    </div>
                 </div>
 
                 <!-- Price Breakdown Summary -->
-                <div style="background:var(--bg-dark); padding:1rem; border-radius:10px; border:1px solid var(--border); margin-bottom:1.25rem;">
+                <div
+                    style="background:var(--bg-dark); padding:1rem; border-radius:10px; border:1px solid var(--border); margin-bottom:1.25rem;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem; font-size:0.85rem;">
                         <span style="color:var(--text-muted);">Base Package Price</span>
                         <span id="checkout-display-base-price" style="color:var(--text-main);">₹0.00</span>
                     </div>
-                    <div id="checkout-row-discount" style="display:none; justify-content:space-between; margin-bottom:0.35rem; font-size:0.85rem; color:#10b981;">
+                    <div id="checkout-row-discount"
+                        style="display:none; justify-content:space-between; margin-bottom:0.35rem; font-size:0.85rem; color:#10b981;">
                         <span>Coupon Discount</span>
                         <span id="checkout-display-discount">- ₹0.00</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; border-top:1px solid var(--border); padding-top:0.5rem; margin-top:0.35rem; font-weight:700;">
+                    <div
+                        style="display:flex; justify-content:space-between; border-top:1px solid var(--border); padding-top:0.5rem; margin-top:0.35rem; font-weight:700;">
                         <span style="color:var(--text-main); font-size:1rem;">Final Payable Amount</span>
-                        <span id="checkout-display-final-price" style="color:var(--primary); font-size:1.25rem;">₹0.00</span>
+                        <span id="checkout-display-final-price"
+                            style="color:var(--primary); font-size:1.25rem;">₹0.00</span>
                     </div>
                 </div>
 
                 <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
                     <button type="button" onclick="closeCheckoutModal()" class="btn secondary">Cancel</button>
-                    <button type="submit" id="btn-proceed-payment" class="btn primary" style="background:#00a884; font-weight:700; gap:0.5rem;">
+                    <button type="submit" id="btn-proceed-payment" class="btn primary"
+                        style="background:#00a884; font-weight:700; gap:0.5rem;">
                         <span>Proceed to Pay</span> 💳
                     </button>
                 </div>
@@ -2021,45 +2309,69 @@
     </div>
 
     <!-- Create / Edit Coupon Modal -->
-    <div id="create-coupon-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px);">
-        <div class="modal-content card" style="max-width: 480px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border);">
+    <div id="create-coupon-modal" class="modal-overlay hidden"
+        style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px);">
+        <div class="modal-content card"
+            style="max-width: 480px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border);">
                 <h3 style="margin:0; font-size:1.1rem; color:var(--text-main);">🎟️ Create Promotional Coupon</h3>
-                <button type="button" onclick="closeCreateCouponModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem;">✕</button>
+                <button type="button" onclick="closeCreateCouponModal()"
+                    style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem;">✕</button>
             </div>
 
             <form id="create-coupon-form" onsubmit="saveNewCoupon(event)">
                 <div style="margin-bottom:0.85rem;">
-                    <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">COUPON CODE *</label>
-                    <input type="text" id="coupon-code-input" placeholder="e.g. FESTIVE20, PARTNER30" required style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); text-transform:uppercase;">
+                    <label
+                        style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">COUPON
+                        CODE *</label>
+                    <input type="text" id="coupon-code-input" placeholder="e.g. FESTIVE20, PARTNER30" required
+                        style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); text-transform:uppercase;">
                 </div>
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem; margin-bottom:0.85rem;">
                     <div>
-                        <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">DISCOUNT (%) *</label>
-                        <input type="number" id="coupon-discount-input" min="0" max="100" step="0.5" placeholder="e.g. 20" required style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                        <label
+                            style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">DISCOUNT
+                            (%) *</label>
+                        <input type="number" id="coupon-discount-input" min="0" max="100" step="0.5"
+                            placeholder="e.g. 20" required
+                            style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                     </div>
                     <div>
-                        <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">COMMISSION (%)</label>
-                        <input type="number" id="coupon-commission-input" min="0" max="100" step="0.5" placeholder="e.g. 10" style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                        <label
+                            style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">COMMISSION
+                            (%)</label>
+                        <input type="number" id="coupon-commission-input" min="0" max="100" step="0.5"
+                            placeholder="e.g. 10"
+                            style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                     </div>
                 </div>
 
                 <div style="margin-bottom:0.85rem;">
-                    <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">LINKED USER / INFLUENCER</label>
-                    <select id="coupon-user-select" style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    <label
+                        style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">LINKED
+                        USER / INFLUENCER</label>
+                    <select id="coupon-user-select"
+                        style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                         <option value="">None (General Company Coupon)</option>
                     </select>
                 </div>
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem; margin-bottom:1.25rem;">
                     <div>
-                        <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">MAX USAGE LIMIT</label>
-                        <input type="number" id="coupon-limit-input" min="1" placeholder="Unlimited" style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                        <label
+                            style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">MAX
+                            USAGE LIMIT</label>
+                        <input type="number" id="coupon-limit-input" min="1" placeholder="Unlimited"
+                            style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                     </div>
                     <div>
-                        <label style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">EXPIRY DATE</label>
-                        <input type="date" id="coupon-expiry-input" style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                        <label
+                            style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">EXPIRY
+                            DATE</label>
+                        <input type="date" id="coupon-expiry-input"
+                            style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                     </div>
                 </div>
 
@@ -2435,12 +2747,16 @@
             <form id="company-form" onsubmit="saveCompany(event)">
                 <input type="hidden" id="company-id-edit">
 
-                <div id="comp-modal-sub-alert" style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1rem; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                <div id="comp-modal-sub-alert"
+                    style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1rem; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
                     <div style="font-size: 0.825rem; color: #ef4444; line-height: 1.45;">
                         <strong>🔒 Active Subscription Required:</strong><br>
-                        Please subscribe to an Inspenox plan to configure Meta WhatsApp Business API credentials & launch broadcasts.
+                        Please subscribe to an Inspenox plan to configure Meta WhatsApp Business API credentials &
+                        launch broadcasts.
                     </div>
-                    <button type="button" class="btn primary sm" onclick="closeCompanyModal(); switchView('subscriptions');" style="white-space: nowrap; font-size: 0.8rem; padding: 0.4rem 0.85rem;">
+                    <button type="button" class="btn primary sm"
+                        onclick="closeCompanyModal(); switchView('subscriptions');"
+                        style="white-space: nowrap; font-size: 0.8rem; padding: 0.4rem 0.85rem;">
                         ⚡ View Plans & Subscribe
                     </button>
                 </div>
@@ -2455,12 +2771,16 @@
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
                     <div>
-                        <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">COMPANY EMAIL</label>
+                        <label
+                            style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">COMPANY
+                            EMAIL</label>
                         <input type="email" id="comp-email" placeholder="contact@company.com"
                             style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">PHONE NUMBER</label>
+                        <label
+                            style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">PHONE
+                            NUMBER</label>
                         <input type="tel" id="comp-phone" placeholder="e.g. +91 9876543210"
                             style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                     </div>
@@ -2511,8 +2831,10 @@
         style="z-index: 10000; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);">
         <div class="modal-content card"
             style="max-width: 480px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
-                <h3 id="user-modal-title" style="margin: 0; font-size: 1.1rem; color: var(--text-main);">👤 Add New User Account</h3>
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+                <h3 id="user-modal-title" style="margin: 0; font-size: 1.1rem; color: var(--text-main);">👤 Add New User
+                    Account</h3>
                 <button type="button" onclick="closeUserModal()"
                     style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem;">✕</button>
             </div>
@@ -2521,42 +2843,57 @@
                 <input type="hidden" id="user-id-edit">
 
                 <div style="margin-bottom: 0.85rem;">
-                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">USERNAME *</label>
+                    <label
+                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">USERNAME
+                        *</label>
                     <input type="text" id="user-name-input" placeholder="e.g. manaswini_admin" required
                         style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
                     <div>
-                        <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">EMAIL ADDRESS</label>
+                        <label
+                            style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">EMAIL
+                            ADDRESS</label>
                         <input type="email" id="user-email-input" placeholder="user@company.com"
                             style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">PHONE NUMBER</label>
+                        <label
+                            style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">PHONE
+                            NUMBER</label>
                         <input type="tel" id="user-phone-input" placeholder="e.g. +91 9876543210"
                             style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                     </div>
                 </div>
 
                 <div style="margin-bottom: 0.85rem;">
-                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">ASSIGNED COMPANY *</label>
-                    <select id="user-company-select" style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    <label
+                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">ASSIGNED
+                        COMPANY *</label>
+                    <select id="user-company-select"
+                        style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                         <option value="default">Inspenox Business Suite (Parent)</option>
                     </select>
                 </div>
 
                 <div style="margin-bottom: 0.85rem;">
-                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">USER ROLE *</label>
-                    <select id="user-role-select" style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    <label
+                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">USER
+                        ROLE *</label>
+                    <select id="user-role-select"
+                        style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                         <option value="admin" selected>Admin (Full Company Control)</option>
                         <option value="member">Member (Read / Broadcast Only)</option>
                     </select>
                 </div>
 
                 <div style="margin-bottom: 1.25rem;">
-                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">PASSWORD (MIN 6 CHARS)</label>
-                    <input type="password" id="user-password-input" placeholder="Leave blank to keep unchanged when editing"
+                    <label
+                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">PASSWORD
+                        (MIN 6 CHARS)</label>
+                    <input type="password" id="user-password-input"
+                        placeholder="Leave blank to keep unchanged when editing"
                         style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                 </div>
 
@@ -2573,7 +2910,8 @@
         style="z-index: 10000; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);">
         <div class="modal-content card"
             style="max-width: 440px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
                 <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main);">🔑 Reset User Password</h3>
                 <button type="button" onclick="closeResetUserPassModal()"
                     style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem;">✕</button>
@@ -2584,13 +2922,17 @@
                 <input type="hidden" id="reset-user-name">
 
                 <div style="margin-bottom: 0.85rem;">
-                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">USER ACCOUNT</label>
+                    <label
+                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">USER
+                        ACCOUNT</label>
                     <input type="text" id="reset-user-display" disabled
                         style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-muted); font-weight:700;">
                 </div>
 
                 <div style="margin-bottom: 1.25rem;">
-                    <label style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">NEW PASSWORD (MIN 6 CHARS) *</label>
+                    <label
+                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">NEW
+                        PASSWORD (MIN 6 CHARS) *</label>
                     <input type="password" id="reset-user-new-pass" placeholder="Enter new password" required
                         style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                 </div>
@@ -2606,16 +2948,28 @@
     <!-- Fullscreen Payment & Verification Processing Overlay -->
     <div id="payment-processing-overlay" class="modal-overlay hidden"
         style="z-index: 100000; background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; position: fixed; inset: 0;">
-        <div class="card" style="max-width: 440px; width: 90%; text-align: center; padding: 2.5rem 1.75rem; border-radius: 20px; border: 1px solid rgba(0,168,132,0.35); box-shadow: 0 25px 50px rgba(0,0,0,0.6); background: var(--bg-card); position: relative; overflow: hidden;">
-            <div style="position: absolute; top:0; left:0; right:0; height: 3px; background: linear-gradient(90deg, #00a884, #3b82f6, #00a884);"></div>
-            <div style="width: 64px; height: 64px; margin: 0 auto 1.25rem auto; position: relative; display: flex; align-items: center; justify-content: center;">
-                <div class="spinner-icon" style="width: 54px; height: 54px; border-width: 3.5px; border-color: rgba(0,168,132,0.2); border-top-color: var(--primary);"></div>
+        <div class="card"
+            style="max-width: 440px; width: 90%; text-align: center; padding: 2.5rem 1.75rem; border-radius: 20px; border: 1px solid rgba(0,168,132,0.35); box-shadow: 0 25px 50px rgba(0,0,0,0.6); background: var(--bg-card); position: relative; overflow: hidden;">
+            <div
+                style="position: absolute; top:0; left:0; right:0; height: 3px; background: linear-gradient(90deg, #00a884, #3b82f6, #00a884);">
+            </div>
+            <div
+                style="width: 64px; height: 64px; margin: 0 auto 1.25rem auto; position: relative; display: flex; align-items: center; justify-content: center;">
+                <div class="spinner-icon"
+                    style="width: 54px; height: 54px; border-width: 3.5px; border-color: rgba(0,168,132,0.2); border-top-color: var(--primary);">
+                </div>
                 <span id="pay-overlay-icon" style="position: absolute; font-size: 1.4rem;">🔒</span>
             </div>
-            <h3 id="pay-overlay-title" style="margin: 0 0 0.5rem 0; font-size: 1.25rem; color: var(--text-main); font-weight: 700;">Connecting Secure Gateway</h3>
-            <p id="pay-overlay-desc" style="margin: 0; font-size: 0.875rem; color: var(--text-muted); line-height: 1.55;">Connecting to Razorpay...</p>
-            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                <span style="color: #10b981;">🛡️ Your Friendly Business Partner</span> • <span>Instant Auto-Activation</span>
+            <h3 id="pay-overlay-title"
+                style="margin: 0 0 0.5rem 0; font-size: 1.25rem; color: var(--text-main); font-weight: 700;">Connecting
+                Secure Gateway</h3>
+            <p id="pay-overlay-desc"
+                style="margin: 0; font-size: 0.875rem; color: var(--text-muted); line-height: 1.55;">Connecting to
+                Razorpay...</p>
+            <div
+                style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <span style="color: #10b981;">🛡️ Your Friendly Business Partner</span> • <span>Instant
+                    Auto-Activation</span>
             </div>
         </div>
     </div>
@@ -2623,15 +2977,19 @@
     <!-- Workspace Payment Receipt / Tax Invoice Modal -->
     <div id="company-receipt-modal" class="modal-overlay hidden"
         style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; position: fixed; inset: 0; padding: 1rem; overflow-y: auto;">
-        <div class="card" style="max-width: 680px; width: 100%; padding: 0; border-radius: 18px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden;">
+        <div class="card"
+            style="max-width: 680px; width: 100%; padding: 0; border-radius: 18px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden;">
             <!-- Modal Header Bar -->
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; background: var(--bg-dark); border-bottom: 1px solid var(--border);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; background: var(--bg-dark); border-bottom: 1px solid var(--border);">
                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                     <span style="font-size: 1.25rem;">📜</span>
-                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-main);">Official Payment Receipt</h3>
+                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-main);">Official
+                        Payment Receipt</h3>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <button type="button" class="btn primary sm" onclick="printCompanyReceipt()" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <button type="button" class="btn primary sm" onclick="printCompanyReceipt()"
+                        style="display: inline-flex; align-items: center; gap: 6px;">
                         🖨️ <span>Print / Save PDF</span>
                     </button>
                     <button type="button" onclick="closeCompanyReceiptModal()"
@@ -2642,42 +3000,64 @@
             <!-- Printable Receipt Body -->
             <div id="company-receipt-printable" style="padding: 2rem 2rem 1.5rem 2rem;">
                 <!-- Receipt Brand Header -->
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 1px dashed var(--border); margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 1px dashed var(--border); margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                     <div>
                         <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                            <span style="font-size: 1.35rem; font-weight: 800; color: #10b981; letter-spacing: -0.5px;">Inspenox</span>
-                            <span style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 6px; font-weight: 700;">Business Suite</span>
+                            <span
+                                style="font-size: 1.35rem; font-weight: 800; color: #10b981; letter-spacing: -0.5px;">Inspenox</span>
+                            <span
+                                style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 6px; font-weight: 700;">Business
+                                Suite</span>
                         </div>
-                        <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Cloud WhatsApp Marketing & Automation Platform</p>
-                        <p style="margin: 2px 0 0 0; font-size: 0.775rem; color: var(--text-muted);">Website: marketing.inspenox.in | Support: support@inspenox.in</p>
+                        <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Cloud WhatsApp Marketing &
+                            Automation Platform</p>
+                        <p style="margin: 2px 0 0 0; font-size: 0.775rem; color: var(--text-muted);">Website:
+                            marketing.inspenox.in | Support: support@inspenox.in</p>
                     </div>
                     <div style="text-align: right;">
-                        <span class="window-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 800; font-size: 0.85rem; padding: 4px 12px; border-radius: 20px; text-transform: uppercase;">PAID & VERIFIED ✅</span>
-                        <div style="margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-muted);" id="rcpt-date-display">Date: -</div>
+                        <span class="window-badge"
+                            style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 800; font-size: 0.85rem; padding: 4px 12px; border-radius: 20px; text-transform: uppercase;">PAID
+                            & VERIFIED ✅</span>
+                        <div style="margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-muted);"
+                            id="rcpt-date-display">Date: -</div>
                     </div>
                 </div>
 
                 <!-- Invoice Meta Details Grid -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; padding: 1.25rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px;">
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; padding: 1.25rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px;">
                     <div>
-                        <span style="font-size: 0.725rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 4px;">CUSTOMER & WORKSPACE</span>
-                        <div id="rcpt-customer-name" style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">-</div>
-                        <div id="rcpt-customer-email" style="font-size: 0.825rem; color: var(--text-muted); margin-top: 2px;">-</div>
-                        <div id="rcpt-customer-phone" style="font-size: 0.825rem; color: var(--text-muted); margin-top: 2px;">-</div>
+                        <span
+                            style="font-size: 0.725rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 4px;">CUSTOMER
+                            & WORKSPACE</span>
+                        <div id="rcpt-customer-name"
+                            style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">-</div>
+                        <div id="rcpt-customer-email"
+                            style="font-size: 0.825rem; color: var(--text-muted); margin-top: 2px;">-</div>
+                        <div id="rcpt-customer-phone"
+                            style="font-size: 0.825rem; color: var(--text-muted); margin-top: 2px;">-</div>
                     </div>
                     <div>
-                        <span style="font-size: 0.725rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 4px;">PAYMENT TRANSACTION DETAILS</span>
-                        <div style="font-size: 0.825rem; color: var(--text-muted);">Order ID: <code id="rcpt-order-id" style="color: var(--text-main); font-weight: 600;">-</code></div>
-                        <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Payment Ref: <code id="rcpt-payment-id" style="color: var(--text-main); font-weight: 600;">-</code></div>
-                        <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Gateway: <span style="color: #3b82f6; font-weight: 600;">Razorpay Secure (INR)</span></div>
+                        <span
+                            style="font-size: 0.725rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 4px;">PAYMENT
+                            TRANSACTION DETAILS</span>
+                        <div style="font-size: 0.825rem; color: var(--text-muted);">Order ID: <code id="rcpt-order-id"
+                                style="color: var(--text-main); font-weight: 600;">-</code></div>
+                        <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Payment Ref: <code
+                                id="rcpt-payment-id" style="color: var(--text-main); font-weight: 600;">-</code></div>
+                        <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Gateway: <span
+                                style="color: #3b82f6; font-weight: 600;">Razorpay Secure (INR)</span></div>
                     </div>
                 </div>
 
                 <!-- Line Items Table -->
-                <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem;">
+                <div
+                    style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
-                            <tr style="background: var(--bg-dark); border-bottom: 1px solid var(--border); text-align: left; font-size: 0.775rem; color: var(--text-muted); text-transform: uppercase;">
+                            <tr
+                                style="background: var(--bg-dark); border-bottom: 1px solid var(--border); text-align: left; font-size: 0.775rem; color: var(--text-muted); text-transform: uppercase;">
                                 <th style="padding: 0.75rem 1rem;">Description / Subscription Package</th>
                                 <th style="padding: 0.75rem 1rem; text-align: right;">Billing Cycle</th>
                                 <th style="padding: 0.75rem 1rem; text-align: right;">Amount</th>
@@ -2686,43 +3066,59 @@
                         <tbody>
                             <tr style="border-bottom: 1px solid var(--border); font-size: 0.875rem;">
                                 <td style="padding: 1rem;">
-                                    <strong id="rcpt-plan-name" style="color: #10b981; font-size: 0.95rem; display: block;">Growth Pro</strong>
-                                    <span style="font-size: 0.775rem; color: var(--text-muted);">Full access to WhatsApp Broadcasts, Cloud API & Contacts</span>
+                                    <strong id="rcpt-plan-name"
+                                        style="color: #10b981; font-size: 0.95rem; display: block;">Growth Pro</strong>
+                                    <span style="font-size: 0.775rem; color: var(--text-muted);">Full access to WhatsApp
+                                        Broadcasts, Cloud API & Contacts</span>
                                 </td>
-                                <td id="rcpt-plan-cycle" style="padding: 1rem; text-align: right; color: var(--text-muted); font-size: 0.85rem;">Monthly</td>
-                                <td id="rcpt-base-amount" style="padding: 1rem; text-align: right; font-weight: 600; color: var(--text-main);">₹2,499.00</td>
+                                <td id="rcpt-plan-cycle"
+                                    style="padding: 1rem; text-align: right; color: var(--text-muted); font-size: 0.85rem;">
+                                    Monthly</td>
+                                <td id="rcpt-base-amount"
+                                    style="padding: 1rem; text-align: right; font-weight: 600; color: var(--text-main);">
+                                    ₹2,499.00</td>
                             </tr>
                         </tbody>
                     </table>
 
                     <!-- Pricing Breakdown -->
                     <div style="padding: 1rem 1.25rem; background: rgba(255,255,255,0.015);">
-                        <div style="display: flex; justify-content: flex-end; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                        <div
+                            style="display: flex; justify-content: flex-end; margin-bottom: 0.4rem; font-size: 0.85rem;">
                             <span style="color: var(--text-muted); width: 160px;">Original Plan Price:</span>
-                            <span id="rcpt-subtotal" style="font-weight: 600; color: var(--text-main); width: 120px; text-align: right;">₹2,499.00</span>
+                            <span id="rcpt-subtotal"
+                                style="font-weight: 600; color: var(--text-main); width: 120px; text-align: right;">₹2,499.00</span>
                         </div>
-                        <div id="rcpt-row-discount" style="display: flex; justify-content: flex-end; margin-bottom: 0.4rem; font-size: 0.85rem; color: #10b981;">
+                        <div id="rcpt-row-discount"
+                            style="display: flex; justify-content: flex-end; margin-bottom: 0.4rem; font-size: 0.85rem; color: #10b981;">
                             <span style="width: 160px;">Coupon Discount:</span>
-                            <span id="rcpt-discount" style="font-weight: 600; width: 120px; text-align: right;">- ₹2,498.00</span>
+                            <span id="rcpt-discount" style="font-weight: 600; width: 120px; text-align: right;">-
+                                ₹2,498.00</span>
                         </div>
-                        <div style="display: flex; justify-content: flex-end; padding-top: 0.6rem; border-top: 1px solid var(--border); font-size: 1.05rem;">
+                        <div
+                            style="display: flex; justify-content: flex-end; padding-top: 0.6rem; border-top: 1px solid var(--border); font-size: 1.05rem;">
                             <span style="font-weight: 700; color: var(--text-main); width: 160px;">Total Paid:</span>
-                            <span id="rcpt-total" style="font-weight: 800; color: #10b981; width: 120px; text-align: right;">₹1.00</span>
+                            <span id="rcpt-total"
+                                style="font-weight: 800; color: #10b981; width: 120px; text-align: right;">₹1.00</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Footer Terms & Note -->
-                <div style="text-align: center; padding-top: 0.75rem; border-top: 1px dashed var(--border); font-size: 0.75rem; color: var(--text-muted); line-height: 1.45;">
-                    <p style="margin: 0;">This is a computer-generated tax receipt. Valid for business expense & GST accounting purposes.</p>
+                <div
+                    style="text-align: center; padding-top: 0.75rem; border-top: 1px dashed var(--border); font-size: 0.75rem; color: var(--text-muted); line-height: 1.45;">
+                    <p style="margin: 0;">This is a computer-generated tax receipt. Valid for business expense & GST
+                        accounting purposes.</p>
                     <p style="margin: 3px 0 0 0;">Thank you for partnering with Inspenox Business Suite!</p>
                 </div>
             </div>
 
             <!-- Modal Footer Close Button -->
-            <div style="padding: 1rem 1.5rem; background: var(--bg-dark); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <div
+                style="padding: 1rem 1.5rem; background: var(--bg-dark); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem;">
                 <button type="button" class="btn secondary" onclick="closeCompanyReceiptModal()">Close</button>
-                <button type="button" class="btn primary" onclick="printCompanyReceipt()" style="display: inline-flex; align-items: center; gap: 6px;">
+                <button type="button" class="btn primary" onclick="printCompanyReceipt()"
+                    style="display: inline-flex; align-items: center; gap: 6px;">
                     🖨️ <span>Print Receipt</span>
                 </button>
             </div>
@@ -2730,26 +3126,34 @@
     </div>
 
     <!-- Excel Import Modal with Tag Options -->
-    <div id="excel-import-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px);">
-        <div class="modal-content card" style="max-width: 520px; width: 95%; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+    <div id="excel-import-modal" class="modal-overlay hidden"
+        style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px);">
+        <div class="modal-content card"
+            style="max-width: 520px; width: 95%; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
                 <div>
-                    <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                    <h3
+                        style="margin: 0; font-size: 1.15rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
                         <span>📊</span> <span>Import Excel Contacts</span>
                     </h3>
-                    <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);" id="excel-import-file-info">Ready to import spreadsheet contacts</p>
+                    <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);"
+                        id="excel-import-file-info">Ready to import spreadsheet contacts</p>
                 </div>
-                <button type="button" class="icon-btn" onclick="closeExcelImportModal()" style="font-size: 1.2rem; cursor: pointer;">✕</button>
+                <button type="button" class="icon-btn" onclick="closeExcelImportModal()"
+                    style="font-size: 1.2rem; cursor: pointer;">✕</button>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 1rem;">
-                <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between;">
+                <div
+                    style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between;">
                     <span style="font-size: 0.85rem; color: var(--text-muted);">Valid Contacts Detected:</span>
                     <strong id="excel-import-count" style="font-size: 1.05rem; color: #10b981;">0 contacts</strong>
                 </div>
 
                 <div>
-                    <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.35rem;">
+                    <label
+                        style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.35rem;">
                         🏷️ Assign Default Tag(s) to this Batch (Optional)
                     </label>
                     <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0 0 0.5rem 0;">
@@ -2757,43 +3161,59 @@
                     </p>
                     <div style="position: relative;" id="excel-tag-selector-wrapper">
                         <input type="hidden" id="excel-import-tags">
-                        <div class="tag-selector-box" id="excel-tag-selector-box" onclick="toggleTagDropdown('excel', event)">
-                            <div id="excel-selected-tags-container" style="display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;"></div>
-                            <span class="tag-selector-placeholder" id="excel-tags-placeholder">🏷️ Select Tags for this batch...</span>
+                        <div class="tag-selector-box" id="excel-tag-selector-box"
+                            onclick="toggleTagDropdown('excel', event)">
+                            <div id="excel-selected-tags-container"
+                                style="display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;"></div>
+                            <span class="tag-selector-placeholder" id="excel-tags-placeholder">🏷️ Select Tags for this
+                                batch...</span>
                         </div>
                         <div class="tag-dropdown-menu" id="excel-tag-dropdown-menu">
-                            <input type="text" class="tag-search-input" id="excel-tag-search" placeholder="Search or filter tags..." oninput="filterTagDropdown('excel')">
+                            <input type="text" class="tag-search-input" id="excel-tag-search"
+                                placeholder="Search or filter tags..." oninput="filterTagDropdown('excel')">
                             <div class="tag-items-list" id="excel-tag-items-list"></div>
                             <div class="tag-dropdown-divider"></div>
                             <div class="new-tag-create-box" id="excel-new-tag-box">
-                                <input type="text" class="tag-search-input" id="excel-new-tag-name" placeholder="Tag name (e.g. June Leads)" onkeydown="if(event.key==='Enter'){event.preventDefault();submitNewTag('excel');}">
+                                <input type="text" class="tag-search-input" id="excel-new-tag-name"
+                                    placeholder="Tag name (e.g. June Leads)"
+                                    onkeydown="if(event.key==='Enter'){event.preventDefault();submitNewTag('excel');}">
                                 <div style="display: flex; gap: 0.35rem; margin-top: 4px;">
-                                    <button type="button" class="btn primary sm" onclick="submitNewTag('excel')" style="flex:1; padding: 0.25rem 0.5rem; font-size: 0.75rem;">Add</button>
-                                    <button type="button" class="btn secondary sm" onclick="cancelNewTag('excel')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Cancel</button>
+                                    <button type="button" class="btn primary sm" onclick="submitNewTag('excel')"
+                                        style="flex:1; padding: 0.25rem 0.5rem; font-size: 0.75rem;">Add</button>
+                                    <button type="button" class="btn secondary sm" onclick="cancelNewTag('excel')"
+                                        style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Cancel</button>
                                 </div>
                             </div>
-                            <button type="button" class="btn-new-tag-action" id="excel-btn-show-new-tag" onclick="showNewTagInput('excel')">
+                            <button type="button" class="btn-new-tag-action" id="excel-btn-show-new-tag"
+                                onclick="showNewTagInput('excel')">
                                 <span style="font-size:1rem; font-weight:700;">+</span> <span>New Tag</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div style="background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem;">
-                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--text-main); cursor: pointer;">
-                        <input type="checkbox" id="excel-import-append-cb" checked style="accent-color: var(--primary); width: 15px; height: 15px;">
+                <div
+                    style="background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem;">
+                    <label
+                        style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--text-main); cursor: pointer;">
+                        <input type="checkbox" id="excel-import-append-cb" checked
+                            style="accent-color: var(--primary); width: 15px; height: 15px;">
                         <span>Keep & combine with tags already defined in file rows</span>
                     </label>
                 </div>
 
-                <label style="display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer; font-size: 0.775rem; color: var(--text-muted); background: var(--bg-dark); padding: 0.75rem 0.85rem; border-radius: 8px; border: 1px solid var(--border);">
-                    <input type="checkbox" id="excel-consent-cb" checked required style="width: 15px; height: 15px; margin-top: 2px; flex-shrink: 0; accent-color: var(--primary);">
-                    <span>I certify that these contacts have given opt-in consent to receive WhatsApp & SMS messages.</span>
+                <label
+                    style="display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer; font-size: 0.775rem; color: var(--text-muted); background: var(--bg-dark); padding: 0.75rem 0.85rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <input type="checkbox" id="excel-consent-cb" checked required
+                        style="width: 15px; height: 15px; margin-top: 2px; flex-shrink: 0; accent-color: var(--primary);">
+                    <span>I certify that these contacts have given opt-in consent to receive WhatsApp & SMS
+                        messages.</span>
                 </label>
 
                 <div style="display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.5rem;">
                     <button type="button" class="btn secondary" onclick="closeExcelImportModal()">Cancel</button>
-                    <button type="button" class="btn primary" id="btn-confirm-excel-import" onclick="executeExcelImport()" style="gap: 0.4rem;">
+                    <button type="button" class="btn primary" id="btn-confirm-excel-import"
+                        onclick="executeExcelImport()" style="gap: 0.4rem;">
                         <span>Confirm & Import Contacts</span>
                     </button>
                 </div>
@@ -2802,88 +3222,107 @@
     </div>
 
     <!-- Quick Tag Modal (for Table Row Instant Tag Updates) -->
-    <div id="quick-tag-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(5px);">
-        <div class="modal-content card" style="max-width: 360px; width: 92%; padding: 1.25rem; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; padding-bottom: 0.65rem; border-bottom: 1px solid var(--border);">
+    <div id="quick-tag-modal" class="modal-overlay hidden"
+        style="z-index: 10000; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(5px);">
+        <div class="modal-content card"
+            style="max-width: 360px; width: 92%; padding: 1.25rem; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; padding-bottom: 0.65rem; border-bottom: 1px solid var(--border);">
                 <div>
-                    <h3 style="margin: 0; font-size: 1rem; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                    <h3
+                        style="margin: 0; font-size: 1rem; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
                         <span>🏷️</span> <span>Update Customer Tags</span>
                     </h3>
-                    <p style="margin: 0.15rem 0 0 0; font-size: 0.75rem; color: var(--text-muted);" id="quick-tag-cust-name">Customer</p>
+                    <p style="margin: 0.15rem 0 0 0; font-size: 0.75rem; color: var(--text-muted);"
+                        id="quick-tag-cust-name">Customer</p>
                 </div>
-                <button type="button" class="icon-btn" onclick="closeQuickTagModal()" style="font-size: 1.1rem; cursor: pointer;">✕</button>
+                <button type="button" class="icon-btn" onclick="closeQuickTagModal()"
+                    style="font-size: 1.1rem; cursor: pointer;">✕</button>
             </div>
 
             <input type="hidden" id="quick-tag-cust-id">
-            <input type="text" class="tag-search-input" id="quick-tag-search" placeholder="Search or filter tags..." oninput="filterTagDropdown('quick')" style="margin-bottom: 0.6rem;">
+            <input type="text" class="tag-search-input" id="quick-tag-search" placeholder="Search or filter tags..."
+                oninput="filterTagDropdown('quick')" style="margin-bottom: 0.6rem;">
 
             <div class="tag-items-list" id="quick-tag-items-list" style="max-height: 250px;"></div>
 
             <div class="tag-dropdown-divider" style="margin: 0.65rem 0;"></div>
 
             <div class="new-tag-create-box" id="quick-new-tag-box" style="margin-bottom: 0.5rem;">
-                <input type="text" class="tag-search-input" id="quick-new-tag-name" placeholder="Tag name (e.g. VIP)" onkeydown="if(event.key==='Enter'){event.preventDefault();submitNewTag('quick');}">
+                <input type="text" class="tag-search-input" id="quick-new-tag-name" placeholder="Tag name (e.g. VIP)"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();submitNewTag('quick');}">
                 <div style="display: flex; gap: 0.35rem; margin-top: 4px;">
-                    <button type="button" class="btn primary sm" onclick="submitNewTag('quick')" style="flex:1; padding: 0.25rem 0.5rem; font-size: 0.75rem;">Add</button>
-                    <button type="button" class="btn secondary sm" onclick="cancelNewTag('quick')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Cancel</button>
+                    <button type="button" class="btn primary sm" onclick="submitNewTag('quick')"
+                        style="flex:1; padding: 0.25rem 0.5rem; font-size: 0.75rem;">Add</button>
+                    <button type="button" class="btn secondary sm" onclick="cancelNewTag('quick')"
+                        style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Cancel</button>
                 </div>
             </div>
 
-            <button type="button" class="btn-new-tag-action" id="quick-btn-show-new-tag" onclick="showNewTagInput('quick')" style="margin-bottom: 0.75rem;">
+            <button type="button" class="btn-new-tag-action" id="quick-btn-show-new-tag"
+                onclick="showNewTagInput('quick')" style="margin-bottom: 0.75rem;">
                 <span style="font-size:1rem; font-weight:700;">+</span> <span>New Tag</span>
             </button>
 
             <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
                 <button type="button" class="btn secondary sm" onclick="closeQuickTagModal()">Cancel</button>
-                <button type="button" class="btn primary sm" id="btn-save-quick-tags" onclick="saveQuickTags()">Save Tags</button>
+                <button type="button" class="btn primary sm" id="btn-save-quick-tags" onclick="saveQuickTags()">Save
+                    Tags</button>
             </div>
         </div>
     </div>
 
     <style>
-    @media print {
-        body * {
-            visibility: hidden !important;
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+
+            #company-receipt-modal,
+            #company-receipt-modal * {
+                visibility: visible !important;
+            }
+
+            #company-receipt-modal {
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            #company-receipt-modal .card {
+                border: none !important;
+                box-shadow: none !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                background: white !important;
+                color: black !important;
+            }
+
+            #company-receipt-printable {
+                color: black !important;
+                padding: 20px !important;
+            }
+
+            #company-receipt-printable * {
+                color: black !important;
+            }
+
+            #company-receipt-printable .window-badge,
+            #company-receipt-printable strong,
+            #company-receipt-printable #rcpt-total {
+                color: #059669 !important;
+            }
+
+            #company-receipt-modal button {
+                display: none !important;
+            }
         }
-        #company-receipt-modal,
-        #company-receipt-modal * {
-            visibility: visible !important;
-        }
-        #company-receipt-modal {
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: white !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            display: block !important;
-        }
-        #company-receipt-modal .card {
-            border: none !important;
-            box-shadow: none !important;
-            max-width: 100% !important;
-            width: 100% !important;
-            background: white !important;
-            color: black !important;
-        }
-        #company-receipt-printable {
-            color: black !important;
-            padding: 20px !important;
-        }
-        #company-receipt-printable * {
-            color: black !important;
-        }
-        #company-receipt-printable .window-badge,
-        #company-receipt-printable strong,
-        #company-receipt-printable #rcpt-total {
-            color: #059669 !important;
-        }
-        #company-receipt-modal button {
-            display: none !important;
-        }
-    }
     </style>
 
     <script type="module" src="/app.js"></script>

@@ -59,15 +59,14 @@ module.exports = async (req, res) => {
         let token = null;
         let wabaId = null;
 
-        if (String(companyId) === '1' || String(companyId) === 'default' || !companyId) {
-            phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
-            token = env.WHATSAPP_ACCESS_TOKEN;
-            wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+        let isMaster = false;
+        if (!companyId || String(companyId) === 'default' || String(companyId) === 'parent') {
+            isMaster = true;
         } else {
             try {
                 const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
                 if (cos.length > 0) {
-                    const isMaster = (cos[0].name || '').toLowerCase().includes('inspenox') || (cos[0].slug || '').toLowerCase() === 'inspenox' || String(cos[0].id) === '1';
+                    isMaster = (cos[0].slug || '').toLowerCase() === 'inspenox' || (cos[0].name || '').toLowerCase() === 'inspenox';
                     const isPaid = cos[0].subscription_status === 'active' && cos[0].subscription_plan && cos[0].subscription_plan.toLowerCase() !== 'none';
 
                     if (!isMaster && !isPaid) {
@@ -79,7 +78,7 @@ module.exports = async (req, res) => {
                         token = cos[0].whatsapp_access_token;
                         wabaId = cos[0].whatsapp_business_account_id || null;
                     } else if (isMaster) {
-                        phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
+                        phoneId = env.WHATSAPP_PHONE_NUMBER_ID;
                         token = env.WHATSAPP_ACCESS_TOKEN;
                         wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
                     } else {
@@ -89,6 +88,12 @@ module.exports = async (req, res) => {
             } catch(e) {
                 console.error('Error fetching company Meta credentials for broadcast:', e);
             }
+        }
+
+        if (isMaster) {
+            phoneId = env.WHATSAPP_PHONE_NUMBER_ID;
+            token = env.WHATSAPP_ACCESS_TOKEN;
+            wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
         }
 
         if (!phoneId || !token) {
