@@ -1813,6 +1813,8 @@ function renderPricingCards() {
             `;
         }
 
+        const strikedPrice = price * 2;
+
         return `
             <div class="pricing-card ${plan.popular && !isCurrentActive && !isDowngrade ? 'popular' : ''}" style="${isDowngrade ? 'opacity: 0.82;' : ''}">
                 ${plan.popular && !isCurrentActive && !isDowngrade ? '<div class="pricing-badge-popular">⭐ Recommended</div>' : ''}
@@ -1826,8 +1828,11 @@ function renderPricingCards() {
                 </div>
 
                 <div class="pricing-price-box">
-                    <span class="pricing-amount">₹${price.toLocaleString('en-IN')}</span>
-                    <span class="pricing-period">${periodText}</span>
+                    <div style="display:flex; align-items:baseline; gap:0.4rem; flex-wrap:wrap;">
+                        <span class="pricing-amount">₹${price.toLocaleString('en-IN')}</span>
+                        <span class="pricing-strikethrough" style="font-size:1.2rem; font-weight:600; color:var(--text-muted); text-decoration:line-through; text-decoration-thickness:2px; text-decoration-color:#ef4444; opacity:0.75; margin-left:0.35rem;">₹${strikedPrice.toLocaleString('en-IN')}</span>
+                        <span class="pricing-period">${periodText}</span>
+                    </div>
                     ${isAnnual ? '<div style="font-size:0.75rem; color:#10b981; font-weight:600; margin-top:0.25rem;">✨ Includes 20% annual discount</div>' : ''}
                 </div>
 

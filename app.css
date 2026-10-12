@@ -2915,6 +2915,17 @@ tr:hover td {
     letter-spacing: -0.5px;
 }
 
+.pricing-strikethrough {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: #ef4444;
+    opacity: 0.75;
+    margin-left: 0.35rem;
+}
+
 .pricing-period {
     font-size: 0.85rem;
     color: var(--text-muted);
