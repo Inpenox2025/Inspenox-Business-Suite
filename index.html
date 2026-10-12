@@ -2751,154 +2751,159 @@
 
     <!-- Add / Edit Company Credentials Modal -->
     <div id="company-modal" class="modal-overlay hidden"
-        style="z-index: 10000; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);">
+        style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); padding: 1.25rem 1rem; overflow-y: auto; box-sizing: border-box;">
         <div class="modal-content card"
-            style="max-width: 540px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
-            <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
-                <h3 id="company-modal-title" style="margin: 0; font-size: 1.1rem; color: var(--text-main);">🏢 Add /
-                    Edit Company Account</h3>
+            style="max-width: 580px; width: 100%; max-height: min(90vh, 840px); display: flex; flex-direction: column; padding: 0; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); overflow: hidden; text-align: left; margin: auto;">
+            
+            <!-- Sticky Modal Header -->
+            <div style="padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); flex-shrink: 0;">
+                <h3 id="company-modal-title" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">🏢 Add / Edit Company Account</h3>
                 <button type="button" onclick="closeCompanyModal()"
-                    style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem;">✕</button>
+                    style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 0.25rem 0.45rem; border-radius: 6px; transition: color 0.15s;"
+                    title="Close">✕</button>
             </div>
 
-            <form id="company-form" onsubmit="saveCompany(event)">
+            <!-- Form with scrollable body and sticky footer -->
+            <form id="company-form" onsubmit="saveCompany(event)" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; margin: 0;">
                 <input type="hidden" id="company-id-edit">
 
-                <div id="comp-modal-sub-alert"
-                    style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1rem; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
-                    <div style="font-size: 0.825rem; color: #ef4444; line-height: 1.45;">
-                        <strong>🔒 Active Subscription Required:</strong><br>
-                        Please subscribe to an Inspenox plan to configure Meta WhatsApp Business API credentials &
-                        launch broadcasts.
+                <!-- Scrollable Body Content -->
+                <div style="padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; min-height: 0; scrollbar-width: thin;">
+                    <div id="comp-modal-sub-alert"
+                        style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1rem; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                        <div style="font-size: 0.825rem; color: #ef4444; line-height: 1.45;">
+                            <strong>🔒 Active Subscription Required:</strong><br>
+                            Please subscribe to an Inspenox plan to configure Meta WhatsApp Business API credentials & launch broadcasts.
+                        </div>
+                        <button type="button" class="btn primary sm"
+                            onclick="closeCompanyModal(); switchView('subscriptions');"
+                            style="white-space: nowrap; font-size: 0.8rem; padding: 0.4rem 0.85rem;">
+                            ⚡ View Plans & Subscribe
+                        </button>
                     </div>
-                    <button type="button" class="btn primary sm"
-                        onclick="closeCompanyModal(); switchView('subscriptions');"
-                        style="white-space: nowrap; font-size: 0.8rem; padding: 0.4rem 0.85rem;">
-                        ⚡ View Plans & Subscribe
-                    </button>
-                </div>
 
-                <div style="margin-bottom: 0.85rem;">
-                    <label
-                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">COMPANY
-                        NAME *</label>
-                    <input type="text" id="comp-name" placeholder="e.g. Inspenox Main" required
-                        style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem;">
-                    <div>
+                    <div style="margin-bottom: 0.85rem;">
                         <label
                             style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">COMPANY
-                            EMAIL</label>
-                        <input type="email" id="comp-email" placeholder="contact@company.com"
+                            NAME *</label>
+                        <input type="text" id="comp-name" placeholder="e.g. Inspenox Main" required
                             style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                     </div>
-                    <div>
-                        <label
-                            style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">PHONE
-                            NUMBER</label>
-                        <input type="tel" id="comp-phone" placeholder="e.g. +91 9876543210"
-                            style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
-                    </div>
-                </div>
 
-                <div style="margin-bottom: 0.85rem;">
-                    <label
-                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">WHATSAPP
-                        BUSINESS ACCOUNT ID (WABA ID)</label>
-                    <input type="text" id="comp-waba-id" placeholder="e.g. 1561463645723530"
-                        style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
-                </div>
-
-                <!-- Meta WhatsApp Phone Numbers Management (Plan-enforced) -->
-                <div style="margin-bottom: 1rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 0.85rem;">
                         <div>
-                            <span style="font-size: 0.775rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">Registered Meta Phone Numbers</span>
-                            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
-                                Associated phone numbers & Phone Number IDs registered in Meta Business Suite
-                            </div>
+                            <label
+                                style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">COMPANY
+                                EMAIL</label>
+                            <input type="email" id="comp-email" placeholder="contact@company.com"
+                                style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                         </div>
-                        <span id="comp-phone-quota-badge" style="font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(0, 168, 132, 0.15); color: var(--primary);">
-                            1 of 1 Number
-                        </span>
-                    </div>
-
-                    <!-- Hidden input for backwards compatibility -->
-                    <input type="hidden" id="comp-phone-id">
-
-                    <!-- List of Registered Phone Numbers -->
-                    <div id="comp-phone-numbers-list" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.65rem; margin-bottom: 0.75rem;">
-                        <!-- Rendered dynamically -->
-                    </div>
-
-                    <!-- Plan limit note matching Meta's interface -->
-                    <div id="comp-phone-plan-note" style="font-size: 0.74rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.65rem;">
-                        You can add phone numbers as per your active subscription plan. Once you upgrade your plan, you can add up to 20 numbers.
-                    </div>
-
-                    <!-- Add new number trigger button -->
-                    <button type="button" id="btn-show-add-phone" onclick="toggleAddPhoneForm(true)" class="btn secondary sm" style="font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Add new number
-                    </button>
-
-                    <!-- Add new number inline form -->
-                    <div id="comp-add-phone-form" style="display: none; background: var(--bg-dark); border: 1px dashed var(--border); border-radius: 8px; padding: 0.85rem; margin-top: 0.75rem;">
-                        <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.6rem;">
-                            📞 Connect WhatsApp Phone Number
+                        <div>
+                            <label
+                                style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">PHONE
+                                NUMBER</label>
+                            <input type="tel" id="comp-phone" placeholder="e.g. +91 9876543210"
+                                style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem;">
+                    </div>
+
+                    <div style="margin-bottom: 0.85rem;">
+                        <label
+                            style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">WHATSAPP
+                            BUSINESS ACCOUNT ID (WABA ID)</label>
+                        <input type="text" id="comp-waba-id" placeholder="e.g. 1561463645723530"
+                            style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    </div>
+
+                    <!-- Meta WhatsApp Phone Numbers Management (Plan-enforced) -->
+                    <div style="margin-bottom: 1rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
                             <div>
+                                <span style="font-size: 0.775rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">Registered Meta Phone Numbers</span>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                                    Associated phone numbers & Phone Number IDs registered in Meta Business Suite
+                                </div>
+                            </div>
+                            <span id="comp-phone-quota-badge" style="font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(0, 168, 132, 0.15); color: var(--primary);">
+                                1 of 1 Number
+                            </span>
+                        </div>
+
+                        <!-- Hidden input for backwards compatibility -->
+                        <input type="hidden" id="comp-phone-id">
+
+                        <!-- List of Registered Phone Numbers -->
+                        <div id="comp-phone-numbers-list" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.65rem; margin-bottom: 0.75rem;">
+                            <!-- Rendered dynamically -->
+                        </div>
+
+                        <!-- Plan limit note matching Meta's interface -->
+                        <div id="comp-phone-plan-note" style="font-size: 0.74rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.65rem;">
+                            You can add phone numbers as per your active subscription plan. Once you upgrade your plan, you can add up to 20 numbers.
+                        </div>
+
+                        <!-- Add new number trigger button -->
+                        <button type="button" id="btn-show-add-phone" onclick="toggleAddPhoneForm(true)" class="btn secondary sm" style="font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Add new number
+                        </button>
+
+                        <!-- Add new number inline form -->
+                        <div id="comp-add-phone-form" style="display: none; background: var(--bg-dark); border: 1px dashed var(--border); border-radius: 8px; padding: 0.85rem; margin-top: 0.75rem;">
+                            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.6rem;">
+                                📞 Connect WhatsApp Phone Number
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.6rem; margin-bottom: 0.6rem;">
+                                <div>
+                                    <label style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                        ASSOCIATED PHONE NUMBER *
+                                    </label>
+                                    <input type="text" id="comp-new-phone-num" placeholder="e.g. +91 79816 56294"
+                                        style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                        PHONE NUMBER ID (META) *
+                                    </label>
+                                    <input type="text" id="comp-new-phone-id" placeholder="e.g. 1196613980211733"
+                                        style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 0.75rem;">
                                 <label style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
-                                    ASSOCIATED PHONE NUMBER *
+                                    VERIFIED NAME / LABEL (OPTIONAL)
                                 </label>
-                                <input type="text" id="comp-new-phone-num" placeholder="e.g. +91 79816 56294"
+                                <input type="text" id="comp-new-phone-name" placeholder="e.g. Manasa Geetha Enterprises / Support Desk"
                                     style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
                             </div>
-                            <div>
-                                <label style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
-                                    PHONE NUMBER ID (META) *
-                                </label>
-                                <input type="text" id="comp-new-phone-id" placeholder="e.g. 1196613980211733"
-                                    style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
+                            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <button type="button" onclick="toggleAddPhoneForm(false)" class="btn secondary sm" style="font-size: 0.75rem; padding: 0.35rem 0.7rem;">Cancel</button>
+                                <button type="button" onclick="saveNewPhoneToCompanyList()" class="btn primary sm" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">Confirm & Add</button>
                             </div>
                         </div>
-                        <div style="margin-bottom: 0.75rem;">
-                            <label style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
-                                VERIFIED NAME / LABEL (OPTIONAL)
-                            </label>
-                            <input type="text" id="comp-new-phone-name" placeholder="e.g. Manasa Geetha Enterprises / Support Desk"
-                                style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
-                        </div>
-                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                            <button type="button" onclick="toggleAddPhoneForm(false)" class="btn secondary sm" style="font-size: 0.75rem; padding: 0.35rem 0.7rem;">Cancel</button>
-                            <button type="button" onclick="saveNewPhoneToCompanyList()" class="btn primary sm" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">Confirm & Add</button>
-                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 0.85rem;">
+                        <label
+                            style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">WHATSAPP
+                            SYSTEM USER ACCESS TOKEN</label>
+                        <input type="password" id="comp-access-token" placeholder="EAALed5FtFjw..."
+                            style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                    </div>
+
+                    <div style="margin-bottom: 0.5rem;">
+                        <label
+                            style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">WHATSAPP
+                            VERIFY TOKEN</label>
+                        <input type="text" id="comp-verify-token" placeholder="manasageetha"
+                            style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                     </div>
                 </div>
 
-                <div style="margin-bottom: 0.85rem;">
-                    <label
-                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">WHATSAPP
-                        SYSTEM USER ACCESS TOKEN</label>
-                    <input type="password" id="comp-access-token" placeholder="EAALed5FtFjw..."
-                        style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
-                </div>
-
-                <div style="margin-bottom: 1.25rem;">
-                    <label
-                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">WHATSAPP
-                        VERIFY TOKEN</label>
-                    <input type="text" id="comp-verify-token" placeholder="manasageetha"
-                        style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
-                </div>
-
-                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-                    <button type="button" onclick="closeCompanyModal()" class="btn secondary">Cancel</button>
-                    <button type="submit" id="btn-save-company" class="btn primary">Save Company Account</button>
+                <!-- Sticky Modal Actions Footer -->
+                <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; justify-content: flex-end; align-items: center; background: var(--bg-card); flex-shrink: 0;">
+                    <button type="button" onclick="closeCompanyModal()" class="btn secondary" style="padding: 0.5rem 1.1rem;">Cancel</button>
+                    <button type="submit" id="btn-save-company" class="btn primary" style="padding: 0.5rem 1.3rem;">Save Company Account</button>
                 </div>
             </form>
         </div>
