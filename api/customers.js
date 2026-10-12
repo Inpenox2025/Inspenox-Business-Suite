@@ -57,6 +57,19 @@ module.exports = async (req, res) => {
                 id, name, phone, email, company_name, address, city, state, pincode, country, tags, notes, custom_fields, company_id 
             } = req.body || {};
 
+            if (id && (!name || !phone) && tags !== undefined) {
+                const updated = await sql`
+                    UPDATE customers 
+                    SET tags = ${tags || null}
+                    WHERE id = ${id}
+                    RETURNING *
+                `;
+                if (updated.length > 0) {
+                    return res.status(200).json({ success: true, customer: updated[0] });
+                }
+                return res.status(404).json({ error: 'Customer not found' });
+            }
+
             if (!name || !phone) return res.status(400).json({ error: 'Name and phone required' });
             
             const cleanPhone = formatIndiaPhone(phone);

@@ -506,8 +506,30 @@
                             style="padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.85rem;">
                         <input type="text" id="cust-pincode" placeholder="Pincode"
                             style="padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.85rem;">
-                        <input type="text" id="cust-tags" placeholder="Tags (e.g. VIP, Wholesale)"
-                            style="padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.85rem;">
+                        
+                        <!-- Rich Interactive Tag Selector Component -->
+                        <div style="position: relative;" id="cust-tag-selector-wrapper">
+                            <input type="hidden" id="cust-tags">
+                            <div class="tag-selector-box" id="cust-tag-selector-box" onclick="toggleTagDropdown('form', event)" title="Click to select or create customer tags">
+                                <div id="cust-selected-tags-container" style="display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;"></div>
+                                <span class="tag-selector-placeholder" id="cust-tags-placeholder">🏷️ Select / Add Tags...</span>
+                            </div>
+                            <div class="tag-dropdown-menu" id="form-tag-dropdown-menu">
+                                <input type="text" class="tag-search-input" id="form-tag-search" placeholder="Search or filter tags..." oninput="filterTagDropdown('form')">
+                                <div class="tag-items-list" id="form-tag-items-list"></div>
+                                <div class="tag-dropdown-divider"></div>
+                                <div class="new-tag-create-box" id="form-new-tag-box">
+                                    <input type="text" class="tag-search-input" id="form-new-tag-name" placeholder="Tag name (e.g. VIP, Wholesale)" onkeydown="if(event.key==='Enter'){event.preventDefault();submitNewTag('form');}">
+                                    <div style="display: flex; gap: 0.35rem; margin-top: 4px;">
+                                        <button type="button" class="btn primary sm" onclick="submitNewTag('form')" style="flex:1; padding: 0.25rem 0.5rem; font-size: 0.75rem;">Add</button>
+                                        <button type="button" class="btn secondary sm" onclick="cancelNewTag('form')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Cancel</button>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-new-tag-action" id="form-btn-show-new-tag" onclick="showNewTagInput('form')">
+                                    <span style="font-size:1rem; font-weight:700;">+</span> <span>New Tag</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
@@ -542,6 +564,11 @@
                         </svg>
                         <input type="text" id="customers-search"
                             placeholder="Search customer by name, phone, email, company or tags...">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <select id="customers-tag-filter" onchange="filterCustomersByTag(this.value)" style="padding: 0.5rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.825rem; cursor: pointer; outline: none;">
+                            <option value="">🏷️ All Tags (Filter)</option>
+                        </select>
                     </div>
                     <div class="pagination-area">
                         <span id="customers-pagination-info" class="pagination-info">Showing 0 of 0</span>
@@ -2669,6 +2696,117 @@
                 <button type="button" class="btn primary" onclick="printCompanyReceipt()" style="display: inline-flex; align-items: center; gap: 6px;">
                     🖨️ <span>Print Receipt</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excel Import Modal with Tag Options -->
+    <div id="excel-import-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px);">
+        <div class="modal-content card" style="max-width: 520px; width: 95%; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                        <span>📊</span> <span>Import Excel Contacts</span>
+                    </h3>
+                    <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);" id="excel-import-file-info">Ready to import spreadsheet contacts</p>
+                </div>
+                <button type="button" class="icon-btn" onclick="closeExcelImportModal()" style="font-size: 1.2rem; cursor: pointer;">✕</button>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Valid Contacts Detected:</span>
+                    <strong id="excel-import-count" style="font-size: 1.05rem; color: #10b981;">0 contacts</strong>
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.35rem;">
+                        🏷️ Assign Default Tag(s) to this Batch (Optional)
+                    </label>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0 0 0.5rem 0;">
+                        Apply one or more lifecycle/status tags to all contacts in this upload:
+                    </p>
+                    <div style="position: relative;" id="excel-tag-selector-wrapper">
+                        <input type="hidden" id="excel-import-tags">
+                        <div class="tag-selector-box" id="excel-tag-selector-box" onclick="toggleTagDropdown('excel', event)">
+                            <div id="excel-selected-tags-container" style="display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;"></div>
+                            <span class="tag-selector-placeholder" id="excel-tags-placeholder">🏷️ Select Tags for this batch...</span>
+                        </div>
+                        <div class="tag-dropdown-menu" id="excel-tag-dropdown-menu">
+                            <input type="text" class="tag-search-input" id="excel-tag-search" placeholder="Search or filter tags..." oninput="filterTagDropdown('excel')">
+                            <div class="tag-items-list" id="excel-tag-items-list"></div>
+                            <div class="tag-dropdown-divider"></div>
+                            <div class="new-tag-create-box" id="excel-new-tag-box">
+                                <input type="text" class="tag-search-input" id="excel-new-tag-name" placeholder="Tag name (e.g. June Leads)" onkeydown="if(event.key==='Enter'){event.preventDefault();submitNewTag('excel');}">
+                                <div style="display: flex; gap: 0.35rem; margin-top: 4px;">
+                                    <button type="button" class="btn primary sm" onclick="submitNewTag('excel')" style="flex:1; padding: 0.25rem 0.5rem; font-size: 0.75rem;">Add</button>
+                                    <button type="button" class="btn secondary sm" onclick="cancelNewTag('excel')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Cancel</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-new-tag-action" id="excel-btn-show-new-tag" onclick="showNewTagInput('excel')">
+                                <span style="font-size:1rem; font-weight:700;">+</span> <span>New Tag</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--text-main); cursor: pointer;">
+                        <input type="checkbox" id="excel-import-append-cb" checked style="accent-color: var(--primary); width: 15px; height: 15px;">
+                        <span>Keep & combine with tags already defined in file rows</span>
+                    </label>
+                </div>
+
+                <label style="display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer; font-size: 0.775rem; color: var(--text-muted); background: var(--bg-dark); padding: 0.75rem 0.85rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <input type="checkbox" id="excel-consent-cb" checked required style="width: 15px; height: 15px; margin-top: 2px; flex-shrink: 0; accent-color: var(--primary);">
+                    <span>I certify that these contacts have given opt-in consent to receive WhatsApp & SMS messages.</span>
+                </label>
+
+                <div style="display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.5rem;">
+                    <button type="button" class="btn secondary" onclick="closeExcelImportModal()">Cancel</button>
+                    <button type="button" class="btn primary" id="btn-confirm-excel-import" onclick="executeExcelImport()" style="gap: 0.4rem;">
+                        <span>Confirm & Import Contacts</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Tag Modal (for Table Row Instant Tag Updates) -->
+    <div id="quick-tag-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(5px);">
+        <div class="modal-content card" style="max-width: 360px; width: 92%; padding: 1.25rem; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; padding-bottom: 0.65rem; border-bottom: 1px solid var(--border);">
+                <div>
+                    <h3 style="margin: 0; font-size: 1rem; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                        <span>🏷️</span> <span>Update Customer Tags</span>
+                    </h3>
+                    <p style="margin: 0.15rem 0 0 0; font-size: 0.75rem; color: var(--text-muted);" id="quick-tag-cust-name">Customer</p>
+                </div>
+                <button type="button" class="icon-btn" onclick="closeQuickTagModal()" style="font-size: 1.1rem; cursor: pointer;">✕</button>
+            </div>
+
+            <input type="hidden" id="quick-tag-cust-id">
+            <input type="text" class="tag-search-input" id="quick-tag-search" placeholder="Search or filter tags..." oninput="filterTagDropdown('quick')" style="margin-bottom: 0.6rem;">
+
+            <div class="tag-items-list" id="quick-tag-items-list" style="max-height: 250px;"></div>
+
+            <div class="tag-dropdown-divider" style="margin: 0.65rem 0;"></div>
+
+            <div class="new-tag-create-box" id="quick-new-tag-box" style="margin-bottom: 0.5rem;">
+                <input type="text" class="tag-search-input" id="quick-new-tag-name" placeholder="Tag name (e.g. VIP)" onkeydown="if(event.key==='Enter'){event.preventDefault();submitNewTag('quick');}">
+                <div style="display: flex; gap: 0.35rem; margin-top: 4px;">
+                    <button type="button" class="btn primary sm" onclick="submitNewTag('quick')" style="flex:1; padding: 0.25rem 0.5rem; font-size: 0.75rem;">Add</button>
+                    <button type="button" class="btn secondary sm" onclick="cancelNewTag('quick')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Cancel</button>
+                </div>
+            </div>
+
+            <button type="button" class="btn-new-tag-action" id="quick-btn-show-new-tag" onclick="showNewTagInput('quick')" style="margin-bottom: 0.75rem;">
+                <span style="font-size:1rem; font-weight:700;">+</span> <span>New Tag</span>
+            </button>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button type="button" class="btn secondary sm" onclick="closeQuickTagModal()">Cancel</button>
+                <button type="button" class="btn primary sm" id="btn-save-quick-tags" onclick="saveQuickTags()">Save Tags</button>
             </div>
         </div>
     </div>

@@ -2307,6 +2307,375 @@ loadCompanies();
 switchView(savedView, false);
 
 
+// --- Customer Tags Management & Lifecycle Segmentation System ---
+let availableTags = [];
+let pendingExcelCustomers = [];
+
+const DEFAULT_TAG_PALETTES = {
+    'repeat buyers': { cls: 'tag-pill-pink', bg: '#fdf2f8', text: '#be185d', border: '#fbcfe8' },
+    'recovered': { cls: 'tag-pill-gray', bg: '#f3f4f6', text: '#4b5563', border: '#e5e7eb' },
+    'order placed(prepaid)': { cls: 'tag-pill-pink', bg: '#fdf2f8', text: '#db2777', border: '#fbcfe8' },
+    'order placed(cod)': { cls: 'tag-pill-purple', bg: '#ede9fe', text: '#7c3aed', border: '#ddd6fe' },
+    'loyal': { cls: 'tag-pill-green', bg: '#dcfce7', text: '#15803d', border: '#bbf7d0' },
+    'lost': { cls: 'tag-pill-blue', bg: '#e0f2fe', text: '#0284c7', border: '#bae6fd' },
+    'high spenders': { cls: 'tag-pill-purple', bg: '#ede9fe', text: '#7c3aed', border: '#ddd6fe' },
+    'curious browsers': { cls: 'tag-pill-mint', bg: '#d1fae5', text: '#047857', border: '#a7f3d0' },
+    'at risk': { cls: 'tag-pill-lime', bg: '#ecfccb', text: '#65a30d', border: '#d9f99d' },
+    'abandoned cart': { cls: 'tag-pill-lime', bg: '#ecfccb', text: '#65a30d', border: '#d9f99d' }
+};
+
+const EXTRA_PALETTES = [
+    { cls: 'tag-pill-pink', bg: '#fdf2f8', text: '#be185d', border: '#fbcfe8' },
+    { cls: 'tag-pill-purple', bg: '#ede9fe', text: '#7c3aed', border: '#ddd6fe' },
+    { cls: 'tag-pill-green', bg: '#dcfce7', text: '#15803d', border: '#bbf7d0' },
+    { cls: 'tag-pill-blue', bg: '#e0f2fe', text: '#0284c7', border: '#bae6fd' },
+    { cls: 'tag-pill-mint', bg: '#d1fae5', text: '#047857', border: '#a7f3d0' },
+    { cls: 'tag-pill-lime', bg: '#ecfccb', text: '#65a30d', border: '#d9f99d' },
+    { cls: 'tag-pill-amber', bg: '#fef3c7', text: '#b45309', border: '#fde68a' }
+];
+
+function getTagStyle(tagName) {
+    if (!tagName) return { cls: 'tag-pill-gray', styleAttr: '' };
+    const clean = String(tagName).trim();
+    const lower = clean.toLowerCase();
+    if (DEFAULT_TAG_PALETTES[lower]) {
+        const pal = DEFAULT_TAG_PALETTES[lower];
+        return { cls: pal.cls, styleAttr: `background:${pal.bg}; color:${pal.text}; border-color:${pal.border};` };
+    }
+    const found = availableTags.find(t => (t.name || '').toLowerCase() === lower);
+    if (found && (found.bg_color || found.color)) {
+        const bg = found.bg_color || '#f3f4f6';
+        const txt = found.text_color || '#4b5563';
+        const bdr = found.border_color || '#e5e7eb';
+        return { cls: '', styleAttr: `background:${bg}; color:${txt}; border-color:${bdr};` };
+    }
+    let hash = 0;
+    for (let i = 0; i < clean.length; i++) hash = (hash << 5) - hash + clean.charCodeAt(i);
+    const pal = EXTRA_PALETTES[Math.abs(hash) % EXTRA_PALETTES.length];
+    return { cls: pal.cls, styleAttr: `background:${pal.bg}; color:${pal.text}; border-color:${pal.border};` };
+}
+
+function renderTagPillHtml(tagName, removable = false, context = '') {
+    if (!tagName) return '';
+    const clean = String(tagName).trim();
+    const style = getTagStyle(clean);
+    const escaped = clean.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+    return `
+        <span class="tag-pill ${style.cls}" style="${style.styleAttr}" title="Tag: ${clean}">
+            <svg class="tag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+            </svg>
+            <span>${clean}</span>
+            ${removable ? `<span class="tag-remove-btn" onclick="removeSelectedTag('${context}', '${escaped}', event)" title="Remove tag">✕</span>` : ''}
+        </span>
+    `;
+}
+
+async function loadTags() {
+    try {
+        const res = await apiFetch('/api/tags');
+        const data = await res.json();
+        if (data && Array.isArray(data.tags)) {
+            availableTags = data.tags;
+        } else {
+            availableTags = [
+                { name: 'Repeat Buyers' }, { name: 'Recovered' }, { name: 'Order Placed(Prepaid)' },
+                { name: 'Order Placed(CoD)' }, { name: 'Loyal' }, { name: 'Lost' },
+                { name: 'High Spenders' }, { name: 'Curious Browsers' }, { name: 'At Risk' },
+                { name: 'Abandoned Cart' }
+            ];
+        }
+    } catch(err) {
+        console.warn('Failed to load tags from API, using fallback defaults:', err);
+        availableTags = [
+            { name: 'Repeat Buyers' }, { name: 'Recovered' }, { name: 'Order Placed(Prepaid)' },
+            { name: 'Order Placed(CoD)' }, { name: 'Loyal' }, { name: 'Lost' },
+            { name: 'High Spenders' }, { name: 'Curious Browsers' }, { name: 'At Risk' },
+            { name: 'Abandoned Cart' }
+        ];
+    }
+    updateTagFilterDropdown();
+    renderTagDropdownItems('form');
+    renderTagDropdownItems('excel');
+    renderTagDropdownItems('quick');
+}
+
+function updateTagFilterDropdown() {
+    const sel = document.getElementById('customers-tag-filter');
+    if (!sel) return;
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">🏷️ All Tags (Filter)</option>';
+    availableTags.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.name;
+        opt.textContent = `🏷️ ${t.name}`;
+        if (t.name === currentVal) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+function getSelectedTags(context) {
+    if (context === 'form') {
+        const val = document.getElementById('cust-tags')?.value || '';
+        return val ? val.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+    if (context === 'excel') {
+        const val = document.getElementById('excel-import-tags')?.value || '';
+        return val ? val.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+    if (context === 'quick') {
+        const custId = document.getElementById('quick-tag-cust-id')?.value;
+        const cust = allCustomers.find(c => String(c.id) === String(custId));
+        return (cust && cust.tags) ? cust.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+    return [];
+}
+
+function setSelectedTags(context, tagsArr) {
+    const unique = Array.from(new Set(tagsArr.map(s => s.trim()).filter(Boolean)));
+    const str = unique.join(', ');
+    if (context === 'form') {
+        const inp = document.getElementById('cust-tags');
+        if (inp) inp.value = str;
+    } else if (context === 'excel') {
+        const inp = document.getElementById('excel-import-tags');
+        if (inp) inp.value = str;
+    }
+    syncTagSelectorDisplay(context);
+    renderTagDropdownItems(context);
+}
+
+function syncTagSelectorDisplay(context) {
+    if (context === 'quick') return;
+    const tags = getSelectedTags(context);
+    const container = document.getElementById(context === 'form' ? 'cust-selected-tags-container' : 'excel-selected-tags-container');
+    const placeholder = document.getElementById(context === 'form' ? 'cust-tags-placeholder' : 'excel-tags-placeholder');
+    if (!container) return;
+    container.innerHTML = tags.map(t => renderTagPillHtml(t, true, context)).join('');
+    if (placeholder) {
+        placeholder.style.display = tags.length > 0 ? 'none' : 'inline';
+    }
+}
+
+window.removeSelectedTag = function removeSelectedTag(context, tagName, e) {
+    if (e) e.stopPropagation();
+    const current = getSelectedTags(context);
+    const updated = current.filter(t => t.toLowerCase() !== tagName.toLowerCase());
+    setSelectedTags(context, updated);
+};
+
+window.renderTagDropdownItems = function renderTagDropdownItems(context) {
+    const listEl = document.getElementById(`${context}-tag-items-list`);
+    if (!listEl) return;
+    const searchVal = (document.getElementById(`${context}-tag-search`)?.value || '').toLowerCase().trim();
+    const selected = getSelectedTags(context).map(s => s.toLowerCase());
+
+    const filtered = availableTags.filter(t => !searchVal || (t.name || '').toLowerCase().includes(searchVal));
+
+    if (filtered.length === 0) {
+        listEl.innerHTML = `<div style="font-size:0.775rem; color:var(--text-muted); text-align:center; padding:0.75rem 0;">No matching tags found</div>`;
+        return;
+    }
+
+    listEl.innerHTML = filtered.map(t => {
+        const isChecked = selected.includes((t.name || '').toLowerCase());
+        const escaped = (t.name || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+        return `
+            <div class="tag-item-row" onclick="toggleTagOption('${context}', '${escaped}', event)">
+                <input type="checkbox" class="tag-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); toggleTagOption('${context}', '${escaped}', event)">
+                ${renderTagPillHtml(t.name)}
+            </div>
+        `;
+    }).join('');
+};
+
+window.toggleTagOption = function toggleTagOption(context, tagName, e) {
+    if (e && e.target && e.target.type !== 'checkbox') {
+        const cb = e.currentTarget.querySelector('input[type="checkbox"]');
+        if (cb) cb.checked = !cb.checked;
+    }
+    const current = getSelectedTags(context);
+    const exists = current.some(t => t.toLowerCase() === tagName.toLowerCase());
+    let updated = [];
+    if (exists) {
+        updated = current.filter(t => t.toLowerCase() !== tagName.toLowerCase());
+    } else {
+        updated = [...current, tagName];
+    }
+    
+    if (context === 'quick') {
+        const custId = document.getElementById('quick-tag-cust-id')?.value;
+        const cust = allCustomers.find(c => String(c.id) === String(custId));
+        if (cust) {
+            cust.tags = updated.join(', ');
+        }
+        renderTagDropdownItems('quick');
+    } else {
+        setSelectedTags(context, updated);
+    }
+};
+
+window.showNewTagInput = function showNewTagInput(context) {
+    const box = document.getElementById(`${context}-new-tag-box`);
+    const btn = document.getElementById(`${context}-btn-show-new-tag`);
+    const input = document.getElementById(`${context}-new-tag-name`);
+    if (box) box.classList.add('show');
+    if (btn) btn.style.display = 'none';
+    if (input) { input.value = ''; input.focus(); }
+};
+
+window.cancelNewTag = function cancelNewTag(context) {
+    const box = document.getElementById(`${context}-new-tag-box`);
+    const btn = document.getElementById(`${context}-btn-show-new-tag`);
+    if (box) box.classList.remove('show');
+    if (btn) btn.style.display = 'flex';
+};
+
+window.submitNewTag = async function submitNewTag(context) {
+    const input = document.getElementById(`${context}-new-tag-name`);
+    const tagName = (input?.value || '').trim();
+    if (!tagName) return;
+
+    try {
+        const res = await apiFetch('/api/tags', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: tagName })
+        });
+        const data = await res.json();
+        if (data && (data.success || data.tag)) {
+            if (!availableTags.some(t => t.name.toLowerCase() === tagName.toLowerCase())) {
+                availableTags.push(data.tag || { name: tagName });
+            }
+            toggleTagOption(context, tagName);
+            cancelNewTag(context);
+            updateTagFilterDropdown();
+            renderTagDropdownItems('form');
+            renderTagDropdownItems('excel');
+            renderTagDropdownItems('quick');
+        }
+    } catch(err) {
+        console.error('Failed to create tag:', err);
+    }
+};
+
+window.toggleTagDropdown = function toggleTagDropdown(context, e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById(`${context}-tag-dropdown-menu`);
+    if (!menu) return;
+    const isShown = menu.classList.contains('show');
+    
+    document.querySelectorAll('.tag-dropdown-menu').forEach(m => m.classList.remove('show'));
+    
+    if (!isShown) {
+        menu.classList.add('show');
+        renderTagDropdownItems(context);
+        const searchInput = document.getElementById(`${context}-tag-search`);
+        if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+    }
+};
+
+window.filterTagDropdown = function filterTagDropdown(context) {
+    renderTagDropdownItems(context);
+};
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.tag-dropdown-menu') && !e.target.closest('.tag-selector-box')) {
+        document.querySelectorAll('.tag-dropdown-menu').forEach(m => m.classList.remove('show'));
+    }
+});
+
+window.openQuickTagModal = function openQuickTagModal(custId, e) {
+    if (e) e.stopPropagation();
+    const cust = allCustomers.find(c => String(c.id) === String(custId));
+    if (!cust) return;
+
+    document.getElementById('quick-tag-cust-id').value = cust.id;
+    document.getElementById('quick-tag-cust-name').textContent = `${cust.name} (${cust.phone})`;
+    
+    cancelNewTag('quick');
+    const searchInput = document.getElementById('quick-tag-search');
+    if (searchInput) searchInput.value = '';
+
+    renderTagDropdownItems('quick');
+    const modal = document.getElementById('quick-tag-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeQuickTagModal = function closeQuickTagModal() {
+    const modal = document.getElementById('quick-tag-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.saveQuickTags = async function saveQuickTags() {
+    const custId = document.getElementById('quick-tag-cust-id')?.value;
+    const cust = allCustomers.find(c => String(c.id) === String(custId));
+    if (!cust) return;
+
+    const btn = document.getElementById('btn-save-quick-tags');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = 'Saving...';
+    }
+
+    try {
+        const res = await apiFetch('/api/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: custId,
+                tags: cust.tags || ''
+            })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+            closeQuickTagModal();
+            renderCustomersTable();
+            showModal('Tags Updated', `Successfully updated tags for ${cust.name}.`);
+        }
+    } catch(err) {
+        console.error('Failed to update tags:', err);
+        showModal('Error', 'Failed to update tags.');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Save Tags';
+        }
+    }
+};
+
+window.filterCustomersByTag = function filterCustomersByTag(tagVal) {
+    const query = (document.getElementById('customers-search')?.value || '').toLowerCase().trim();
+    const selectedTag = (tagVal || '').toLowerCase().trim();
+
+    filteredCustomers = allCustomers.filter(c => {
+        const matchesQuery = !query || (
+            (c.name && c.name.toLowerCase().includes(query)) || 
+            (c.phone && c.phone.toLowerCase().includes(query)) ||
+            (c.email && c.email.toLowerCase().includes(query)) ||
+            (c.company_name && c.company_name.toLowerCase().includes(query)) ||
+            (c.tags && c.tags.toLowerCase().includes(query)) ||
+            (c.city && c.city.toLowerCase().includes(query))
+        );
+
+        const matchesTag = !selectedTag || (
+            c.tags && c.tags.split(',').map(s => s.trim().toLowerCase()).includes(selectedTag)
+        );
+
+        return matchesQuery && matchesTag;
+    });
+
+    currentCustomersPage = 1;
+    renderCustomersTable();
+};
+
 // --- Customers Logic ---
 async function loadCustomers() {
     const tbody = document.getElementById('customers-table-body');
@@ -2314,6 +2683,8 @@ async function loadCustomers() {
         tbody.innerHTML = `<tr><td colspan="7"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading customer directory...</span></div></td></tr>`;
     }
     try {
+        await loadTags();
+
         const res = await apiFetch('/api/customers');
         const customers = await res.json();
         
@@ -2331,6 +2702,7 @@ async function loadCustomers() {
         if(statEl) statEl.textContent = allCustomers.length;
 
         renderCustomersTable();
+        syncTagSelectorDisplay('form');
     } catch (e) { 
         console.error('Error loading customers:', e);
         if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="height:100px;">Error loading data.</td></tr>`;
@@ -2359,7 +2731,16 @@ function renderCustomersTable() {
     tbody.innerHTML = '';
     pageData.forEach(c => {
         const tr = document.createElement('tr');
-        const tagsHtml = c.tags ? c.tags.split(',').map(t => `<span class="window-badge" style="background:rgba(99, 102, 241, 0.15);color:#818cf8;margin-right:2px;font-size:0.7rem;">${t.trim()}</span>`).join('') : '<span style="color:var(--text-muted);font-size:0.75rem;">-</span>';
+        const tagsArr = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+        const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
+        const tagsDisplayHtml = `
+            <div class="table-tags-cell">
+                ${pillsHtml}
+                <button type="button" class="btn-edit-tag-quick" onclick="openQuickTagModal(${c.id}, event)" title="Update lifecycle / status tags for this customer">
+                    <span>🏷️</span> <span>${tagsArr.length > 0 ? 'Edit' : '+ Tag'}</span>
+                </button>
+            </div>
+        `;
 
         tr.innerHTML = `
             <td>
@@ -2374,7 +2755,7 @@ function renderCustomersTable() {
             <td><code style="font-size:0.85rem;color:var(--primary);">${c.phone}</code></td>
             <td><span style="font-size:0.8rem;color:var(--text-muted);">${c.email || '-'}</span></td>
             <td><span style="font-size:0.8rem;color:var(--text-muted);">${c.company_name || '-'}</span></td>
-            <td>${tagsHtml}</td>
+            <td>${tagsDisplayHtml}</td>
             <td><span class="window-badge" style="background:var(--primary-light);color:var(--primary);">${c.message_count || 0} messages</span></td>
             <td style="text-align: right;">
                 <button class="btn secondary sm" onclick="editCustomer(${c.id})">Edit</button>
@@ -2397,15 +2778,25 @@ function renderCustomersTable() {
 }
 
 document.getElementById('customers-search')?.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    filteredCustomers = allCustomers.filter(c => 
-        (c.name && c.name.toLowerCase().includes(query)) || 
-        (c.phone && c.phone.toLowerCase().includes(query)) ||
-        (c.email && c.email.toLowerCase().includes(query)) ||
-        (c.company_name && c.company_name.toLowerCase().includes(query)) ||
-        (c.tags && c.tags.toLowerCase().includes(query)) ||
-        (c.city && c.city.toLowerCase().includes(query))
-    );
+    const query = e.target.value.toLowerCase().trim();
+    const selectedTag = (document.getElementById('customers-tag-filter')?.value || '').toLowerCase().trim();
+
+    filteredCustomers = allCustomers.filter(c => {
+        const matchesQuery = !query || (
+            (c.name && c.name.toLowerCase().includes(query)) || 
+            (c.phone && c.phone.toLowerCase().includes(query)) ||
+            (c.email && c.email.toLowerCase().includes(query)) ||
+            (c.company_name && c.company_name.toLowerCase().includes(query)) ||
+            (c.tags && c.tags.toLowerCase().includes(query)) ||
+            (c.city && c.city.toLowerCase().includes(query))
+        );
+
+        const matchesTag = !selectedTag || (
+            c.tags && c.tags.split(',').map(s => s.trim().toLowerCase()).includes(selectedTag)
+        );
+
+        return matchesQuery && matchesTag;
+    });
     currentCustomersPage = 1;
     renderCustomersTable();
 });
@@ -2443,7 +2834,10 @@ window.editCustomer = (id) => {
     if (document.getElementById('cust-city')) document.getElementById('cust-city').value = cust.city || '';
     if (document.getElementById('cust-state')) document.getElementById('cust-state').value = cust.state || '';
     if (document.getElementById('cust-pincode')) document.getElementById('cust-pincode').value = cust.pincode || '';
-    if (document.getElementById('cust-tags')) document.getElementById('cust-tags').value = cust.tags || '';
+    if (document.getElementById('cust-tags')) {
+        document.getElementById('cust-tags').value = cust.tags || '';
+        syncTagSelectorDisplay('form');
+    }
     if (document.getElementById('cust-notes')) document.getElementById('cust-notes').value = cust.notes || '';
     document.getElementById('btn-save-cust').innerHTML = `<span>Update Customer</span>`;
     document.getElementById('btn-cancel-edit').style.display = 'inline-flex';
@@ -2452,6 +2846,10 @@ window.editCustomer = (id) => {
 document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
     document.getElementById('add-customer-form').reset();
     document.getElementById('cust-id').value = '';
+    if (document.getElementById('cust-tags')) {
+        document.getElementById('cust-tags').value = '';
+        syncTagSelectorDisplay('form');
+    }
     document.getElementById('btn-save-cust').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>Add Customer</span>`;
     document.getElementById('btn-cancel-edit').style.display = 'none';
 });
@@ -2573,88 +2971,139 @@ async function loadDashboard() {
     }
 }
 
-// Excel Import
+// Excel Import with Tag Configuration & Opt-in Consent
+window.closeExcelImportModal = function closeExcelImportModal() {
+    const modal = document.getElementById('excel-import-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+    pendingExcelCustomers = [];
+    const uploadInput = document.getElementById('excel-upload');
+    if (uploadInput) uploadInput.value = '';
+};
+
+window.executeExcelImport = async function executeExcelImport() {
+    if (!pendingExcelCustomers || pendingExcelCustomers.length === 0) {
+        showModal('Error', 'No valid contacts to import.');
+        return;
+    }
+
+    const consentCb = document.getElementById('excel-consent-cb');
+    if (consentCb && !consentCb.checked) {
+        showModal('Consent Required', 'Please certify that these contacts have given opt-in consent before importing.');
+        return;
+    }
+
+    const defaultTags = (document.getElementById('excel-import-tags')?.value || '').trim();
+    const appendMode = document.getElementById('excel-import-append-cb')?.checked ?? true;
+
+    const btn = document.getElementById('btn-confirm-excel-import');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Importing Contacts...';
+    }
+
+    try {
+        const res = await apiFetch('/api/customers-import', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                customers: pendingExcelCustomers,
+                default_tags: defaultTags,
+                tag_mode: appendMode ? 'append' : 'replace'
+            })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+            closeExcelImportModal();
+            showModal('Success', `Imported ${data.count || pendingExcelCustomers.length} customers successfully!`);
+            loadCustomers();
+        } else {
+            showModal('Error', data.error || 'Failed to import contacts.');
+        }
+    } catch(err) {
+        console.error('Import error:', err);
+        showModal('Error', 'Failed to import contacts: ' + err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+};
+
 document.getElementById('excel-upload')?.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    showModal(
-        'Bulk Contact Consent Certification',
-        `By importing contacts from "${file.name}", you certify that all contacts have agreed: "I agree to receive WhatsApp, Email, and SMS promotional updates & service announcements from Inspenox Business Suite".`,
-        'confirm',
-        async () => {
-            const importBtn = document.getElementById('btn-import-excel');
-            const originalBtnText = importBtn ? importBtn.innerHTML : '';
-            
-            if (importBtn) {
-                importBtn.disabled = true;
-                importBtn.innerHTML = '<span class="spinner"></span> Importing...';
-            }
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+        try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet);
 
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const sheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-                    const json = XLSX.utils.sheet_to_json(worksheet);
+            const customers = json.map(row => {
+                const keys = Object.keys(row);
+                const nameKey = keys.find(k => k.toLowerCase().includes('name')) || keys[0];
+                const phoneKey = keys.find(k => k.toLowerCase().includes('phone') || k.toLowerCase().includes('mobile') || k.toLowerCase().includes('contact')) || keys[1];
+                const emailKey = keys.find(k => k.toLowerCase().includes('email'));
+                const companyKey = keys.find(k => k.toLowerCase().includes('company') || k.toLowerCase().includes('organization'));
+                const cityKey = keys.find(k => k.toLowerCase().includes('city'));
+                const tagKey = keys.find(k => k.toLowerCase().includes('tag') || k.toLowerCase().includes('status') || k.toLowerCase().includes('segment'));
 
-                    const customers = json.map(row => {
-                        const keys = Object.keys(row);
-                        const nameKey = keys.find(k => k.toLowerCase().includes('name')) || keys[0];
-                        const phoneKey = keys.find(k => k.toLowerCase().includes('phone') || k.toLowerCase().includes('mobile')) || keys[1];
-                        const emailKey = keys.find(k => k.toLowerCase().includes('email'));
-                        const companyKey = keys.find(k => k.toLowerCase().includes('company') || k.toLowerCase().includes('organization'));
-                        const cityKey = keys.find(k => k.toLowerCase().includes('city'));
-                        const tagKey = keys.find(k => k.toLowerCase().includes('tag'));
+                const rawPhone = row[phoneKey];
+                const formattedPhone = formatIndiaPhone(rawPhone);
+                return { 
+                    name: row[nameKey] ? String(row[nameKey]).trim() : 'Customer', 
+                    phone: formattedPhone,
+                    email: emailKey && row[emailKey] ? String(row[emailKey]).trim() : '',
+                    company_name: companyKey && row[companyKey] ? String(row[companyKey]).trim() : '',
+                    city: cityKey && row[cityKey] ? String(row[cityKey]).trim() : '',
+                    tags: tagKey && row[tagKey] ? String(row[tagKey]).trim() : ''
+                };
+            }).filter(c => c.phone && c.phone.length >= 10);
 
-                        const rawPhone = row[phoneKey];
-                        const formattedPhone = formatIndiaPhone(rawPhone);
-                        return { 
-                            name: row[nameKey] ? String(row[nameKey]).trim() : 'Customer', 
-                            phone: formattedPhone,
-                            email: emailKey && row[emailKey] ? String(row[emailKey]).trim() : '',
-                            company_name: companyKey && row[companyKey] ? String(row[companyKey]).trim() : '',
-                            city: cityKey && row[cityKey] ? String(row[cityKey]).trim() : '',
-                            tags: tagKey && row[tagKey] ? String(row[tagKey]).trim() : ''
-                        };
-                    }).filter(c => c.phone && c.phone.length >= 10);
+            if (customers.length > 0) {
+                pendingExcelCustomers = customers;
+                const countEl = document.getElementById('excel-import-count');
+                const fileEl = document.getElementById('excel-import-file-info');
+                if (countEl) countEl.textContent = `${customers.length} contacts detected`;
+                if (fileEl) fileEl.textContent = `File: ${file.name} (${customers.length} valid rows)`;
+                
+                // Reset tag selector in Excel modal
+                const importTagsInp = document.getElementById('excel-import-tags');
+                if (importTagsInp) importTagsInp.value = '';
+                syncTagSelectorDisplay('excel');
+                renderTagDropdownItems('excel');
 
-                    if(customers.length > 0) {
-                        await apiFetch('/api/customers-import', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ customers })
-                        });
-                        showModal('Success', `Imported ${customers.length} customers successfully after consent certification.`);
-                        loadCustomers();
-                    } else {
-                        showModal('Error', 'Could not find valid Phone column in Excel file.');
-                    }
-                } catch (err) {
-                    console.error('Excel processing error:', err);
-                    showModal('Error', 'Error processing Excel file.');
-                } finally {
-                    if (importBtn) {
-                        importBtn.disabled = false;
-                        importBtn.innerHTML = originalBtnText;
-                    }
-                    document.getElementById('excel-upload').value = '';
+                const modal = document.getElementById('excel-import-modal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.style.display = 'flex';
                 }
-            };
-            reader.readAsArrayBuffer(file);
-        },
-        'I Certify & Import',
-        'btn primary'
-    );
+            } else {
+                showModal('Error', 'Could not find any valid phone numbers in the uploaded Excel/CSV file.');
+            }
+        } catch(err) {
+            console.error('Excel parse error:', err);
+            showModal('Error', 'Error processing file: ' + err.message);
+        }
+    };
+    reader.readAsArrayBuffer(file);
 });
 
-// Download Excel Template for Customer Import
+// Download Excel Template for Customer Import with Tags column
 document.getElementById('btn-download-template')?.addEventListener('click', () => {
     const templateData = [
-        { Name: "John Doe", Phone: "919876543210" },
-        { Name: "Jane Smith", Phone: "919876543211" }
+        { Name: "John Doe", Phone: "919876543210", Email: "john@example.com", Company: "Acme Corp", City: "Mumbai", Tags: "Repeat Buyers, High Spenders" },
+        { Name: "Jane Smith", Phone: "919876543211", Email: "jane@example.com", Company: "Apex Media", City: "Bengaluru", Tags: "Loyal" },
+        { Name: "Rahul Verma", Phone: "919876543212", Email: "rahul@example.com", Company: "Tech Solutions", City: "Hyderabad", Tags: "Order Placed(Prepaid)" },
+        { Name: "Priya Sharma", Phone: "919876543213", Email: "priya@example.com", Company: "Design Studio", City: "Delhi", Tags: "Abandoned Cart" }
     ];
     
     const worksheet = XLSX.utils.json_to_sheet(templateData);
@@ -2662,7 +3111,7 @@ document.getElementById('btn-download-template')?.addEventListener('click', () =
     XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
     
     // Set column widths
-    worksheet['!cols'] = [{ wch: 20 }, { wch: 20 }];
+    worksheet['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 22 }, { wch: 20 }, { wch: 16 }, { wch: 30 }];
     
     XLSX.writeFile(workbook, "inspenox_customers_template.xlsx");
 });

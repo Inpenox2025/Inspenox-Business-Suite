@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
 
     try {
         const env = req.env || process.env || {};
-        const { customers, company_id } = req.body; // Array of {name, phone, email, company_name, city, tags}
+        const { customers, company_id, default_tags, tag_mode } = req.body; // Array of {name, phone, email, company_name, city, tags}
         if (!customers || !Array.isArray(customers)) {
             return res.status(400).json({ error: 'Invalid data format' });
         }
@@ -32,11 +32,23 @@ module.exports = async (req, res) => {
             const email = cust.email || null;
             const companyName = cust.company_name || cust.company || null;
             const city = cust.city || null;
-            const tags = cust.tags || null;
+            
+            let finalTags = cust.tags ? String(cust.tags).trim() : null;
+            if (default_tags && String(default_tags).trim()) {
+                const defs = String(default_tags).trim();
+                if (finalTags) {
+                    if (tag_mode === 'append' || !tag_mode) {
+                        const set = new Set([...finalTags.split(',').map(s => s.trim()), ...defs.split(',').map(s => s.trim())].filter(Boolean));
+                        finalTags = Array.from(set).join(', ');
+                    }
+                } else {
+                    finalTags = defs;
+                }
+            }
             
             await sql`
                 INSERT INTO customers (name, phone, email, company_name, city, tags, company_id, is_saved) 
-                VALUES (${name}, ${cleanPhone}, ${email}, ${companyName}, ${city}, ${tags}, ${targetCompanyId}, true) 
+                VALUES (${name}, ${cleanPhone}, ${email}, ${companyName}, ${city}, ${finalTags}, ${targetCompanyId}, true) 
                 ON CONFLICT (phone) DO UPDATE SET 
                     name = EXCLUDED.name,
                     email = COALESCE(EXCLUDED.email, customers.email),
