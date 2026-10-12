@@ -50,17 +50,38 @@ module.exports = async (req, res) => {
 
         const companyId = company_id || customer.company_id || 1;
 
-        let phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
-        let token = env.WHATSAPP_ACCESS_TOKEN;
+        let phoneId = null;
+        let token = null;
 
-        if (companyId) {
+        if (String(companyId) === '1' || String(companyId) === 'default') {
+            phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
+            token = env.WHATSAPP_ACCESS_TOKEN;
+        } else {
             try {
                 const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
-                if (cos.length > 0 && cos[0].whatsapp_phone_number_id && cos[0].whatsapp_access_token) {
-                    phoneId = cos[0].whatsapp_phone_number_id;
-                    token = cos[0].whatsapp_access_token;
+                if (cos.length > 0) {
+                    const isMaster = (cos[0].name || '').toLowerCase().includes('inspenox') || (cos[0].slug || '').toLowerCase() === 'inspenox' || String(cos[0].id) === '1';
+                    const isPaid = cos[0].subscription_status === 'active' && cos[0].subscription_plan && cos[0].subscription_plan.toLowerCase() !== 'none';
+
+                    if (!isMaster && !isPaid) {
+                        return res.status(403).json({ error: 'Subscription Required: You must have an active paid subscription to send WhatsApp messages. Please subscribe in Subscriptions & Billing.' });
+                    }
+
+                    if (cos[0].whatsapp_phone_number_id && cos[0].whatsapp_access_token) {
+                        phoneId = cos[0].whatsapp_phone_number_id;
+                        token = cos[0].whatsapp_access_token;
+                    } else if (isMaster) {
+                        phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
+                        token = env.WHATSAPP_ACCESS_TOKEN;
+                    } else {
+                        return res.status(400).json({ error: 'Meta WhatsApp credentials are not configured for your workspace. Please configure Phone ID and Access Token in Meta Credentials.' });
+                    }
                 }
             } catch(e) {}
+        }
+
+        if (!phoneId || !token) {
+            return res.status(400).json({ error: 'Meta WhatsApp credentials not configured for this company.' });
         }
 
         const url = `https://graph.facebook.com/v19.0/${phoneId}/messages`;

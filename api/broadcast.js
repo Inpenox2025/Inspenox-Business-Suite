@@ -46,25 +46,44 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Invalid target' });
         }
 
-        let phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
-        let token = env.WHATSAPP_ACCESS_TOKEN;
-        let wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+        let phoneId = null;
+        let token = null;
+        let wabaId = null;
 
-        if (companyId) {
+        if (String(companyId) === '1' || String(companyId) === 'default' || !companyId) {
+            phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
+            token = env.WHATSAPP_ACCESS_TOKEN;
+            wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+        } else {
             try {
                 const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
                 if (cos.length > 0) {
+                    const isMaster = (cos[0].name || '').toLowerCase().includes('inspenox') || (cos[0].slug || '').toLowerCase() === 'inspenox' || String(cos[0].id) === '1';
+                    const isPaid = cos[0].subscription_status === 'active' && cos[0].subscription_plan && cos[0].subscription_plan.toLowerCase() !== 'none';
+
+                    if (!isMaster && !isPaid) {
+                        return res.status(403).json({ error: 'Subscription Required: You must have an active paid subscription to send broadcasts. Please subscribe in Subscriptions & Billing.' });
+                    }
+
                     if (cos[0].whatsapp_phone_number_id && cos[0].whatsapp_access_token) {
                         phoneId = cos[0].whatsapp_phone_number_id;
                         token = cos[0].whatsapp_access_token;
-                    }
-                    if (cos[0].whatsapp_business_account_id) {
-                        wabaId = cos[0].whatsapp_business_account_id;
+                        wabaId = cos[0].whatsapp_business_account_id || null;
+                    } else if (isMaster) {
+                        phoneId = env.WHATSAPP_PHONE_NUMBER_ID || '1196613980211733';
+                        token = env.WHATSAPP_ACCESS_TOKEN;
+                        wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+                    } else {
+                        return res.status(400).json({ error: 'Meta WhatsApp credentials are not configured for this company. Please configure them in Meta Credentials.' });
                     }
                 }
             } catch(e) {
                 console.error('Error fetching company Meta credentials for broadcast:', e);
             }
+        }
+
+        if (!phoneId || !token) {
+            return res.status(400).json({ error: 'Meta WhatsApp credentials not configured for this company.' });
         }
 
         const url = `https://graph.facebook.com/v19.0/${phoneId}/messages`;

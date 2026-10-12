@@ -264,6 +264,12 @@ async function loadCompanies() {
         subNav.style.display = 'flex';
     }
 
+    // Dynamic sidebar nav label: "Settings" for Superadmin/Parent vs "Meta Credentials" for other companies
+    const settingsNavSpan = document.querySelector('#sidebar-nav a[data-view="settings"] span');
+    if (settingsNavSpan) {
+        settingsNavSpan.textContent = isParent ? 'Settings' : 'Meta Credentials';
+    }
+
     let user = {};
     try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
 
@@ -335,7 +341,29 @@ async function loadCompaniesSettings() {
 
     const isParent = isParentAdmin();
 
-    // Toggle System Environment credentials panel visibility
+    // 1. Dynamic Titles for Master Superadmin vs Other Companies
+    const panelTitle = document.getElementById('panel-companies-title');
+    const panelDesc = document.getElementById('panel-companies-desc');
+    const pageTitle = document.getElementById('settings-page-title');
+    const pageSubtitle = document.getElementById('settings-page-subtitle');
+    const settingsNavSpan = document.querySelector('#sidebar-nav a[data-view="settings"] span');
+
+    if (isParent) {
+        if (panelTitle) panelTitle.textContent = 'Multi-Tenant Companies & WhatsApp API Accounts';
+        if (panelDesc) panelDesc.textContent = 'Each company has isolated customers, templates, broadcast logs, and custom Meta WhatsApp credentials.';
+        if (pageTitle) pageTitle.textContent = 'Settings & Preferences';
+        if (pageSubtitle) pageSubtitle.textContent = 'Manage multi-tenant companies, WhatsApp Cloud API credentials, and security settings.';
+        if (settingsNavSpan) settingsNavSpan.textContent = 'Settings';
+    } else {
+        // Other companies see "Meta Credentials"
+        if (panelTitle) panelTitle.textContent = '⚙️ Meta Credentials';
+        if (panelDesc) panelDesc.textContent = 'Manage your official Meta WhatsApp Cloud API credentials, Phone ID, and Access Tokens.';
+        if (pageTitle) pageTitle.textContent = '⚙️ Meta Credentials';
+        if (pageSubtitle) pageSubtitle.textContent = 'Configure your official Meta WhatsApp Cloud API credentials and workspace settings.';
+        if (settingsNavSpan) settingsNavSpan.textContent = 'Meta Credentials';
+    }
+
+    // Toggle System Environment credentials panel visibility (strictly for Master Superadmin)
     const envCard = document.getElementById('env-credentials-card');
     if (envCard) envCard.style.display = isParent ? 'block' : 'none';
 
@@ -343,11 +371,11 @@ async function loadCompaniesSettings() {
         btn.style.display = isParent ? 'inline-flex' : 'none';
     });
 
-    tbody.innerHTML = `<tr><td colspan="6"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading companies...</span></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading credentials...</span></div></td></tr>`;
     try {
         let compUrl = '/api/companies?include_env=true';
         if (isParent) {
-            compUrl += '&all=true';
+            compUrl += '&all=true&is_parent=true';
         } else if (currentCompanyId && currentCompanyId !== 'default') {
             compUrl += `&company_id=${currentCompanyId}`;
         }
@@ -358,32 +386,34 @@ async function loadCompaniesSettings() {
         const systemEnv = data.system_env || {};
         systemEnvGlobals = systemEnv;
 
-        // Update System Environment Credentials Panel
-        const elPhone = document.getElementById('env-stat-phone-id');
-        const elWaba = document.getElementById('env-stat-waba-id');
-        const elVerify = document.getElementById('env-stat-verify-token');
-        const elToken = document.getElementById('env-stat-token-status');
+        // Update System Environment Credentials Panel (Superadmin only)
+        if (isParent) {
+            const elPhone = document.getElementById('env-stat-phone-id');
+            const elWaba = document.getElementById('env-stat-waba-id');
+            const elVerify = document.getElementById('env-stat-verify-token');
+            const elToken = document.getElementById('env-stat-token-status');
 
-        if (elPhone) elPhone.textContent = systemEnv.whatsapp_phone_number_id || 'Not Set';
-        if (elWaba) elWaba.textContent = systemEnv.whatsapp_business_account_id || 'Not Set';
-        if (elVerify) elVerify.textContent = systemEnv.whatsapp_verify_token || 'Not Set';
-        if (elToken) {
-            elToken.textContent = systemEnv.has_access_token ? 'Configured ✅' : 'Missing Token ⚠️';
-            elToken.style.background = systemEnv.has_access_token ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
-            elToken.style.color = systemEnv.has_access_token ? '#10b981' : '#ef4444';
+            if (elPhone) elPhone.textContent = systemEnv.whatsapp_phone_number_id || 'Not Set';
+            if (elWaba) elWaba.textContent = systemEnv.whatsapp_business_account_id || 'Not Set';
+            if (elVerify) elVerify.textContent = systemEnv.whatsapp_verify_token || 'Not Set';
+            if (elToken) {
+                elToken.textContent = systemEnv.has_access_token ? 'Configured ✅' : 'Missing Token ⚠️';
+                elToken.style.background = systemEnv.has_access_token ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+                elToken.style.color = systemEnv.has_access_token ? '#10b981' : '#ef4444';
+            }
         }
 
         if (Array.isArray(companies)) {
             allCompanies = companies;
             if (companies.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No custom companies created yet. Using System Environment credentials.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No company record found.</td></tr>`;
                 return;
             }
             tbody.innerHTML = '';
             companies.forEach(c => {
                 const tr = document.createElement('tr');
-                const isCurrent = String(c.id) === String(currentCompanyId);
-                const isInspenox = c.name.toLowerCase().includes('inspenox') || String(c.slug || '').toLowerCase() === 'inspenox' || String(c.id) === 'default';
+                const isInspenox = (c.name || '').toLowerCase().includes('inspenox') || String(c.slug || '').toLowerCase() === 'inspenox' || String(c.id) === 'default' || String(c.id) === '1';
+                const isPlanActive = c.subscription_status === 'active' && c.subscription_plan && c.subscription_plan.toLowerCase() !== 'none';
 
                 let actionHtml = '';
                 if (isParent) {
@@ -392,7 +422,11 @@ async function loadCompaniesSettings() {
                         actionHtml += ` <button class="btn danger sm" onclick="deleteCompany('${c.id}')">Delete</button>`;
                     }
                 } else {
-                    actionHtml = `<button class="btn secondary sm" onclick="editCompany('${c.id}')">Edit Details</button>`;
+                    if (isPlanActive) {
+                        actionHtml = `<button class="btn secondary sm" onclick="editCompany('${c.id}')">⚙️ Configure Meta Credentials</button>`;
+                    } else {
+                        actionHtml = `<button class="btn primary sm" onclick="switchView('subscriptions')" style="gap:4px; font-size:0.75rem; background:linear-gradient(135deg, #00a884 0%, #3b82f6 100%); border:none; padding:0.45rem 0.85rem;">⚡ Subscribe to Unlock Meta API</button>`;
+                    }
                 }
 
                 const contactHtml = `
@@ -402,16 +436,42 @@ async function loadCompaniesSettings() {
                     </div>
                 `;
 
-                const isPlanActive = c.subscription_status === 'active' && c.subscription_plan && c.subscription_plan.toLowerCase() !== 'none';
                 const planBadge = isPlanActive ? `
-                    <span class="window-badge" style="background:rgba(0, 168, 132, 0.15); color:var(--primary); font-weight:600; font-size:0.75rem;">
+                    <span class="window-badge" style="background:rgba(0, 168, 132, 0.15); color:var(--primary); font-weight:700; font-size:0.75rem;">
                         ${c.subscription_plan}
                     </span>
                 ` : `
-                    <span class="window-badge" style="background:rgba(239, 68, 68, 0.12); color:#ef4444; font-weight:600; font-size:0.75rem;">
+                    <span class="window-badge" style="background:rgba(239, 68, 68, 0.12); color:#ef4444; font-weight:700; font-size:0.75rem;">
                         No Active Plan
                     </span>
                 `;
+
+                // For Meta credential cells:
+                // If not paid and not master Inspenox: show locked status, NEVER ENV default!
+                let phoneDisplay = '';
+                let wabaDisplay = '';
+                let verifyDisplay = '';
+
+                if (isInspenox) {
+                    phoneDisplay = `<code style="font-size:0.8rem; color:var(--primary);">${c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id || 'System Env'}</code>`;
+                    wabaDisplay = `<code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id || 'System Env'}</code>`;
+                    verifyDisplay = `<code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_verify_token || systemEnv.whatsapp_verify_token || 'System Env'}</code>`;
+                } else if (isPlanActive) {
+                    phoneDisplay = c.whatsapp_phone_number_id 
+                        ? `<code style="font-size:0.8rem; color:var(--primary);">${c.whatsapp_phone_number_id}</code>` 
+                        : `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Not Configured</span>`;
+                    wabaDisplay = c.whatsapp_business_account_id 
+                        ? `<code style="font-size:0.8rem; color:var(--text-main);">${c.whatsapp_business_account_id}</code>` 
+                        : `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Not Configured</span>`;
+                    verifyDisplay = c.whatsapp_verify_token 
+                        ? `<code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_verify_token}</code>` 
+                        : `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Not Configured</span>`;
+                } else {
+                    // Not paid: strictly locked!
+                    phoneDisplay = `<span style="font-size:0.725rem; color:#ef4444; font-weight:600;">🔒 Locked (Unsubscribed)</span>`;
+                    wabaDisplay = `<span style="font-size:0.725rem; color:#ef4444; font-weight:600;">🔒 Locked (Unsubscribed)</span>`;
+                    verifyDisplay = `<span style="font-size:0.725rem; color:#ef4444; font-weight:600;">🔒 Locked</span>`;
+                }
 
                 tr.innerHTML = `
                     <td>
@@ -421,9 +481,9 @@ async function loadCompaniesSettings() {
                     <td><code style="font-size:0.8rem;">${c.id}</code></td>
                     <td>${contactHtml}</td>
                     <td>${planBadge}</td>
-                    <td><code style="font-size:0.8rem; color:var(--primary);">${c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id || 'Env Default'}</code></td>
-                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id || 'Env Default'}</code></td>
-                    <td><code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_verify_token || systemEnv.whatsapp_verify_token || 'Env Default'}</code></td>
+                    <td>${phoneDisplay}</td>
+                    <td>${wabaDisplay}</td>
+                    <td>${verifyDisplay}</td>
                     <td style="text-align: right;">${actionHtml}</td>
                 `;
                 tbody.appendChild(tr);
@@ -444,19 +504,91 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
     document.getElementById('company-id-edit').value = '';
     if (document.getElementById('comp-email')) document.getElementById('comp-email').value = '';
     if (document.getElementById('comp-phone')) document.getElementById('comp-phone').value = '';
-    document.getElementById('company-modal-title').textContent = companyId ? '🏢 Edit Company Account' : '🏢 Add New Company Account';
     
+    const isParent = isParentAdmin();
+    const titleEl = document.getElementById('company-modal-title');
+    const subAlert = document.getElementById('comp-modal-sub-alert');
+    const phoneInput = document.getElementById('comp-phone-id');
+    const wabaInput = document.getElementById('comp-waba-id');
+    const tokenInput = document.getElementById('comp-access-token');
+    const verifyInput = document.getElementById('comp-verify-token');
+    const saveBtn = document.getElementById('btn-save-company');
+
     if (companyId !== null && companyId !== undefined) {
         const comp = allCompanies.find(c => String(c.id) === String(companyId));
         if (comp) {
+            const isMaster = (comp.name || '').toLowerCase().includes('inspenox') || (comp.slug && comp.slug.toLowerCase() === 'inspenox') || String(comp.id) === 'default' || String(comp.id) === '1';
+            const isPaid = comp.subscription_status === 'active' && comp.subscription_plan && comp.subscription_plan.toLowerCase() !== 'none';
+
+            if (titleEl) {
+                titleEl.textContent = isParent ? '🏢 Edit Company Account' : '⚙️ Configure Meta Credentials';
+            }
+
             document.getElementById('company-id-edit').value = comp.id;
             document.getElementById('comp-name').value = comp.name || '';
             if (document.getElementById('comp-email')) document.getElementById('comp-email').value = comp.email || '';
             if (document.getElementById('comp-phone')) document.getElementById('comp-phone').value = comp.phone || '';
-            document.getElementById('comp-phone-id').value = comp.whatsapp_phone_number_id || systemEnvGlobals.whatsapp_phone_number_id || '';
-            document.getElementById('comp-waba-id').value = comp.whatsapp_business_account_id || systemEnvGlobals.whatsapp_business_account_id || '';
-            document.getElementById('comp-access-token').value = comp.whatsapp_access_token || '';
-            document.getElementById('comp-verify-token').value = comp.whatsapp_verify_token || systemEnvGlobals.whatsapp_verify_token || '';
+
+            // Strictly do NOT prefill systemEnv for other companies
+            phoneInput.value = comp.whatsapp_phone_number_id || (isMaster ? systemEnvGlobals.whatsapp_phone_number_id : '') || '';
+            wabaInput.value = comp.whatsapp_business_account_id || (isMaster ? systemEnvGlobals.whatsapp_business_account_id : '') || '';
+            tokenInput.value = comp.whatsapp_access_token || '';
+            verifyInput.value = comp.whatsapp_verify_token || (isMaster ? systemEnvGlobals.whatsapp_verify_token : '') || '';
+
+            // If not master inspenox and not paid: LOCK Meta WhatsApp credentials fields
+            if (!isMaster && !isPaid) {
+                if (subAlert) subAlert.style.display = 'flex';
+                if (phoneInput) { phoneInput.disabled = true; phoneInput.style.opacity = '0.55'; phoneInput.placeholder = '🔒 Locked - Subscription Required'; }
+                if (wabaInput) { wabaInput.disabled = true; wabaInput.style.opacity = '0.55'; wabaInput.placeholder = '🔒 Locked - Subscription Required'; }
+                if (tokenInput) { tokenInput.disabled = true; tokenInput.style.opacity = '0.55'; tokenInput.placeholder = '🔒 Locked - Subscription Required'; }
+                if (verifyInput) { verifyInput.disabled = true; verifyInput.style.opacity = '0.55'; verifyInput.placeholder = '🔒 Locked - Subscription Required'; }
+                if (saveBtn) {
+                    if (!isParent) {
+                        saveBtn.disabled = true;
+                        saveBtn.textContent = '🔒 Subscription Required to Add Meta Credentials';
+                        saveBtn.style.opacity = '0.6';
+                        saveBtn.style.cursor = 'not-allowed';
+                    } else {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save Company Account';
+                        saveBtn.style.opacity = '1';
+                        saveBtn.style.cursor = 'pointer';
+                    }
+                }
+            } else {
+                if (subAlert) subAlert.style.display = 'none';
+                if (phoneInput) { phoneInput.disabled = false; phoneInput.style.opacity = '1'; phoneInput.placeholder = 'e.g. 1196613980211733'; }
+                if (wabaInput) { wabaInput.disabled = false; wabaInput.style.opacity = '1'; wabaInput.placeholder = 'e.g. 1561463645723530'; }
+                if (tokenInput) { tokenInput.disabled = false; tokenInput.style.opacity = '1'; tokenInput.placeholder = 'EAALed5FtFjw...'; }
+                if (verifyInput) { verifyInput.disabled = false; verifyInput.style.opacity = '1'; verifyInput.placeholder = 'manasageetha'; }
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = isParent ? 'Save Company Account' : 'Save Meta Credentials';
+                    saveBtn.style.opacity = '1';
+                    saveBtn.style.cursor = 'pointer';
+                }
+            }
+        }
+    } else {
+        if (titleEl) titleEl.textContent = '🏢 Add New Company Account';
+        if (subAlert) {
+            subAlert.style.display = 'flex';
+            subAlert.innerHTML = `
+                <div style="font-size: 0.825rem; color: #ef4444; line-height: 1.45;">
+                    <strong>ℹ️ New Company Creation:</strong><br>
+                    New company accounts are initialized without any plan. Meta WhatsApp credentials can be added once the company subscribes to an active plan.
+                </div>
+            `;
+        }
+        if (phoneInput) { phoneInput.value = ''; phoneInput.disabled = true; phoneInput.style.opacity = '0.55'; phoneInput.placeholder = '🔒 Unlocked after subscription'; }
+        if (wabaInput) { wabaInput.value = ''; wabaInput.disabled = true; wabaInput.style.opacity = '0.55'; wabaInput.placeholder = '🔒 Unlocked after subscription'; }
+        if (tokenInput) { tokenInput.value = ''; tokenInput.disabled = true; tokenInput.style.opacity = '0.55'; tokenInput.placeholder = '🔒 Unlocked after subscription'; }
+        if (verifyInput) { verifyInput.value = 'manasageetha'; verifyInput.disabled = false; verifyInput.style.opacity = '1'; }
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Create Company Account';
+            saveBtn.style.opacity = '1';
+            saveBtn.style.cursor = 'pointer';
         }
     }
     
@@ -1277,10 +1409,23 @@ window.saveCompany = async function saveCompany(e) {
     const name = document.getElementById('comp-name').value;
     const email = document.getElementById('comp-email')?.value || '';
     const phone = document.getElementById('comp-phone')?.value || '';
-    const whatsapp_phone_number_id = document.getElementById('comp-phone-id').value;
-    const whatsapp_business_account_id = document.getElementById('comp-waba-id').value;
-    const whatsapp_access_token = document.getElementById('comp-access-token').value;
-    const whatsapp_verify_token = document.getElementById('comp-verify-token').value;
+    const whatsapp_phone_number_id = (document.getElementById('comp-phone-id')?.value || '').trim();
+    const whatsapp_business_account_id = (document.getElementById('comp-waba-id')?.value || '').trim();
+    const whatsapp_access_token = (document.getElementById('comp-access-token')?.value || '').trim();
+    const whatsapp_verify_token = (document.getElementById('comp-verify-token')?.value || '').trim();
+
+    let comp = null;
+    if (id && Array.isArray(allCompanies)) {
+        comp = allCompanies.find(c => String(c.id) === String(id));
+    }
+    const isMaster = comp && ((comp.name || '').toLowerCase().includes('inspenox') || (comp.slug && comp.slug.toLowerCase() === 'inspenox') || String(comp.id) === 'default' || String(comp.id) === '1');
+    const isPaid = comp && (comp.subscription_status === 'active' && comp.subscription_plan && comp.subscription_plan.toLowerCase() !== 'none');
+
+    const hasCreds = whatsapp_phone_number_id || whatsapp_business_account_id || whatsapp_access_token;
+    if (id && comp && !isMaster && !isPaid && hasCreds) {
+        showModal('Subscription Required', 'Active Subscription Required: You must subscribe to an Inspenox plan to configure Meta WhatsApp Business API credentials.');
+        return;
+    }
 
     const btn = document.getElementById('btn-save-company');
     if (btn) {
@@ -1290,8 +1435,16 @@ window.saveCompany = async function saveCompany(e) {
 
     try {
         const method = id ? 'PUT' : 'POST';
-        const body = { name, email, phone, whatsapp_phone_number_id, whatsapp_business_account_id, whatsapp_access_token, whatsapp_verify_token };
-        if (id) body.id = id;
+        const body = { name, email, phone };
+        if (id) {
+            body.id = id;
+            if (isMaster || isPaid) {
+                body.whatsapp_phone_number_id = whatsapp_phone_number_id;
+                body.whatsapp_business_account_id = whatsapp_business_account_id;
+                body.whatsapp_access_token = whatsapp_access_token;
+                body.whatsapp_verify_token = whatsapp_verify_token || 'manasageetha';
+            }
+        }
 
         const res = await apiFetch('/api/companies', {
             method,
