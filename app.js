@@ -3762,10 +3762,39 @@ window.deleteTemplate = function deleteTemplate(name, id) {
     });
 };
 
+window._customMediaOverrideActive = false;
+
+function toggleCustomMediaOverride() {
+    window._customMediaOverrideActive = !window._customMediaOverrideActive;
+    const customWrapper = document.getElementById('bc-custom-media-wrapper');
+    const btnToggle = document.getElementById('btn-toggle-custom-media');
+    if (customWrapper) {
+        customWrapper.style.display = window._customMediaOverrideActive ? 'block' : 'none';
+    }
+    if (btnToggle) {
+        btnToggle.textContent = window._customMediaOverrideActive ? '✖ Use Meta Default' : '🔄 Change Media (Optional)';
+    }
+    if (!window._customMediaOverrideActive) {
+        const mediaSelect = document.getElementById('bc-media-select');
+        const mediaFile = document.getElementById('bc-media');
+        if (mediaSelect) mediaSelect.value = '';
+        if (mediaFile) mediaFile.value = '';
+        const dropzoneText = document.getElementById('dropzone-text');
+        if (dropzoneText) dropzoneText.textContent = 'Click to choose image or video';
+        const previewContainer = document.getElementById('bc-media-preview-container');
+        if (previewContainer) previewContainer.style.display = 'none';
+    }
+}
+window.toggleCustomMediaOverride = toggleCustomMediaOverride;
+
 function checkSelectedTemplateMediaRequirement() {
     const type = document.getElementById('bc-type')?.value;
     const mediaGroup = document.getElementById('bc-media-group');
     if (!mediaGroup) return;
+
+    const autoContainer = document.getElementById('bc-meta-header-auto-container');
+    const customWrapper = document.getElementById('bc-custom-media-wrapper');
+    const label = document.getElementById('bc-media-group-label') || mediaGroup.querySelector('label');
 
     if (type === 'template') {
         const tSel = document.getElementById('bc-template');
@@ -3774,18 +3803,75 @@ function checkSelectedTemplateMediaRequirement() {
         const headerComp = tmpl && tmpl.components ? tmpl.components.find(c => c.type === 'HEADER') : null;
 
         if (headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
-            const mediaFormat = headerComp.format.toLowerCase();
+            const format = headerComp.format.toUpperCase();
             mediaGroup.style.display = 'block';
-            const label = document.getElementById('bc-media-group-label') || mediaGroup.querySelector('label');
-            if (label) label.textContent = `Attach Template Header ${headerComp.format} (Required by Meta)`;
-            loadMediaForSelect(mediaFormat === 'video' ? 'video' : 'image');
+            if (label) label.textContent = `Template Header ${format} (Auto-Attached from Meta)`;
+
+            const metaMedia = tmpl.header_media;
+            const hasMeta = metaMedia && (metaMedia.has_meta_media || metaMedia.media_id);
+            const mediaVal = metaMedia ? metaMedia.media_id : null;
+            const isFallback = metaMedia && metaMedia.has_fallback_media;
+            const fallbackName = metaMedia && metaMedia.fallback_name;
+
+            if (autoContainer) {
+                autoContainer.style.display = 'block';
+                const iconSvg = format === 'VIDEO'
+                    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`
+                    : format === 'DOCUMENT'
+                    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`
+                    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`;
+
+                const badgeText = isFallback ? 'Auto-Attached from Library' : 'Synced from Meta';
+                const subtitleText = isFallback
+                    ? `Default ${fallbackName || 'library asset'} is attached. No re-upload required.`
+                    : 'Meta approved header media is automatically linked. No re-upload required to broadcast.';
+
+                autoContainer.innerHTML = `
+                    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.32); border-radius: 8px; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(16, 185, 129, 0.18); display: flex; align-items: center; justify-content: center; color: #10b981; flex-shrink: 0;">
+                                ${iconSvg}
+                            </div>
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+                                    <span style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">Template Header ${format} Auto-Attached</span>
+                                    <span style="background: #10b981; color: #ffffff; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 12px; letter-spacing: 0.02em;">${badgeText}</span>
+                                </div>
+                                <p style="margin: 0.2rem 0 0 0; font-size: 0.77rem; color: var(--text-muted);">
+                                    ${subtitleText}
+                                </p>
+                                ${mediaVal ? `<div style="margin-top: 0.25rem; font-size: 0.72rem; color: #10b981; font-family: monospace;">Linked ID / Handle: ${mediaVal.length > 40 ? mediaVal.substring(0, 37) + '...' : mediaVal}</div>` : ''}
+                            </div>
+                        </div>
+                        <button type="button" class="btn secondary" id="btn-toggle-custom-media" onclick="toggleCustomMediaOverride()" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; white-space: nowrap;">
+                            ${window._customMediaOverrideActive ? '✖ Use Meta Default' : '🔄 Change Media (Optional)'}
+                        </button>
+                    </div>
+                `;
+            }
+
+            if (customWrapper) {
+                customWrapper.style.display = window._customMediaOverrideActive ? 'block' : 'none';
+            }
+            loadMediaForSelect(format === 'VIDEO' ? 'video' : 'image');
+            return;
+        } else {
+            mediaGroup.style.display = 'none';
+            if (autoContainer) autoContainer.style.display = 'none';
             return;
         }
     }
 
-    if (type !== 'image' && type !== 'video') {
-        mediaGroup.style.display = 'none';
+    if (type === 'image' || type === 'video') {
+        mediaGroup.style.display = 'block';
+        if (label) label.textContent = 'Attach Media';
+        if (autoContainer) autoContainer.style.display = 'none';
+        if (customWrapper) customWrapper.style.display = 'block';
+        return;
     }
+
+    mediaGroup.style.display = 'none';
+    if (autoContainer) autoContainer.style.display = 'none';
 }
 window.checkSelectedTemplateMediaRequirement = checkSelectedTemplateMediaRequirement;
 
@@ -5812,6 +5898,7 @@ document.getElementById('bc-media-select')?.addEventListener('change', (e) => {
 
 const bcType = document.getElementById('bc-type');
 bcType?.addEventListener('change', (e) => {
+    window._customMediaOverrideActive = false;
     const type = e.target.value;
     document.getElementById('bc-template-group').style.display = type === 'template' ? 'block' : 'none';
     document.getElementById('bc-content-group').style.display = type === 'template' ? 'none' : 'block';
@@ -5820,6 +5907,10 @@ bcType?.addEventListener('change', (e) => {
         document.getElementById('bc-media-group').style.display = 'block';
         const mediaLabel = document.getElementById('bc-media-group-label') || document.getElementById('bc-media-group')?.querySelector('label');
         if (mediaLabel) mediaLabel.textContent = "Attach Media";
+        const customWrapper = document.getElementById('bc-custom-media-wrapper');
+        if (customWrapper) customWrapper.style.display = 'block';
+        const autoContainer = document.getElementById('bc-meta-header-auto-container');
+        if (autoContainer) autoContainer.style.display = 'none';
         loadMediaForSelect(type);
     } else {
         checkSelectedTemplateMediaRequirement();
@@ -5827,6 +5918,7 @@ bcType?.addEventListener('change', (e) => {
 });
 
 document.getElementById('bc-template')?.addEventListener('change', () => {
+    window._customMediaOverrideActive = false;
     checkSelectedTemplateMediaRequirement();
 });
 
@@ -6090,7 +6182,7 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
         const content = document.getElementById('bc-content').value;
         
         let media_id = null;
-        if (type === 'image' || type === 'video' || type === 'template') {
+        if (type === 'image' || type === 'video' || type === 'document' ) {
             const librarySelectedUrl = document.getElementById('bc-media-select')?.value;
             const fileInput = document.getElementById('bc-media');
 
@@ -6106,8 +6198,34 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                     if (statusDiv) statusDiv.innerHTML = `<span class="spinner"></span> Streaming ${file.name} to Meta Cloud (${percent}%)...`;
                 });
                 media_id = metaData.id;
-            } else if (type === 'image' || type === 'video') {
+            } else {
                 throw new Error("Please select a media file from Library or upload a new file.");
+            }
+        } else if (type === 'template') {
+            const librarySelectedUrl = document.getElementById('bc-media-select')?.value;
+            const fileInput = document.getElementById('bc-media');
+
+            // If user explicitly chose a custom override file
+            if (window._customMediaOverrideActive && librarySelectedUrl) {
+                media_id = librarySelectedUrl;
+            } else if (window._customMediaOverrideActive && fileInput && fileInput.files && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const configRes = await apiFetch('/api/config');
+                const config = await configRes.json();
+                
+                if (statusDiv) statusDiv.innerHTML = `<span class="spinner"></span> Streaming ${file.name} to Meta Cloud...`;
+                const metaData = await uploadMediaToMetaFast(file, config, (percent) => {
+                    if (statusDiv) statusDiv.innerHTML = `<span class="spinner"></span> Streaming ${file.name} to Meta Cloud (${percent}%)...`;
+                });
+                media_id = metaData.id;
+            } else {
+                // Auto-attach from template metadata (Zero re-upload required!)
+                const tSel = document.getElementById('bc-template');
+                const tName = tSel ? tSel.value : null;
+                const tmpl = (templatesCache || []).find(t => t.name === tName);
+                if (tmpl && tmpl.header_media && tmpl.header_media.media_id) {
+                    media_id = tmpl.header_media.media_id;
+                }
             }
         }
 
@@ -6830,7 +6948,8 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
 
     try {
         const res = await apiFetch('/api/templates');
-        const templates = await res.json();
+        const json = await res.json();
+        const templates = Array.isArray(json) ? json : (json.data || json.templates || []);
         
         if (!Array.isArray(templates) || templates.length === 0) {
             showModal('No Templates Found', 'No approved Meta message templates found in your WhatsApp Business Account.');
@@ -6864,20 +6983,26 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
                 </div>
 
                 <div id="modal-template-media-group" style="display:none; border-top:1px solid var(--border); padding-top:0.85rem; margin-top:0.85rem;">
-                    <label id="modal-template-media-label" style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.4rem; font-weight:600;">Attach Template Header IMAGE (Required by Meta):</label>
-                    
-                    <div style="margin-bottom:0.75rem;">
-                        <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Option 1: Choose from Media Library</label>
-                        <select id="modal-media-select" style="width:100%; padding:0.5rem; border-radius:6px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border); font-size:0.85rem;">
-                            ${mediaOptions}
-                        </select>
-                    </div>
+                    <!-- Auto-Attached Badge Card -->
+                    <div id="modal-template-auto-media" style="margin-bottom:0.75rem;"></div>
 
-                    <div>
-                        <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Option 2: Or Upload New File</label>
-                        <div class="file-dropzone" style="padding:0.75rem; text-align:center; cursor:pointer;" onclick="document.getElementById('modal-media-file').click()">
-                            <span id="modal-dropzone-text" style="font-size:0.8rem; color:var(--text-muted);">Click to browse and upload media file</span>
-                            <input type="file" id="modal-media-file" accept="image/*,video/*" style="display:none">
+                    <!-- Optional Custom Override (Hidden by default) -->
+                    <div id="modal-custom-media-wrapper" style="display:none;">
+                        <label id="modal-template-media-label" style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.4rem; font-weight:600;">Custom Header Override (Optional):</label>
+                        
+                        <div style="margin-bottom:0.75rem;">
+                            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Option 1: Choose from Media Library</label>
+                            <select id="modal-media-select" style="width:100%; padding:0.5rem; border-radius:6px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border); font-size:0.85rem;">
+                                ${mediaOptions}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Option 2: Or Upload New File</label>
+                            <div class="file-dropzone" style="padding:0.75rem; text-align:center; cursor:pointer;" onclick="document.getElementById('modal-media-file').click()">
+                                <span id="modal-dropzone-text" style="font-size:0.8rem; color:var(--text-muted);">Click to browse and upload media file</span>
+                                <input type="file" id="modal-media-file" accept="image/*,video/*" style="display:none">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -6902,9 +7027,12 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
 
             if (requiresMedia) {
                 media_type = headerComp.format.toLowerCase();
-                if (mediaSelectEl && mediaSelectEl.value) {
+                const customWrapEl = document.getElementById('modal-custom-media-wrapper');
+                const isCustomActive = customWrapEl && customWrapEl.style.display !== 'none';
+
+                if (isCustomActive && mediaSelectEl && mediaSelectEl.value) {
                     media_id = mediaSelectEl.value;
-                } else if (fileInputEl && fileInputEl.files && fileInputEl.files.length > 0) {
+                } else if (isCustomActive && fileInputEl && fileInputEl.files && fileInputEl.files.length > 0) {
                     try {
                         const file = fileInputEl.files[0];
                         const configRes = await apiFetch('/api/config');
@@ -6914,6 +7042,9 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
                     } catch (err) {
                         console.error('Error uploading media for template modal:', err);
                     }
+                } else {
+                    // Auto-attach from template metadata directly (No re-upload required!)
+                    media_id = tmpl && tmpl.header_media ? tmpl.header_media.media_id : null;
                 }
             }
             
@@ -6958,11 +7089,61 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
                 const tmpl = templates.find(t => t.name === selName);
                 const headerComp = tmpl && tmpl.components ? tmpl.components.find(c => c.type === 'HEADER') : null;
                 const mg = document.getElementById('modal-template-media-group');
-                const lbl = document.getElementById('modal-template-media-label');
+                const autoMediaEl = document.getElementById('modal-template-auto-media');
+                const customWrapEl = document.getElementById('modal-custom-media-wrapper');
 
                 if (mg && headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
                     mg.style.display = 'block';
-                    if (lbl) lbl.textContent = `Attach Template Header ${headerComp.format} (Required by Meta):`;
+                    const format = headerComp.format.toUpperCase();
+                    const metaMedia = tmpl.header_media;
+                    const hasMeta = metaMedia && (metaMedia.has_meta_media || metaMedia.media_id);
+                    const isFallback = metaMedia && metaMedia.has_fallback_media;
+                    const fallbackName = metaMedia && metaMedia.fallback_name;
+
+                    if (autoMediaEl) {
+                        const badgeText = isFallback ? 'Auto-Attached from Library' : 'Synced from Meta';
+                        const subtitleText = isFallback
+                            ? `Default ${fallbackName || 'library asset'} linked. No re-upload needed.`
+                            : 'Meta approved header media is automatically linked. No re-upload needed.';
+
+                        autoMediaEl.innerHTML = `
+                            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <span style="font-size: 1.15rem;">${format === 'VIDEO' ? '🎥' : format === 'DOCUMENT' ? '📄' : '🖼️'}</span>
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                            <span style="font-weight: 600; font-size: 0.84rem; color: var(--text-main);">Header ${format} Auto-Attached</span>
+                                            <span style="background: #10b981; color: #fff; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 10px;">${badgeText}</span>
+                                        </div>
+                                        <div style="font-size: 0.73rem; color: var(--text-muted); margin-top: 0.15rem;">
+                                            ${subtitleText}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn secondary" id="btn-modal-toggle-custom" style="font-size: 0.72rem; padding: 0.25rem 0.5rem; white-space: nowrap;">
+                                    Change
+                                </button>
+                            </div>
+                        `;
+
+                        document.getElementById('btn-modal-toggle-custom')?.addEventListener('click', () => {
+                            if (customWrapEl) {
+                                const isHidden = customWrapEl.style.display === 'none';
+                                customWrapEl.style.display = isHidden ? 'block' : 'none';
+                                const btn = document.getElementById('btn-modal-toggle-custom');
+                                if (btn) btn.textContent = isHidden ? 'Reset' : 'Change';
+                                if (!isHidden) {
+                                    const mSelect = document.getElementById('modal-media-select');
+                                    const mFile = document.getElementById('modal-media-file');
+                                    if (mSelect) mSelect.value = '';
+                                    if (mFile) mFile.value = '';
+                                    const dzText = document.getElementById('modal-dropzone-text');
+                                    if (dzText) dzText.textContent = 'Click to browse and upload media file';
+                                }
+                            }
+                        });
+                    }
+                    if (customWrapEl) customWrapEl.style.display = 'none';
                 } else if (mg) {
                     mg.style.display = 'none';
                 }

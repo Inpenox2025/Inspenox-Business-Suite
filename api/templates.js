@@ -83,10 +83,64 @@ module.exports = async (req, res) => {
                 return res.status(500).json({ error: data.error.message || JSON.stringify(data.error) });
             }
 
-            const templates = (data.data || []).map(t => ({
-                ...t,
-                is_view_only: isViewOnly
-            }));
+            let libraryMedia = [];
+            try {
+                const sql = getDb(env);
+                libraryMedia = await sql`SELECT id, name, type, meta_media_id, file_url FROM media_library ORDER BY id DESC LIMIT 20`;
+            } catch (e) {}
+
+            const templates = (data.data || []).map(t => {
+                const headerComp = (t.components || []).find(c => c.type === 'HEADER');
+                let headerMedia = null;
+                if (headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
+                    let url = null;
+                    let handle = null;
+                    if (headerComp.example) {
+                        if (Array.isArray(headerComp.example.header_url) && headerComp.example.header_url[0]) {
+                            url = headerComp.example.header_url[0];
+                        } else if (typeof headerComp.example.header_url === 'string') {
+                            url = headerComp.example.header_url;
+                        }
+
+                        if (Array.isArray(headerComp.example.header_handle) && headerComp.example.header_handle[0]) {
+                            const h = headerComp.example.header_handle[0];
+                            if (h.startsWith('http://') || h.startsWith('https://')) {
+                                url = h;
+                            } else {
+                                handle = h;
+                            }
+                        } else if (typeof headerComp.example.header_handle === 'string') {
+                            const h = headerComp.example.header_handle;
+                            if (h.startsWith('http://') || h.startsWith('https://')) {
+                                url = h;
+                            } else {
+                                handle = h;
+                            }
+                        }
+                    }
+
+                    const formatLower = headerComp.format.toLowerCase();
+                    const fallbackLib = (!url && !handle) ? libraryMedia.find(m => m.type === formatLower) : null;
+                    const fallbackMediaId = fallbackLib ? (fallbackLib.meta_media_id || fallbackLib.file_url) : null;
+
+                    headerMedia = {
+                        format: formatLower,
+                        formatUpper: headerComp.format,
+                        url: url,
+                        handle: handle,
+                        media_id: handle || url || fallbackMediaId || null,
+                        has_meta_media: !!(url || handle),
+                        has_fallback_media: !!fallbackMediaId,
+                        fallback_name: fallbackLib ? fallbackLib.name : null
+                    };
+                }
+
+                return {
+                    ...t,
+                    header_media: headerMedia,
+                    is_view_only: isViewOnly
+                };
+            });
 
             return res.status(200).json({
                 is_view_only: isViewOnly,

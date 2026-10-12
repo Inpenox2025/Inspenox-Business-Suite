@@ -5,6 +5,7 @@ function formatMetaMediaObject(media_id, req) {
     const str = String(media_id).trim();
     if (!str) return null;
 
+    // 1. Numeric Meta Media ID
     if (/^\d+$/.test(str)) {
         const num = parseInt(str, 10);
         if (!isNaN(num) && num < Number.MAX_SAFE_INTEGER) {
@@ -13,14 +14,21 @@ function formatMetaMediaObject(media_id, req) {
         return { id: str };
     }
 
-    let fullUrl = str;
-    if (!str.startsWith('http://') && !str.startsWith('https://')) {
-        const host = (req && req.headers && req.headers['host']) || 'marketing.inspenox.in';
-        const proto = (req && req.headers && req.headers['x-forwarded-proto']) || 'https';
-        const cleanPath = str.startsWith('/') ? str : '/' + str;
-        fullUrl = `${proto}://${host}${cleanPath}`;
+    // 2. Meta Resumable Upload handle (e.g. "4::aW1hZ2UvanBlZw==...") or internal Meta handle
+    if (str.startsWith('4::') || str.includes('::') || (!str.includes('/') && !str.includes('.'))) {
+        return { id: str };
     }
-    return { link: fullUrl };
+
+    // 3. Absolute URL (e.g. from Meta CDN / scontent / lookaside)
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+        return { link: str };
+    }
+
+    // 4. Local relative media path hosted on the platform
+    const host = (req && req.headers && req.headers['host']) || 'marketing.inspenox.in';
+    const proto = (req && req.headers && req.headers['x-forwarded-proto']) || 'https';
+    const cleanPath = str.startsWith('/') ? str : '/' + str;
+    return { link: `${proto}://${host}${cleanPath}` };
 }
 
 module.exports = async (req, res) => {
@@ -118,6 +126,32 @@ module.exports = async (req, res) => {
             }
         }
 
+        // Pre-resolve default media for templates if header requires media and media_id not explicitly given
+        let templateDefaultMediaObj = null;
+        if (type === 'template' && templateMeta) {
+            const headerComp = (templateMeta.components || []).find(c => c.type === 'HEADER');
+            if (headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
+                let defaultSource = media_id;
+                if (!defaultSource && headerComp.example) {
+                    const handle = Array.isArray(headerComp.example.header_handle) ? headerComp.example.header_handle[0] : headerComp.example.header_handle;
+                    const url = Array.isArray(headerComp.example.header_url) ? headerComp.example.header_url[0] : headerComp.example.header_url;
+                    defaultSource = handle || url;
+                }
+                if (!defaultSource) {
+                    try {
+                        const fmt = headerComp.format.toLowerCase();
+                        const fallbackMedia = await sql`SELECT meta_media_id, file_url FROM media_library WHERE type = ${fmt} ORDER BY id DESC LIMIT 1`;
+                        if (fallbackMedia && fallbackMedia.length > 0) {
+                            defaultSource = fallbackMedia[0].meta_media_id || fallbackMedia[0].file_url;
+                        }
+                    } catch (e) {}
+                }
+                if (defaultSource) {
+                    templateDefaultMediaObj = formatMetaMediaObject(defaultSource, req);
+                }
+            }
+        }
+
         let sent = 0;
         let failed = 0;
         let errors = [];
@@ -168,16 +202,12 @@ module.exports = async (req, res) => {
                     const headerComp = tmplComponents.find(c => c.type === 'HEADER');
                     if (headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
                         const format = headerComp.format.toLowerCase();
-                        let mediaObj = null;
-
-                        if (media_id) {
-                            mediaObj = formatMetaMediaObject(media_id, req);
-                        } else if (headerComp.example) {
-                            if (headerComp.example.header_handle && headerComp.example.header_handle[0]) {
-                                mediaObj = formatMetaMediaObject(headerComp.example.header_handle[0], req);
-                            } else if (headerComp.example.header_url && headerComp.example.header_url[0]) {
-                                mediaObj = formatMetaMediaObject(headerComp.example.header_url[0], req);
-                            }
+                        let mediaObj = media_id ? formatMetaMediaObject(media_id, req) : templateDefaultMediaObj;
+                        if (!mediaObj && headerComp.example) {
+                            const handle = Array.isArray(headerComp.example.header_handle) ? headerComp.example.header_handle[0] : headerComp.example.header_handle;
+                            const url = Array.isArray(headerComp.example.header_url) ? headerComp.example.header_url[0] : headerComp.example.header_url;
+                            if (handle) mediaObj = formatMetaMediaObject(handle, req);
+                            else if (url) mediaObj = formatMetaMediaObject(url, req);
                         }
 
                         if (mediaObj) {

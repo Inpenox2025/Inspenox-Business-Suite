@@ -808,26 +808,33 @@
                             <!-- Media Upload -->
                             <div class="form-group" id="bc-media-group" style="display:none;">
                                 <label id="bc-media-group-label">Attach Media</label>
-                                <div style="margin-bottom: 0.75rem;">
-                                    <label
-                                        style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Option
-                                        1: Choose from Media Library</label>
-                                    <select id="bc-media-select">
-                                        <option value="">-- Select from uploaded files --</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label
-                                        style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Option
-                                        2: Or Upload New File</label>
-                                    <div class="file-dropzone" onclick="document.getElementById('bc-media').click()">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                            <polyline points="17 8 12 3 7 8"></polyline>
-                                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                                        </svg>
-                                        <span id="dropzone-text">Click to choose image or video</span>
-                                        <input type="file" id="bc-media" accept="image/*,video/*" style="display:none">
+                                
+                                <!-- Meta Auto-Attached Header Card (Zero Re-Upload) -->
+                                <div id="bc-meta-header-auto-container" style="display:none; margin-bottom: 0.75rem;"></div>
+
+                                <!-- Custom Media Wrapper (Optional Override) -->
+                                <div id="bc-custom-media-wrapper">
+                                    <div style="margin-bottom: 0.75rem;">
+                                        <label
+                                            style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Option
+                                            1: Choose from Media Library</label>
+                                        <select id="bc-media-select">
+                                            <option value="">-- Select from uploaded files --</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label
+                                            style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Option
+                                            2: Or Upload New File</label>
+                                        <div class="file-dropzone" onclick="document.getElementById('bc-media').click()">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline points="17 8 12 3 7 8"></polyline>
+                                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                                            </svg>
+                                            <span id="dropzone-text">Click to choose image or video</span>
+                                            <input type="file" id="bc-media" accept="image/*,video/*" style="display:none">
+                                        </div>
                                     </div>
                                 </div>
                                 <div id="bc-media-preview-container" style="margin-top: 0.75rem; display:none;"></div>
