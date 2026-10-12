@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
         let appId = 'app';
 
         const companyId = req.query.company_id || (req.body && req.body.company_id);
-        if (String(companyId) === '1' || String(companyId) === 'default' || !companyId) {
+        if (String(companyId) === 'default' || String(companyId) === 'parent' || !companyId) {
             phoneId = env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID;
             token = env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN;
             appId = env.WHATSAPP_APP_ID || process.env.WHATSAPP_APP_ID || 'app';
@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
                 const sql = getDb(env);
                 const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
                 if (cos.length > 0) {
-                    const isMaster = (cos[0].name || '').toLowerCase().includes('inspenox') || (cos[0].slug || '').toLowerCase() === 'inspenox' || String(cos[0].id) === '1';
+                    const isMaster = (cos[0].name || '').toLowerCase().trim() === 'inspenox' || (cos[0].slug || '').toLowerCase() === 'inspenox' || cos[0].is_parent === true;
                     const isPaid = cos[0].subscription_status === 'active' && cos[0].subscription_plan && cos[0].subscription_plan.toLowerCase() !== 'none';
 
                     if (!isMaster && !isPaid) {

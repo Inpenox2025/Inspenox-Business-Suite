@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
             const companies = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
             if (companies.length > 0) {
                 const c = companies[0];
-                const isMaster = (c.name || '').toLowerCase().includes('inspenox') || (c.slug && c.slug.toLowerCase() === 'inspenox') || String(c.id) === '1';
+                const isMaster = (c.name || '').toLowerCase().trim() === 'inspenox' || (c.slug && c.slug.toLowerCase() === 'inspenox') || c.is_parent === true || c.is_master === true;
                 const isPaid = (c.subscription_status === 'active' && c.subscription_plan && c.subscription_plan.toLowerCase() !== 'none');
 
                 if (isMaster) {

@@ -261,12 +261,26 @@ function updateBrandingForActiveCompany() {
     // Find the current active company object from allCompanies
     const activeCo = (allCompanies || []).find(c => String(c.id) === String(currentCompanyId));
 
-    // Determine whether this is the parent company:
-    // It's the parent if:
-    // - currentCompanyId is 'default' or '1'
-    // - OR activeCo name includes 'inspenox' or slug is 'inspenox'
-    const isParentCo = !currentCompanyId || currentCompanyId === 'default' || String(currentCompanyId) === '1' ||
-        (activeCo && (activeCo.name.toLowerCase().includes('inspenox') || String(activeCo.slug || '').toLowerCase() === 'inspenox'));
+    // Determine whether this is the parent Inspenox company:
+    // A company is the parent ONLY if:
+    // - activeCo exists and has is_parent/is_master true, or slug/name is 'inspenox'
+    // - OR no activeCo is found, currentCompanyId is 'default'/'parent'/empty, and user is NOT tied to a child company
+    let isParentCo = false;
+    if (activeCo) {
+        const coNameLower = (activeCo.name || '').toLowerCase().trim();
+        const coSlugLower = (activeCo.slug || '').toLowerCase().trim();
+        isParentCo = (activeCo.is_parent === true || activeCo.is_master === true || coSlugLower === 'inspenox' || coNameLower === 'inspenox');
+    } else {
+        const userCoName = (user.company_name || '').toLowerCase().trim();
+        const userCoId = user.company_id;
+        const isChildUser = (userCoName && !userCoName.includes('inspenox') && !userCoName.includes('parent')) ||
+                            (userCoId !== undefined && userCoId !== null && String(userCoId) !== 'default' && String(userCoId) !== 'parent' && String(userCoId) !== 'null' && String(userCoId) !== '' && String(userCoId) !== '0');
+        if (isChildUser) {
+            isParentCo = false;
+        } else {
+            isParentCo = (!currentCompanyId || currentCompanyId === 'default' || currentCompanyId === 'parent');
+        }
+    }
 
     if (isParentCo) {
         if (brandNameEl) {
@@ -1695,7 +1709,7 @@ window.saveCompany = async function saveCompany(e) {
     if (id && Array.isArray(allCompanies)) {
         comp = allCompanies.find(c => String(c.id) === String(id));
     }
-    const isMaster = comp && ((comp.name || '').toLowerCase().includes('inspenox') || (comp.slug && comp.slug.toLowerCase() === 'inspenox') || String(comp.id) === 'default' || String(comp.id) === '1');
+    const isMaster = comp && ((comp.name || '').toLowerCase().trim() === 'inspenox' || (comp.slug && comp.slug.toLowerCase() === 'inspenox') || String(comp.id) === 'default' || comp.is_parent === true || comp.is_master === true);
     const isPaid = comp && (comp.subscription_status === 'active' && comp.subscription_plan && comp.subscription_plan.toLowerCase() !== 'none');
 
     const hasCreds = whatsapp_phone_number_id || whatsapp_business_account_id || whatsapp_access_token;
@@ -1750,7 +1764,7 @@ window.saveCompany = async function saveCompany(e) {
 
 window.deleteCompany = function deleteCompany(id) {
     const comp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(id)) : null;
-    if (comp && (comp.name.toLowerCase().includes('inspenox') || (comp.slug && comp.slug.toLowerCase() === 'inspenox') || String(id) === 'default' || String(id) === '1')) {
+    if (comp && ((comp.name || '').toLowerCase().trim() === 'inspenox' || (comp.slug && comp.slug.toLowerCase() === 'inspenox') || String(id) === 'default' || comp.is_parent === true)) {
         showModal('Protected Company', 'Inspenox Business Suite is the primary parent organization and cannot be deleted.');
         return;
     }

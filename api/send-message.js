@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Invalid customer phone number format' });
         }
 
-        const companyId = company_id || customer.company_id || 1;
+        const companyId = company_id || customer.company_id || 'default';
 
         let phoneId = null;
         let token = null;
