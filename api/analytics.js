@@ -69,9 +69,10 @@ module.exports = async (req, res) => {
         }
 
         const isSubscribed = isMaster || !!(company && company.subscription_status === 'active' && company.subscription_plan && company.subscription_plan.toLowerCase() !== 'none');
+        const hasCustomMeta = !!(company && company.whatsapp_phone_number_id && company.whatsapp_business_account_id && company.whatsapp_access_token && company.whatsapp_verify_token);
         const isConfigured = isMaster 
             ? !!(env.WHATSAPP_PHONE_NUMBER_ID && env.WHATSAPP_BUSINESS_ACCOUNT_ID && env.WHATSAPP_ACCESS_TOKEN && env.WHATSAPP_VERIFY_TOKEN)
-            : !!(company && company.whatsapp_phone_number_id && company.whatsapp_business_account_id && company.whatsapp_access_token && company.whatsapp_verify_token);
+            : (hasCustomMeta || (isSubscribed && !!(env.WHATSAPP_BUSINESS_ACCOUNT_ID && env.WHATSAPP_ACCESS_TOKEN)));
 
         let wabaId = null;
         let token = null;
@@ -79,12 +80,17 @@ module.exports = async (req, res) => {
         if (isMaster) {
             wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || null;
             token = env.WHATSAPP_ACCESS_TOKEN || null;
-        } else if (isSubscribed && isConfigured) {
-            // ONLY fetch using this specific company's own credentials! Never fall back to ENV!
-            wabaId = company.whatsapp_business_account_id;
-            token = company.whatsapp_access_token;
+        } else if (isSubscribed) {
+            if (hasCustomMeta) {
+                wabaId = company.whatsapp_business_account_id;
+                token = company.whatsapp_access_token;
+            } else {
+                // Subscribed companies on managed platform access system WABA
+                wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || null;
+                token = env.WHATSAPP_ACCESS_TOKEN || null;
+            }
         } else {
-            // Unsubscribed or unconfigured: strictly NULL!
+            // Unsubscribed: strictly NULL
             wabaId = null;
             token = null;
         }
@@ -239,7 +245,7 @@ module.exports = async (req, res) => {
         if (wabaId && token) {
             try {
                 const nowTs = Math.floor(Date.now() / 1000);
-                const startTs = nowTs - (90 * 86400); // 90 days lookback
+                const startTs = nowTs - (85 * 86400); // 85 days lookback (strictly within Meta's 90 day limit)
 
                 // Step 1: Fetch template list and aggregate WABA analytics in parallel
                 const [metaRes, metaAnalyticsRes] = await Promise.all([
@@ -264,11 +270,11 @@ module.exports = async (req, res) => {
                     metaDataPoints = metaAnalyticsData.analytics.data_points;
                 }
 
-                // Step 2: Fetch per-template analytics using template_ids[] parameter
+                // Step 2: Fetch per-template analytics using template_ids parameter
                 if (metaTemplates.length > 0) {
                     try {
-                        const tplIdParams = metaTemplates.map(t => `template_ids[]=${t.id}`).join('&');
-                        const tplAnalyticsUrl = `https://graph.facebook.com/v20.0/${wabaId}/template_analytics?start=${startTs}&end=${nowTs}&granularity=DAILY&metric_types=SENT,DELIVERED,READ&${tplIdParams}`;
+                        const ids = metaTemplates.map(t => String(t.id));
+                        const tplAnalyticsUrl = `https://graph.facebook.com/v20.0/${wabaId}/template_analytics?start=${startTs}&end=${nowTs}&granularity=DAILY&metric_types=SENT,DELIVERED,READ&template_ids=${encodeURIComponent(JSON.stringify(ids))}`;
                         
                         const templateAnalyticsRes = await fetch(tplAnalyticsUrl, {
                             headers: { 'Authorization': `Bearer ${token}` }
@@ -276,33 +282,18 @@ module.exports = async (req, res) => {
                         const tplAnalyticsData = await templateAnalyticsRes.json();
                         
                         if (tplAnalyticsData.data && Array.isArray(tplAnalyticsData.data)) {
-                            tplAnalyticsData.data.forEach(entry => {
-                                const tplId = String(entry.template_id || entry.id || '');
-                                if (!tplId) return;
-                                let sent = 0, delivered = 0, read = 0;
-                                if (Array.isArray(entry.data_points)) {
-                                    entry.data_points.forEach(dp => {
-                                        sent += (dp.sent || 0);
-                                        delivered += (dp.delivered || 0);
-                                        read += (dp.read || 0);
-                                    });
-                                } else {
-                                    sent = entry.sent || 0;
-                                    delivered = entry.delivered || 0;
-                                    read = entry.read || 0;
-                                }
-                                metaTemplateAnalytics[tplId] = { sent, delivered, read };
-                            });
-                        }
-
-                        if (tplAnalyticsData.data_points && Array.isArray(tplAnalyticsData.data_points)) {
-                            tplAnalyticsData.data_points.forEach(dp => {
-                                const tplId = String(dp.template_id || '');
-                                if (!tplId) return;
-                                if (!metaTemplateAnalytics[tplId]) metaTemplateAnalytics[tplId] = { sent: 0, delivered: 0, read: 0 };
-                                metaTemplateAnalytics[tplId].sent += (dp.sent || 0);
-                                metaTemplateAnalytics[tplId].delivered += (dp.delivered || 0);
-                                metaTemplateAnalytics[tplId].read += (dp.read || 0);
+                            tplAnalyticsData.data.forEach(item => {
+                                const points = Array.isArray(item.data_points) ? item.data_points : [item];
+                                points.forEach(dp => {
+                                    const tplId = String(dp.template_id || item.template_id || '');
+                                    if (!tplId) return;
+                                    if (!metaTemplateAnalytics[tplId]) {
+                                        metaTemplateAnalytics[tplId] = { sent: 0, delivered: 0, read: 0 };
+                                    }
+                                    metaTemplateAnalytics[tplId].sent += (dp.sent || 0);
+                                    metaTemplateAnalytics[tplId].delivered += (dp.delivered || 0);
+                                    metaTemplateAnalytics[tplId].read += (dp.read || 0);
+                                });
                             });
                         }
                     } catch (tplErr) {
