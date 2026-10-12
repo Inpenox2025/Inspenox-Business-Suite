@@ -1027,7 +1027,13 @@ window.loadDashboard = async function loadDashboard() {
         if (elEmailSent) elEmailSent.textContent = data.channels?.email || 0;
         if (elSmsSent) elSmsSent.textContent = data.channels?.sms || 0;
         if (elChats) elChats.textContent = data.recent_inbound?.length || 0;
-        if (elEstCost) elEstCost.textContent = `₹${(data.estimated_costs?.total || 0).toFixed(2)}`;
+        if (elEstCost) {
+            if (!isParentAdmin() && (data.requires_subscription || data.is_subscribed === false)) {
+                elEstCost.innerHTML = '<span style="font-size:1.15rem; color:var(--text-muted); font-weight:700;">🔒 Sub Required</span>';
+            } else {
+                elEstCost.textContent = `₹${(data.estimated_costs?.total || 0).toFixed(2)}`;
+            }
+        }
 
         if (elInboxList) {
             if (!data.recent_inbound || data.recent_inbound.length === 0) {
@@ -1103,23 +1109,42 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         const res = await apiFetch(`/api/analytics${queryStr}`);
         const data = await res.json();
 
+        const isRequiresSub = !isParent && (data.requires_subscription || data.is_subscribed === false);
+        const isRequiresConfig = !isParent && !isRequiresSub && (data.requires_meta_config || data.is_configured === false);
+
         // 1. Connection Status Badge & Superadmin Edit Summary Button
         if (elBadge) {
-            let badgeText = data.meta_connected ? '⚡ Direct Meta Graph API v20.0' : '📊 Local Database Analytics';
-            let badgeBg = data.meta_connected ? 'rgba(16, 185, 129, 0.15)' : 'rgba(234, 179, 8, 0.15)';
-            let badgeColor = data.meta_connected ? '#10b981' : '#eab308';
-            let superBtnHtml = isParent ? ` <button class="btn secondary sm" style="margin-left:0.5rem; padding:0.2rem 0.5rem; font-size:0.75rem; border-radius:6px;" onclick="editOverallMetaInsightsModal(${data.meta_direct_insights?.total_amount_spent || 0}, ${data.meta_direct_insights?.total_sent || 0}, ${data.meta_direct_insights?.total_delivered || 0}, ${data.meta_direct_insights?.total_read || 0}, ${data.meta_direct_insights?.unique_replies || 0})">✏️ Edit Summary</button>` : '';
+            if (isRequiresSub) {
+                elBadge.innerHTML = '🔒 Subscription Required';
+                elBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+                elBadge.style.color = '#ef4444';
+            } else if (isRequiresConfig) {
+                elBadge.innerHTML = '⚙️ Meta Credentials Not Configured';
+                elBadge.style.background = 'rgba(234, 179, 8, 0.15)';
+                elBadge.style.color = '#eab308';
+            } else {
+                let badgeText = data.meta_connected ? '⚡ Direct Meta Graph API v20.0' : '📊 Local Database Analytics';
+                let badgeBg = data.meta_connected ? 'rgba(16, 185, 129, 0.15)' : 'rgba(234, 179, 8, 0.15)';
+                let badgeColor = data.meta_connected ? '#10b981' : '#eab308';
+                let superBtnHtml = isParent ? ` <button class="btn secondary sm" style="margin-left:0.5rem; padding:0.2rem 0.5rem; font-size:0.75rem; border-radius:6px;" onclick="editOverallMetaInsightsModal(${data.meta_direct_insights?.total_amount_spent || 0}, ${data.meta_direct_insights?.total_sent || 0}, ${data.meta_direct_insights?.total_delivered || 0}, ${data.meta_direct_insights?.total_read || 0}, ${data.meta_direct_insights?.unique_replies || 0})">✏️ Edit Summary</button>` : '';
 
-            elBadge.innerHTML = badgeText + superBtnHtml;
-            elBadge.style.background = badgeBg;
-            elBadge.style.color = badgeColor;
+                elBadge.innerHTML = badgeText + superBtnHtml;
+                elBadge.style.background = badgeBg;
+                elBadge.style.color = badgeColor;
+            }
         }
 
         // 2. Direct Meta Summary Stat Cards
         const metaInsights = data.meta_direct_insights || {};
-        if (elAmountSpent) elAmountSpent.textContent = `₹${(metaInsights.total_amount_spent || data.estimated_costs?.whatsapp || 0).toFixed(2)}`;
+        if (elAmountSpent) {
+            if (isRequiresSub) {
+                elAmountSpent.innerHTML = '<span style="font-size:1.35rem; color:var(--text-muted); font-weight:700;">🔒 Locked</span>';
+            } else {
+                elAmountSpent.textContent = `₹${(metaInsights.total_amount_spent || data.estimated_costs?.whatsapp || 0).toFixed(2)}`;
+            }
+        }
         if (elCostPerMsg) elCostPerMsg.textContent = `₹0.8631 / ₹0.115`;
-        if (elTotalMsgs) elTotalMsgs.textContent = metaInsights.total_sent || data.messages_sent || 0;
+        if (elTotalMsgs) elTotalMsgs.textContent = isRequiresSub ? '0' : (metaInsights.total_sent || data.messages_sent || 0);
 
         const totalCostVal = data.estimated_costs?.total || 0;
         const subtotalVal = data.estimated_costs?.subtotal || (totalCostVal / 1.18);
@@ -1128,94 +1153,185 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         window.latestSubtotal = subtotalVal;
         window.latestGst = gstVal;
 
-        if (elTotalCost) elTotalCost.textContent = `₹${totalCostVal.toFixed(2)}`;
+        if (elTotalCost) {
+            if (isRequiresSub) {
+                elTotalCost.innerHTML = '<span style="font-size:1.35rem; color:var(--text-muted); font-weight:700;">🔒 Locked</span>';
+            } else {
+                elTotalCost.textContent = `₹${totalCostVal.toFixed(2)}`;
+            }
+        }
 
         const elCostSubtext = document.getElementById('usage-stat-cost-subtext');
         if (elCostSubtext) {
-            elCostSubtext.innerHTML = `Excl. GST: <strong>₹${subtotalVal.toFixed(2)}</strong> + 18% GST: <strong>₹${gstVal.toFixed(2)}</strong>`;
+            if (isRequiresSub) {
+                elCostSubtext.innerHTML = '<span style="color:#eab308; font-weight:600;">Subscribe to view analytics & estimated cost breakdown</span>';
+            } else {
+                elCostSubtext.innerHTML = `Excl. GST: <strong>₹${subtotalVal.toFixed(2)}</strong> + 18% GST: <strong>₹${gstVal.toFixed(2)}</strong>`;
+            }
         }
 
-        // Show Pay Bill Now container for registered logged-in company users
+        // Show Pay Bill Now or Subscribe container for registered logged-in company users
         const payContainer = document.getElementById('pay-now-container');
         if (payContainer) {
-            payContainer.style.display = (!isParent && totalCostVal >= 0) ? 'block' : 'none';
+            if (isRequiresSub) {
+                payContainer.style.display = 'block';
+                payContainer.innerHTML = `
+                    <button class="btn primary sm" style="width: 100%; font-weight: 700; background: var(--primary); border: none; padding: 0.45rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem;" onclick="switchView('subscriptions')">
+                        ⚡ Subscribe to View Estimated Cost
+                    </button>
+                `;
+            } else {
+                payContainer.style.display = (!isParent && totalCostVal >= 0) ? 'block' : 'none';
+                payContainer.innerHTML = `
+                    <button id="btn-pay-now" class="btn primary sm" style="width: 100%; font-weight: 700; background: #10b981; border: none; padding: 0.45rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem;" onclick="triggerCompanyPayment()">
+                        💳 Pay Bill Now
+                    </button>
+                `;
+            }
         }
 
         // 3. Performance Metrics
-        if (elSentCount) elSentCount.textContent = metaInsights.total_sent || 0;
-        if (elDeliveredCount) elDeliveredCount.textContent = metaInsights.total_delivered || 0;
-        if (elReadCount) elReadCount.textContent = metaInsights.total_read || 0;
-        if (elReadPercent) elReadPercent.textContent = `(${metaInsights.total_read_percent || 0}%)`;
-        if (elUniqueReplies) elUniqueReplies.textContent = metaInsights.unique_replies || 0;
+        if (elSentCount) elSentCount.innerHTML = isRequiresSub ? '<span style="color:var(--text-muted); font-size:1.35rem;">🔒</span>' : (metaInsights.total_sent || 0);
+        if (elDeliveredCount) elDeliveredCount.innerHTML = isRequiresSub ? '<span style="color:var(--text-muted); font-size:1.35rem;">🔒</span>' : (metaInsights.total_delivered || 0);
+        if (elReadCount) elReadCount.innerHTML = isRequiresSub ? '<span style="color:var(--text-muted); font-size:1.35rem;">🔒</span>' : (metaInsights.total_read || 0);
+        if (elReadPercent) elReadPercent.textContent = isRequiresSub ? '' : `(${metaInsights.total_read_percent || 0}%)`;
+        if (elUniqueReplies) elUniqueReplies.innerHTML = isRequiresSub ? '<span style="color:var(--text-muted); font-size:1.35rem;">🔒</span>' : (metaInsights.unique_replies || 0);
 
         // 4. Render Template Insights Table
         if (tbodyTemplates) {
-            const tList = metaInsights.templates || [];
-            if (tList.length === 0) {
-                tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">No Meta template analytics recorded yet.</td></tr>`;
+            if (isRequiresSub) {
+                tbodyTemplates.innerHTML = `
+                    <tr>
+                        <td colspan="${colspanVal}" style="padding: 3.5rem 1.5rem; text-align: center; background: rgba(16, 185, 129, 0.02);">
+                            <div style="max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 0.85rem;">
+                                <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(234, 179, 8, 0.15); color: #eab308; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; box-shadow: 0 4px 14px rgba(234, 179, 8, 0.12);">
+                                    🔒
+                                </div>
+                                <h3 style="margin: 0; font-size: 1.25rem; color: var(--text-main); font-weight: 800; letter-spacing: -0.3px;">
+                                    Subscribe to View Analytics and Estimated Cost
+                                </h3>
+                                <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted); line-height: 1.55;">
+                                    Direct Meta WhatsApp message templates, delivery statistics, read receipts, and live cost calculation are only available on active subscription plans.
+                                </p>
+                                <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem; flex-wrap: wrap; justify-content: center;">
+                                    <button class="btn primary" style="font-weight: 700; padding: 0.65rem 1.6rem; border-radius: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); font-size: 0.9rem;" onclick="switchView('subscriptions')">
+                                        ⚡ View Subscription Plans & Upgrade
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else if (isRequiresConfig) {
+                tbodyTemplates.innerHTML = `
+                    <tr>
+                        <td colspan="${colspanVal}" style="padding: 3.5rem 1.5rem; text-align: center; background: rgba(59, 130, 246, 0.02);">
+                            <div style="max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 0.85rem;">
+                                <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.75rem;">
+                                    ⚙️
+                                </div>
+                                <h3 style="margin: 0; font-size: 1.25rem; color: var(--text-main); font-weight: 800; letter-spacing: -0.3px;">
+                                    Configure Meta Credentials
+                                </h3>
+                                <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted); line-height: 1.55;">
+                                    To view your company's official templates and live analytics, please configure your WhatsApp Phone Number ID, Business Account ID, and Access Token in Settings.
+                                </p>
+                                <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem;">
+                                    <button class="btn primary sm" style="font-weight: 700; padding: 0.6rem 1.4rem; border-radius: 8px;" onclick="switchView('settings')">
+                                        🔑 Configure Meta Credentials in Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
             } else {
-                tbodyTemplates.innerHTML = tList.map(t => {
-                    const statusBadge = t.status === 'APPROVED' || t.status === 'ACTIVE' ? 
-                        '<span class="window-badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; font-weight:600;">Active</span>' : 
-                        '<span class="window-badge" style="background:rgba(234, 179, 8, 0.15); color:#eab308; font-weight:600;">Pending</span>';
-                    const categoryBadge = `<span class="window-badge" style="background:var(--primary-light); color:var(--primary); font-size:0.75rem; text-transform:uppercase;">${t.category}</span>`;
-                    const rateDisplay = (t.cost_per_delivered < 0.2 && t.cost_per_delivered > 0) ? `₹${t.cost_per_delivered.toFixed(4)}` : (t.cost_per_delivered === 0 ? 'FREE' : `₹${t.cost_per_delivered.toFixed(4)}`);
-                    const actionTd = isParent ? `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editTemplateStatsModal('${t.id}', '${t.name.replace(/'/g, "\\'")}', ${t.sent}, ${t.delivered}, ${t.read}, ${t.replies}, ${t.cost_per_delivered}, ${t.amount_spent})">✏️ Edit</button></td>` : '';
-                    return `
-                        <tr>
-                            <td>
-                                <strong style="color:var(--text-main); display:block;">${t.name}</strong>
-                                <span style="font-size:0.75rem; color:var(--text-muted);">ID: ${t.id} · ${t.language}</span>
-                            </td>
-                            <td>${categoryBadge}</td>
-                            <td>${statusBadge}</td>
-                            <td><strong>${t.sent}</strong></td>
-                            <td><strong style="color:#10b981;">${t.delivered}</strong></td>
-                            <td>
-                                <span style="font-weight:700; color:#3b82f6;">${t.read}</span>
-                                <span style="font-size:0.75rem; color:var(--text-muted); margin-left:0.2rem;">(${t.read_percent}%)</span>
-                            </td>
-                            <td><strong style="color:#8b5cf6;">${t.replies}</strong></td>
-                            <td><code style="color:var(--text-muted); font-weight:600;">${rateDisplay}</code></td>
-                            <td style="text-align: right;"><strong style="color:var(--text-main); font-size:1.05rem;">₹${t.amount_spent.toFixed(2)}</strong></td>
-                            ${actionTd}
-                        </tr>
-                    `;
-                }).join('');
+                const tList = metaInsights.templates || [];
+                if (tList.length === 0) {
+                    tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">No Meta template analytics recorded yet for your account.</td></tr>`;
+                } else {
+                    tbodyTemplates.innerHTML = tList.map(t => {
+                        const statusBadge = t.status === 'APPROVED' || t.status === 'ACTIVE' ? 
+                            '<span class="window-badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; font-weight:600;">Active</span>' : 
+                            '<span class="window-badge" style="background:rgba(234, 179, 8, 0.15); color:#eab308; font-weight:600;">Pending</span>';
+                        const categoryBadge = `<span class="window-badge" style="background:var(--primary-light); color:var(--primary); font-size:0.75rem; text-transform:uppercase;">${t.category}</span>`;
+                        const rateDisplay = (t.cost_per_delivered < 0.2 && t.cost_per_delivered > 0) ? `₹${t.cost_per_delivered.toFixed(4)}` : (t.cost_per_delivered === 0 ? 'FREE' : `₹${t.cost_per_delivered.toFixed(4)}`);
+                        const actionTd = isParent ? `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editTemplateStatsModal('${t.id}', '${t.name.replace(/'/g, "\\'")}', ${t.sent}, ${t.delivered}, ${t.read}, ${t.replies}, ${t.cost_per_delivered}, ${t.amount_spent})">✏️ Edit</button></td>` : '';
+                        return `
+                            <tr>
+                                <td>
+                                    <strong style="color:var(--text-main); display:block;">${t.name}</strong>
+                                    <span style="font-size:0.75rem; color:var(--text-muted);">ID: ${t.id} · ${t.language}</span>
+                                </td>
+                                <td>${categoryBadge}</td>
+                                <td>${statusBadge}</td>
+                                <td><strong>${t.sent}</strong></td>
+                                <td><strong style="color:#10b981;">${t.delivered}</strong></td>
+                                <td>
+                                    <span style="font-weight:700; color:#3b82f6;">${t.read}</span>
+                                    <span style="font-size:0.75rem; color:var(--text-muted); margin-left:0.2rem;">(${t.read_percent}%)</span>
+                                </td>
+                                <td><strong style="color:#8b5cf6;">${t.replies}</strong></td>
+                                <td><code style="color:var(--text-muted); font-weight:600;">${rateDisplay}</code></td>
+                                <td style="text-align: right;"><strong style="color:var(--text-main); font-size:1.05rem;">₹${t.amount_spent.toFixed(2)}</strong></td>
+                                ${actionTd}
+                            </tr>
+                        `;
+                    }).join('');
+                }
             }
         }
 
         // 5. Render Company Usage Table
         if (tbodyCompanies) {
-            const usageList = data.company_usage || [];
-            if (usageList.length === 0) {
-                tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">No company API usage data recorded yet.</td></tr>`;
-            } else {
-                tbodyCompanies.innerHTML = usageList.map(u => {
-                    const baseCost = u.base_cost || (u.est_cost / 1.18);
-                    const gstAmount = u.gst_amount || (u.est_cost - baseCost);
-                    const actionTd = isParent ? 
-                        `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editCompanyUsageModal('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.wa_marketing_count}, ${u.wa_utility_count}, ${u.wa_auth_count}, ${u.email_count}, ${u.sms_count}, ${u.est_cost})">✏️ Edit</button></td>` : 
-                        `<td style="text-align:center;"><button class="btn primary sm" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#10b981; border:none; font-weight:700;" onclick="triggerCompanyPayment('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.est_cost}, ${baseCost}, ${gstAmount})">💳 Pay Charges</button></td>`;
-                    return `
+            if (isRequiresSub) {
+                tbodyCompanies.innerHTML = `
                     <tr>
-                        <td><strong style="color:var(--text-main);">${u.name}</strong></td>
-                        <td><code style="color:var(--primary); font-weight:600;">${u.wa_marketing_count}</code></td>
-                        <td><code>${u.wa_utility_count}</code></td>
-                        <td><code>${u.wa_auth_count}</code></td>
-                        <td><code>${u.email_count}</code></td>
-                        <td><code>${u.sms_count}</code></td>
-                        <td><strong>${u.total_outbound}</strong></td>
-                        <td style="text-align: right;">
-                            <strong style="color:var(--primary); font-size:1.05rem; display:block;">₹${u.est_cost.toFixed(2)} <span style="font-size:0.7rem; color:#10b981; font-weight:600;">(Incl. GST)</span></strong>
-                            <span style="font-size:0.725rem; color:var(--text-muted); display:block; font-weight:500; margin-top:0.15rem;">
-                                Excl. GST: ₹${baseCost.toFixed(2)} | GST 18%: ₹${gstAmount.toFixed(2)}
-                            </span>
+                        <td colspan="${coColspanVal}" style="padding: 2.5rem 1.5rem; text-align: center;">
+                            <div style="max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                <div style="font-size: 1.5rem;">🔒</div>
+                                <strong style="color: var(--text-main); font-size: 1rem;">Usage Billing Details Locked</strong>
+                                <p style="margin: 0; font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">
+                                    Subscribe to an active plan to view itemized message counts and estimated charges for your company.
+                                </p>
+                                <button class="btn primary sm" style="margin-top: 0.5rem; font-weight: 700; border-radius: 6px;" onclick="switchView('subscriptions')">
+                                    ⚡ View Subscription Plans
+                                </button>
+                            </div>
                         </td>
-                        ${actionTd}
                     </tr>
                 `;
-                }).join('');
+            } else {
+                const usageList = data.company_usage || [];
+                if (usageList.length === 0) {
+                    tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">No company API usage data recorded yet.</td></tr>`;
+                } else {
+                    tbodyCompanies.innerHTML = usageList.map(u => {
+                        const baseCost = u.base_cost || (u.est_cost / 1.18);
+                        const gstAmount = u.gst_amount || (u.est_cost - baseCost);
+                        const actionTd = isParent ? 
+                            `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editCompanyUsageModal('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.wa_marketing_count}, ${u.wa_utility_count}, ${u.wa_auth_count}, ${u.email_count}, ${u.sms_count}, ${u.est_cost})">✏️ Edit</button></td>` : 
+                            `<td style="text-align:center;"><button class="btn primary sm" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#10b981; border:none; font-weight:700;" onclick="triggerCompanyPayment('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.est_cost}, ${baseCost}, ${gstAmount})">💳 Pay Charges</button></td>`;
+                        return `
+                        <tr>
+                            <td><strong style="color:var(--text-main);">${u.name}</strong></td>
+                            <td><code style="color:var(--primary); font-weight:600;">${u.wa_marketing_count}</code></td>
+                            <td><code>${u.wa_utility_count}</code></td>
+                            <td><code>${u.wa_auth_count}</code></td>
+                            <td><code>${u.email_count}</code></td>
+                            <td><code>${u.sms_count}</code></td>
+                            <td><strong>${u.total_outbound}</strong></td>
+                            <td style="text-align: right;">
+                                <strong style="color:var(--primary); font-size:1.05rem; display:block;">₹${u.est_cost.toFixed(2)} <span style="font-size:0.7rem; color:#10b981; font-weight:600;">(Incl. GST)</span></strong>
+                                <span style="font-size:0.725rem; color:var(--text-muted); display:block; font-weight:500; margin-top:0.15rem;">
+                                    Excl. GST: ₹${baseCost.toFixed(2)} | GST 18%: ₹${gstAmount.toFixed(2)}
+                                </span>
+                            </td>
+                            ${actionTd}
+                        </tr>
+                    `;
+                    }).join('');
+                }
             }
         }
     } catch(e) {

@@ -46,27 +46,47 @@ module.exports = async (req, res) => {
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
-        const companyId = req.query.company_id || null;
+        const rawCoParam = req.query.company_id || (req.headers && req.headers['x-company-id']);
+        const companyId = (rawCoParam && rawCoParam !== 'default' && rawCoParam !== 'parent' && rawCoParam !== 'all' && String(rawCoParam).trim() !== '') ? rawCoParam : null;
 
-        let wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || null;
-        let token = env.WHATSAPP_ACCESS_TOKEN || null;
+        let isMaster = false;
+        let company = null;
 
-        if (companyId && companyId !== 'default') {
+        if (!companyId) {
+            isMaster = true;
+        } else {
             try {
                 const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
                 if (cos.length > 0) {
-                    if (cos[0].whatsapp_business_account_id) wabaId = cos[0].whatsapp_business_account_id;
-                    if (cos[0].whatsapp_access_token) token = cos[0].whatsapp_access_token;
+                    company = cos[0];
+                    isMaster = (company.slug && company.slug.toLowerCase() === 'inspenox') || (company.name && company.name.toLowerCase() === 'inspenox');
+                } else {
+                    isMaster = false;
                 }
-            } catch (e) {}
-        } else if (!wabaId || !token) {
-            try {
-                const cos = await sql`SELECT * FROM companies ORDER BY id ASC LIMIT 1`;
-                if (cos.length > 0) {
-                    if (!wabaId && cos[0].whatsapp_business_account_id) wabaId = cos[0].whatsapp_business_account_id;
-                    if (!token && cos[0].whatsapp_access_token) token = cos[0].whatsapp_access_token;
-                }
-            } catch (e) {}
+            } catch(e) {
+                isMaster = false;
+            }
+        }
+
+        const isSubscribed = isMaster || !!(company && company.subscription_status === 'active' && company.subscription_plan && company.subscription_plan.toLowerCase() !== 'none');
+        const isConfigured = isMaster 
+            ? !!(env.WHATSAPP_PHONE_NUMBER_ID && env.WHATSAPP_BUSINESS_ACCOUNT_ID && env.WHATSAPP_ACCESS_TOKEN && env.WHATSAPP_VERIFY_TOKEN)
+            : !!(company && company.whatsapp_phone_number_id && company.whatsapp_business_account_id && company.whatsapp_access_token && company.whatsapp_verify_token);
+
+        let wabaId = null;
+        let token = null;
+
+        if (isMaster) {
+            wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || null;
+            token = env.WHATSAPP_ACCESS_TOKEN || null;
+        } else if (isSubscribed && isConfigured) {
+            // ONLY fetch using this specific company's own credentials! Never fall back to ENV!
+            wabaId = company.whatsapp_business_account_id;
+            token = company.whatsapp_access_token;
+        } else {
+            // Unsubscribed or unconfigured: strictly NULL!
+            wabaId = null;
+            token = null;
         }
 
         let customersQuery = companyId && companyId !== 'default' ? 
@@ -369,7 +389,9 @@ module.exports = async (req, res) => {
             });
         }
 
-        if (templateInsightsList.length === 0) {
+        // ONLY fallback to local message stats if isMaster (Inspenox Parent) AND metaTemplates list is empty!
+        // Tenant companies should NEVER see dummy or master ENV templates!
+        if (templateInsightsList.length === 0 && isMaster) {
             (templateStats || []).forEach((ts, idx) => {
                 const sent = parseInt(ts.sent_count || 0);
                 const delivered = parseInt(ts.delivered_count || ts.sent_count || 0);
@@ -398,6 +420,14 @@ module.exports = async (req, res) => {
                     amount_spent: amountSpent
                 });
             });
+        }
+
+        if (!isMaster && !isSubscribed) {
+            templateInsightsList.length = 0;
+            totalMetaSpent = 0;
+            totalMetaSent = 0;
+            totalMetaDelivered = 0;
+            totalMetaRead = 0;
         }
 
         const totalReplies = parseInt(inboundRepliesResult[0]?.count || 0);
@@ -528,54 +558,79 @@ module.exports = async (req, res) => {
             calculated_total_est_cost = company_usage_list.reduce((acc, cu) => acc + (cu.est_cost || 0), 0);
         }
 
+        const requiresSub = !isMaster && !isSubscribed;
+        const requiresConfig = !isMaster && isSubscribed && !isConfigured;
+
+        if (requiresSub) {
+            company_usage_list.forEach(cu => {
+                if (String(cu.id) === String(companyId)) {
+                    cu.locked = true;
+                    cu.requires_subscription = true;
+                }
+            });
+        }
+
         const analytics = {
-            meta_connected: metaConnected,
-            meta_error: metaError,
+            is_master: isMaster,
+            is_subscribed: isSubscribed,
+            is_configured: isConfigured,
+            requires_subscription: requiresSub,
+            requires_meta_config: requiresConfig,
+            company_name: company ? company.name : 'Inspenox',
+            meta_connected: isMaster ? metaConnected : (isConfigured && metaConnected),
+            meta_error: requiresSub ? null : metaError,
             waba_id: wabaId || null,
             total_customers: parseInt(customersResult[0]?.count || 0),
-            messages_sent: parseInt(messagesResult[0]?.count || 0),
-            channels: {
+            messages_sent: requiresSub ? 0 : parseInt(messagesResult[0]?.count || 0),
+            channels: requiresSub ? { whatsapp: 0, email: 0, sms: 0 } : {
                 whatsapp: channels['whatsapp'] || parseInt(messagesResult[0]?.count || 0),
                 email: email_sent,
                 sms: sms_sent
             },
-            categories: {
+            categories: requiresSub ? { marketing: 0, utility: 0, authentication: 0 } : {
                 marketing: wa_marketing,
                 utility: wa_utility,
                 authentication: wa_auth
             },
             meta_direct_insights: {
-                total_amount_spent: parseFloat(totalMetaSpent.toFixed(2)) || parseFloat(est_wa_cost.toFixed(2)),
-                total_sent: metaDirectSent || totalMetaSent || parseInt(messagesResult[0]?.count || 0),
-                total_delivered: metaDirectDelivered || totalMetaDelivered || parseInt(messagesResult[0]?.count || 0),
-                total_read: totalMetaRead,
-                total_read_percent: (metaDirectDelivered || totalMetaDelivered) > 0 ? Math.round((totalMetaRead / (metaDirectDelivered || totalMetaDelivered)) * 100) : 0,
-                unique_replies: totalReplies,
-                templates: templateInsightsList
+                total_amount_spent: requiresSub ? 0 : (parseFloat(totalMetaSpent.toFixed(2)) || parseFloat(est_wa_cost.toFixed(2))),
+                total_sent: requiresSub ? 0 : (metaDirectSent || totalMetaSent || parseInt(messagesResult[0]?.count || 0)),
+                total_delivered: requiresSub ? 0 : (metaDirectDelivered || totalMetaDelivered || parseInt(messagesResult[0]?.count || 0)),
+                total_read: requiresSub ? 0 : totalMetaRead,
+                total_read_percent: requiresSub ? 0 : (((metaDirectDelivered || totalMetaDelivered) > 0) ? Math.round((totalMetaRead / (metaDirectDelivered || totalMetaDelivered)) * 100) : 0),
+                unique_replies: requiresSub ? 0 : totalReplies,
+                templates: requiresSub ? [] : templateInsightsList,
+                locked: requiresSub,
+                requires_subscription: requiresSub,
+                requires_meta_config: requiresConfig
             },
             pricing_rates: RATES,
             estimated_costs: {
-                whatsapp: parseFloat(est_wa_cost.toFixed(4)),
-                email: parseFloat(est_email_cost.toFixed(4)),
-                sms: parseFloat(est_sms_cost.toFixed(4)),
-                subtotal: parseFloat(calculated_total_base_cost.toFixed(2)),
-                gst_amount: parseFloat(calculated_total_gst_amount.toFixed(2)),
-                total: parseFloat(calculated_total_est_cost.toFixed(2))
+                whatsapp: requiresSub ? 0 : parseFloat(est_wa_cost.toFixed(4)),
+                email: requiresSub ? 0 : parseFloat(est_email_cost.toFixed(4)),
+                sms: requiresSub ? 0 : parseFloat(est_sms_cost.toFixed(4)),
+                subtotal: requiresSub ? 0 : parseFloat(calculated_total_base_cost.toFixed(2)),
+                gst_amount: requiresSub ? 0 : parseFloat(calculated_total_gst_amount.toFixed(2)),
+                total: requiresSub ? 0 : parseFloat(calculated_total_est_cost.toFixed(2)),
+                locked: requiresSub,
+                requires_subscription: requiresSub
             },
             company_usage: company_usage_list,
-            recent_inbound: recentInbound || []
+            recent_inbound: requiresSub ? [] : (recentInbound || [])
         };
 
-        // Apply Superadmin Manual Overrides to Overall Meta Direct Insights Summary Cards
-        const globalOv = overridesMap['meta_direct_global'];
-        if (globalOv) {
-            if (globalOv.total_amount_spent !== undefined) analytics.meta_direct_insights.total_amount_spent = parseFloat(globalOv.total_amount_spent);
-            if (globalOv.total_sent !== undefined) analytics.meta_direct_insights.total_sent = parseInt(globalOv.total_sent);
-            if (globalOv.total_delivered !== undefined) analytics.meta_direct_insights.total_delivered = parseInt(globalOv.total_delivered);
-            if (globalOv.total_read !== undefined) analytics.meta_direct_insights.total_read = parseInt(globalOv.total_read);
-            if (globalOv.unique_replies !== undefined) analytics.meta_direct_insights.unique_replies = parseInt(globalOv.unique_replies);
-            if (analytics.meta_direct_insights.total_delivered > 0) {
-                analytics.meta_direct_insights.total_read_percent = Math.round((analytics.meta_direct_insights.total_read / analytics.meta_direct_insights.total_delivered) * 100);
+        // Apply Superadmin Manual Overrides only when not locked by subscription
+        if (!requiresSub) {
+            const globalOv = overridesMap['meta_direct_global'];
+            if (globalOv) {
+                if (globalOv.total_amount_spent !== undefined) analytics.meta_direct_insights.total_amount_spent = parseFloat(globalOv.total_amount_spent);
+                if (globalOv.total_sent !== undefined) analytics.meta_direct_insights.total_sent = parseInt(globalOv.total_sent);
+                if (globalOv.total_delivered !== undefined) analytics.meta_direct_insights.total_delivered = parseInt(globalOv.total_delivered);
+                if (globalOv.total_read !== undefined) analytics.meta_direct_insights.total_read = parseInt(globalOv.total_read);
+                if (globalOv.unique_replies !== undefined) analytics.meta_direct_insights.unique_replies = parseInt(globalOv.unique_replies);
+                if (analytics.meta_direct_insights.total_delivered > 0) {
+                    analytics.meta_direct_insights.total_read_percent = Math.round((analytics.meta_direct_insights.total_read / analytics.meta_direct_insights.total_delivered) * 100);
+                }
             }
         }
 
