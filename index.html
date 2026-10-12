@@ -1636,13 +1636,62 @@
                 <!-- Live Meta Template Insights Breakdown Table -->
                 <div class="card" style="margin-bottom: 1.5rem;">
                     <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 0.75rem;">
                         <div>
                             <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main); font-weight: 700;">
                                 Template Insights Breakdown</h3>
                             <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Direct
                                 performance stats, read rates, and exact spend per message template.</p>
                         </div>
+                        <div id="tpl-insights-filter-summary" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span id="tpl-filter-count-badge" class="badge" style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-weight: 600; padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.8rem;">Showing all templates</span>
+                        </div>
+                    </div>
+
+                    <!-- Meta WhatsApp Manager Filter Controls Bar -->
+                    <div class="tpl-filter-bar" style="display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px;">
+                        <div style="flex: 1.6; min-width: 170px; position: relative;">
+                            <input type="text" id="filter-tpl-search" placeholder="Search templates..." style="width: 100%; padding: 0.45rem 0.75rem 0.45rem 2rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+                            <span style="position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); font-size: 0.85rem; color: var(--text-muted); pointer-events: none;">🔍</span>
+                        </div>
+
+                        <div style="flex: 1; min-width: 130px;">
+                            <select id="filter-tpl-category" style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+                                <option value="ALL">Category ▾ (All)</option>
+                                <option value="MARKETING">Marketing</option>
+                                <option value="UTILITY">Utility</option>
+                                <option value="AUTHENTICATION">Authentication</option>
+                            </select>
+                        </div>
+
+                        <div style="flex: 1; min-width: 130px;">
+                            <select id="filter-tpl-language" style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+                                <option value="ALL">Language ▾ (All)</option>
+                            </select>
+                        </div>
+
+                        <div style="flex: 1; min-width: 130px;">
+                            <select id="filter-tpl-status" style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+                                <option value="ALL">Status ▾ (All)</option>
+                                <option value="APPROVED">Active / Approved</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="REJECTED">Rejected</option>
+                                <option value="PAUSED">Paused</option>
+                            </select>
+                        </div>
+
+                        <div style="flex: 1.1; min-width: 140px;">
+                            <select id="filter-tpl-date-range" style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid #10b981; background: var(--bg-card); color: #10b981; font-weight: 600;">
+                                <option value="7">Last 7 days</option>
+                                <option value="30">Last 30 days</option>
+                                <option value="60" selected>Last 60 days</option>
+                                <option value="85">Last 90 days</option>
+                            </select>
+                        </div>
+
+                        <button type="button" id="btn-reset-tpl-filters" class="btn secondary sm" style="padding: 0.45rem 0.75rem; font-size: 0.8rem; border-radius: 6px; white-space: nowrap;" title="Reset all filters">
+                            ↺ Reset
+                        </button>
                     </div>
 
                     <div class="table-responsive">

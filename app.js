@@ -1336,7 +1336,7 @@ window.loadDashboard = async function loadDashboard() {
     }
 };
 
-window.loadUsageAnalytics = async function loadUsageAnalytics() {
+window.loadUsageAnalytics = async function loadUsageAnalytics(daysParam) {
     const isParent = isParentAdmin();
     const elBadge = document.getElementById('usage-meta-badge');
     const elAmountSpent = document.getElementById('meta-stat-amount-spent');
@@ -1383,12 +1383,30 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
 
     try {
         const storedComp = getStoredCompany();
-        const queryStr = (!isParent && storedComp && storedComp.id) ? `?company_id=${storedComp.id}` : '';
+        const dateRangeSelect = document.getElementById('filter-tpl-date-range');
+        const queryDays = daysParam || (dateRangeSelect ? dateRangeSelect.value : '60');
+        if (dateRangeSelect && daysParam) {
+            dateRangeSelect.value = String(daysParam);
+        }
+
+        const queryParts = [];
+        if (!isParent && storedComp && storedComp.id) {
+            queryParts.push(`company_id=${storedComp.id}`);
+        } else if (isParent && storedComp && storedComp.id && storedComp.id !== 'all' && storedComp.id !== 'default' && storedComp.id !== 'parent') {
+            queryParts.push(`company_id=${storedComp.id}`);
+        }
+        if (queryDays) {
+            queryParts.push(`days=${queryDays}`);
+        }
+        const queryStr = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+
         const res = await apiFetch(`/api/analytics${queryStr}`);
         const data = await res.json();
 
         const isRequiresSub = !isParent && (data.requires_subscription || data.is_subscribed === false);
         const isRequiresConfig = !isParent && !isRequiresSub && (data.requires_meta_config || data.is_configured === false);
+        window._metaAnalyticsRequiresSub = isRequiresSub;
+        window._metaAnalyticsRequiresConfig = isRequiresConfig;
 
         // 1. Connection Status Badge & Superadmin Edit Summary Button
         if (elBadge) {
@@ -1475,7 +1493,9 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         if (elReadPercent) elReadPercent.textContent = isRequiresSub ? '' : `(${metaInsights.total_read_percent || 0}%)`;
         if (elUniqueReplies) elUniqueReplies.innerHTML = isRequiresSub ? '<span style="color:var(--text-muted); font-size:1.35rem;">🔒</span>' : (metaInsights.unique_replies || 0);
 
-        // 4. Render Template Insights Table
+        // 4. Render Template Insights Table with Live Filter Controls
+        window._metaAllTemplates = metaInsights.templates || [];
+
         if (tbodyTemplates) {
             if (isRequiresSub) {
                 tbodyTemplates.innerHTML = `
@@ -1524,40 +1544,35 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                     </tr>
                 `;
             } else {
-                const tList = metaInsights.templates || [];
-                if (tList.length === 0) {
-                    tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">No Meta template analytics recorded yet for your account.</td></tr>`;
-                } else {
-                    tbodyTemplates.innerHTML = tList.map((t, idx) => {
-                        const statusBadge = t.status === 'APPROVED' || t.status === 'ACTIVE' ? 
-                            '<span class="window-badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; font-weight:600;">Active</span>' : 
-                            '<span class="window-badge" style="background:rgba(234, 179, 8, 0.15); color:#eab308; font-weight:600;">Pending</span>';
-                        const categoryBadge = `<span class="window-badge" style="background:var(--primary-light); color:var(--primary); font-size:0.75rem; text-transform:uppercase;">${t.category}</span>`;
-                        const rateDisplay = (t.cost_per_delivered < 0.2 && t.cost_per_delivered > 0) ? `₹${t.cost_per_delivered.toFixed(4)}` : (t.cost_per_delivered === 0 ? 'FREE' : `₹${t.cost_per_delivered.toFixed(4)}`);
-                        const actionTd = isParent ? `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editTemplateStatsModal('${t.id}', '${t.name.replace(/'/g, "\\'")}', ${t.sent}, ${t.delivered}, ${t.read}, ${t.replies}, ${t.cost_per_delivered}, ${t.amount_spent})">✏️ Edit</button></td>` : '';
-                        return `
-                            <tr>
-                                <td><strong style="color:var(--text-muted); font-size:0.85rem;">${idx + 1}</strong></td>
-                                <td>
-                                    <strong style="color:var(--text-main); display:block;">${t.name}</strong>
-                                    <span style="font-size:0.75rem; color:var(--text-muted);">${t.language}</span>
-                                </td>
-                                <td>${categoryBadge}</td>
-                                <td>${statusBadge}</td>
-                                <td><strong>${t.sent}</strong></td>
-                                <td><strong style="color:#10b981;">${t.delivered}</strong></td>
-                                <td>
-                                    <span style="font-weight:700; color:#3b82f6;">${t.read}</span>
-                                    <span style="font-size:0.75rem; color:var(--text-muted); margin-left:0.2rem;">(${t.read_percent}%)</span>
-                                </td>
-                                <td><strong style="color:#8b5cf6;">${t.replies}</strong></td>
-                                <td><code style="color:var(--text-muted); font-weight:600;">${rateDisplay}</code></td>
-                                <td style="text-align: right;"><strong style="color:var(--text-main); font-size:1.05rem;">₹${t.amount_spent.toFixed(2)}</strong></td>
-                                ${actionTd}
-                            </tr>
-                        `;
-                    }).join('');
+                // Populate languages into filter dropdown
+                const langSelect = document.getElementById('filter-tpl-language');
+                if (langSelect) {
+                    const currentLang = langSelect.value || 'ALL';
+                    const langs = Array.from(new Set(window._metaAllTemplates.map(t => t.language).filter(Boolean)));
+                    let langHtml = '<option value="ALL">Language ▾ (All)</option>';
+                    langs.forEach(l => {
+                        const label = l === 'te' ? 'Telugu (te)' : (l === 'en' ? 'English (en)' : (l === 'en_US' ? 'English US (en_US)' : l));
+                        langHtml += `<option value="${l}">${label}</option>`;
+                    });
+                    langSelect.innerHTML = langHtml;
+                    if (langs.includes(currentLang)) langSelect.value = currentLang;
                 }
+
+                // Initialize filter events once
+                if (!window._tplFiltersInitialized) {
+                    window._tplFiltersInitialized = true;
+                    document.getElementById('filter-tpl-search')?.addEventListener('input', applyTemplateFiltersAndRender);
+                    document.getElementById('filter-tpl-category')?.addEventListener('change', applyTemplateFiltersAndRender);
+                    document.getElementById('filter-tpl-language')?.addEventListener('change', applyTemplateFiltersAndRender);
+                    document.getElementById('filter-tpl-status')?.addEventListener('change', applyTemplateFiltersAndRender);
+                    document.getElementById('filter-tpl-date-range')?.addEventListener('change', (e) => {
+                        loadUsageAnalytics(e.target.value);
+                    });
+                    document.getElementById('btn-reset-tpl-filters')?.addEventListener('click', resetTemplateFilters);
+                }
+
+                // Render with current filters applied
+                applyTemplateFiltersAndRender();
             }
         }
 
@@ -1619,6 +1634,119 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
         if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">Failed to load direct Meta template insights.</td></tr>`;
         if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">Failed to load API usage statistics.</td></tr>`;
     }
+};
+
+window.resetTemplateFilters = function resetTemplateFilters() {
+    const searchInp = document.getElementById('filter-tpl-search');
+    const catSel = document.getElementById('filter-tpl-category');
+    const langSel = document.getElementById('filter-tpl-language');
+    const statSel = document.getElementById('filter-tpl-status');
+    if (searchInp) searchInp.value = '';
+    if (catSel) catSel.value = 'ALL';
+    if (langSel) langSel.value = 'ALL';
+    if (statSel) statSel.value = 'ALL';
+    applyTemplateFiltersAndRender();
+};
+
+window.applyTemplateFiltersAndRender = function applyTemplateFiltersAndRender() {
+    const tbodyTemplates = document.getElementById('meta-templates-insights-body');
+    const countBadge = document.getElementById('tpl-filter-count-badge');
+    const isParent = isParentAdmin();
+    const colspanVal = isParent ? 11 : 10;
+    if (!tbodyTemplates) return;
+
+    if (window._metaAnalyticsRequiresSub || window._metaAnalyticsRequiresConfig) return;
+
+    const allTemplates = window._metaAllTemplates || [];
+    const searchVal = (document.getElementById('filter-tpl-search')?.value || '').toLowerCase().trim();
+    const catVal = document.getElementById('filter-tpl-category')?.value || 'ALL';
+    const langVal = document.getElementById('filter-tpl-language')?.value || 'ALL';
+    const statVal = document.getElementById('filter-tpl-status')?.value || 'ALL';
+
+    const filtered = allTemplates.filter(t => {
+        if (searchVal) {
+            const nameMatch = (t.name || '').toLowerCase().includes(searchVal);
+            const catMatch = (t.category || '').toLowerCase().includes(searchVal);
+            if (!nameMatch && !catMatch) return false;
+        }
+        if (catVal !== 'ALL') {
+            if ((t.category || '').toUpperCase() !== catVal.toUpperCase()) return false;
+        }
+        if (langVal !== 'ALL') {
+            if (t.language !== langVal) return false;
+        }
+        if (statVal !== 'ALL') {
+            const s = (t.status || '').toUpperCase();
+            if (statVal === 'APPROVED' && s !== 'APPROVED' && s !== 'ACTIVE') return false;
+            if (statVal === 'PENDING' && s !== 'PENDING') return false;
+            if (statVal === 'REJECTED' && s !== 'REJECTED') return false;
+            if (statVal === 'PAUSED' && s !== 'PAUSED') return false;
+        }
+        return true;
+    });
+
+    if (countBadge) {
+        if (allTemplates.length === 0) {
+            countBadge.textContent = '0 templates found';
+            countBadge.style.background = 'rgba(234, 179, 8, 0.12)';
+            countBadge.style.color = '#eab308';
+        } else if (filtered.length === allTemplates.length) {
+            countBadge.textContent = `Showing all ${allTemplates.length} templates`;
+            countBadge.style.background = 'rgba(16, 185, 129, 0.12)';
+            countBadge.style.color = '#10b981';
+        } else {
+            countBadge.textContent = `Showing ${filtered.length} of ${allTemplates.length} templates`;
+            countBadge.style.background = 'rgba(59, 130, 246, 0.12)';
+            countBadge.style.color = '#3b82f6';
+        }
+    }
+
+    if (filtered.length === 0) {
+        if (allTemplates.length === 0) {
+            tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">No Meta template analytics recorded yet for your account.</td></tr>`;
+        } else {
+            tbodyTemplates.innerHTML = `
+                <tr>
+                    <td colspan="${colspanVal}" class="empty-state" style="padding: 2.5rem 1.5rem; text-align: center;">
+                        <div style="font-size: 1.1rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.35rem;">No templates match your filters</div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.85rem 0;">Try adjusting your search terms, category, or language.</p>
+                        <button type="button" class="btn secondary sm" onclick="resetTemplateFilters()">Clear Filters</button>
+                    </td>
+                </tr>
+            `;
+        }
+        return;
+    }
+
+    tbodyTemplates.innerHTML = filtered.map((t, idx) => {
+        const statusBadge = t.status === 'APPROVED' || t.status === 'ACTIVE' ? 
+            '<span class="window-badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; font-weight:600;">Active</span>' : 
+            '<span class="window-badge" style="background:rgba(234, 179, 8, 0.15); color:#eab308; font-weight:600;">Pending</span>';
+        const categoryBadge = `<span class="window-badge" style="background:var(--primary-light); color:var(--primary); font-size:0.75rem; text-transform:uppercase;">${t.category}</span>`;
+        const rateDisplay = (t.cost_per_delivered < 0.2 && t.cost_per_delivered > 0) ? `₹${t.cost_per_delivered.toFixed(4)}` : (t.cost_per_delivered === 0 ? 'FREE' : `₹${t.cost_per_delivered.toFixed(4)}`);
+        const actionTd = isParent ? `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editTemplateStatsModal('${t.id}', '${t.name.replace(/'/g, "\\'")}', ${t.sent}, ${t.delivered}, ${t.read}, ${t.replies}, ${t.cost_per_delivered}, ${t.amount_spent})">✏️ Edit</button></td>` : '';
+        return `
+            <tr>
+                <td><strong style="color:var(--text-muted); font-size:0.85rem;">${idx + 1}</strong></td>
+                <td>
+                    <strong style="color:var(--text-main); display:block;">${t.name}</strong>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">${t.language}</span>
+                </td>
+                <td>${categoryBadge}</td>
+                <td>${statusBadge}</td>
+                <td><strong>${t.sent}</strong></td>
+                <td><strong style="color:#10b981;">${t.delivered}</strong></td>
+                <td>
+                    <span style="font-weight:700; color:#3b82f6;">${t.read}</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted); margin-left:0.2rem;">(${t.read_percent}%)</span>
+                </td>
+                <td><strong style="color:#8b5cf6;">${t.replies}</strong></td>
+                <td><code style="color:var(--text-muted); font-weight:600;">${rateDisplay}</code></td>
+                <td style="text-align: right;"><strong style="color:var(--text-main); font-size:1.05rem;">₹${t.amount_spent.toFixed(2)}</strong></td>
+                ${actionTd}
+            </tr>
+        `;
+    }).join('');
 };
 
 // Payment Flow for Logged-In Registered Companies
