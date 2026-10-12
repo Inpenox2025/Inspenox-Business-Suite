@@ -5141,9 +5141,175 @@ document.getElementById('btn-bc-target-done')?.addEventListener('click', () => {
 });
 
 let broadcastCustomersCache = [];
+let activeBroadcastTagFilter = '';
+
+function populateBroadcastTagFilterOptions() {
+    const sel = document.getElementById('bc-tag-filter-select');
+    const chipsContainer = document.getElementById('bc-tag-chips-container');
+    
+    // Calculate customer count per tag
+    const tagCounts = {};
+    broadcastCustomersCache.forEach(c => {
+        if (c.tags) {
+            c.tags.split(',').forEach(raw => {
+                const t = raw.trim();
+                if (t) tagCounts[t.toLowerCase()] = (tagCounts[t.toLowerCase()] || 0) + 1;
+            });
+        }
+    });
+
+    if (sel) {
+        sel.innerHTML = '<option value="">-- All Tags (Show All) --</option>';
+        availableTags.forEach(t => {
+            const count = tagCounts[(t.name || '').toLowerCase()] || 0;
+            const opt = document.createElement('option');
+            opt.value = t.name;
+            opt.textContent = `🏷️ ${t.name} (${count})`;
+            if (t.name.toLowerCase() === activeBroadcastTagFilter.toLowerCase()) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    if (chipsContainer) {
+        chipsContainer.innerHTML = '';
+        
+        // "All" Chip
+        const allChip = document.createElement('button');
+        allChip.type = 'button';
+        allChip.className = `btn sm ${!activeBroadcastTagFilter ? 'primary' : 'secondary'}`;
+        allChip.style.cssText = 'padding: 0.2rem 0.55rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0;';
+        allChip.innerHTML = `All (${broadcastCustomersCache.length})`;
+        allChip.onclick = () => clearBroadcastTagFilter();
+        chipsContainer.appendChild(allChip);
+
+        availableTags.forEach(t => {
+            const count = tagCounts[(t.name || '').toLowerCase()] || 0;
+            if (count === 0 && !t.is_default) return;
+            const isActive = t.name.toLowerCase() === activeBroadcastTagFilter.toLowerCase();
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'btn sm';
+            chip.style.cssText = `padding: 0.2rem 0.6rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0; cursor: pointer; border: 1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; background: ${isActive ? 'var(--primary-light)' : 'var(--bg-card)'}; color: ${isActive ? 'var(--primary)' : 'var(--text-main)'}; font-weight: ${isActive ? '700' : '500'};`;
+            chip.innerHTML = `🏷️ ${t.name} <span style="opacity:0.75; font-size:0.68rem;">(${count})</span>`;
+            chip.onclick = () => {
+                if (isActive) {
+                    clearBroadcastTagFilter();
+                } else {
+                    applyBroadcastTagFilter(t.name, true);
+                }
+            };
+            chipsContainer.appendChild(chip);
+        });
+    }
+}
+
+window.applyBroadcastTagFilter = function applyBroadcastTagFilter(tagName, autoSelect = false) {
+    activeBroadcastTagFilter = (tagName || '').trim();
+    if (!activeBroadcastTagFilter) {
+        clearBroadcastTagFilter();
+        return;
+    }
+
+    const sel = document.getElementById('bc-tag-filter-select');
+    if (sel) sel.value = activeBroadcastTagFilter;
+
+    const clearBtn = document.getElementById('btn-bc-clear-tag-filter');
+    if (clearBtn) clearBtn.style.display = 'inline-flex';
+
+    populateBroadcastTagFilterOptions();
+
+    // If autoSelect: Check ONLY customers having this tag!
+    if (autoSelect && activeBroadcastTagFilter) {
+        const lowerTag = activeBroadcastTagFilter.toLowerCase();
+        let matchedCount = 0;
+        
+        document.querySelectorAll('.bc-cust-cb').forEach(cb => {
+            const custId = parseInt(cb.value);
+            const cust = broadcastCustomersCache.find(c => c.id === custId);
+            const hasTag = cust && cust.tags && cust.tags.split(',').map(s => s.trim().toLowerCase()).includes(lowerTag);
+            cb.checked = !!hasTag;
+            if (hasTag) matchedCount++;
+        });
+
+        const selectAll = document.getElementById('bc-select-all');
+        if (selectAll) selectAll.checked = false;
+
+        updateBcDisplay();
+    }
+
+    filterBroadcastCustomerList();
+};
+
+window.clearBroadcastTagFilter = function clearBroadcastTagFilter() {
+    activeBroadcastTagFilter = '';
+    const sel = document.getElementById('bc-tag-filter-select');
+    if (sel) sel.value = '';
+
+    const clearBtn = document.getElementById('btn-bc-clear-tag-filter');
+    if (clearBtn) clearBtn.style.display = 'none';
+
+    populateBroadcastTagFilterOptions();
+    filterBroadcastCustomerList();
+    updateBcDisplay();
+};
+
+window.clearBroadcastAudienceSelection = function clearBroadcastAudienceSelection() {
+    document.querySelectorAll('.bc-cust-cb').forEach(cb => { cb.checked = false; });
+    const selectAll = document.getElementById('bc-select-all');
+    if (selectAll) selectAll.checked = false;
+    clearBroadcastTagFilter();
+    updateBcDisplay();
+};
+
+window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
+    const searchVal = (document.getElementById('bc-customer-search')?.value || '').toLowerCase().trim();
+    const lowerFilterTag = activeBroadcastTagFilter.toLowerCase().trim();
+
+    let visibleCount = 0;
+    const optionLabels = document.querySelectorAll('#bc-target-list .option-item');
+
+    optionLabels.forEach(label => {
+        const custId = label.getAttribute('data-id');
+        const cust = broadcastCustomersCache.find(c => String(c.id) === String(custId));
+        if (!cust) return;
+
+        const custTags = cust.tags ? cust.tags.split(',').map(s => s.trim().toLowerCase()) : [];
+        const matchesTag = !lowerFilterTag || custTags.includes(lowerFilterTag);
+        
+        const matchesSearch = !searchVal || (
+            (cust.name && cust.name.toLowerCase().includes(searchVal)) ||
+            (cust.phone && cust.phone.includes(searchVal)) ||
+            custTags.some(t => t.includes(searchVal))
+        );
+
+        if (matchesTag && matchesSearch) {
+            label.style.display = 'flex';
+            visibleCount++;
+        } else {
+            label.style.display = 'none';
+        }
+    });
+
+    const selectAllLabel = document.getElementById('bc-select-all-label');
+    if (selectAllLabel) {
+        if (activeBroadcastTagFilter) {
+            selectAllLabel.textContent = `Select All with Tag "${activeBroadcastTagFilter}" (${visibleCount})`;
+        } else if (searchVal) {
+            selectAllLabel.textContent = `Select All Filtered (${visibleCount})`;
+        } else {
+            selectAllLabel.textContent = `Select All Customers (${broadcastCustomersCache.length})`;
+        }
+    }
+
+    const countBadge = document.getElementById('bc-matching-count-badge');
+    if (countBadge) {
+        countBadge.textContent = `${visibleCount} shown`;
+    }
+};
 
 async function loadCustomersForSelect() {
     try {
+        await loadTags();
         const res = await apiFetch('/api/customers');
         const customers = await res.json();
         
@@ -5157,20 +5323,40 @@ async function loadCustomersForSelect() {
             customers.forEach(c => {
                 const label = document.createElement('label');
                 label.className = 'option-item';
-                label.innerHTML = `<input type="checkbox" class="bc-cust-cb" value="${c.id}"> <span>${c.name} (${c.phone})</span>`;
+                label.setAttribute('data-id', c.id);
+                
+                const tagsArr = c.tags ? c.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
+                const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
+
+                label.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.65rem; flex: 1; min-width: 0;">
+                        <input type="checkbox" class="bc-cust-cb" value="${c.id}" style="margin:0;">
+                        <span style="font-size: 0.825rem; color: var(--text-main); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${c.name} <code style="font-size: 0.75rem; color: var(--text-muted);">(${c.phone})</code>
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: flex-end; align-items: center;">
+                        ${pillsHtml}
+                    </div>
+                `;
                 list.appendChild(label);
             });
+
+            populateBroadcastTagFilterOptions();
 
             const selectAll = document.getElementById('bc-select-all');
             const cbs = document.querySelectorAll('.bc-cust-cb');
             
             selectAll?.addEventListener('change', (e) => {
-                cbs.forEach(cb => cb.checked = e.target.checked);
+                const isChecked = e.target.checked;
+                // Only toggle checkboxes of visible customers (matching active tag filter / search)
+                document.querySelectorAll('#bc-target-list .option-item').forEach(item => {
+                    if (item.style.display !== 'none') {
+                        const cb = item.querySelector('.bc-cust-cb');
+                        if (cb) cb.checked = isChecked;
+                    }
+                });
                 updateBcDisplay();
-                // Auto-close dropdown when Select All is chosen
-                if (e.target.checked) {
-                    setTimeout(() => bcOptions?.classList.remove('active'), 250);
-                }
             });
 
             cbs.forEach(cb => {
@@ -5211,10 +5397,12 @@ function updateBcDisplay() {
     selectedCustomerIds = Array.from(cbs).map(cb => cb.value);
     
     const selectAll = document.getElementById('bc-select-all');
-    if (selectAll?.checked) {
-        bcDisplay.textContent = "All Customers Selected";
+    if (selectAll?.checked && !activeBroadcastTagFilter) {
+        bcDisplay.textContent = `All Customers Selected (${broadcastCustomersCache.length})`;
     } else if (selectedCustomerIds.length === 0) {
         bcDisplay.textContent = "Select Audience...";
+    } else if (activeBroadcastTagFilter) {
+        bcDisplay.textContent = `🎯 ${selectedCustomerIds.length} Customer(s) with "${activeBroadcastTagFilter}" Selected`;
     } else {
         bcDisplay.textContent = `${selectedCustomerIds.length} Customer(s) Selected`;
     }
@@ -5392,6 +5580,10 @@ function resetBroadcastForm() {
     const form = document.getElementById('broadcast-form');
     if (form) form.reset();
     
+    if (typeof clearBroadcastTagFilter === 'function') {
+        clearBroadcastTagFilter();
+    }
+    
     selectedCustomerIds = [];
     document.querySelectorAll('.bc-cust-cb').forEach(cb => { cb.checked = false; });
     const selectAll = document.getElementById('bc-select-all');
@@ -5503,24 +5695,56 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
         let targetList = [];
         const isSelectAll = document.getElementById('bc-select-all')?.checked;
 
-        if (isSelectAll) {
+        // Freshly read all checked customer checkboxes
+        const checkedCbs = document.querySelectorAll('.bc-cust-cb:checked');
+        const checkedIds = Array.from(checkedCbs).map(cb => String(cb.value));
+
+        if (isSelectAll && !activeBroadcastTagFilter) {
+            // Truly all customers in the workspace
             const res = await apiFetch('/api/customers');
             const allCust = await res.json();
             if (Array.isArray(allCust)) targetList = allCust;
-        } else {
-            if (selectedCustomerIds.length === 0) throw new Error("Please select at least one customer.");
-            if (broadcastCustomersCache.length > 0) {
-                targetList = broadcastCustomersCache.filter(c => selectedCustomerIds.includes(String(c.id)));
+        } else if (checkedIds.length > 0) {
+            // Specific customers checked individually or via tag auto-select
+            if (broadcastCustomersCache && broadcastCustomersCache.length > 0) {
+                targetList = broadcastCustomersCache.filter(c => checkedIds.includes(String(c.id)));
             } else {
                 const res = await apiFetch('/api/customers');
                 const allCust = await res.json();
                 if (Array.isArray(allCust)) {
-                    targetList = allCust.filter(c => selectedCustomerIds.includes(String(c.id)));
+                    targetList = allCust.filter(c => checkedIds.includes(String(c.id)));
                 }
+            }
+        } else if (activeBroadcastTagFilter) {
+            // Tag is selected but no individual checkboxes were explicitly ticked
+            const lowerFilterTag = activeBroadcastTagFilter.toLowerCase().trim();
+            const pool = (broadcastCustomersCache && broadcastCustomersCache.length > 0) 
+                ? broadcastCustomersCache 
+                : await (await apiFetch('/api/customers')).json();
+            if (Array.isArray(pool)) {
+                targetList = pool.filter(c => {
+                    if (!c.tags) return false;
+                    return c.tags.split(',').map(s => s.trim().toLowerCase()).includes(lowerFilterTag);
+                });
             }
         }
 
-        if (targetList.length === 0) throw new Error("No target customers found for broadcast.");
+        // 🔒 STRICT TAG FILTER CHECK:
+        // When a tag filter is active, guarantee that ONLY customers who have this tag are included!
+        if (activeBroadcastTagFilter) {
+            const lowerFilterTag = activeBroadcastTagFilter.toLowerCase().trim();
+            targetList = targetList.filter(c => {
+                if (!c.tags) return false;
+                const custTags = c.tags.split(',').map(s => s.trim().toLowerCase());
+                return custTags.includes(lowerFilterTag);
+            });
+        }
+
+        if (targetList.length === 0) {
+            throw new Error(activeBroadcastTagFilter 
+                ? `No customers found with tag "${activeBroadcastTagFilter}".`
+                : "Please select at least one customer or tag.");
+        }
 
         const type = document.getElementById('bc-type').value;
         const content = document.getElementById('bc-content').value;

@@ -686,13 +686,37 @@
                     <div class="card broadcast-card">
                         <form id="broadcast-form">
                             <div class="form-group">
-                                <label>Target Audience</label>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; flex-wrap: wrap; gap: 0.5rem;">
+                                    <label style="margin: 0; font-weight: 600;">Target Audience</label>
+                                    <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                                        <span style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600;">🏷️ Filter / Send by Tag:</span>
+                                        <select id="bc-tag-filter-select" onchange="applyBroadcastTagFilter(this.value, true)" style="padding: 0.25rem 0.65rem; border-radius: 6px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.775rem; cursor: pointer; outline: none; min-width: 170px;">
+                                            <option value="">-- All Tags (Show All) --</option>
+                                        </select>
+                                        <button type="button" class="btn secondary sm" id="btn-bc-clear-tag-filter" onclick="clearBroadcastTagFilter()" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.725rem;">
+                                            ✕ Clear
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div class="custom-select" id="bc-target-container">
                                     <div class="select-box" id="bc-target-display">Select Audience...</div>
                                     <div class="options-container" id="bc-target-options">
-                                        <label class="option-item select-all-item">
-                                            <input type="checkbox" id="bc-select-all" value="all">
-                                            <strong>Select All Customers</strong>
+                                        <!-- Search & Tag Filter Inside Options Box -->
+                                        <div style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.45rem; background: var(--bg-dark);">
+                                            <input type="text" id="bc-customer-search" placeholder="Search by name, phone or tag..." oninput="filterBroadcastCustomerList()" style="width: 100%; padding: 0.35rem 0.6rem; font-size: 0.775rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); outline: none;">
+                                            
+                                            <div style="display: flex; align-items: center; gap: 0.35rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin;" id="bc-tag-chips-container">
+                                                <!-- Dynamic tag quick chips: All, Repeat Buyers, Recovered, etc. -->
+                                            </div>
+                                        </div>
+
+                                        <label class="option-item select-all-item" style="border-bottom: 1px solid var(--border); padding: 0.6rem 0.85rem;">
+                                            <div style="display: flex; align-items: center; gap: 0.6rem; flex: 1;">
+                                                <input type="checkbox" id="bc-select-all" value="all">
+                                                <strong id="bc-select-all-label">Select All Customers</strong>
+                                            </div>
+                                            <span id="bc-matching-count-badge" style="font-size: 0.725rem; color: var(--primary); font-weight: 600;"></span>
                                         </label>
                                         <div id="bc-target-list"></div>
                                         <div class="bc-target-footer">

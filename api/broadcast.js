@@ -39,9 +39,18 @@ module.exports = async (req, res) => {
 
         let customersToMessage = [];
         if (target === 'all') {
-            customersToMessage = await sql`SELECT id, name, phone, company_id FROM customers WHERE company_id = ${companyId} OR company_id IS NULL`;
+            if (req.body.tag && String(req.body.tag).trim()) {
+                const tagPattern = `%${String(req.body.tag).trim()}%`;
+                customersToMessage = await sql`SELECT id, name, phone, company_id FROM customers WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}`;
+            } else {
+                customersToMessage = await sql`SELECT id, name, phone, company_id FROM customers WHERE company_id = ${companyId} OR company_id IS NULL`;
+            }
         } else if (Array.isArray(target)) {
             customersToMessage = await sql`SELECT id, name, phone, company_id FROM customers WHERE id = ANY(${target})`;
+        } else if (typeof target === 'string' && target.startsWith('tag:')) {
+            const rawTag = target.replace('tag:', '').trim();
+            const tagPattern = `%${rawTag}%`;
+            customersToMessage = await sql`SELECT id, name, phone, company_id FROM customers WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}`;
         } else {
             return res.status(400).json({ error: 'Invalid target' });
         }
