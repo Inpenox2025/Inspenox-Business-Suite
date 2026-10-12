@@ -1,5 +1,15 @@
 const { getDb } = require('../lib/db');
 
+function getCompanyPhoneLimit(planName, isMaster) {
+    if (isMaster) return 20;
+    if (!planName) return 0;
+    const lower = String(planName).toLowerCase().trim();
+    if (lower.includes('enterprise')) return 20;
+    if (lower.includes('growth')) return 3;
+    if (lower.includes('starter')) return 1;
+    return 1;
+}
+
 module.exports = async (req, res) => {
     const env = req.env || process.env || {};
     const sql = getDb(env);
@@ -34,6 +44,7 @@ module.exports = async (req, res) => {
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS phone TEXT;`;
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_plan TEXT DEFAULT NULL;`;
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'inactive';`;
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS whatsapp_phone_numbers JSONB DEFAULT '[]'::jsonb;`;
 
         // Auto-ensure default parent company Inspenox exists in DB with NULL DB credentials (loaded from ENV only)
         try {
@@ -80,7 +91,7 @@ module.exports = async (req, res) => {
             let companies = await sql`
                 SELECT id, name, slug, email, phone, subscription_plan, subscription_status,
                        whatsapp_phone_number_id, whatsapp_business_account_id, whatsapp_access_token, 
-                       whatsapp_verify_token, is_active, created_at,
+                       whatsapp_verify_token, whatsapp_phone_numbers, is_active, created_at,
                        (SELECT COUNT(*) FROM customers c WHERE c.company_id = companies.id) as customer_count,
                        (SELECT COUNT(*) FROM messages m WHERE m.company_id = companies.id) as message_count
                 FROM companies 
@@ -103,6 +114,19 @@ module.exports = async (req, res) => {
                 const isPaid = c.subscription_status === 'active' && c.subscription_plan && c.subscription_plan.toLowerCase() !== 'none';
 
                 if (isMaster) {
+                    let masterPhoneNumbers = Array.isArray(c.whatsapp_phone_numbers) && c.whatsapp_phone_numbers.length > 0 
+                        ? c.whatsapp_phone_numbers 
+                        : [];
+                    if (masterPhoneNumbers.length === 0 && systemEnv.whatsapp_phone_number_id) {
+                        masterPhoneNumbers = [{
+                            phone: c.phone || '+91 79816 56294',
+                            phone_number_id: systemEnv.whatsapp_phone_number_id,
+                            verified_name: 'Inspenox Parent',
+                            status: 'Registered',
+                            is_default: true
+                        }];
+                    }
+
                     return {
                         ...c,
                         name: 'Inspenox',
@@ -111,6 +135,8 @@ module.exports = async (req, res) => {
                         whatsapp_business_account_id: systemEnv.whatsapp_business_account_id,
                         whatsapp_access_token: systemEnv.whatsapp_access_token,
                         whatsapp_verify_token: systemEnv.whatsapp_verify_token,
+                        whatsapp_phone_numbers: masterPhoneNumbers,
+                        phone_limit: 20,
                         is_parent: true,
                         is_master: true,
                         is_env_loaded: true
@@ -118,11 +144,33 @@ module.exports = async (req, res) => {
                 }
 
                 // For other companies: NEVER fall back to system ENV defaults for unpaid or child accounts!
+                const planLimit = getCompanyPhoneLimit(c.subscription_plan, false);
+                let childPhoneNumbers = [];
+                if (isPaid) {
+                    if (Array.isArray(c.whatsapp_phone_numbers) && c.whatsapp_phone_numbers.length > 0) {
+                        childPhoneNumbers = c.whatsapp_phone_numbers;
+                    } else if (c.whatsapp_phone_number_id) {
+                        childPhoneNumbers = [{
+                            phone: c.phone || '',
+                            phone_number_id: c.whatsapp_phone_number_id,
+                            verified_name: c.name || '',
+                            status: 'Registered',
+                            is_default: true
+                        }];
+                    }
+                }
+
+                const primaryPhoneId = isPaid 
+                    ? (c.whatsapp_phone_number_id || (childPhoneNumbers.find(p => p.is_default)?.phone_number_id || (childPhoneNumbers[0] ? childPhoneNumbers[0].phone_number_id : null)))
+                    : null;
+
                 return {
                     ...c,
                     is_parent: false,
                     is_master: false,
-                    whatsapp_phone_number_id: isPaid ? (c.whatsapp_phone_number_id || null) : null,
+                    phone_limit: isPaid ? planLimit : 0,
+                    whatsapp_phone_numbers: childPhoneNumbers,
+                    whatsapp_phone_number_id: primaryPhoneId,
                     whatsapp_business_account_id: isPaid ? (c.whatsapp_business_account_id || null) : null,
                     whatsapp_access_token: isPaid ? (c.whatsapp_access_token || null) : null,
                     whatsapp_verify_token: isPaid ? (c.whatsapp_verify_token || null) : null
@@ -179,7 +227,11 @@ module.exports = async (req, res) => {
 
     if (req.method === 'PUT') {
         try {
-            const { id, name, email, phone, subscription_plan, whatsapp_phone_number_id, whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token, is_active } = req.body || {};
+            const { 
+                id, name, email, phone, subscription_plan, 
+                whatsapp_phone_number_id, whatsapp_phone_numbers,
+                whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token, is_active 
+            } = req.body || {};
 
             if (!id) return res.status(400).json({ error: 'Company ID is required' });
 
@@ -192,6 +244,7 @@ module.exports = async (req, res) => {
 
             // Check if user is attempting to configure Meta credentials without an active paid subscription
             const hasIncomingCreds = (whatsapp_phone_number_id && String(whatsapp_phone_number_id).trim() !== '') ||
+                                    (whatsapp_phone_numbers && Array.isArray(whatsapp_phone_numbers) && whatsapp_phone_numbers.length > 0) ||
                                     (whatsapp_access_token && String(whatsapp_access_token).trim() !== '') ||
                                     (whatsapp_business_account_id && String(whatsapp_business_account_id).trim() !== '');
 
@@ -209,8 +262,43 @@ module.exports = async (req, res) => {
             const updatedPlan = subscription_plan !== undefined ? (subscription_plan || null) : (oldComp.subscription_plan || null);
             const updatedStatus = updatedPlan ? 'active' : (oldComp.subscription_status || 'inactive');
 
+            // Plan limits enforcement on multiple phone numbers
+            let cleanPhoneNumbers = null;
+            if (whatsapp_phone_numbers !== undefined && Array.isArray(whatsapp_phone_numbers)) {
+                const maxLimit = getCompanyPhoneLimit(updatedPlan, isMaster);
+                if (!isMaster && !isPaid && whatsapp_phone_numbers.length > 0) {
+                    return res.status(403).json({
+                        error: 'Subscription Required: You must subscribe to an Inspenox plan before adding Meta WhatsApp phone numbers.'
+                    });
+                }
+                if (whatsapp_phone_numbers.length > maxLimit) {
+                    return res.status(400).json({
+                        error: `Plan limit exceeded: Your ${updatedPlan || 'current'} subscription plan allows a maximum of ${maxLimit} WhatsApp phone number(s). Please upgrade to add more numbers.`
+                    });
+                }
+
+                cleanPhoneNumbers = whatsapp_phone_numbers.map((item, idx) => ({
+                    phone: (item.phone || '').trim(),
+                    phone_number_id: (item.phone_number_id || '').trim(),
+                    verified_name: (item.verified_name || '').trim(),
+                    status: item.status || 'Registered',
+                    is_default: item.is_default !== undefined ? !!item.is_default : (idx === 0)
+                })).filter(item => item.phone_number_id);
+
+                if (cleanPhoneNumbers.length > 0 && !cleanPhoneNumbers.some(p => p.is_default)) {
+                    cleanPhoneNumbers[0].is_default = true;
+                }
+            }
+
+            let defaultPhoneId = null;
+            if (cleanPhoneNumbers && cleanPhoneNumbers.length > 0) {
+                const def = cleanPhoneNumbers.find(p => p.is_default) || cleanPhoneNumbers[0];
+                defaultPhoneId = def.phone_number_id;
+            }
+
             // Parent Inspenox WhatsApp configuration strictly goes from ENV only, NEVER stored in DB!
-            const updatedPhoneId = isMaster ? null : ((!isPaid) ? null : ((whatsapp_phone_number_id !== undefined && whatsapp_phone_number_id !== null && String(whatsapp_phone_number_id).trim() !== '') ? String(whatsapp_phone_number_id).trim() : oldComp.whatsapp_phone_number_id));
+            const updatedPhoneId = isMaster ? null : ((!isPaid) ? null : (defaultPhoneId || ((whatsapp_phone_number_id !== undefined && whatsapp_phone_number_id !== null && String(whatsapp_phone_number_id).trim() !== '') ? String(whatsapp_phone_number_id).trim() : oldComp.whatsapp_phone_number_id)));
+            const phoneNumbersJson = cleanPhoneNumbers !== null ? JSON.stringify(cleanPhoneNumbers) : (oldComp.whatsapp_phone_numbers ? JSON.stringify(oldComp.whatsapp_phone_numbers) : '[]');
             const updatedWabaId = isMaster ? null : ((!isPaid) ? null : ((whatsapp_business_account_id !== undefined && whatsapp_business_account_id !== null && String(whatsapp_business_account_id).trim() !== '') ? String(whatsapp_business_account_id).trim() : oldComp.whatsapp_business_account_id));
             const updatedToken = isMaster ? null : ((!isPaid) ? null : ((whatsapp_access_token && String(whatsapp_access_token).trim() !== '') ? String(whatsapp_access_token).trim() : oldComp.whatsapp_access_token));
             const updatedVerify = isMaster ? null : ((!isPaid) ? null : ((whatsapp_verify_token && String(whatsapp_verify_token).trim() !== '') ? String(whatsapp_verify_token).trim() : oldComp.whatsapp_verify_token));
@@ -224,6 +312,7 @@ module.exports = async (req, res) => {
                     subscription_plan = ${updatedPlan},
                     subscription_status = ${updatedStatus},
                     whatsapp_phone_number_id = ${updatedPhoneId},
+                    whatsapp_phone_numbers = ${phoneNumbersJson}::jsonb,
                     whatsapp_business_account_id = ${updatedWabaId},
                     whatsapp_access_token = ${updatedToken},
                     whatsapp_verify_token = ${updatedVerify},
@@ -242,10 +331,15 @@ module.exports = async (req, res) => {
                 whatsapp_business_account_id: env.WHATSAPP_BUSINESS_ACCOUNT_ID || '',
                 whatsapp_access_token: env.WHATSAPP_ACCESS_TOKEN || '',
                 whatsapp_verify_token: env.WHATSAPP_VERIFY_TOKEN || 'marketinginspenox',
+                whatsapp_phone_numbers: cleanPhoneNumbers || result[0].whatsapp_phone_numbers || [],
+                phone_limit: 20,
                 is_parent: true,
                 is_master: true,
                 is_env_loaded: true
-            } : result[0];
+            } : {
+                ...result[0],
+                phone_limit: isPaid ? getCompanyPhoneLimit(updatedPlan, false) : 0
+            };
 
             return res.status(200).json({ success: true, company: returnComp });
         } catch (error) {

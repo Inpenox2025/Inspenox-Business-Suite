@@ -65,7 +65,12 @@ module.exports = async (req, res) => {
           let targetCompanyId = 1;
           if (metaPhoneId) {
             try {
-              const cos = await sql`SELECT id FROM companies WHERE whatsapp_phone_number_id = ${metaPhoneId} LIMIT 1`;
+              const cos = await sql`
+                SELECT id FROM companies 
+                WHERE whatsapp_phone_number_id = ${metaPhoneId} 
+                   OR whatsapp_phone_numbers::text ILIKE ${'%' + metaPhoneId + '%'} 
+                LIMIT 1
+              `;
               if (cos.length > 0) targetCompanyId = cos[0].id;
             } catch(e) {}
           }

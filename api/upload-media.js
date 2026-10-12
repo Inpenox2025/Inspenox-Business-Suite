@@ -30,12 +30,17 @@ module.exports = async (req, res) => {
                         return res.status(403).json({ error: 'Subscription Required: You must have an active paid subscription to upload media. Please subscribe in Subscriptions & Billing.' });
                     }
 
-                    if (cos[0].whatsapp_phone_number_id && cos[0].whatsapp_access_token) {
+                    const requestedPhoneId = req.query.phone_number_id || (req.body && req.body.phone_number_id);
+                    if (requestedPhoneId && cos[0].whatsapp_access_token) {
+                        phoneId = requestedPhoneId;
+                        token = cos[0].whatsapp_access_token;
+                        if (cos[0].whatsapp_app_id) appId = cos[0].whatsapp_app_id;
+                    } else if (cos[0].whatsapp_phone_number_id && cos[0].whatsapp_access_token) {
                         phoneId = cos[0].whatsapp_phone_number_id;
                         token = cos[0].whatsapp_access_token;
                         if (cos[0].whatsapp_app_id) appId = cos[0].whatsapp_app_id;
                     } else if (isMaster) {
-                        phoneId = env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID;
+                        phoneId = requestedPhoneId || env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID;
                         token = env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN;
                     } else {
                         return res.status(400).json({ error: 'Meta WhatsApp credentials are not configured for this company. Please configure them in Meta Credentials.' });

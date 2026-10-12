@@ -787,6 +787,17 @@
                                 </div>
                             </div>
 
+                            <!-- Sender WhatsApp Phone Number Selector -->
+                            <div class="form-group" id="bc-sender-phone-group" style="display:none;">
+                                <label style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span>📱 Sender WhatsApp Number</span>
+                                    <span id="bc-sender-badge" style="font-size:0.72rem; color:#10b981; font-weight:600; padding:1px 6px; border-radius:999px; background:#e6f4ea;">Registered</span>
+                                </label>
+                                <select id="bc-sender-phone-select" style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                                    <option value="">Default Primary Number</option>
+                                </select>
+                            </div>
+
                             <div class="form-group">
                                 <label>Message Type</label>
                                 <select id="bc-type" required>
@@ -2796,17 +2807,77 @@
                 <div style="margin-bottom: 0.85rem;">
                     <label
                         style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">WHATSAPP
-                        PHONE NUMBER ID (META)</label>
-                    <input type="text" id="comp-phone-id" placeholder="e.g. 1196613980211733"
-                        style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
-                </div>
-
-                <div style="margin-bottom: 0.85rem;">
-                    <label
-                        style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">WHATSAPP
                         BUSINESS ACCOUNT ID (WABA ID)</label>
                     <input type="text" id="comp-waba-id" placeholder="e.g. 1561463645723530"
                         style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                </div>
+
+                <!-- Meta WhatsApp Phone Numbers Management (Plan-enforced) -->
+                <div style="margin-bottom: 1rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div>
+                            <span style="font-size: 0.775rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">Registered Meta Phone Numbers</span>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                                Associated phone numbers & Phone Number IDs registered in Meta Business Suite
+                            </div>
+                        </div>
+                        <span id="comp-phone-quota-badge" style="font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(0, 168, 132, 0.15); color: var(--primary);">
+                            1 of 1 Number
+                        </span>
+                    </div>
+
+                    <!-- Hidden input for backwards compatibility -->
+                    <input type="hidden" id="comp-phone-id">
+
+                    <!-- List of Registered Phone Numbers -->
+                    <div id="comp-phone-numbers-list" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.65rem; margin-bottom: 0.75rem;">
+                        <!-- Rendered dynamically -->
+                    </div>
+
+                    <!-- Plan limit note matching Meta's interface -->
+                    <div id="comp-phone-plan-note" style="font-size: 0.74rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.65rem;">
+                        You can add phone numbers as per your active subscription plan. Once you upgrade your plan, you can add up to 20 numbers.
+                    </div>
+
+                    <!-- Add new number trigger button -->
+                    <button type="button" id="btn-show-add-phone" onclick="toggleAddPhoneForm(true)" class="btn secondary sm" style="font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add new number
+                    </button>
+
+                    <!-- Add new number inline form -->
+                    <div id="comp-add-phone-form" style="display: none; background: var(--bg-dark); border: 1px dashed var(--border); border-radius: 8px; padding: 0.85rem; margin-top: 0.75rem;">
+                        <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.6rem;">
+                            📞 Connect WhatsApp Phone Number
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem;">
+                            <div>
+                                <label style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                    ASSOCIATED PHONE NUMBER *
+                                </label>
+                                <input type="text" id="comp-new-phone-num" placeholder="e.g. +91 79816 56294"
+                                    style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                    PHONE NUMBER ID (META) *
+                                </label>
+                                <input type="text" id="comp-new-phone-id" placeholder="e.g. 1196613980211733"
+                                    style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <label style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                VERIFIED NAME / LABEL (OPTIONAL)
+                            </label>
+                            <input type="text" id="comp-new-phone-name" placeholder="e.g. Manasa Geetha Enterprises / Support Desk"
+                                style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                            <button type="button" onclick="toggleAddPhoneForm(false)" class="btn secondary sm" style="font-size: 0.75rem; padding: 0.35rem 0.7rem;">Cancel</button>
+                            <button type="button" onclick="saveNewPhoneToCompanyList()" class="btn primary sm" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">Confirm & Add</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div style="margin-bottom: 0.85rem;">

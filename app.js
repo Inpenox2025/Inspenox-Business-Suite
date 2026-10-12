@@ -402,6 +402,10 @@ async function loadCompanies() {
                     renderPricingCards();
                 }
             }
+
+            if (typeof updateBroadcastSenderPhoneSelect === 'function') {
+                updateBroadcastSenderPhoneSelect();
+            }
         }
     } catch(e) {
         console.error('Error loading companies:', e);
@@ -419,6 +423,10 @@ document.getElementById('company-switcher')?.addEventListener('change', (e) => {
     const subNav = document.getElementById('nav-item-subscriptions');
     if (secNav) secNav.style.display = isSuper ? 'flex' : 'none';
     if (subNav) subNav.style.display = 'flex';
+
+    if (typeof updateBroadcastSenderPhoneSelect === 'function') {
+        updateBroadcastSenderPhoneSelect();
+    }
 
     const activeView = localStorage.getItem('activeView') || 'dashboard';
     switchView(activeView, false);
@@ -535,20 +543,65 @@ async function loadCompaniesSettings() {
                     </span>
                 `;
 
-                // For Meta credential cells:
-                // If not paid and not master Inspenox: show locked status, NEVER ENV default!
+                // Extract and format multiple phone numbers
+                const phoneNumbers = Array.isArray(c.whatsapp_phone_numbers) && c.whatsapp_phone_numbers.length > 0
+                    ? c.whatsapp_phone_numbers
+                    : (c.whatsapp_phone_number_id ? [{
+                        phone: c.phone || '',
+                        phone_number_id: c.whatsapp_phone_number_id,
+                        status: 'Registered',
+                        is_default: true
+                    }] : (isInspenox && systemEnv.whatsapp_phone_number_id ? [{
+                        phone: c.phone || '+91 79816 56294',
+                        phone_number_id: systemEnv.whatsapp_phone_number_id,
+                        status: 'Registered',
+                        is_default: true
+                    }] : []));
+
                 let phoneDisplay = '';
                 let wabaDisplay = '';
                 let verifyDisplay = '';
 
                 if (isInspenox) {
-                    phoneDisplay = `<code style="font-size:0.8rem; color:var(--primary);">${c.whatsapp_phone_number_id || systemEnv.whatsapp_phone_number_id || 'System Env'}</code>`;
+                    if (phoneNumbers.length > 0) {
+                        const prim = phoneNumbers.find(p => p.is_default) || phoneNumbers[0];
+                        const extra = phoneNumbers.length - 1;
+                        phoneDisplay = `
+                            <div>
+                                <div style="display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
+                                    <span style="font-weight:600; font-size:0.8rem; color:var(--text-main);">${prim.phone ? formatDisplayPhone(prim.phone) : 'Parent Line'}</span>
+                                    <span style="font-size:0.68rem; padding:1px 6px; border-radius:999px; background:#e6f4ea; color:#137333; font-weight:600;">Registered</span>
+                                    ${extra > 0 ? `<span style="font-size:0.68rem; padding:1px 6px; border-radius:999px; background:rgba(59,130,246,0.15); color:#3b82f6; font-weight:600;">+${extra} more</span>` : ''}
+                                </div>
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+                                    ID: <code style="color:var(--primary); font-size:0.75rem;">${prim.phone_number_id}</code>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        phoneDisplay = `<code style="font-size:0.8rem; color:var(--primary);">${systemEnv.whatsapp_phone_number_id || 'System Env'}</code>`;
+                    }
                     wabaDisplay = `<code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_business_account_id || systemEnv.whatsapp_business_account_id || 'System Env'}</code>`;
                     verifyDisplay = `<code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_verify_token || systemEnv.whatsapp_verify_token || 'System Env'}</code>`;
                 } else if (isPlanActive) {
-                    phoneDisplay = c.whatsapp_phone_number_id 
-                        ? `<code style="font-size:0.8rem; color:var(--primary);">${c.whatsapp_phone_number_id}</code>` 
-                        : `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Not Configured</span>`;
+                    if (phoneNumbers.length > 0) {
+                        const prim = phoneNumbers.find(p => p.is_default) || phoneNumbers[0];
+                        const extra = phoneNumbers.length - 1;
+                        phoneDisplay = `
+                            <div>
+                                <div style="display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
+                                    <span style="font-weight:600; font-size:0.8rem; color:var(--text-main);">${prim.phone ? formatDisplayPhone(prim.phone) : 'Phone ID'}</span>
+                                    <span style="font-size:0.68rem; padding:1px 6px; border-radius:999px; background:#e6f4ea; color:#137333; font-weight:600;">Registered</span>
+                                    ${extra > 0 ? `<span style="font-size:0.68rem; padding:1px 6px; border-radius:999px; background:rgba(59,130,246,0.15); color:#3b82f6; font-weight:600;">+${extra} more</span>` : ''}
+                                </div>
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+                                    ID: <code style="color:var(--primary); font-size:0.75rem;">${prim.phone_number_id}</code>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        phoneDisplay = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Not Configured</span>`;
+                    }
                     wabaDisplay = c.whatsapp_business_account_id 
                         ? `<code style="font-size:0.8rem; color:var(--text-main);">${c.whatsapp_business_account_id}</code>` 
                         : `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Not Configured</span>`;
@@ -585,6 +638,184 @@ async function loadCompaniesSettings() {
 }
 
 let systemEnvGlobals = {};
+let currentModalPhoneNumbers = [];
+let currentModalPhoneLimit = 1;
+
+function getCompanyPhoneLimit(planName, isMaster) {
+    if (isMaster) return 20;
+    if (!planName) return 0;
+    const lower = String(planName).toLowerCase().trim();
+    if (lower.includes('enterprise')) return 20;
+    if (lower.includes('growth')) return 3;
+    if (lower.includes('starter')) return 1;
+    return 1;
+}
+
+window.toggleAddPhoneForm = function toggleAddPhoneForm(show) {
+    const form = document.getElementById('comp-add-phone-form');
+    const btn = document.getElementById('btn-show-add-phone');
+    if (!form) return;
+    if (show) {
+        if (currentModalPhoneNumbers.length >= currentModalPhoneLimit) {
+            showModal('Plan Limit Reached', `Your subscription plan allows a maximum of ${currentModalPhoneLimit} connected phone number(s). Upgrade to Enterprise Elite for up to 20 numbers.`);
+            return;
+        }
+        form.style.display = 'block';
+        if (btn) btn.style.display = 'none';
+        setTimeout(() => document.getElementById('comp-new-phone-num')?.focus(), 50);
+    } else {
+        form.style.display = 'none';
+        if (btn) btn.style.display = (currentModalPhoneLimit > 0 && currentModalPhoneNumbers.length < currentModalPhoneLimit) ? 'inline-flex' : 'none';
+        const numInput = document.getElementById('comp-new-phone-num');
+        const idInput = document.getElementById('comp-new-phone-id');
+        const nameInput = document.getElementById('comp-new-phone-name');
+        if (numInput) numInput.value = '';
+        if (idInput) idInput.value = '';
+        if (nameInput) nameInput.value = '';
+    }
+};
+
+window.saveNewPhoneToCompanyList = function saveNewPhoneToCompanyList() {
+    const numInput = document.getElementById('comp-new-phone-num');
+    const idInput = document.getElementById('comp-new-phone-id');
+    const nameInput = document.getElementById('comp-new-phone-name');
+
+    const rawPhone = (numInput?.value || '').trim();
+    const phoneId = (idInput?.value || '').trim();
+    const verifiedName = (nameInput?.value || '').trim();
+
+    if (!phoneId) {
+        showModal('Validation Error', 'Meta Phone Number ID is required.');
+        return;
+    }
+
+    if (currentModalPhoneLimit === 0) {
+        showModal('Subscription Required', 'You must subscribe to an active plan to connect Meta WhatsApp phone numbers.');
+        return;
+    }
+
+    if (currentModalPhoneNumbers.length >= currentModalPhoneLimit) {
+        showModal('Plan Limit Reached', `Your subscription plan allows a maximum of ${currentModalPhoneLimit} phone numbers. Please upgrade your plan in Subscriptions & Billing to add more.`);
+        return;
+    }
+
+    if (currentModalPhoneNumbers.some(p => p.phone_number_id === phoneId)) {
+        showModal('Duplicate ID', 'This Phone Number ID is already added to this company.');
+        return;
+    }
+
+    const formatted = rawPhone ? formatDisplayPhone(rawPhone) : '';
+
+    currentModalPhoneNumbers.push({
+        phone: formatted || rawPhone,
+        phone_number_id: phoneId,
+        verified_name: verifiedName,
+        status: 'Registered',
+        is_default: currentModalPhoneNumbers.length === 0
+    });
+
+    toggleAddPhoneForm(false);
+    renderModalPhoneNumbersList();
+};
+
+window.setDefaultModalPhoneNumber = function setDefaultModalPhoneNumber(phoneId) {
+    currentModalPhoneNumbers.forEach(p => {
+        p.is_default = (p.phone_number_id === phoneId);
+    });
+    renderModalPhoneNumbersList();
+};
+
+window.removeModalPhoneNumber = function removeModalPhoneNumber(phoneId) {
+    currentModalPhoneNumbers = currentModalPhoneNumbers.filter(p => p.phone_number_id !== phoneId);
+    if (currentModalPhoneNumbers.length > 0 && !currentModalPhoneNumbers.some(p => p.is_default)) {
+        currentModalPhoneNumbers[0].is_default = true;
+    }
+    renderModalPhoneNumbersList();
+};
+
+function renderModalPhoneNumbersList() {
+    const container = document.getElementById('comp-phone-numbers-list');
+    const badge = document.getElementById('comp-phone-quota-badge');
+    const planNote = document.getElementById('comp-phone-plan-note');
+    const addBtn = document.getElementById('btn-show-add-phone');
+    const hiddenPhoneId = document.getElementById('comp-phone-id');
+
+    if (!container) return;
+
+    // Update quota badge
+    if (badge) {
+        badge.textContent = `${currentModalPhoneNumbers.length} of ${currentModalPhoneLimit} Number${currentModalPhoneLimit === 1 ? '' : 's'}`;
+        badge.style.background = (currentModalPhoneLimit > 0 && currentModalPhoneNumbers.length >= currentModalPhoneLimit) 
+            ? 'rgba(239, 68, 68, 0.15)' 
+            : 'rgba(0, 168, 132, 0.15)';
+        badge.style.color = (currentModalPhoneLimit > 0 && currentModalPhoneNumbers.length >= currentModalPhoneLimit) 
+            ? '#ef4444' 
+            : 'var(--primary)';
+    }
+
+    // Update plan limit note text
+    if (planNote) {
+        if (currentModalPhoneLimit === 0) {
+            planNote.innerHTML = `🔒 <em>Subscription required to connect Meta WhatsApp phone numbers.</em>`;
+            planNote.style.color = '#ef4444';
+        } else if (currentModalPhoneNumbers.length >= currentModalPhoneLimit) {
+            planNote.innerHTML = `⚠️ <strong>Plan limit reached (${currentModalPhoneLimit}/${currentModalPhoneLimit}).</strong> Upgrade your subscription plan in Subscriptions & Billing to add more phone numbers.`;
+            planNote.style.color = '#ef4444';
+        } else {
+            planNote.innerHTML = `You can add up to <strong>${currentModalPhoneLimit}</strong> phone number${currentModalPhoneLimit === 1 ? '' : 's'} per your plan. Once you upgrade your plan, you can add up to 20 numbers.`;
+            planNote.style.color = 'var(--text-muted)';
+        }
+    }
+
+    // Toggle add button visibility
+    if (addBtn) {
+        if (currentModalPhoneLimit === 0 || currentModalPhoneNumbers.length >= currentModalPhoneLimit) {
+            addBtn.style.display = 'none';
+        } else {
+            addBtn.style.display = 'inline-flex';
+        }
+    }
+
+    // Sync hidden phone id with default primary
+    const def = currentModalPhoneNumbers.find(p => p.is_default) || currentModalPhoneNumbers[0];
+    if (hiddenPhoneId) {
+        hiddenPhoneId.value = def ? def.phone_number_id : '';
+    }
+
+    if (currentModalPhoneNumbers.length === 0) {
+        container.innerHTML = `
+            <div style="padding: 1rem; border-radius: 8px; background: var(--bg-dark); border: 1px dashed var(--border); text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+                No Meta WhatsApp phone numbers added yet. ${currentModalPhoneLimit > 0 ? 'Click <strong>Add new number</strong> below to register one.' : 'Subscribe to a plan to connect numbers.'}
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = currentModalPhoneNumbers.map(item => `
+        <div style="background: var(--bg-dark); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 0.95rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(0, 168, 132, 0.12); display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex-shrink: 0; color: #00a884;">
+                    📞
+                </div>
+                <div style="min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+                        <span style="font-weight: 700; font-size: 0.925rem; color: var(--text-main);">${item.phone ? formatDisplayPhone(item.phone) : 'WhatsApp Number'}</span>
+                        <span style="font-size: 0.68rem; padding: 1px 7px; border-radius: 999px; background: #e6f4ea; color: #137333; font-weight: 600;">Registered</span>
+                        ${item.is_default ? '<span style="font-size: 0.68rem; padding: 1px 7px; border-radius: 999px; background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-weight: 600;">Primary</span>' : ''}
+                    </div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+                        Phone Number ID: <code style="color: var(--primary); font-size: 0.76rem;">${item.phone_number_id}</code>
+                        ${item.verified_name ? ` • <span style="color: var(--text-muted);">${item.verified_name}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
+                ${!item.is_default ? `<button type="button" class="btn secondary sm" style="font-size: 0.7rem; padding: 0.25rem 0.55rem;" onclick="setDefaultModalPhoneNumber('${item.phone_number_id}')">Make Primary</button>` : ''}
+                <button type="button" class="btn danger sm" style="font-size: 0.7rem; padding: 0.25rem 0.55rem;" onclick="removeModalPhoneNumber('${item.phone_number_id}')" title="Delete Number">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+}
 
 window.openCompanyModal = function openCompanyModal(companyId = null) {
     const modal = document.getElementById('company-modal');
@@ -619,10 +850,41 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
             if (document.getElementById('comp-phone')) document.getElementById('comp-phone').value = comp.phone || '';
 
             // Strictly do NOT prefill systemEnv for other companies
-            phoneInput.value = comp.whatsapp_phone_number_id || (isMaster ? systemEnvGlobals.whatsapp_phone_number_id : '') || '';
             wabaInput.value = comp.whatsapp_business_account_id || (isMaster ? systemEnvGlobals.whatsapp_business_account_id : '') || '';
             tokenInput.value = comp.whatsapp_access_token || '';
             verifyInput.value = comp.whatsapp_verify_token || (isMaster ? systemEnvGlobals.whatsapp_verify_token : '') || '';
+
+            // Calculate and enforce phone number limits based on active plan
+            const planLimit = comp.phone_limit !== undefined 
+                ? comp.phone_limit 
+                : getCompanyPhoneLimit(comp.subscription_plan, isMaster);
+            currentModalPhoneLimit = planLimit;
+
+            // Load registered phone numbers
+            if (Array.isArray(comp.whatsapp_phone_numbers) && comp.whatsapp_phone_numbers.length > 0) {
+                currentModalPhoneNumbers = JSON.parse(JSON.stringify(comp.whatsapp_phone_numbers));
+            } else if (comp.whatsapp_phone_number_id) {
+                currentModalPhoneNumbers = [{
+                    phone: comp.phone || '',
+                    phone_number_id: comp.whatsapp_phone_number_id,
+                    verified_name: comp.name || '',
+                    status: 'Registered',
+                    is_default: true
+                }];
+            } else if (isMaster && systemEnvGlobals.whatsapp_phone_number_id) {
+                currentModalPhoneNumbers = [{
+                    phone: comp.phone || '+91 79816 56294',
+                    phone_number_id: systemEnvGlobals.whatsapp_phone_number_id,
+                    verified_name: 'Inspenox Master',
+                    status: 'Registered',
+                    is_default: true
+                }];
+            } else {
+                currentModalPhoneNumbers = [];
+            }
+
+            toggleAddPhoneForm(false);
+            renderModalPhoneNumbersList();
 
             if (isMaster) {
                 if (subAlert) {
@@ -630,13 +892,12 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
                     subAlert.innerHTML = `
                         <div style="font-size: 0.825rem; color: #10b981; line-height: 1.45;">
                             <strong>⚡ Inspenox Parent Organization:</strong><br>
-                            WhatsApp API credentials for Inspenox are loaded directly from server environment variables and not stored in DB columns.
+                            WhatsApp API credentials for Inspenox are loaded directly from server environment variables and allow up to 20 numbers.
                         </div>
                     `;
                 }
             } else if (!isPaid) {
                 if (subAlert) subAlert.style.display = 'flex';
-                if (phoneInput) { phoneInput.disabled = true; phoneInput.style.opacity = '0.55'; phoneInput.placeholder = '🔒 Locked - Subscription Required'; }
                 if (wabaInput) { wabaInput.disabled = true; wabaInput.style.opacity = '0.55'; wabaInput.placeholder = '🔒 Locked - Subscription Required'; }
                 if (tokenInput) { tokenInput.disabled = true; tokenInput.style.opacity = '0.55'; tokenInput.placeholder = '🔒 Locked - Subscription Required'; }
                 if (verifyInput) { verifyInput.disabled = true; verifyInput.style.opacity = '0.55'; verifyInput.placeholder = '🔒 Locked - Subscription Required'; }
@@ -655,7 +916,6 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
                 }
             } else {
                 if (subAlert) subAlert.style.display = 'none';
-                if (phoneInput) { phoneInput.disabled = false; phoneInput.style.opacity = '1'; phoneInput.placeholder = 'e.g. 1196613980211733'; }
                 if (wabaInput) { wabaInput.disabled = false; wabaInput.style.opacity = '1'; wabaInput.placeholder = 'e.g. 1561463645723530'; }
                 if (tokenInput) { tokenInput.disabled = false; tokenInput.style.opacity = '1'; tokenInput.placeholder = 'EAALed5FtFjw...'; }
                 if (verifyInput) { verifyInput.disabled = false; verifyInput.style.opacity = '1'; verifyInput.placeholder = 'manasageetha'; }
@@ -678,7 +938,11 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
                 </div>
             `;
         }
-        if (phoneInput) { phoneInput.value = ''; phoneInput.disabled = true; phoneInput.style.opacity = '0.55'; phoneInput.placeholder = '🔒 Unlocked after subscription'; }
+        currentModalPhoneLimit = 0;
+        currentModalPhoneNumbers = [];
+        toggleAddPhoneForm(false);
+        renderModalPhoneNumbersList();
+
         if (wabaInput) { wabaInput.value = ''; wabaInput.disabled = true; wabaInput.style.opacity = '0.55'; wabaInput.placeholder = '🔒 Unlocked after subscription'; }
         if (tokenInput) { tokenInput.value = ''; tokenInput.disabled = true; tokenInput.style.opacity = '0.55'; tokenInput.placeholder = '🔒 Unlocked after subscription'; }
         if (verifyInput) { verifyInput.value = 'manasageetha'; verifyInput.disabled = false; verifyInput.style.opacity = '1'; }
@@ -1712,7 +1976,7 @@ window.saveCompany = async function saveCompany(e) {
     const isMaster = comp && ((comp.name || '').toLowerCase().trim() === 'inspenox' || (comp.slug && comp.slug.toLowerCase() === 'inspenox') || String(comp.id) === 'default' || comp.is_parent === true || comp.is_master === true);
     const isPaid = comp && (comp.subscription_status === 'active' && comp.subscription_plan && comp.subscription_plan.toLowerCase() !== 'none');
 
-    const hasCreds = whatsapp_phone_number_id || whatsapp_business_account_id || whatsapp_access_token;
+    const hasCreds = whatsapp_phone_number_id || (currentModalPhoneNumbers && currentModalPhoneNumbers.length > 0) || whatsapp_business_account_id || whatsapp_access_token;
     if (id && comp && !isMaster && !isPaid && hasCreds) {
         showModal('Subscription Required', 'Active Subscription Required: You must subscribe to an Inspenox plan to configure Meta WhatsApp Business API credentials.');
         return;
@@ -1730,7 +1994,9 @@ window.saveCompany = async function saveCompany(e) {
         if (id) {
             body.id = id;
             if (isMaster || isPaid) {
-                body.whatsapp_phone_number_id = whatsapp_phone_number_id;
+                body.whatsapp_phone_numbers = currentModalPhoneNumbers;
+                const defPhone = currentModalPhoneNumbers.find(p => p.is_default) || currentModalPhoneNumbers[0];
+                body.whatsapp_phone_number_id = defPhone ? defPhone.phone_number_id : whatsapp_phone_number_id;
                 body.whatsapp_business_account_id = whatsapp_business_account_id;
                 body.whatsapp_access_token = whatsapp_access_token;
                 body.whatsapp_verify_token = whatsapp_verify_token || 'manasageetha';
@@ -2488,7 +2754,11 @@ window.switchView = function switchView(target, pushHistory = true) {
     if (target === 'usage') loadUsageAnalytics();
     if (target === 'customers') loadCustomers();
     if (target === 'templates') loadTemplates();
-    if (target === 'send') { loadCustomersForSelect(); loadTemplatesForSelect(); }
+    if (target === 'send') { 
+        loadCustomersForSelect(); 
+        loadTemplatesForSelect(); 
+        if (typeof updateBroadcastSenderPhoneSelect === 'function') updateBroadcastSenderPhoneSelect();
+    }
     if (target === 'inbox') loadInboxSidebar();
     if (target === 'media') loadMedia();
     if (target === 'settings') loadCompaniesSettings();
@@ -6073,6 +6343,62 @@ function resetBroadcastForm() {
     if (cg) cg.style.display = 'block';
 }
 
+window.updateBroadcastSenderPhoneSelect = function updateBroadcastSenderPhoneSelect() {
+    const group = document.getElementById('bc-sender-phone-group');
+    const select = document.getElementById('bc-sender-phone-select');
+    if (!group || !select) return;
+
+    const coId = typeof getCompanyId === 'function' ? getCompanyId() : 'default';
+    const comp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
+    const isMaster = !comp || (comp.slug && comp.slug.toLowerCase() === 'inspenox') || (comp.name && comp.name.toLowerCase() === 'inspenox') || comp.is_master;
+
+    let phoneList = [];
+    if (comp && Array.isArray(comp.whatsapp_phone_numbers) && comp.whatsapp_phone_numbers.length > 0) {
+        phoneList = comp.whatsapp_phone_numbers;
+    } else if (comp && comp.whatsapp_phone_number_id) {
+        phoneList = [{
+            phone: comp.phone || '',
+            phone_number_id: comp.whatsapp_phone_number_id,
+            verified_name: comp.name || '',
+            status: 'Registered',
+            is_default: true
+        }];
+    } else if (isMaster && systemEnvGlobals.whatsapp_phone_number_id) {
+        phoneList = [{
+            phone: '+91 79816 56294',
+            phone_number_id: systemEnvGlobals.whatsapp_phone_number_id,
+            verified_name: 'Inspenox Default',
+            status: 'Registered',
+            is_default: true
+        }];
+    }
+
+    if (phoneList.length === 0) {
+        group.style.display = 'none';
+        select.innerHTML = '<option value="">-- No Registered Phone Number --</option>';
+        return;
+    }
+
+    if (phoneList.length === 1) {
+        const single = phoneList[0];
+        group.style.display = 'block';
+        select.innerHTML = `
+            <option value="${single.phone_number_id}">
+                ${single.phone ? formatDisplayPhone(single.phone) : 'Phone'} (ID: ${single.phone_number_id}) • Primary
+            </option>
+        `;
+        return;
+    }
+
+    // Multiple registered phone numbers available!
+    group.style.display = 'block';
+    select.innerHTML = phoneList.map(p => `
+        <option value="${p.phone_number_id}" ${p.is_default ? 'selected' : ''}>
+            ${p.phone ? formatDisplayPhone(p.phone) : 'Phone'} (ID: ${p.phone_number_id}) ${p.is_default ? '★ Primary' : ''} ${p.verified_name ? '• ' + p.verified_name : ''}
+        </option>
+    `).join('');
+};
+
 // --- Broadcast Progress Modal Handler ---
 const bcProgressModal = document.getElementById('broadcast-progress-modal');
 const bcProgressCircle = document.getElementById('bc-progress-circle-fill');
@@ -6292,10 +6618,21 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
 
             try {
                 const activeCoId = typeof getCompanyId === 'function' ? getCompanyId() : null;
+                const senderPhoneId = document.getElementById('bc-sender-phone-select')?.value || null;
                 const res = await apiFetch('/api/broadcast', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ target: chunkIds, type, content, media_id, media_type, template_name, template_language, company_id: activeCoId })
+                    body: JSON.stringify({ 
+                        target: chunkIds, 
+                        type, 
+                        content, 
+                        media_id, 
+                        media_type, 
+                        template_name, 
+                        template_language, 
+                        company_id: activeCoId,
+                        phone_number_id: senderPhoneId
+                    })
                 });
                 
                 const result = await res.json();

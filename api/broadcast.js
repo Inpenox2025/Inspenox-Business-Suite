@@ -81,12 +81,17 @@ module.exports = async (req, res) => {
                         return res.status(403).json({ error: 'Subscription Required: You must have an active paid subscription to send broadcasts. Please subscribe in Subscriptions & Billing.' });
                     }
 
-                    if (cos[0].whatsapp_phone_number_id && cos[0].whatsapp_access_token) {
+                    const requestedPhoneId = req.body && (req.body.phone_number_id || req.body.phone_id);
+                    if (requestedPhoneId && cos[0].whatsapp_access_token) {
+                        phoneId = requestedPhoneId;
+                        token = cos[0].whatsapp_access_token;
+                        wabaId = cos[0].whatsapp_business_account_id || null;
+                    } else if (cos[0].whatsapp_phone_number_id && cos[0].whatsapp_access_token) {
                         phoneId = cos[0].whatsapp_phone_number_id;
                         token = cos[0].whatsapp_access_token;
                         wabaId = cos[0].whatsapp_business_account_id || null;
                     } else if (isMaster) {
-                        phoneId = env.WHATSAPP_PHONE_NUMBER_ID;
+                        phoneId = requestedPhoneId || env.WHATSAPP_PHONE_NUMBER_ID;
                         token = env.WHATSAPP_ACCESS_TOKEN;
                         wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
                     } else {
@@ -99,7 +104,8 @@ module.exports = async (req, res) => {
         }
 
         if (isMaster) {
-            phoneId = env.WHATSAPP_PHONE_NUMBER_ID;
+            const requestedPhoneId = req.body && (req.body.phone_number_id || req.body.phone_id);
+            phoneId = requestedPhoneId || env.WHATSAPP_PHONE_NUMBER_ID;
             token = env.WHATSAPP_ACCESS_TOKEN;
             wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID;
         }

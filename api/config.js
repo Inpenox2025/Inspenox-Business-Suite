@@ -20,6 +20,7 @@ module.exports = async (req, res) => {
                         meta_token: c.whatsapp_access_token || env.WHATSAPP_ACCESS_TOKEN,
                         waba_id: c.whatsapp_business_account_id || env.WHATSAPP_BUSINESS_ACCOUNT_ID,
                         verify_token: c.whatsapp_verify_token || env.WHATSAPP_VERIFY_TOKEN,
+                        phone_numbers: c.whatsapp_phone_numbers || [],
                         is_paid: true
                     });
                 }
@@ -30,6 +31,7 @@ module.exports = async (req, res) => {
                     meta_token: isPaid ? (c.whatsapp_access_token || null) : null,
                     waba_id: isPaid ? (c.whatsapp_business_account_id || null) : null,
                     verify_token: isPaid ? (c.whatsapp_verify_token || null) : null,
+                    phone_numbers: isPaid ? (c.whatsapp_phone_numbers || []) : [],
                     is_paid: isPaid
                 });
             }
