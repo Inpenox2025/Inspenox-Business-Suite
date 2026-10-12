@@ -507,7 +507,7 @@ async function loadCompaniesSettings() {
                 return;
             }
             tbody.innerHTML = '';
-            companies.forEach(c => {
+            companies.forEach((c, idx) => {
                 const tr = document.createElement('tr');
                 const isInspenox = (c.slug && c.slug.toLowerCase() === 'inspenox') || (c.name && c.name.toLowerCase() === 'inspenox');
                 const isPlanActive = c.subscription_status === 'active' && c.subscription_plan && c.subscription_plan.toLowerCase() !== 'none';
@@ -616,11 +616,11 @@ async function loadCompaniesSettings() {
                 }
 
                 tr.innerHTML = `
+                    <td><strong style="color:var(--text-muted); font-size:0.85rem;">${idx + 1}</strong></td>
                     <td>
                         <strong style="color:var(--text-main);">${c.name}</strong>
                         ${isInspenox ? ' <span class="window-badge" style="background:rgba(168, 85, 247, 0.15);color:#a855f7;">Parent</span>' : ' <span class="window-badge" style="background:rgba(255,255,255,0.08);color:var(--text-muted);">Child Company</span>'}
                     </td>
-                    <td><code style="font-size:0.8rem;">${c.id}</code></td>
                     <td>${contactHtml}</td>
                     <td>${planBadge}</td>
                     <td>${phoneDisplay}</td>
@@ -1002,14 +1002,14 @@ window.loadUsersList = async function loadUsersList() {
                 return;
             }
             tbody.innerHTML = '';
-            users.forEach(u => {
+            users.forEach((u, idx) => {
                 const tr = document.createElement('tr');
                 const coName = u.company_name || (u.company_id ? `Company #${u.company_id}` : 'Inspenox Parent (All Companies)');
                 const emailHtml = u.email ? `<span style="font-size:0.8rem; color:var(--text-main); font-weight:500;">${u.email}</span>` : `<span style="font-size:0.75rem; color:var(--text-muted);">-</span>`;
                 const phoneHtml = u.phone ? `<span style="font-size:0.8rem; color:var(--text-muted);">${formatDisplayPhone(u.phone)}</span>` : `<span style="font-size:0.75rem; color:var(--text-muted);">-</span>`;
 
                 tr.innerHTML = `
-                    <td><code style="font-size:0.8rem;">${u.id}</code></td>
+                    <td><strong style="color:var(--text-muted); font-size:0.85rem;">${idx + 1}</strong></td>
                     <td><strong style="color:var(--text-main);">${u.username}</strong></td>
                     <td>${emailHtml}</td>
                     <td>${phoneHtml}</td>
@@ -1375,8 +1375,8 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
             'Itemized message usage breakdown and outstanding bill charges for your account.';
     }
 
-    const colspanVal = isParent ? 10 : 9;
-    const coColspanVal = isParent ? 9 : 9;
+    const colspanVal = isParent ? 11 : 10;
+    const coColspanVal = isParent ? 10 : 10;
 
     if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading direct Meta template insights...</span></div></td></tr>`;
     if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading API usage data...</span></div></td></tr>`;
@@ -1528,7 +1528,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                 if (tList.length === 0) {
                     tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">No Meta template analytics recorded yet for your account.</td></tr>`;
                 } else {
-                    tbodyTemplates.innerHTML = tList.map(t => {
+                    tbodyTemplates.innerHTML = tList.map((t, idx) => {
                         const statusBadge = t.status === 'APPROVED' || t.status === 'ACTIVE' ? 
                             '<span class="window-badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; font-weight:600;">Active</span>' : 
                             '<span class="window-badge" style="background:rgba(234, 179, 8, 0.15); color:#eab308; font-weight:600;">Pending</span>';
@@ -1537,9 +1537,10 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                         const actionTd = isParent ? `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editTemplateStatsModal('${t.id}', '${t.name.replace(/'/g, "\\'")}', ${t.sent}, ${t.delivered}, ${t.read}, ${t.replies}, ${t.cost_per_delivered}, ${t.amount_spent})">✏️ Edit</button></td>` : '';
                         return `
                             <tr>
+                                <td><strong style="color:var(--text-muted); font-size:0.85rem;">${idx + 1}</strong></td>
                                 <td>
                                     <strong style="color:var(--text-main); display:block;">${t.name}</strong>
-                                    <span style="font-size:0.75rem; color:var(--text-muted);">ID: ${t.id} · ${t.language}</span>
+                                    <span style="font-size:0.75rem; color:var(--text-muted);">${t.language}</span>
                                 </td>
                                 <td>${categoryBadge}</td>
                                 <td>${statusBadge}</td>
@@ -1584,7 +1585,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                 if (usageList.length === 0) {
                     tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">No company API usage data recorded yet.</td></tr>`;
                 } else {
-                    tbodyCompanies.innerHTML = usageList.map(u => {
+                    tbodyCompanies.innerHTML = usageList.map((u, idx) => {
                         const baseCost = u.base_cost || (u.est_cost / 1.18);
                         const gstAmount = u.gst_amount || (u.est_cost - baseCost);
                         const actionTd = isParent ? 
@@ -1592,6 +1593,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics() {
                             `<td style="text-align:center;"><button class="btn primary sm" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#10b981; border:none; font-weight:700;" onclick="triggerCompanyPayment('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.est_cost}, ${baseCost}, ${gstAmount})">💳 Pay Charges</button></td>`;
                         return `
                         <tr>
+                            <td><strong style="color:var(--text-muted); font-size:0.85rem;">${idx + 1}</strong></td>
                             <td><strong style="color:var(--text-main);">${u.name}</strong></td>
                             <td><code style="color:var(--primary); font-weight:600;">${u.wa_marketing_count}</code></td>
                             <td><code>${u.wa_utility_count}</code></td>
@@ -3241,7 +3243,7 @@ window.filterCustomersByTag = function filterCustomersByTag(tagVal) {
 async function loadCustomers() {
     const tbody = document.getElementById('customers-table-body');
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="7"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading customer directory...</span></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading customer directory...</span></div></td></tr>`;
     }
     try {
         await loadTags();
@@ -3251,7 +3253,7 @@ async function loadCustomers() {
         
         if (customers.error) {
             console.error('API Error:', customers.error);
-            if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="height:100px;">Failed to load customers.</td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="height:100px;">Failed to load customers.</td></tr>`;
             return;
         }
         
@@ -3266,7 +3268,7 @@ async function loadCustomers() {
         syncTagSelectorDisplay('form');
     } catch (e) { 
         console.error('Error loading customers:', e);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="height:100px;">Error loading data.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="height:100px;">Error loading data.</td></tr>`;
     }
 }
 
@@ -3290,7 +3292,8 @@ function renderCustomersTable() {
     const pageData = filteredCustomers.slice(startIndex, endIndex);
 
     tbody.innerHTML = '';
-    pageData.forEach(c => {
+    pageData.forEach((c, idx) => {
+        const serialNo = startIndex + idx + 1;
         const tr = document.createElement('tr');
         const tagsArr = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
         const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
@@ -3304,6 +3307,7 @@ function renderCustomersTable() {
         `;
 
         tr.innerHTML = `
+            <td><strong style="color:var(--text-muted); font-size:0.85rem;">${serialNo}</strong></td>
             <td>
                 <div class="user-cell">
                     <div class="user-avatar">${getInitial(c.name)}</div>
@@ -3327,7 +3331,7 @@ function renderCustomersTable() {
     });
 
     if (totalItems === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="height: 100px;">No matching customers found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="height: 100px;">No matching customers found.</td></tr>`;
     }
 
     if (pageInfo) {
@@ -7748,7 +7752,7 @@ window.renderSecurityLogsTable = function renderSecurityLogsTable(logs) {
     }
 
     let html = '';
-    logs.forEach(log => {
+    logs.forEach((log, idx) => {
         let timeStr = 'N/A';
         if (log.attempt_time) {
             const parsed = new Date(String(log.attempt_time).replace(' ', 'T'));
@@ -7763,7 +7767,7 @@ window.renderSecurityLogsTable = function renderSecurityLogsTable(logs) {
 
         html += `
             <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 0.75rem; font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">#${log.id}</td>
+                <td style="padding: 0.75rem; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">${idx + 1}</td>
                 <td style="padding: 0.75rem; font-weight: 700; font-family: monospace;">${escapeHtml(log.ip_address || 'Unknown')}</td>
                 <td style="padding: 0.75rem; font-weight: 600;">${escapeHtml(log.username || 'N/A')}</td>
                 <td style="padding: 0.75rem; font-size: 0.825rem; color: var(--text-muted);">${timeStr}</td>
@@ -8331,7 +8335,7 @@ window.loadCouponsList = async function loadCouponsList() {
     const tbody = document.getElementById('coupons-table-body');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><span class="spinner"></span> Loading promotional coupons...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="spinner"></span> Loading promotional coupons...</td></tr>';
 
     try {
         const res = await apiFetch('/api/payments?action=coupons');
@@ -8341,11 +8345,11 @@ window.loadCouponsList = async function loadCouponsList() {
             allCouponsList = data.coupons;
 
             if (allCouponsList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No coupons created yet. Click "+ Create New Coupon" to generate discount codes.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No coupons created yet. Click "+ Create New Coupon" to generate discount codes.</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = allCouponsList.map(c => {
+            tbody.innerHTML = allCouponsList.map((c, idx) => {
                 const used = c.used_count || 0;
                 const limit = c.usage_limit ? c.usage_limit : '∞';
                 const usagePercent = c.usage_limit ? Math.min(100, Math.round((used / c.usage_limit) * 100)) : 0;
@@ -8363,6 +8367,7 @@ window.loadCouponsList = async function loadCouponsList() {
 
                 return `
                     <tr>
+                        <td><strong style="color:var(--text-muted); font-size:0.85rem;">${idx + 1}</strong></td>
                         <td>
                             <div class="coupon-code-pill" title="Click to copy" onclick="navigator.clipboard.writeText('${c.coupon_code}'); showModal('Copied', 'Coupon code copied to clipboard!')">
                                 <span>${c.coupon_code}</span> 📋
@@ -8390,7 +8395,7 @@ window.loadCouponsList = async function loadCouponsList() {
             }).join('');
         }
     } catch(err) {
-        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load coupons.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Failed to load coupons.</td></tr>';
     }
 };
 
@@ -8512,7 +8517,7 @@ window.loadPaymentLogs = async function loadPaymentLogs() {
     const tbody = document.getElementById('payment-logs-table-body');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="spinner"></span> Loading payment logs...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><span class="spinner"></span> Loading payment logs...</td></tr>';
 
     try {
         const res = await apiFetch('/api/payments?action=logs');
@@ -8522,14 +8527,14 @@ window.loadPaymentLogs = async function loadPaymentLogs() {
             allPaymentLogsList = data.logs;
 
             if (allPaymentLogsList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No payment transactions recorded yet. Payments processed via Razorpay will be logged here.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No payment transactions recorded yet. Payments processed via Razorpay will be logged here.</td></tr>';
                 return;
             }
 
             renderPaymentLogs(allPaymentLogsList);
         }
     } catch(err) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Failed to load payment transactions.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Failed to load payment transactions.</td></tr>';
     }
 };
 
@@ -8538,11 +8543,11 @@ function renderPaymentLogs(logs) {
     if (!tbody) return;
 
     if (logs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No matching payment transactions found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No matching payment transactions found.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = logs.map(p => {
+    tbody.innerHTML = logs.map((p, idx) => {
         const orderIdShort = p.order_id ? `<code>${p.order_id}</code>` : '-';
         const payIdShort = p.payment_id ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><code>${p.payment_id}</code></div>` : '';
         const userContact = `
@@ -8560,6 +8565,7 @@ function renderPaymentLogs(logs) {
 
         return `
             <tr>
+                <td><strong style="color:var(--text-muted); font-size:0.85rem;">${idx + 1}</strong></td>
                 <td>${orderIdShort}${payIdShort}</td>
                 <td>${userContact}</td>
                 <td><strong style="color:var(--primary); font-size:0.85rem;">${p.plan_name || 'Standard'}</strong></td>
@@ -8600,7 +8606,7 @@ window.loadCompanyReceipts = async function loadCompanyReceipts() {
     const tbody = document.getElementById('company-receipts-table-body');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><span class="spinner-icon" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Loading payment receipts...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><span class="spinner-icon" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Loading payment receipts...</td></tr>';
 
     const coId = getCompanyId();
     let user = {};
@@ -8616,11 +8622,11 @@ window.loadCompanyReceipts = async function loadCompanyReceipts() {
             allCompanyReceiptsList = data.logs;
 
             if (allCompanyReceiptsList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No payment receipts found for this workspace yet. When you subscribe or renew a package, official tax receipts will appear here.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No payment receipts found for this workspace yet. When you subscribe or renew a package, official tax receipts will appear here.</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = allCompanyReceiptsList.map(r => {
+            tbody.innerHTML = allCompanyReceiptsList.map((r, idx) => {
                 const formattedDate = r.created_at_formatted || (r.created_at ? new Date(r.created_at).toLocaleString('en-IN') : '-');
                 const orderIdShort = r.order_id ? `<code>${r.order_id}</code>` : '-';
                 const paymentIdShort = r.payment_id ? `<code>${r.payment_id}</code>` : '-';
@@ -8630,6 +8636,7 @@ window.loadCompanyReceipts = async function loadCompanyReceipts() {
 
                 return `
                     <tr>
+                        <td><strong style="color:var(--text-muted); font-size:0.85rem;">${idx + 1}</strong></td>
                         <td><span style="font-size:0.825rem; color:var(--text-main); font-weight:500;">${formattedDate}</span></td>
                         <td>${orderIdShort}</td>
                         <td><span style="font-size:0.8rem; color:var(--text-muted);">${paymentIdShort}</span></td>
@@ -8645,11 +8652,11 @@ window.loadCompanyReceipts = async function loadCompanyReceipts() {
                 `;
             }).join('');
         } else {
-            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No payment receipts available.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No payment receipts available.</td></tr>';
         }
     } catch(err) {
         console.error('Error loading receipts:', err);
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load payment receipts.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load payment receipts.</td></tr>';
     }
 };
 
