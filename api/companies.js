@@ -1,4 +1,5 @@
 const { getDb } = require('../lib/db');
+const { subscribeWabaToApp } = require('../lib/whatsapp');
 
 function getCompanyPhoneLimit(planName, isMaster) {
     if (isMaster) return 20;
@@ -341,6 +342,10 @@ module.exports = async (req, res) => {
             `;
 
             if (result.length === 0) return res.status(404).json({ error: 'Company not found' });
+
+            if (updatedWabaId && updatedToken) {
+                subscribeWabaToApp(updatedWabaId, updatedToken).catch(() => {});
+            }
 
             const returnComp = isMaster ? {
                 ...result[0],

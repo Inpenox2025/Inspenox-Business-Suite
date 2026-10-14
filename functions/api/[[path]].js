@@ -43,7 +43,7 @@ async function handleApi(request, env, paramsPath = null) {
     if (paramsPath && Array.isArray(paramsPath) && paramsPath.length > 0) {
         routeName = paramsPath[0];
     } else {
-        const cleanPath = url.pathname.replace(/^\/api\/?/, '');
+        const cleanPath = url.pathname.replace(/^\/api\/?/, '').replace(/^\//, '');
         routeName = cleanPath.split('/')[0];
     }
 

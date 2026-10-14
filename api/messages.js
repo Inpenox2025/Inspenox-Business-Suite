@@ -21,45 +21,85 @@ module.exports = async (req, res) => {
 
         const sql = getDb(env);
         
-        // Lookup target customer's phone number to aggregate messages across any duplicate IDs
-        const targetCust = await sql`SELECT id, phone FROM customers WHERE id = ${customer_id} LIMIT 1`;
+        const companyId = req.query.company_id || (req.headers && req.headers['x-company-id']);
+        const targetCust = companyId 
+            ? await sql`SELECT id, phone, company_id FROM customers WHERE id = ${customer_id} AND company_id = ${companyId} LIMIT 1`
+            : await sql`SELECT id, phone, company_id FROM customers WHERE id = ${customer_id} LIMIT 1`;
+
         let messages = [];
 
         if (targetCust.length > 0 && targetCust[0].phone) {
             const cleanPhone = formatIndiaPhone(targetCust[0].phone);
             const tenDigits = cleanPhone.slice(-10);
+            const compFilter = companyId || targetCust[0].company_id;
 
-            // Get all matching customer IDs with same phone number
-            const matchingCusts = await sql`
-                SELECT id FROM customers 
-                WHERE phone = ${cleanPhone} OR phone = ${tenDigits} OR phone LIKE ${'%' + tenDigits}
-            `;
-            const custIds = matchingCusts.map(c => c.id);
+            const matchingCusts = compFilter
+                ? await sql`
+                    SELECT id FROM customers 
+                    WHERE (phone = ${cleanPhone} OR phone = ${tenDigits} OR phone LIKE ${'%' + tenDigits})
+                      AND company_id = ${compFilter}
+                  `
+                : await sql`
+                    SELECT id FROM customers 
+                    WHERE phone = ${cleanPhone} OR phone = ${tenDigits} OR phone LIKE ${'%' + tenDigits}
+                  `;
+            let custIds = matchingCusts.map(c => c.id);
+            if (custIds.length === 0) custIds = [Number(customer_id)];
 
-            messages = await sql`
-                SELECT * FROM messages 
-                WHERE customer_id = ANY(${custIds}) 
-                ORDER BY created_at ASC
-            `;
+            if (compFilter) {
+                messages = await sql`
+                    SELECT * FROM messages 
+                    WHERE (customer_id = ANY(${custIds}) OR customer_id = ${customer_id})
+                      AND company_id = ${compFilter}
+                    ORDER BY created_at ASC
+                `;
 
-            // Mark unread inbound messages as read across matching IDs
-            await sql`
-                UPDATE messages 
-                SET status = 'read' 
-                WHERE customer_id = ANY(${custIds}) AND direction = 'inbound' AND status = 'delivered'
-            `;
+                await sql`
+                    UPDATE messages 
+                    SET status = 'read' 
+                    WHERE (customer_id = ANY(${custIds}) OR customer_id = ${customer_id})
+                      AND company_id = ${compFilter}
+                      AND direction = 'inbound' AND status = 'delivered'
+                `;
+            } else {
+                messages = await sql`
+                    SELECT * FROM messages 
+                    WHERE customer_id = ANY(${custIds}) 
+                    ORDER BY created_at ASC
+                `;
+
+                await sql`
+                    UPDATE messages 
+                    SET status = 'read' 
+                    WHERE customer_id = ANY(${custIds}) AND direction = 'inbound' AND status = 'delivered'
+                `;
+            }
         } else {
-            messages = await sql`
-                SELECT * FROM messages 
-                WHERE customer_id = ${customer_id} 
-                ORDER BY created_at ASC
-            `;
+            if (companyId) {
+                messages = await sql`
+                    SELECT * FROM messages 
+                    WHERE customer_id = ${customer_id} AND company_id = ${companyId}
+                    ORDER BY created_at ASC
+                `;
 
-            await sql`
-                UPDATE messages 
-                SET status = 'read' 
-                WHERE customer_id = ${customer_id} AND direction = 'inbound' AND status = 'delivered'
-            `;
+                await sql`
+                    UPDATE messages 
+                    SET status = 'read' 
+                    WHERE customer_id = ${customer_id} AND company_id = ${companyId} AND direction = 'inbound' AND status = 'delivered'
+                `;
+            } else {
+                messages = await sql`
+                    SELECT * FROM messages 
+                    WHERE customer_id = ${customer_id} 
+                    ORDER BY created_at ASC
+                `;
+
+                await sql`
+                    UPDATE messages 
+                    SET status = 'read' 
+                    WHERE customer_id = ${customer_id} AND direction = 'inbound' AND status = 'delivered'
+                `;
+            }
         }
 
         return res.status(200).json(messages);
