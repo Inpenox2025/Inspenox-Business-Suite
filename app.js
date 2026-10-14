@@ -8970,6 +8970,11 @@ async function loadSecurityLogs() {
 }
 window.loadSecurityLogs = loadSecurityLogs;
 
+window.currentSecPage = 1;
+window.secPageSize = 10;
+window.totalSecPages = 1;
+window.filteredSecurityLogs = [];
+
 window.filterSecurityLogs = function filterSecurityLogs() {
     const searchVal = (document.getElementById('sec-search-input')?.value || '').trim().toLowerCase();
     const statusVal = document.getElementById('sec-status-filter')?.value || 'all';
@@ -8989,14 +8994,40 @@ window.filterSecurityLogs = function filterSecurityLogs() {
         filtered = filtered.filter(item => item.success);
     }
 
-    renderSecurityLogsTable(filtered);
+    window.filteredSecurityLogs = filtered;
+    window.currentSecPage = 1;
+    renderSecurityLogsTable();
 };
 
-window.renderSecurityLogsTable = function renderSecurityLogsTable(logs) {
+window.renderSecurityLogsTable = function renderSecurityLogsTable(logs = null) {
     const tbody = document.getElementById('sec-logs-tbody');
+    const infoEl = document.getElementById('sec-pagination-info');
+    const pageNumsEl = document.getElementById('sec-page-numbers');
+    const btnFirst = document.getElementById('btn-sec-first-page');
+    const btnPrev = document.getElementById('btn-sec-prev-page');
+    const btnNext = document.getElementById('btn-sec-next-page');
+    const btnLast = document.getElementById('btn-sec-last-page');
+
     if (!tbody) return;
 
-    if (!logs || logs.length === 0) {
+    if (logs && Array.isArray(logs)) {
+        window.filteredSecurityLogs = logs;
+    }
+
+    const dataList = window.filteredSecurityLogs || [];
+    const totalItems = dataList.length;
+    const pageSize = window.secPageSize || 10;
+    const totalPages = Math.ceil(totalItems / pageSize) || 1;
+    window.totalSecPages = totalPages;
+
+    if (window.currentSecPage > totalPages) window.currentSecPage = totalPages;
+    if (window.currentSecPage < 1) window.currentSecPage = 1;
+
+    const startIndex = (window.currentSecPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalItems);
+    const pageData = dataList.slice(startIndex, endIndex);
+
+    if (totalItems === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
@@ -9004,11 +9035,18 @@ window.renderSecurityLogsTable = function renderSecurityLogsTable(logs) {
                 </td>
             </tr>
         `;
+        if (infoEl) infoEl.textContent = 'Showing 0 of 0';
+        if (btnFirst) btnFirst.disabled = true;
+        if (btnPrev) btnPrev.disabled = true;
+        if (btnNext) btnNext.disabled = true;
+        if (btnLast) btnLast.disabled = true;
+        if (pageNumsEl) pageNumsEl.innerHTML = '';
         return;
     }
 
     let html = '';
-    logs.forEach((log, idx) => {
+    pageData.forEach((log, idx) => {
+        const serialNo = startIndex + idx + 1;
         let timeStr = 'N/A';
         if (log.attempt_time) {
             const parsed = new Date(String(log.attempt_time).replace(' ', 'T'));
@@ -9023,7 +9061,7 @@ window.renderSecurityLogsTable = function renderSecurityLogsTable(logs) {
 
         html += `
             <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 0.75rem; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">${idx + 1}</td>
+                <td style="padding: 0.75rem; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">${serialNo}</td>
                 <td style="padding: 0.75rem; font-weight: 700; font-family: monospace;">${escapeHtml(log.ip_address || 'Unknown')}</td>
                 <td style="padding: 0.75rem; font-weight: 600;">${escapeHtml(log.username || 'N/A')}</td>
                 <td style="padding: 0.75rem; font-size: 0.825rem; color: var(--text-muted);">${timeStr}</td>
@@ -9041,6 +9079,49 @@ window.renderSecurityLogsTable = function renderSecurityLogsTable(logs) {
     });
 
     tbody.innerHTML = html;
+
+    if (infoEl) {
+        infoEl.textContent = `Showing ${startIndex + 1} to ${endIndex} of ${totalItems}`;
+    }
+
+    if (btnFirst) btnFirst.disabled = window.currentSecPage <= 1;
+    if (btnPrev) btnPrev.disabled = window.currentSecPage <= 1;
+    if (btnNext) btnNext.disabled = window.currentSecPage >= totalPages;
+    if (btnLast) btnLast.disabled = window.currentSecPage >= totalPages;
+
+    if (pageNumsEl) {
+        let pagesHtml = '';
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, window.currentSecPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+        if (endPage - startPage < maxPagesToShow - 1) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+
+        for (let p = startPage; p <= endPage; p++) {
+            const isActive = p === window.currentSecPage;
+            pagesHtml += `
+                <button type="button" class="btn ${isActive ? 'primary' : 'secondary'} sm"
+                    style="min-width: 28px; padding: 0.25rem 0.55rem; font-size: 0.8rem; font-weight: ${isActive ? '700' : '500'};"
+                    onclick="goToSecurityPage(${p})">
+                    ${p}
+                </button>
+            `;
+        }
+        pageNumsEl.innerHTML = pagesHtml;
+    }
+};
+
+window.goToSecurityPage = function goToSecurityPage(page) {
+    const targetPage = Math.max(1, Math.min(page, window.totalSecPages || 1));
+    window.currentSecPage = targetPage;
+    renderSecurityLogsTable();
+};
+
+window.changeSecurityPageSize = function changeSecurityPageSize(size) {
+    window.secPageSize = parseInt(size, 10) || 10;
+    window.currentSecPage = 1;
+    renderSecurityLogsTable();
 };
 
 window.clearAllLockouts = async function clearAllLockouts(target = null) {
