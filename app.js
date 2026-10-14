@@ -9609,9 +9609,10 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                                 ? new Date(verifyData.subscription_expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) 
                                 : '';
                             const validityNotice = expDateStr ? `<br><br>📅 <strong>Valid Until:</strong> ${expDateStr}` : '';
+                            const targetNoticeEmail = email || verifyData.payment?.user_email || 'your email';
                             const emailNotice = verifyData.email_sent 
-                                ? `<br>📧 An official payment receipt and plan confirmation has been sent to <strong>${email}</strong>.` 
-                                : '';
+                                ? `<br>📧 An official payment receipt and plan confirmation has been sent to <strong>${targetNoticeEmail}</strong>.` 
+                                : (verifyData.email_error ? `<br><small style="color:var(--text-muted);">📧 Email status: ${verifyData.email_error}</small>` : '');
 
                             showModal(
                                 'Payment Successful! 🎉', 
@@ -9710,9 +9711,10 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                             ? new Date(verifyData.subscription_expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) 
                             : '';
                         const validityNotice = expDateStr ? `<br><br>📅 <strong>Valid Until:</strong> ${expDateStr}` : '';
+                        const targetNoticeEmail = email || verifyData.payment?.user_email || 'your email';
                         const emailNotice = verifyData.email_sent 
-                            ? `<br>📧 An official payment receipt and plan confirmation has been sent to <strong>${email}</strong>.` 
-                            : '';
+                            ? `<br>📧 An official payment receipt and plan confirmation has been sent to <strong>${targetNoticeEmail}</strong>.` 
+                            : (verifyData.email_error ? `<br><small style="color:var(--text-muted);">📧 Email status: ${verifyData.email_error}</small>` : '');
 
                         showModal('Subscription Activated! 🎉', `Payment verified successfully! Subscription activated for <strong>${planName}</strong>.${validityNotice}${emailNotice}`);
                     } else {
@@ -10064,6 +10066,7 @@ window.loadCompanyReceipts = async function loadCompanyReceipts() {
 };
 
 window.viewCompanyReceipt = function viewCompanyReceipt(receiptId) {
+    window.currentViewingReceiptId = receiptId;
     const receipt = allCompanyReceiptsList.find(r => String(r.id) === String(receiptId)) ||
         allPaymentLogsList.find(r => String(r.id) === String(receiptId));
     if (!receipt) {
@@ -10151,6 +10154,42 @@ window.closeCompanyReceiptModal = function closeCompanyReceiptModal() {
 
 window.printCompanyReceipt = function printCompanyReceipt() {
     window.print();
+};
+
+window.resendCurrentReceiptEmail = async function resendCurrentReceiptEmail() {
+    if (!window.currentViewingReceiptId) {
+        showModal('No Receipt Selected', 'Please open a receipt before requesting an email resend.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-rcpt-resend-email');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-icon" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Sending Email...';
+    }
+
+    try {
+        const res = await apiFetch('/api/payments?action=resend-receipt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: window.currentViewingReceiptId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showModal('Email Sent 🎉', data.message || 'Payment receipt email has been sent successfully!');
+        } else {
+            showModal('Email Send Error', data.error || 'Could not send receipt email.');
+        }
+    } catch (err) {
+        console.error('Error resending receipt email:', err);
+        showModal('Error', err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
 };
 
 // Ensure active view is synchronized upon full script execution

@@ -4003,8 +4003,12 @@
 
             <!-- Modal Footer Close Button -->
             <div
-                style="padding: 1rem 1.5rem; background: var(--bg-dark); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem;">
+                style="padding: 1rem 1.5rem; background: var(--bg-dark); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
                 <button type="button" class="btn secondary" onclick="closeCompanyReceiptModal()">Close</button>
+                <button type="button" class="btn secondary" id="btn-rcpt-resend-email" onclick="resendCurrentReceiptEmail()"
+                    style="display: inline-flex; align-items: center; gap: 6px;">
+                    📧 <span>Email Receipt</span>
+                </button>
                 <button type="button" class="btn primary" onclick="printCompanyReceipt()"
                     style="display: inline-flex; align-items: center; gap: 6px;">
                     🖨️ <span>Print Receipt</span>

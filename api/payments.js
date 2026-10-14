@@ -543,6 +543,22 @@ module.exports = async (req, res) => {
                 }
                 const expiresAtIso = expiresAt.toISOString();
 
+                // Resolve recipient email & phone with company fallback
+                let recipientEmail = (user_email && String(user_email).trim()) || '';
+                let recipientPhone = (user_phone && String(user_phone).trim()) || '';
+
+                if ((!recipientEmail || !recipientEmail.includes('@')) && targetCompanyId) {
+                    try {
+                        const compRows = await sql`SELECT email, phone FROM companies WHERE id = ${targetCompanyId} LIMIT 1;`;
+                        if (compRows && compRows.length > 0) {
+                            if (!recipientEmail && compRows[0].email) recipientEmail = String(compRows[0].email).trim();
+                            if (!recipientPhone && compRows[0].phone) recipientPhone = String(compRows[0].phone).trim();
+                        }
+                    } catch (e) {
+                        console.warn('Fallback company email fetch failed:', e.message);
+                    }
+                }
+
                 // Insert into payment_logs table with company_id, billing_cycle, and valid_until
                 const logResult = await sql`
                     INSERT INTO payment_logs (
@@ -555,8 +571,8 @@ module.exports = async (req, res) => {
                         ${targetCompanyId},
                         ${razorpay_order_id},
                         ${paymentIdVal},
-                        ${user_email || null},
-                        ${user_phone || null},
+                        ${recipientEmail || null},
+                        ${recipientPhone || null},
                         ${plan_name || 'Inspenox Business Plan'},
                         ${cycleVal},
                         ${expiresAtIso},
@@ -604,11 +620,12 @@ module.exports = async (req, res) => {
 
                 // Send email receipt to user with plan details, pricing and validity
                 let emailSent = false;
-                if (user_email && user_email.includes('@')) {
+                let emailError = null;
+                if (recipientEmail && recipientEmail.includes('@')) {
                     try {
                         const emailRes = await sendSubscriptionReceiptEmail({
-                            to: user_email,
-                            phone: user_phone,
+                            to: recipientEmail,
+                            phone: recipientPhone,
                             plan_name: plan_name || 'Inspenox Business Plan',
                             billing_cycle: cycleVal,
                             valid_until: expiresAtIso,
@@ -621,9 +638,15 @@ module.exports = async (req, res) => {
                             env
                         });
                         emailSent = !!emailRes.success;
+                        if (!emailSent) {
+                            emailError = emailRes.error || emailRes.warning || 'Failed to dispatch email receipt';
+                        }
                     } catch (e) {
                         console.error('Error sending subscription receipt email:', e);
+                        emailError = e.message;
                     }
+                } else {
+                    emailError = 'No valid recipient email provided';
                 }
 
                 return res.status(200).json({
@@ -633,7 +656,8 @@ module.exports = async (req, res) => {
                     subscription_expires_at: expiresAtIso,
                     subscription_billing_cycle: cycleVal,
                     valid_until: expiresAtIso,
-                    email_sent: emailSent
+                    email_sent: emailSent,
+                    email_error: emailError
                 });
             }
 
@@ -694,6 +718,58 @@ module.exports = async (req, res) => {
                     success: true,
                     coupon: updated[0]
                 });
+            }
+
+            // 6. Resend Payment Receipt Email
+            if (action === 'resend-receipt') {
+                const { payment_id, id, email: overrideEmail } = body;
+                if (!payment_id && !id) {
+                    return res.status(400).json({ error: 'Payment ID or Record ID is required to resend receipt' });
+                }
+
+                let paymentRow;
+                if (id) {
+                    paymentRow = await sql`SELECT * FROM payment_logs WHERE id = ${parseInt(id)} LIMIT 1;`;
+                } else {
+                    paymentRow = await sql`SELECT * FROM payment_logs WHERE payment_id = ${payment_id} OR order_id = ${payment_id} LIMIT 1;`;
+                }
+
+                if (!paymentRow || paymentRow.length === 0) {
+                    return res.status(404).json({ error: 'Payment record not found' });
+                }
+
+                const log = paymentRow[0];
+                const sendToEmail = (overrideEmail && String(overrideEmail).trim()) || log.user_email;
+                if (!sendToEmail || !sendToEmail.includes('@')) {
+                    return res.status(400).json({ error: 'No valid recipient email address on file for this payment.' });
+                }
+
+                const emailRes = await sendSubscriptionReceiptEmail({
+                    to: sendToEmail,
+                    phone: log.user_phone,
+                    plan_name: log.plan_name,
+                    billing_cycle: log.billing_cycle,
+                    valid_until: log.valid_until,
+                    original_amount: log.original_amount,
+                    discount_amount: log.discount_amount,
+                    final_amount: log.final_amount,
+                    coupon_code: log.coupon_code,
+                    order_id: log.order_id,
+                    payment_id: log.payment_id,
+                    env
+                });
+
+                if (emailRes.success) {
+                    return res.status(200).json({
+                        success: true,
+                        message: `Official subscription receipt sent to ${sendToEmail} successfully!`
+                    });
+                } else {
+                    return res.status(500).json({
+                        success: false,
+                        error: emailRes.error || emailRes.warning || 'Failed to dispatch receipt email'
+                    });
+                }
             }
 
             return res.status(400).json({ error: `Unknown POST action "${action}"` });
