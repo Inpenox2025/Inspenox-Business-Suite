@@ -695,40 +695,346 @@
 
             <!-- Broadcast View -->
             <section id="view-send" class="view">
-                <div class="page-header"
-                    style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem;">
-                    <div>
-                        <h1>Broadcast Campaign</h1>
-                        <p class="subtitle">Send instant or template-based broadcasts to your entire audience or
-                            targeted segments.</p>
+                <!-- SUB-VIEW 1: CAMPAIGN ANALYTICS DASHBOARD (Image 3) -->
+                <div id="campaign-dashboard-view" class="campaign-subview">
+                    <div class="camp-dash-header">
+                        <div class="camp-dash-header-left">
+                            <button type="button" class="btn-camp-back" onclick="toggleCampaignsListView()" title="View All Campaigns">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                                    <polyline points="12 19 5 12 12 5"></polyline>
+                                </svg>
+                            </button>
+                            <div class="camp-title-wrapper">
+                                <h1 id="camp-dash-title" class="camp-dash-title">REPUBLIC DAY SALE</h1>
+                                <span id="camp-dash-badge" class="camp-status-pill">Active</span>
+                            </div>
+                        </div>
+                        <div class="camp-dash-header-right">
+                            <!-- Campaign Switcher Dropdown -->
+                            <div class="camp-switcher-wrapper">
+                                <select id="camp-switcher-select" onchange="switchActiveCampaign(this.value)">
+                                    <option value="">-- Switch Campaign --</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn secondary sm" onclick="toggleCampaignsListView()" style="border-radius:8px; font-weight:600; gap:0.4rem;">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                </svg>
+                                All Campaigns
+                            </button>
+                            <button type="button" class="btn primary sm" onclick="openCreateCampaignModal()" style="border-radius:8px; font-weight:700; gap:0.4rem; box-shadow:0 2px 10px rgba(0,168,132,0.25);">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                + Create Campaign
+                            </button>
+                        </div>
                     </div>
-                    <div style="display:flex; gap:0.5rem; flex-shrink:0; align-items:center; flex-wrap:wrap;">
-                        <a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing#rate-cards"
-                            target="_blank" rel="noopener noreferrer" class="btn secondary sm"
-                            style="gap:0.4rem; text-decoration:none; font-size:0.8rem; border-radius:8px; padding:0.45rem 0.85rem;">
-                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="1" x2="12" y2="23"></line>
-                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                            </svg>
-                            View Pricing
-                        </a>
-                        <a href="https://business.facebook.com/latest/billing_hub/" target="_blank"
-                            rel="noopener noreferrer" class="btn primary sm"
-                            style="gap:0.4rem; text-decoration:none; font-size:0.8rem; border-radius:8px; padding:0.45rem 0.85rem;">
-                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                                <line x1="1" y1="10" x2="23" y2="10"></line>
-                            </svg>
-                            Pay Bill
-                        </a>
+
+                    <!-- KPI Tabs Horizontal Strip (Image 3) -->
+                    <div class="camp-kpi-strip">
+                        <div class="camp-kpi-tab" data-tab="overview" onclick="selectCampaignTab('overview')">
+                            <div class="kpi-tab-stat"><span id="tab-rate-overview">100%</span> <span id="tab-count-overview" class="kpi-count">(17861)</span></div>
+                            <div class="kpi-tab-label">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                                Overview
+                            </div>
+                        </div>
+                        <div class="camp-kpi-tab" data-tab="sent" onclick="selectCampaignTab('sent')">
+                            <div class="kpi-tab-stat"><span id="tab-rate-sent">100%</span> <span id="tab-count-sent" class="kpi-count">(17.9K)</span></div>
+                            <div class="kpi-tab-label">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                Sent
+                            </div>
+                        </div>
+                        <div class="camp-kpi-tab" data-tab="delivered" onclick="selectCampaignTab('delivered')">
+                            <div class="kpi-tab-stat"><span id="tab-rate-delivered">97%</span> <span id="tab-count-delivered" class="kpi-count">(17.3K)</span></div>
+                            <div class="kpi-tab-label">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 6 9 15 5 11"/><polyline points="22 10 13 19 11 17"/></svg>
+                                Delivered
+                            </div>
+                        </div>
+                        <div class="camp-kpi-tab" data-tab="read" onclick="selectCampaignTab('read')">
+                            <div class="kpi-tab-stat"><span id="tab-rate-read">93%</span> <span id="tab-count-read" class="kpi-count">(16.6K)</span></div>
+                            <div class="kpi-tab-label tick-read-label">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polyline points="18 6 9 15 5 11"/><polyline points="22 10 13 19 11 17"/></svg>
+                                Read
+                            </div>
+                        </div>
+                        <div class="camp-kpi-tab active" data-tab="clicked" onclick="selectCampaignTab('clicked')">
+                            <div class="kpi-tab-stat"><span id="tab-rate-clicked">45%</span> <span id="tab-count-clicked" class="kpi-count">(7.3K)</span></div>
+                            <div class="kpi-tab-label">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                                Clicked
+                            </div>
+                        </div>
+                        <div class="camp-kpi-tab" data-tab="replied" onclick="selectCampaignTab('replied')">
+                            <div class="kpi-tab-stat"><span id="tab-rate-replied">42%</span> <span id="tab-count-replied" class="kpi-count">(7.5K)</span></div>
+                            <div class="kpi-tab-label">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                                Replied
+                            </div>
+                        </div>
+                        <div class="camp-kpi-tab" data-tab="failed" onclick="selectCampaignTab('failed')">
+                            <div class="kpi-tab-stat"><span id="tab-rate-failed">3%</span> <span id="tab-count-failed" class="kpi-count">(535)</span></div>
+                            <div class="kpi-tab-label kpi-failed-label">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                Failed
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Two-Column Main Grid (Image 3) -->
+                    <div class="camp-dash-grid">
+                        <!-- LEFT: WhatsApp Message Mockup / Preview Card -->
+                        <div class="camp-card camp-wa-card">
+                            <div class="wa-chat-container">
+                                <div class="wa-bubble-wrapper">
+                                    <div class="wa-bubble">
+                                        <div class="wa-bubble-header">
+                                            <span class="wa-bubble-sender">Inspenox Verified</span>
+                                            <div class="wa-icon-badge">
+                                                <svg viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
+                                            </div>
+                                        </div>
+                                        <div class="wa-bubble-body" id="camp-preview-body">
+                                            Hey Shivam 👋<br>
+                                            The <b>Republic Day 🇮🇳 Sale</b> is LIVE!!<br>
+                                            Order today win a <b>SHOPPING VOUCHER 💰</b> worth ₹1000/-
+                                        </div>
+                                        <div class="wa-bubble-time" id="camp-preview-time">4:31 pm</div>
+                                    </div>
+
+                                    <!-- Product Cards / Media / Action Row -->
+                                    <div class="wa-preview-media-cards" id="camp-preview-media-cards">
+                                        <div class="wa-media-card">
+                                            <div class="wa-media-card-thumb" id="camp-preview-thumb-1" style="background-image: url('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&q=80');">
+                                                <span class="wa-card-badge">₹225</span>
+                                            </div>
+                                            <div class="wa-media-card-title">New range of Accessories</div>
+                                            <div class="wa-media-card-actions">
+                                                <a href="#" class="wa-action-btn" id="camp-preview-cta-btn"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg> Buy Now</a>
+                                            </div>
+                                        </div>
+                                        <div class="wa-media-card">
+                                            <div class="wa-media-card-thumb" id="camp-preview-thumb-2" style="background-image: url('https://images.unsplash.com/photo-1484704849700-f032a568e944?w=300&q=80');">
+                                                <span class="wa-card-badge">Razer 441</span>
+                                            </div>
+                                            <div class="wa-media-card-title">Explore headphones & gear</div>
+                                            <div class="wa-media-card-actions">
+                                                <a href="#" class="wa-action-btn"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg> Show More</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: Meta Info Card + Audience Timeline Chart -->
+                        <div class="camp-right-col">
+                            <!-- Top Card: Campaign Metadata & Donut Chart -->
+                            <div class="camp-card camp-meta-donut-card">
+                                <div class="camp-meta-details">
+                                    <div class="camp-meta-field">
+                                        <div class="camp-meta-label">
+                                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                            CAMPAIGN NAME
+                                        </div>
+                                        <div class="camp-meta-value" id="camp-detail-name">Republic_Day_Sale</div>
+                                    </div>
+                                    <div class="camp-meta-field">
+                                        <div class="camp-meta-label">SENT ON</div>
+                                        <div class="camp-meta-value" id="camp-detail-date">23rd January, 2024</div>
+                                    </div>
+                                    <div class="camp-meta-field">
+                                        <div class="camp-meta-label">CTA (URL)</div>
+                                        <div class="camp-meta-value camp-cta-link" id="camp-detail-cta">Shop Now</div>
+                                    </div>
+                                    <div class="camp-meta-field">
+                                        <div class="camp-meta-label">CAMPAIGN DURATION</div>
+                                        <div class="camp-meta-value" id="camp-detail-duration">0:00:57</div>
+                                    </div>
+                                </div>
+
+                                <!-- Donut Chart with Speech Tooltip -->
+                                <div class="camp-donut-wrapper">
+                                    <div class="camp-donut-box">
+                                        <svg class="camp-donut-svg" viewBox="0 0 100 100">
+                                            <circle class="donut-bg" cx="50" cy="50" r="38" stroke-width="14"></circle>
+                                            <circle class="donut-fill" id="camp-donut-fill" cx="50" cy="50" r="38" stroke-width="14" stroke-dasharray="238.76" stroke-dashoffset="131.3"></circle>
+                                        </svg>
+                                        <div class="donut-tooltip-badge" id="camp-donut-badge">45%</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Card: Audience (per day) Timeline Area Chart -->
+                            <div class="camp-card camp-chart-card">
+                                <div class="camp-chart-header">
+                                    <h3>Audience (per day)</h3>
+                                </div>
+                                <div class="camp-chart-body">
+                                    <div class="timeline-chart-container">
+                                        <svg class="timeline-svg" id="camp-timeline-svg" viewBox="0 0 600 220" preserveAspectRatio="none">
+                                            <defs>
+                                                <linearGradient id="purpleAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.45"/>
+                                                    <stop offset="70%" stop-color="#c4b5fd" stop-opacity="0.12"/>
+                                                    <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+                                                </linearGradient>
+                                            </defs>
+                                            <line x1="50" y1="20" x2="580" y2="20" class="chart-grid-line"/>
+                                            <line x1="50" y1="65" x2="580" y2="65" class="chart-grid-line"/>
+                                            <line x1="50" y1="110" x2="580" y2="110" class="chart-grid-line"/>
+                                            <line x1="50" y1="155" x2="580" y2="155" class="chart-grid-line"/>
+                                            <line x1="50" y1="195" x2="580" y2="195" class="chart-grid-line baseline"/>
+
+                                            <text x="42" y="24" class="chart-axis-text">3400</text>
+                                            <text x="42" y="69" class="chart-axis-text">2550</text>
+                                            <text x="42" y="114" class="chart-axis-text">1700</text>
+                                            <text x="42" y="159" class="chart-axis-text">850</text>
+                                            <text x="42" y="199" class="chart-axis-text">0</text>
+
+                                            <path id="camp-chart-area" class="chart-area-path" d="M 60 195 Q 95 30, 130 50 T 210 110 T 290 80 T 370 115 T 450 75 T 520 195 Z" fill="url(#purpleAreaGrad)"/>
+                                            <path id="camp-chart-line" class="chart-line-path" d="M 60 195 Q 95 30, 130 50 T 210 110 T 290 80 T 370 115 T 450 75 T 520 195" fill="none" stroke="#8b5cf6" stroke-width="3"/>
+                                            <circle id="camp-chart-peak-dot" cx="290" cy="80" r="4.5" fill="#8b5cf6" stroke="#ffffff" stroke-width="2"/>
+                                        </svg>
+
+                                        <div class="chart-floating-tooltip" id="camp-chart-tooltip" style="left: 48%; top: 24%;">
+                                            <span id="camp-chart-tooltip-text">CLICKED</span>
+                                        </div>
+
+                                        <div class="chart-x-labels" id="camp-chart-x-labels">
+                                            <span>23 Jan</span>
+                                            <span>24 Jan</span>
+                                            <span>25 Jan</span>
+                                            <span>26 Jan</span>
+                                            <span>27 Jan</span>
+                                            <span>28 Jan</span>
+                                            <span>29 Jan</span>
+                                            <span>30 Jan</span>
+                                            <span>31 Jan</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="camp-chart-legend">
+                                        <span class="legend-indicator"></span>
+                                        <span id="camp-legend-label">clicked</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="broadcast-layout">
-                    <div class="card broadcast-card">
-                        <form id="broadcast-form">
+                <!-- SUB-VIEW 2: ALL CAMPAIGNS LIST / DIRECTORY -->
+                <div id="campaign-list-view" class="campaign-subview" style="display:none;">
+                    <div class="camp-dash-header" style="margin-bottom:1.25rem;">
+                        <div>
+                            <h1 class="camp-dash-title">All Broadcast Campaigns</h1>
+                            <p class="subtitle" style="margin:0.2rem 0 0 0;">View history, delivery rates, and analytics for all sent broadcasts.</p>
+                        </div>
+                        <div style="display:flex; gap:0.5rem; align-items:center;">
+                            <button type="button" class="btn secondary sm" onclick="closeCampaignsListView()" style="border-radius:8px; font-weight:600;">
+                                ← Back to Dashboard
+                            </button>
+                            <button type="button" class="btn primary sm" onclick="openCreateCampaignModal()" style="border-radius:8px; font-weight:700;">
+                                + Create Campaign
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Campaigns Table Card -->
+                    <div class="card" style="padding:0; overflow:hidden;">
+                        <div style="padding:0.75rem 1rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                            <input type="text" id="camp-search-input" placeholder="Search campaigns by name..." oninput="filterCampaignsList(this.value)"
+                                style="padding:0.4rem 0.75rem; border-radius:6px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.8rem; min-width:240px;">
+                            <span id="camp-total-count-badge" style="font-size:0.775rem; color:var(--text-muted); font-weight:600;">Loading campaigns...</span>
+                        </div>
+                        <div class="table-responsive" style="max-height:550px; overflow-y:auto;">
+                            <table class="data-table" id="camp-table">
+                                <thead>
+                                    <tr>
+                                        <th>Campaign Name</th>
+                                        <th>Sent On</th>
+                                        <th>Type</th>
+                                        <th>Sent</th>
+                                        <th>Delivered</th>
+                                        <th>Read</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="camp-table-body">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-VIEW 3: CREATE / BROADCAST CAMPAIGN SETUP VIEW ("this page") -->
+                <div id="campaign-create-view" class="campaign-subview" style="display:none;">
+                    <div class="page-header"
+                        style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.25rem;">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <button type="button" class="btn-camp-back" onclick="closeCampaignCreateView()" title="Back to Dashboard">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                                    <polyline points="12 19 5 12 12 5"></polyline>
+                                </svg>
+                            </button>
+                            <div>
+                                <h1 style="font-size:1.35rem; font-weight:800; margin:0;" id="bc-setup-heading">Setup Broadcast Campaign</h1>
+                                <p class="subtitle" style="margin:0.2rem 0 0 0;">Configure audience, choose templates or messages, and launch your campaign.</p>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:0.5rem; flex-shrink:0; align-items:center; flex-wrap:wrap;">
+                            <button type="button" class="btn secondary sm" onclick="closeCampaignCreateView()" style="border-radius:8px;">
+                                Cancel
+                            </button>
+                            <a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing#rate-cards"
+                                target="_blank" rel="noopener noreferrer" class="btn secondary sm"
+                                style="gap:0.4rem; text-decoration:none; font-size:0.8rem; border-radius:8px; padding:0.45rem 0.85rem;">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                                View Pricing
+                            </a>
+                            <a href="https://business.facebook.com/latest/billing_hub/" target="_blank"
+                                rel="noopener noreferrer" class="btn primary sm"
+                                style="gap:0.4rem; text-decoration:none; font-size:0.8rem; border-radius:8px; padding:0.45rem 0.85rem;">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                                </svg>
+                                Pay Bill
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="broadcast-layout">
+                        <div class="card broadcast-card">
+                            <form id="broadcast-form">
+                                <!-- Campaign Name Field -->
+                                <div class="form-group" style="margin-bottom: 1.25rem;">
+                                    <label style="display:flex; justify-content:space-between; align-items:center;">
+                                        <span style="font-weight:700; color:var(--text-main);">🏷️ Campaign Name <span style="color:var(--primary); font-size:0.75rem;">(Required)</span></span>
+                                        <span style="font-size:0.75rem; color:var(--text-muted);">Descriptive name for reports & analytics</span>
+                                    </label>
+                                    <input type="text" id="bc-campaign-name" required placeholder="e.g. Republic Day Sale 2026"
+                                        style="width:100%; padding:0.6rem 0.85rem; font-size:0.95rem; font-weight:600; border-radius:8px; background:var(--bg-dark); border:1.5px solid var(--border); color:var(--text-main); outline:none;">
+                                </div>
                             <div class="form-group">
                                 <div
                                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem; flex-wrap: wrap; gap: 0.5rem;">
@@ -997,6 +1303,18 @@
                                     placeholder="Write your broadcast message here... e.g. Hello {{name}}, welcome to {{company_name}}!"></textarea>
                             </div>
 
+                            <!-- Optional CTA URL & Text Inputs -->
+                            <div style="display:flex; gap:0.75rem; margin-bottom:1.25rem; flex-wrap:wrap;">
+                                <div style="flex:1; min-width:180px;">
+                                    <label style="font-size:0.775rem; color:var(--text-muted); margin-bottom:0.25rem; display:block; font-weight:600;">CTA Button Text (Optional)</label>
+                                    <input type="text" id="bc-cta-text" placeholder="e.g. Shop Now / Order Today" style="width:100%; padding:0.5rem 0.75rem; border-radius:6px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.825rem;">
+                                </div>
+                                <div style="flex:1; min-width:180px;">
+                                    <label style="font-size:0.775rem; color:var(--text-muted); margin-bottom:0.25rem; display:block; font-weight:600;">CTA Link URL (Optional)</label>
+                                    <input type="url" id="bc-cta-url" placeholder="https://yourstore.com/sale" style="width:100%; padding:0.5rem 0.75rem; border-radius:6px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.825rem;">
+                                </div>
+                            </div>
+
                             <button type="submit" class="btn primary w-full" id="btn-broadcast">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                     style="width:18px;height:18px;">
@@ -1009,10 +1327,45 @@
                         <div id="broadcast-status" class="status-banner"></div>
                     </div>
                 </div>
-                <footer class="page-footer">
-                    <p>Inspenox Business Suite For Marketing</p>
-                </footer>
-            </section>
+            </div>
+
+            <!-- CREATE CAMPAIGN NAME MODAL -->
+            <div id="modal-create-campaign" class="modal-overlay hidden">
+                <div class="modal-card" style="max-width: 480px; width: 90%;">
+                    <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:0.75rem;">
+                        <div>
+                            <h3 style="margin:0; font-size:1.15rem; font-weight:700;">🚀 Create New Campaign</h3>
+                            <p style="margin:0.25rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Set a name to track live broadcast analytics and engagement.</p>
+                        </div>
+                        <button type="button" class="btn-close-modal" onclick="closeCreateCampaignModal()" style="background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text-muted);">✕</button>
+                    </div>
+                    <div class="modal-body" style="padding:1.25rem 0;">
+                        <div class="form-group">
+                            <label style="font-weight:600; font-size:0.85rem; margin-bottom:0.45rem; display:block;">Campaign Name</label>
+                            <input type="text" id="modal-campaign-name-input" placeholder="e.g. Republic Day Sale 2026" autofocus
+                                style="width:100%; padding:0.65rem 0.85rem; border-radius:8px; background:var(--bg-dark); border:1.5px solid var(--primary); color:var(--text-main); font-size:0.95rem; font-weight:600; outline:none;">
+                        </div>
+                        <div style="margin-top:0.75rem;">
+                            <span style="font-size:0.725rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.4rem;">Quick Suggestions:</span>
+                            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                                <button type="button" class="btn-suggestion-chip" onclick="applySuggestedName('Republic Day Sale 2026')">🇮🇳 Republic Day Sale</button>
+                                <button type="button" class="btn-suggestion-chip" onclick="applySuggestedName('Weekend Flash Deal')">⚡ Weekend Flash Deal</button>
+                                <button type="button" class="btn-suggestion-chip" onclick="applySuggestedName('Festival Dhamaka Offer')">🎉 Festival Dhamaka</button>
+                                <button type="button" class="btn-suggestion-chip" onclick="applySuggestedName('VIP Exclusive Promo')">⭐ VIP Exclusive</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:0.5rem; border-top:1px solid var(--border); padding-top:0.75rem;">
+                        <button type="button" class="btn secondary sm" onclick="closeCreateCampaignModal()" style="border-radius:6px;">Cancel</button>
+                        <button type="button" class="btn primary sm" onclick="submitCreateCampaignModal()" style="border-radius:6px; font-weight:700;">Continue to Setup →</button>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="page-footer">
+                <p>Inspenox Business Suite For Marketing</p>
+            </footer>
+        </section>
 
             <!-- Inbox View (WhatsApp Style) -->
             <section id="view-inbox" class="view">

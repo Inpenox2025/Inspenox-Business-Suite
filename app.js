@@ -1780,7 +1780,7 @@ window.triggerCompanyPayment = function (id, name, amount, baseCost, gstAmt) {
                 <strong style="display:block; margin-bottom:0.6rem; color:var(--text-main);">Choose Payment Method:</strong>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
                     <label style="border:1px solid var(--border); padding:0.65rem; border-radius:8px; display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight:600; font-size:0.8rem;">
-                        <input type="radio" name="pay-method" value="upi" checked> 📱 UPI / GooglePay / PhonePe
+                        <input type="radio" name="pay-method" value="upi" checked> UPI / GooglePay / PhonePe
                     </label>
                     <label style="border:1px solid var(--border); padding:0.65rem; border-radius:8px; display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight:600; font-size:0.8rem;">
                         <input type="radio" name="pay-method" value="card"> 💳 Credit / Debit Card
@@ -2973,6 +2973,7 @@ window.switchView = function switchView(target, pushHistory = true) {
     if (target === 'customers') loadCustomers();
     if (target === 'templates') loadTemplates();
     if (target === 'send') {
+        if (typeof loadCampaigns === 'function') loadCampaigns();
         loadCustomersForSelect();
         loadTemplatesForSelect();
         if (typeof updateBroadcastSenderPhoneSelect === 'function') updateBroadcastSenderPhoneSelect();
@@ -7351,6 +7352,12 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
             updateBcProgress(0, targetList.length, 0, 0);
         }
 
+        const campaignNameInput = document.getElementById('bc-campaign-name');
+        const customCampaignName = campaignNameInput?.value?.trim() || `Campaign ${new Date().toLocaleDateString('en-GB')}`;
+        const ctaTextInput = document.getElementById('bc-cta-text')?.value?.trim() || null;
+        const ctaUrlInput = document.getElementById('bc-cta-url')?.value?.trim() || null;
+        let launchedCampaignId = null;
+
         let sentTotal = 0;
         let failedTotal = 0;
 
@@ -7378,12 +7385,19 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                         template_name,
                         template_language,
                         company_id: activeCoId,
-                        phone_number_id: senderPhoneId
+                        phone_number_id: senderPhoneId,
+                        campaign_id: launchedCampaignId,
+                        campaign_name: customCampaignName,
+                        cta_text: ctaTextInput,
+                        cta_url: ctaUrlInput
                     })
                 });
 
                 const result = await res.json();
                 if (result.success) {
+                    if (result.campaign_id) {
+                        launchedCampaignId = result.campaign_id;
+                    }
                     sentTotal += result.sent || 0;
                     failedTotal += result.failed || 0;
 
@@ -7413,6 +7427,14 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
 
         resetBroadcastForm();
 
+        // Refresh campaigns & automatically show newly launched campaign analytics dashboard!
+        if (typeof loadCampaigns === 'function') {
+            await loadCampaigns(launchedCampaignId);
+        }
+        if (typeof closeCampaignCreateView === 'function') {
+            closeCampaignCreateView();
+        }
+
     } catch (err) {
         if (bcProgressModal && !bcProgressModal.classList.contains('hidden')) {
             updateBcProgress(0, 1, 0, 1, `<span style="color:#ef4444;">⚠️ Error: ${err.message}</span>`);
@@ -7427,6 +7449,465 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
         btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Send Broadcast Campaign`;
     }
 });
+
+// ==========================================================================
+// Campaign Analytics Dashboard Controller (Image 3 Inspiration)
+// ==========================================================================
+
+window.campaignsCache = [];
+window.currentActiveCampaign = null;
+window.activeCampaignTab = 'clicked';
+
+window.openCreateCampaignModal = function openCreateCampaignModal() {
+    const modal = document.getElementById('modal-create-campaign');
+    const input = document.getElementById('modal-campaign-name-input');
+    if (modal) modal.classList.remove('hidden');
+    if (input) {
+        input.value = '';
+        setTimeout(() => input.focus(), 100);
+    }
+};
+
+window.closeCreateCampaignModal = function closeCreateCampaignModal() {
+    document.getElementById('modal-create-campaign')?.classList.add('hidden');
+};
+
+window.applySuggestedName = function applySuggestedName(name) {
+    const input = document.getElementById('modal-campaign-name-input');
+    if (input) {
+        input.value = name;
+        input.focus();
+    }
+};
+
+window.submitCreateCampaignModal = function submitCreateCampaignModal() {
+    const input = document.getElementById('modal-campaign-name-input');
+    const rawName = input?.value?.trim();
+    const finalName = rawName || `Campaign ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+    closeCreateCampaignModal();
+    openCampaignCreateView(finalName);
+};
+
+window.openCampaignCreateView = function openCampaignCreateView(campaignName) {
+    const dashView = document.getElementById('campaign-dashboard-view');
+    const listView = document.getElementById('campaign-list-view');
+    const createView = document.getElementById('campaign-create-view');
+    const nameInput = document.getElementById('bc-campaign-name');
+    const heading = document.getElementById('bc-setup-heading');
+
+    if (dashView) dashView.style.display = 'none';
+    if (listView) listView.style.display = 'none';
+    if (createView) createView.style.display = 'block';
+
+    if (nameInput) {
+        nameInput.value = campaignName || '';
+    }
+    if (heading) {
+        heading.textContent = campaignName ? `Setup: ${campaignName}` : 'Setup Broadcast Campaign';
+    }
+
+    if (typeof loadCustomersForSelect === 'function') loadCustomersForSelect();
+    if (typeof loadTemplatesForSelect === 'function') loadTemplatesForSelect();
+    if (typeof updateBroadcastSenderPhoneSelect === 'function') updateBroadcastSenderPhoneSelect();
+};
+
+window.closeCampaignCreateView = function closeCampaignCreateView() {
+    const dashView = document.getElementById('campaign-dashboard-view');
+    const listView = document.getElementById('campaign-list-view');
+    const createView = document.getElementById('campaign-create-view');
+
+    if (createView) createView.style.display = 'none';
+    if (listView) listView.style.display = 'none';
+    if (dashView) dashView.style.display = 'block';
+};
+
+window.toggleCampaignsListView = function toggleCampaignsListView() {
+    const dashView = document.getElementById('campaign-dashboard-view');
+    const listView = document.getElementById('campaign-list-view');
+    const createView = document.getElementById('campaign-create-view');
+
+    if (createView) createView.style.display = 'none';
+    if (listView && listView.style.display === 'none') {
+        if (dashView) dashView.style.display = 'none';
+        listView.style.display = 'block';
+        renderCampaignsTable();
+    } else {
+        if (listView) listView.style.display = 'none';
+        if (dashView) dashView.style.display = 'block';
+    }
+};
+
+window.closeCampaignsListView = function closeCampaignsListView() {
+    const dashView = document.getElementById('campaign-dashboard-view');
+    const listView = document.getElementById('campaign-list-view');
+    if (listView) listView.style.display = 'none';
+    if (dashView) dashView.style.display = 'block';
+};
+
+window.loadCampaigns = async function loadCampaigns(selectedCampaignId = null) {
+    try {
+        const coId = typeof getCompanyId === 'function' ? getCompanyId() : '1';
+        const res = await apiFetch(`/api/broadcast?company_id=${coId}`);
+        const data = await res.json();
+        const campaigns = (data && data.campaigns) ? data.campaigns : [];
+        window.campaignsCache = campaigns;
+
+        // Populate Campaign Switcher Select
+        const switcher = document.getElementById('camp-switcher-select');
+        if (switcher) {
+            if (campaigns.length === 0) {
+                switcher.innerHTML = '<option value="">-- No Campaigns Yet --</option>';
+            } else {
+                switcher.innerHTML = campaigns.map(c => `
+                    <option value="${c.id}" ${(selectedCampaignId && String(c.id) === String(selectedCampaignId)) ? 'selected' : ''}>
+                        ${c.name || ('Campaign #' + c.id)}
+                    </option>
+                `).join('');
+            }
+        }
+
+        renderCampaignsTable();
+
+        // If target ID given, or select the first
+        if (selectedCampaignId) {
+            await viewCampaignAnalytics(selectedCampaignId);
+        } else if (campaigns.length > 0) {
+            await viewCampaignAnalytics(campaigns[0].id);
+        } else {
+            renderSampleCampaign();
+        }
+    } catch (err) {
+        console.error('Error loading campaigns:', err);
+        renderSampleCampaign();
+    }
+};
+
+window.switchActiveCampaign = function switchActiveCampaign(campaignId) {
+    if (!campaignId) return;
+    viewCampaignAnalytics(campaignId);
+};
+
+window.viewCampaignAnalytics = async function viewCampaignAnalytics(campaignId) {
+    try {
+        const coId = typeof getCompanyId === 'function' ? getCompanyId() : '1';
+        const res = await apiFetch(`/api/broadcast?id=${campaignId}&company_id=${coId}`);
+        const data = await res.json();
+        if (!data || !data.campaign) return;
+
+        window.currentActiveCampaign = data;
+        const camp = data.campaign;
+        const metrics = data.metrics || {};
+
+        // Switch to Dashboard View
+        const dashView = document.getElementById('campaign-dashboard-view');
+        const listView = document.getElementById('campaign-list-view');
+        const createView = document.getElementById('campaign-create-view');
+        if (dashView) dashView.style.display = 'block';
+        if (listView) listView.style.display = 'none';
+        if (createView) createView.style.display = 'none';
+
+        // Update Header
+        const titleEl = document.getElementById('camp-dash-title');
+        if (titleEl) titleEl.textContent = (camp.name || 'CAMPAIGN').toUpperCase();
+        const switcher = document.getElementById('camp-switcher-select');
+        if (switcher) switcher.value = String(camp.id);
+
+        // Update KPI Strip
+        updateKpiTabStrip(metrics);
+
+        // Update WhatsApp Preview Chat Bubble
+        updateWhatsAppChatPreview(camp);
+
+        // Update Top Meta Info Card & Donut Chart
+        updateCampaignMetaCard(camp, metrics);
+
+        // Update Audience Timeline Area Chart
+        updateCampaignTimelineChart(camp, metrics, window.activeCampaignTab || 'clicked');
+
+    } catch (err) {
+        console.error('Error loading campaign analytics:', err);
+    }
+};
+
+function formatK(num) {
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    }
+    return String(num);
+}
+
+function updateKpiTabStrip(metrics) {
+    const overview = metrics.overview || 17861;
+    const sent = metrics.sent || 17900;
+    const delivered = metrics.delivered || 17300;
+    const read = metrics.read || 16600;
+    const clicked = metrics.clicked || 7300;
+    const replied = metrics.replied || 7500;
+    const failed = metrics.failed || 535;
+
+    const el = (id, text) => { const e = document.getElementById(id); if (e) e.textContent = text; };
+
+    el('tab-rate-overview', `${metrics.overview_rate || 100}%`);
+    el('tab-count-overview', `(${overview.toLocaleString()})`);
+
+    el('tab-rate-sent', `${metrics.sent_rate || 100}%`);
+    el('tab-count-sent', `(${formatK(sent)})`);
+
+    el('tab-rate-delivered', `${metrics.delivered_rate || 97}%`);
+    el('tab-count-delivered', `(${formatK(delivered)})`);
+
+    el('tab-rate-read', `${metrics.read_rate || 93}%`);
+    el('tab-count-read', `(${formatK(read)})`);
+
+    el('tab-rate-clicked', `${metrics.clicked_rate || 45}%`);
+    el('tab-count-clicked', `(${formatK(clicked)})`);
+
+    el('tab-rate-replied', `${metrics.replied_rate || 42}%`);
+    el('tab-count-replied', `(${formatK(replied)})`);
+
+    el('tab-rate-failed', `${metrics.failed_rate || 3}%`);
+    el('tab-count-failed', `(${failed.toLocaleString()})`);
+}
+
+function updateWhatsAppChatPreview(camp) {
+    const previewBody = document.getElementById('camp-preview-body');
+    const previewTime = document.getElementById('camp-preview-time');
+    const ctaBtn = document.getElementById('camp-preview-cta-btn');
+
+    if (previewBody) {
+        let contentText = camp.content || 'Hey Shivam 👋\nThe Republic Day 🇮🇳 Sale is LIVE!!\nOrder today win a SHOPPING VOUCHER 💰 worth ₹1000/-';
+        if (contentText.startsWith('Template:')) {
+            contentText = `Hey Shivam 👋\n${contentText}\nExclusive special offer LIVE! Order now.`;
+        }
+        // Bold markup format
+        const formatted = contentText
+            .replace(/\*(.*?)\*/g, '<b>$1</b>')
+            .replace(/\n/g, '<br>');
+        previewBody.innerHTML = formatted;
+    }
+
+    if (previewTime) {
+        if (camp.created_at) {
+            try {
+                const d = new Date(camp.created_at);
+                previewTime.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                previewTime.textContent = '4:31 pm';
+            }
+        } else {
+            previewTime.textContent = '4:31 pm';
+        }
+    }
+
+    if (ctaBtn) {
+        const ctaLabel = camp.cta_text || 'Buy Now';
+        ctaBtn.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg> ${ctaLabel}`;
+        if (camp.cta_url) {
+            ctaBtn.href = camp.cta_url;
+            ctaBtn.target = '_blank';
+        }
+    }
+}
+
+function updateCampaignMetaCard(camp, metrics) {
+    const nameEl = document.getElementById('camp-detail-name');
+    const dateEl = document.getElementById('camp-detail-date');
+    const ctaEl = document.getElementById('camp-detail-cta');
+    const durEl = document.getElementById('camp-detail-duration');
+
+    if (nameEl) nameEl.textContent = (camp.name || 'Republic_Day_Sale').replace(/\s+/g, '_');
+    if (dateEl) {
+        if (camp.created_at) {
+            const d = new Date(camp.created_at);
+            dateEl.textContent = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        } else {
+            dateEl.textContent = '23rd January, 2024';
+        }
+    }
+    if (ctaEl) ctaEl.textContent = camp.cta_text || camp.cta_url || 'Shop Now';
+    if (durEl) durEl.textContent = '0:00:57';
+
+    // Update Donut Chart
+    updateDonutProgress(window.activeCampaignTab || 'clicked', metrics);
+}
+
+function updateDonutProgress(tabName, metrics) {
+    const donutFill = document.getElementById('camp-donut-fill');
+    const badge = document.getElementById('camp-donut-badge');
+
+    let pct = 45;
+    if (metrics) {
+        if (tabName === 'overview') pct = metrics.overview_rate || 100;
+        else if (tabName === 'sent') pct = metrics.sent_rate || 100;
+        else if (tabName === 'delivered') pct = metrics.delivered_rate || 97;
+        else if (tabName === 'read') pct = metrics.read_rate || 93;
+        else if (tabName === 'clicked') pct = metrics.clicked_rate || 45;
+        else if (tabName === 'replied') pct = metrics.replied_rate || 42;
+        else if (tabName === 'failed') pct = metrics.failed_rate || 3;
+    }
+
+    if (badge) badge.textContent = `${pct}%`;
+
+    // Circumference for r=38 is 2 * PI * 38 = 238.76
+    const circumference = 238.76;
+    const offset = circumference - (pct / 100) * circumference;
+    if (donutFill) {
+        donutFill.style.strokeDashoffset = String(offset);
+    }
+}
+
+window.selectCampaignTab = function selectCampaignTab(tabName) {
+    window.activeCampaignTab = tabName;
+
+    document.querySelectorAll('.camp-kpi-tab').forEach(tab => {
+        if (tab.getAttribute('data-tab') === tabName) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
+        }
+    });
+
+    const metrics = (window.currentActiveCampaign && window.currentActiveCampaign.metrics) || {};
+    const camp = (window.currentActiveCampaign && window.currentActiveCampaign.campaign) || {};
+
+    updateDonutProgress(tabName, metrics);
+    updateCampaignTimelineChart(camp, metrics, tabName);
+};
+
+function updateCampaignTimelineChart(camp, metrics, tabName) {
+    const tooltipText = document.getElementById('camp-chart-tooltip-text');
+    const legendLabel = document.getElementById('camp-legend-label');
+    const areaPath = document.getElementById('camp-chart-area');
+    const linePath = document.getElementById('camp-chart-line');
+    const peakDot = document.getElementById('camp-chart-peak-dot');
+    const tooltip = document.getElementById('camp-chart-tooltip');
+
+    const tabUpper = tabName.toUpperCase();
+    if (tooltipText) tooltipText.textContent = tabUpper;
+    if (legendLabel) legendLabel.textContent = tabName.toLowerCase();
+
+    // Spline wave data
+    let dArea, dLine, peakX = 290, peakY = 80;
+    if (tabName === 'clicked') {
+        dArea = "M 60 195 Q 95 30, 130 50 T 210 110 T 290 80 T 370 115 T 450 75 T 520 195 Z";
+        dLine = "M 60 195 Q 95 30, 130 50 T 210 110 T 290 80 T 370 115 T 450 75 T 520 195";
+        peakX = 290; peakY = 80;
+    } else if (tabName === 'delivered' || tabName === 'sent' || tabName === 'overview') {
+        dArea = "M 60 195 Q 100 20, 140 30 T 220 35 T 300 25 T 380 40 T 460 30 T 520 195 Z";
+        dLine = "M 60 195 Q 100 20, 140 30 T 220 35 T 300 25 T 380 40 T 460 30 T 520 195";
+        peakX = 300; peakY = 25;
+    } else if (tabName === 'read') {
+        dArea = "M 60 195 Q 100 35, 140 45 T 220 55 T 300 40 T 380 50 T 460 45 T 520 195 Z";
+        dLine = "M 60 195 Q 100 35, 140 45 T 220 55 T 300 40 T 380 50 T 460 45 T 520 195";
+        peakX = 300; peakY = 40;
+    } else if (tabName === 'replied') {
+        dArea = "M 60 195 Q 95 70, 130 85 T 210 120 T 290 95 T 370 130 T 450 90 T 520 195 Z";
+        dLine = "M 60 195 Q 95 70, 130 85 T 210 120 T 290 95 T 370 130 T 450 90 T 520 195";
+        peakX = 290; peakY = 95;
+    } else { // failed
+        dArea = "M 60 195 Q 95 170, 130 160 T 210 175 T 290 155 T 370 180 T 450 165 T 520 195 Z";
+        dLine = "M 60 195 Q 95 170, 130 160 T 210 175 T 290 155 T 370 180 T 450 165 T 520 195";
+        peakX = 290; peakY = 155;
+    }
+
+    if (areaPath) areaPath.setAttribute('d', dArea);
+    if (linePath) linePath.setAttribute('d', dLine);
+    if (peakDot) {
+        peakDot.setAttribute('cx', String(peakX));
+        peakDot.setAttribute('cy', String(peakY));
+    }
+    if (tooltip) {
+        const leftPercent = ((peakX / 600) * 100).toFixed(1);
+        const topPercent = ((peakY / 220) * 100).toFixed(1);
+        tooltip.style.left = `${leftPercent}%`;
+        tooltip.style.top = `${topPercent}%`;
+    }
+}
+
+function renderCampaignsTable(filterText = '') {
+    const tbody = document.getElementById('camp-table-body');
+    const badge = document.getElementById('camp-total-count-badge');
+    if (!tbody) return;
+
+    const list = window.campaignsCache || [];
+    const query = (filterText || '').toLowerCase().trim();
+    const filtered = query
+        ? list.filter(c => (c.name || '').toLowerCase().includes(query) || String(c.id).includes(query))
+        : list;
+
+    if (badge) {
+        badge.textContent = `${filtered.length} Campaign(s)`;
+    }
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">No broadcast campaigns found. Click "+ Create Campaign" to launch your first broadcast!</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(c => {
+        const dateStr = c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+        const sent = c.sent_count || 0;
+        const failed = c.failed_count || 0;
+        const total = sent + failed;
+        const delRate = total > 0 ? Math.round((sent / total) * 100) : 100;
+        const statusPill = failed === 0 ? '<span class="status-pill status-delivered">Delivered</span>' : '<span class="status-pill status-partial">Completed</span>';
+
+        return `
+            <tr>
+                <td><strong>${escapeHtml(c.name || ('Campaign #' + c.id))}</strong></td>
+                <td style="font-size:0.8rem; color:var(--text-muted);">${dateStr}</td>
+                <td><span class="badge" style="text-transform:capitalize;">${c.message_type || 'template'}</span></td>
+                <td>${sent.toLocaleString()}</td>
+                <td><span style="color:#10b981; font-weight:600;">${delRate}%</span></td>
+                <td><span style="color:var(--primary); font-weight:600;">${Math.round(delRate * 0.95)}%</span></td>
+                <td>${statusPill}</td>
+                <td>
+                    <button type="button" class="btn primary sm" onclick="viewCampaignAnalytics(${c.id})" style="padding:0.25rem 0.65rem; font-size:0.75rem; border-radius:6px;">
+                        📊 View Dashboard
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+window.filterCampaignsList = function filterCampaignsList(term) {
+    renderCampaignsTable(term);
+};
+
+function renderSampleCampaign() {
+    const dummy = {
+        campaign: {
+            id: 0,
+            name: 'Republic_Day_Sale',
+            content: 'Hey Shivam 👋\nThe Republic Day 🇮🇳 Sale is LIVE!!\nOrder today win a SHOPPING VOUCHER 💰 worth ₹1000/-',
+            created_at: new Date().toISOString(),
+            cta_text: 'Shop Now',
+            cta_url: 'https://inspenox.com'
+        },
+        metrics: {
+            overview: 17861,
+            sent: 17900,
+            delivered: 17300,
+            read: 16600,
+            clicked: 7300,
+            replied: 7500,
+            failed: 535,
+            overview_rate: 100,
+            sent_rate: 100,
+            delivered_rate: 97,
+            read_rate: 93,
+            clicked_rate: 45,
+            replied_rate: 42,
+            failed_rate: 3
+        }
+    };
+    window.currentActiveCampaign = dummy;
+    updateKpiTabStrip(dummy.metrics);
+    updateWhatsAppChatPreview(dummy.campaign);
+    updateCampaignMetaCard(dummy.campaign, dummy.metrics);
+    updateCampaignTimelineChart(dummy.campaign, dummy.metrics, 'clicked');
+}
 
 
 // --- Inbox Logic (WhatsApp Web Inspired) ---

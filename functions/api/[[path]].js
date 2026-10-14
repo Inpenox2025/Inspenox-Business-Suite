@@ -19,6 +19,7 @@ const routes = {
     'analytics': analyticsHandler,
     'auth': authHandler,
     'broadcast': broadcastHandler,
+    'campaigns': broadcastHandler,
     'companies': companiesHandler,
     'config': configHandler,
     'customers-import': customersImportHandler,

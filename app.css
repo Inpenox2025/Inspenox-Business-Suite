@@ -3634,4 +3634,613 @@ tr:hover td {
     border-color: var(--primary);
     background: var(--primary-light);
 }
+
+/* ==========================================================================
+   Campaign Analytics Dashboard (Image 3 Inspiration)
+   ========================================================================== */
+
+.camp-dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.camp-dash-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.btn-camp-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-camp-back:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-color: var(--primary);
+    transform: translateX(-2px);
+}
+
+.camp-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.camp-dash-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.camp-status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.725rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.camp-dash-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.camp-switcher-wrapper select {
+    padding: 0.45rem 0.85rem;
+    border-radius: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    font-size: 0.825rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    max-width: 260px;
+    transition: border-color 0.2s;
+}
+.camp-switcher-wrapper select:focus {
+    border-color: var(--primary);
+}
+
+/* KPI Tabs Horizontal Strip */
+.camp-kpi-strip {
+    display: flex;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--shadow);
+}
+
+.camp-kpi-tab {
+    flex: 1;
+    min-width: 105px;
+    padding: 0.85rem 0.65rem;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    border-top: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.camp-kpi-tab:last-child {
+    border-right: none;
+}
+.camp-kpi-tab:hover {
+    background: rgba(139, 92, 246, 0.05);
+}
+
+.camp-kpi-tab.active {
+    background: rgba(139, 92, 246, 0.12);
+    border-top-color: #8b5cf6;
+}
+
+.camp-kpi-tab.active .kpi-tab-stat,
+.camp-kpi-tab.active .kpi-tab-label {
+    color: #8b5cf6;
+}
+
+.kpi-tab-stat {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-main);
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.3rem;
+}
+.kpi-tab-stat .kpi-count {
+    font-size: 0.775rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+.camp-kpi-tab.active .kpi-tab-stat .kpi-count {
+    color: #8b5cf6;
+    opacity: 0.85;
+}
+
+.kpi-tab-label {
+    font-size: 0.775rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+.kpi-tab-label svg {
+    width: 14px;
+    height: 14px;
+}
+.tick-read-label svg {
+    stroke: #10b981 !important;
+}
+.kpi-failed-label svg {
+    stroke: #f59e0b !important;
+}
+
+/* Dashboard Two-Column Grid */
+.camp-dash-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .camp-dash-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.camp-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+/* Left Column: WhatsApp Live Mockup Card */
+.camp-wa-card {
+    padding: 1.25rem;
+    background: var(--bg-dark);
+}
+
+.wa-chat-container {
+    background: #efeae2;
+    border-radius: 12px;
+    padding: 1.25rem 1rem;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+[data-theme="dark"] .wa-chat-container {
+    background: #0b141a;
+    border-color: var(--border);
+}
+
+.wa-bubble-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.wa-bubble {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 0.85rem 0.95rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    position: relative;
+    color: #111b21;
+}
+[data-theme="dark"] .wa-bubble {
+    background: #202c33;
+    color: #e9edef;
+}
+
+.wa-bubble-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.45rem;
+}
+
+.wa-bubble-sender {
+    font-size: 0.725rem;
+    font-weight: 700;
+    color: #00a884;
+}
+
+.wa-icon-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #25D366;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.wa-icon-badge svg {
+    width: 14px;
+    height: 14px;
+    fill: #ffffff;
+}
+
+.wa-bubble-body {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    white-space: pre-line;
+    word-break: break-word;
+}
+
+.wa-bubble-time {
+    font-size: 0.68rem;
+    color: #667781;
+    text-align: right;
+    margin-top: 0.35rem;
+}
+[data-theme="dark"] .wa-bubble-time {
+    color: #8696a0;
+}
+
+/* Media / Product Cards Mockup */
+.wa-preview-media-cards {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.wa-media-card {
+    flex: 1;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+[data-theme="dark"] .wa-media-card {
+    background: #202c33;
+    border-color: var(--border);
+}
+
+.wa-media-card-thumb {
+    height: 90px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    background-color: #cbd5e1;
+}
+
+.wa-card-badge {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.wa-media-card-title {
+    font-size: 0.725rem;
+    font-weight: 600;
+    padding: 0.45rem 0.5rem 0.25rem 0.5rem;
+    color: #111b21;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+[data-theme="dark"] .wa-media-card-title {
+    color: #e9edef;
+}
+
+.wa-media-card-actions {
+    padding: 0.35rem 0.5rem 0.5rem 0.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    text-align: center;
+}
+[data-theme="dark"] .wa-media-card-actions {
+    border-top-color: var(--border);
+}
+
+.wa-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    font-size: 0.725rem;
+    font-weight: 700;
+    color: #0284c7;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.wa-action-btn:hover {
+    color: #0369a1;
+    text-decoration: underline;
+}
+
+/* Right Column: Meta Info Card & Donut */
+.camp-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.camp-meta-donut-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 1.75rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.camp-meta-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    gap: 1.25rem 2rem;
+    flex: 1;
+}
+
+@media (max-width: 650px) {
+    .camp-meta-details {
+        grid-template-columns: 1fr;
+    }
+}
+
+.camp-meta-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.camp-meta-label {
+    font-size: 0.725rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    text-transform: uppercase;
+}
+
+.camp-meta-value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.camp-cta-link {
+    color: #8b5cf6;
+}
+
+/* Donut Chart with Speech Tooltip */
+.camp-donut-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+.camp-donut-box {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+.camp-donut-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.donut-bg {
+    fill: none;
+    stroke: rgba(0, 0, 0, 0.08);
+}
+[data-theme="dark"] .donut-bg {
+    stroke: rgba(255, 255, 255, 0.1);
+}
+
+.donut-fill {
+    fill: none;
+    stroke: #8b5cf6;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s ease;
+}
+
+.donut-tooltip-badge {
+    position: absolute;
+    top: 22%;
+    left: -12px;
+    background: #8b5cf6;
+    color: #ffffff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4);
+    z-index: 2;
+}
+.donut-tooltip-badge::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    border-width: 5px 0 5px 6px;
+    border-style: solid;
+    border-color: transparent transparent transparent #8b5cf6;
+}
+
+/* Bottom Card: Audience (per day) Timeline Area Chart */
+.camp-chart-card {
+    padding: 1.5rem 1.75rem;
+}
+
+.camp-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.camp-chart-header h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.timeline-chart-container {
+    position: relative;
+    width: 100%;
+    height: 220px;
+}
+
+.timeline-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.chart-grid-line {
+    stroke: var(--border);
+    stroke-dasharray: 4, 4;
+    stroke-width: 1;
+}
+
+.chart-grid-line.baseline {
+    stroke-dasharray: none;
+    stroke: var(--border);
+}
+
+.chart-axis-text {
+    font-size: 11px;
+    font-family: inherit;
+    fill: var(--text-muted);
+    text-anchor: end;
+}
+
+.chart-area-path {
+    transition: d 0.6s ease;
+}
+
+.chart-line-path {
+    transition: d 0.6s ease;
+}
+
+.chart-floating-tooltip {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    background: #ffffff;
+    border: 1.5px solid #8b5cf6;
+    color: #8b5cf6;
+    padding: 3px 12px;
+    border-radius: 8px;
+    font-size: 0.725rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 10px rgba(139, 92, 246, 0.2);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+[data-theme="dark"] .chart-floating-tooltip {
+    background: #202c33;
+}
+.chart-floating-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 5px 0 5px;
+    border-style: solid;
+    border-color: #8b5cf6 transparent transparent transparent;
+}
+
+.chart-x-labels {
+    position: absolute;
+    bottom: 0;
+    left: 50px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.725rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.camp-chart-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    font-size: 0.775rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.legend-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #8b5cf6;
+    border: 2px solid rgba(139, 92, 246, 0.4);
+}
+
+/* Suggestion Chips in Modal */
+.btn-suggestion-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.btn-suggestion-chip:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
 
