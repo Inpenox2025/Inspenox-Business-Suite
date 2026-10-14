@@ -1236,6 +1236,319 @@
             }
         }
 
+        /* Why Choose Us & Comparison Section */
+        .why-us-section {
+            padding: 5.5rem 1.5rem 4.5rem 1.5rem;
+            max-width: 1250px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .why-us-pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+
+        .why-us-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.2rem 1.85rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .why-us-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 168, 132, 0.45);
+            box-shadow: 0 14px 34px rgba(0, 168, 132, 0.15);
+        }
+
+        .why-us-badge {
+            position: absolute;
+            top: 1.25rem;
+            right: 1.25rem;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 0.25rem 0.65rem;
+            border-radius: 50px;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .why-us-badge.green {
+            background: rgba(0, 168, 132, 0.15);
+            color: #00a884;
+            border: 1px solid rgba(0, 168, 132, 0.3);
+        }
+
+        .why-us-badge.blue {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .why-us-badge.purple {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .why-us-icon-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.35rem;
+        }
+
+        .why-us-card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 0.75rem 0;
+            line-height: 1.3;
+        }
+
+        .why-us-card-desc {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin: 0 0 1.5rem 0;
+            flex-grow: 1;
+        }
+
+        .why-us-card-metric {
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+
+        .metric-num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        .metric-lbl {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        /* Comparison Table */
+        .comparison-table-container {
+            margin: 4rem 0 3.5rem 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2.75rem 2rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        [data-theme="light"] .comparison-table-container {
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .comparison-table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            text-align: left;
+            font-size: 0.925rem;
+        }
+
+        .comparison-table th {
+            padding: 1.25rem 1.25rem;
+            border-bottom: 2px solid var(--border);
+            color: var(--text-main);
+            font-size: 0.95rem;
+            vertical-align: bottom;
+        }
+
+        .comparison-table td {
+            padding: 1.15rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+            vertical-align: middle;
+            line-height: 1.5;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-brand-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .badge-star {
+            font-size: 0.65rem;
+            font-weight: 800;
+            background: #00a884;
+            color: #ffffff;
+            padding: 2px 8px;
+            border-radius: 20px;
+            width: fit-content;
+            letter-spacing: 0.5px;
+        }
+
+        .col-highlight {
+            background: rgba(0, 168, 132, 0.05);
+            color: var(--text-main) !important;
+            font-weight: 600;
+            border-left: 1px solid rgba(0, 168, 132, 0.2);
+            border-right: 1px solid rgba(0, 168, 132, 0.2);
+        }
+
+        .comparison-table th.col-highlight {
+            border-top: 2px solid #00a884;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            background: rgba(0, 168, 132, 0.1);
+        }
+
+        .comparison-table tr:last-child td.col-highlight {
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        .col-competitor {
+            background: rgba(239, 68, 68, 0.02);
+        }
+
+        .comp-check {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0, 168, 132, 0.15);
+            color: #00a884;
+            font-weight: 800;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .comp-cross {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            font-weight: 800;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Real Verification Screenshot Card */
+        .template-proof-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2.25rem;
+            margin-top: 3.5rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        [data-theme="light"] .template-proof-card {
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .template-proof-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            margin-bottom: 1.75rem;
+            flex-wrap: wrap;
+        }
+
+        .template-proof-badges {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .proof-badge-pill {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.35rem 0.85rem;
+            border-radius: 50px;
+            letter-spacing: 0.3px;
+        }
+
+        .proof-badge-pill.green {
+            background: rgba(0, 168, 132, 0.12);
+            color: #00a884;
+            border: 1px solid rgba(0, 168, 132, 0.3);
+        }
+
+        .proof-badge-pill.blue {
+            background: rgba(56, 189, 248, 0.12);
+            color: #0284c7;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .proof-badge-pill.purple {
+            background: rgba(168, 85, 247, 0.12);
+            color: #a855f7;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .template-proof-window {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            background: #ffffff;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
+        }
+
+        .template-proof-img-wrap {
+            width: 100%;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .template-proof-img-wrap img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 0 0 16px 16px;
+        }
+
         /* Pricing Section */
         .pricing-section {
             padding: 5.5rem 1.5rem;
@@ -1957,6 +2270,25 @@
             .brand-logo-tag {
                 font-size: 0.6rem;
             }
+            .why-us-pillars-grid {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+            }
+            .why-us-card {
+                padding: 1.6rem 1.35rem;
+            }
+            .comparison-table-container {
+                padding: 1.75rem 1rem;
+                border-radius: 18px;
+            }
+            .comparison-table th, .comparison-table td {
+                padding: 0.85rem 0.75rem;
+                font-size: 0.825rem;
+            }
+            .template-proof-card {
+                padding: 1.5rem 1rem;
+                border-radius: 18px;
+            }
         }
 
         @media (max-width: 360px) {
@@ -2006,6 +2338,7 @@
             <a href="#click-to-whatsapp" class="landing-nav-link has-badge">Meta Ads to WhatsApp</a>
             <a href="#shared-inbox" class="landing-nav-link">Shared Inbox</a>
             <a href="#omnichannel" class="landing-nav-link">Omnichannel</a>
+            <a href="#why-us" class="landing-nav-link">Why Choose Us</a>
             <a href="#pricing" class="landing-nav-link">Rates & Pricing</a>
         </nav>
 
@@ -2028,7 +2361,7 @@
     <!-- Hero Section -->
     <section class="landing-hero">
         <div class="hero-pill-badge">
-            🚀 — Next-Gen Meta WhatsApp Commerce & Growth Engine
+            🚀 Next-Gen Meta WhatsApp Commerce & Growth Engine
         </div>
 
         <h1 class="hero-title">
@@ -2844,23 +3177,230 @@
         </div>
     </section>
 
+    <!-- Why Choose Us & Platform Comparison Section -->
+    <section id="why-us" class="why-us-section">
+        <div style="text-align: center; max-width: 850px; margin: 0 auto;">
+            <span class="spotlight-pill">💎 The Inspenox Advantage</span>
+            <h2 class="spotlight-title">Why Choose Inspenox? Zero Commission & Direct Meta Billing</h2>
+            <p class="spotlight-desc">Other WhatsApp platforms mark up conversation costs by 15% to 35% and force you into locked prepaid wallets. Inspenox connects directly to your Meta Business Manager with 0% platform commission and 100% GST tax credit eligibility.</p>
+        </div>
+
+        <!-- 3 Core Pillars -->
+        <div class="why-us-pillars-grid">
+            <!-- Pillar 1: 0% Platform Commission -->
+            <div class="why-us-card">
+                <div class="why-us-badge green">0% COMMISSION</div>
+                <div class="why-us-icon-box" style="background: rgba(0, 168, 132, 0.12); color: #00a884;">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <h3 class="why-us-card-title">0% Platform Commission on WhatsApp Messages</h3>
+                <p class="why-us-card-desc">Unlike traditional providers that charge ₹0.95 to ₹1.25+ per message, Inspenox charges <strong>₹0.00 platform markup</strong>. You pay the exact official Meta base conversation cost (₹0.8631 for Marketing, ₹0.1150 for Utility) with zero hidden fees.</p>
+                <div class="why-us-card-metric">
+                    <span class="metric-num">₹0.00</span>
+                    <span class="metric-lbl">Platform Message Markup</span>
+                </div>
+            </div>
+
+            <!-- Pillar 2: Direct Pay to Meta Flexibility -->
+            <div class="why-us-card">
+                <div class="why-us-badge blue">DIRECT TO META</div>
+                <div class="why-us-icon-box" style="background: rgba(56, 189, 248, 0.12); color: #0284c7;">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                </div>
+                <h3 class="why-us-card-title">Direct Pay to Meta Flexibility</h3>
+                <p class="why-us-card-desc">Never lock your working capital into proprietary prepaid platform wallets. Pay Meta directly via your own Credit Card, Debit Card, UPI, or NetBanking inside your verified Meta Business Suite with full spend autonomy.</p>
+                <div class="why-us-card-metric">
+                    <span class="metric-num">100%</span>
+                    <span class="metric-lbl">Direct Account Ownership</span>
+                </div>
+            </div>
+
+            <!-- Pillar 3: 100% GST Applicable & Input Tax Credit (ITC) -->
+            <div class="why-us-card">
+                <div class="why-us-badge purple">GST ITC ELIGIBLE</div>
+                <div class="why-us-icon-box" style="background: rgba(168, 85, 247, 0.12); color: #a855f7;">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <h3 class="why-us-card-title">100% GST Invoicing & Full ITC Claims</h3>
+                <p class="why-us-card-desc">Meta bills you directly with an official GST Tax Invoice containing your business GSTIN. Easily claim full <strong>18% GST Input Tax Credit (ITC)</strong> on all your broadcast and conversation expenditures every month.</p>
+                <div class="why-us-card-metric">
+                    <span class="metric-num">18%</span>
+                    <span class="metric-lbl">Full GST Input Tax Credit Claimable</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table: Inspenox vs Other Platforms -->
+        <div class="comparison-table-container">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.85rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.5rem 0;">
+                    How Inspenox Compares to Other Platforms
+                </h3>
+                <p style="font-size: 0.95rem; color: var(--text-muted); margin: 0;">See why high-growth brands switch from AiSensy, Wati, and Interakt to Inspenox.</p>
+            </div>
+
+            <div class="comparison-table-wrap">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 34%;">Feature / Billing Model</th>
+                            <th class="col-highlight" style="width: 33%;">
+                                <div class="table-brand-header">
+                                    <span class="badge-star">★ ZERO COMMISSION</span>
+                                    <strong>Inspenox Business Suite</strong>
+                                </div>
+                            </th>
+                            <th style="width: 33%;" class="col-competitor">
+                                <div class="table-brand-header">
+                                    <span>Other Platforms</span>
+                                    <small style="display: block; font-weight: 500; font-size: 0.72rem; color: var(--text-muted);">(AiSensy, Wati, Interakt, Gallabox)</small>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>WhatsApp Message Commission</strong></td>
+                            <td class="col-highlight">
+                                <span class="comp-check">✔</span>
+                                <strong>0% Commission / ₹0.00 Platform Markup</strong>
+                            </td>
+                            <td class="col-competitor">
+                                <span class="comp-cross">✖</span>
+                                15% - 35% Hidden Markup added per message
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Payment & Wallet Flexibility</strong></td>
+                            <td class="col-highlight">
+                                <span class="comp-check">✔</span>
+                                <strong>Direct Pay to Meta</strong> (Card, UPI, Auto-debit)
+                            </td>
+                            <td class="col-competitor">
+                                <span class="comp-cross">✖</span>
+                                Mandatory prepaid platform wallet recharges
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>GST Invoicing & Input Tax Credit (ITC)</strong></td>
+                            <td class="col-highlight">
+                                <span class="comp-check">✔</span>
+                                <strong>100% ITC Eligible</strong> (Direct Meta GST invoices with your GSTIN)
+                            </td>
+                            <td class="col-competitor">
+                                <span class="comp-cross">✖</span>
+                                Complicated or ineligible GST tax refund process
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Marketing Message Cost (India)</strong></td>
+                            <td class="col-highlight">
+                                <span class="comp-check">✔</span>
+                                <strong>₹0.8631</strong> / delivered message (Exact Meta Cost)
+                            </td>
+                            <td class="col-competitor">
+                                <span class="comp-cross">✖</span>
+                                ₹0.98 to ₹1.25+ / message (Marked-up rate)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Utility / OTP Message Cost (India)</strong></td>
+                            <td class="col-highlight">
+                                <span class="comp-check">✔</span>
+                                <strong>₹0.1150</strong> / delivered message (Exact Meta Cost)
+                            </td>
+                            <td class="col-competitor">
+                                <span class="comp-cross">✖</span>
+                                ₹0.18 to ₹0.30+ / message (Marked-up rate)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Template Performance & Cost Breakdown</strong></td>
+                            <td class="col-highlight">
+                                <span class="comp-check">✔</span>
+                                <strong>Live Itemized Template Analytics</strong> (Exact spend per template)
+                            </td>
+                            <td class="col-competitor">
+                                <span class="comp-cross">✖</span>
+                                Lump-sum wallet deductions with zero per-template visibility
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Meta WABA & Number Ownership</strong></td>
+                            <td class="col-highlight">
+                                <span class="comp-check">✔</span>
+                                <strong>100% Yours</strong> (Direct Meta Cloud API in your Business Manager)
+                            </td>
+                            <td class="col-competitor">
+                                <span class="comp-cross">✖</span>
+                                Risk of vendor lock-in or migration roadblocks
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Real Dashboard Verification Showcase -->
+        <div class="template-proof-card">
+            <div class="template-proof-header">
+                <div>
+                    <span class="spotlight-pill" style="font-size: 0.725rem; padding: 0.2rem 0.65rem; margin-bottom: 0.4rem;">📊 Real Platform Verification</span>
+                    <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.35rem 0;">
+                        Live Template Insights Breakdown & Exact Per-Message Spend
+                    </h4>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0;">
+                        Every single campaign shows exact delivery rates, read rates, and raw Meta costs (Marketing: ₹0.8631, Utility: ₹0.1150). Zero hidden platform margin.
+                    </p>
+                </div>
+                <div class="template-proof-badges">
+                    <span class="proof-badge-pill green">⚡ 0% Platform Markup</span>
+                    <span class="proof-badge-pill blue">💳 Direct Meta Billing</span>
+                    <span class="proof-badge-pill purple">📑 100% GST Compliant</span>
+                </div>
+            </div>
+
+            <div class="template-proof-window">
+                <div class="showcase-window-header">
+                    <div class="window-controls">
+                        <span class="window-dot red"></span>
+                        <span class="window-dot yellow"></span>
+                        <span class="window-dot green"></span>
+                    </div>
+                    <div class="showcase-window-title">
+                        <span>Inspenox Analytics Studio · Template Insights Breakdown (Real Live Spend)</span>
+                    </div>
+                    <div class="showcase-header-badge">
+                        <span class="badge-dot">●</span>
+                        <span>META CLOUD API VERIFIED</span>
+                    </div>
+                </div>
+                <div class="template-proof-img-wrap">
+                    <img src="/template-insights-breakdown.png" alt="Inspenox Template Insights Breakdown with 0% Commission and Exact Meta Rates" loading="lazy">
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Pricing Section -->
     <section id="pricing" class="pricing-section">
         <span class="spotlight-pill">💳 Transparent Pricing</span>
         <h2 class="spotlight-title">Transparent & Itemized Pay-As-You-Go Rates</h2>
-        <p class="spotlight-desc" style="max-width: 700px; margin: 0 auto;">No hidden monthly lock-ins. Pay only for actual delivered messages with full GST tax invoice breakdown.</p>
+        <p class="spotlight-desc" style="max-width: 720px; margin: 0 auto;">No hidden monthly lock-ins. Zero platform commission. Pay Meta directly for actual delivered messages with full GST tax invoice breakdown and 100% Input Tax Credit eligibility.</p>
 
         <div class="rates-grid">
             <div class="rate-card">
+                <span style="display: inline-block; font-size: 0.65rem; font-weight: 800; background: rgba(0, 168, 132, 0.15); color: #00a884; padding: 2px 8px; border-radius: 20px; margin-bottom: 0.5rem;">0% COMMISSION · DIRECT META PAY</span>
                 <span class="rate-category">WhatsApp Marketing</span>
                 <div class="rate-price">₹0.8631</div>
-                <p class="rate-desc">per delivered message (Meta Cloud API)</p>
+                <p class="rate-desc">per delivered message (Raw Meta Cloud API Base Rate)</p>
             </div>
 
             <div class="rate-card">
+                <span style="display: inline-block; font-size: 0.65rem; font-weight: 800; background: rgba(56, 189, 248, 0.15); color: #0284c7; padding: 2px 8px; border-radius: 20px; margin-bottom: 0.5rem;">0% MARKUP · 100% GST ITC</span>
                 <span class="rate-category">WhatsApp Utility</span>
                 <div class="rate-price">₹0.1150</div>
-                <p class="rate-desc">per delivered message (Order updates & OTP)</p>
+                <p class="rate-desc">per delivered message (Order updates & OTP verification)</p>
             </div>
 
             <div class="rate-card">
