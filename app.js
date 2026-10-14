@@ -2315,6 +2315,10 @@ let inboxPollInterval = null;
 let allCustomers = [];
 let filteredCustomers = [];
 let inboxCustomersList = [];
+var availableTags = [];
+var pendingExcelCustomers = [];
+var currentInboxFilter = 'all';
+var activeInboxTagFilter = null;
 let currentCustomersPage = 1;
 const CUSTOMERS_PER_PAGE = 10;
 
@@ -3103,8 +3107,8 @@ if (typeof initVarPickers === 'function') initVarPickers();
 
 
 // --- Customer Tags Management & Lifecycle Segmentation System ---
-let availableTags = [];
-let pendingExcelCustomers = [];
+if (!Array.isArray(availableTags)) availableTags = [];
+if (!Array.isArray(pendingExcelCustomers)) pendingExcelCustomers = [];
 
 const DEFAULT_TAG_PALETTES = {
     'repeat buyers': { cls: 'tag-pill-pink', bg: '#fdf2f8', text: '#be185d', border: '#fbcfe8' },
@@ -7944,9 +7948,9 @@ function renderSampleCampaign() {
 
 // --- Inbox Logic (WhatsApp Web Inspired) ---
 
-let currentInboxFilter = 'all';
-let activeInboxTagFilter = null;
-let inboxModalSelectedTags = [];
+if (typeof currentInboxFilter === 'undefined') var currentInboxFilter = 'all';
+if (typeof activeInboxTagFilter === 'undefined') var activeInboxTagFilter = null;
+var inboxModalSelectedTags = [];
 
 async function loadInboxSidebar() {
     const sidebar = document.getElementById('inbox-customers');
@@ -7954,8 +7958,8 @@ async function loadInboxSidebar() {
         sidebar.innerHTML = `<div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading chats...</span></div>`;
     }
     try {
-        if (!availableTags || availableTags.length === 0) {
-            loadTags().catch(() => {});
+        if (typeof availableTags === 'undefined' || !availableTags || availableTags.length === 0) {
+            if (typeof loadTags === 'function') loadTags().catch(() => {});
         }
 
         const res = await apiFetch('/api/customers');
