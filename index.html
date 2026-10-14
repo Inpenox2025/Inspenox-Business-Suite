@@ -1330,24 +1330,26 @@
             </div>
 
             <!-- CREATE CAMPAIGN NAME MODAL -->
-            <div id="modal-create-campaign" class="modal-overlay hidden">
-                <div class="modal-card" style="max-width: 480px; width: 90%;">
-                    <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:0.75rem;">
+            <div id="modal-create-campaign" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(8px);">
+                <div class="modal-content card modal-card" style="max-width: 490px; width: 92%; padding: 1.75rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); position: relative; color: var(--text-main);">
+                    <div class="modal-header" style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border); padding-bottom:0.85rem; margin-bottom: 1.25rem;">
                         <div>
-                            <h3 style="margin:0; font-size:1.15rem; font-weight:700;">🚀 Create New Campaign</h3>
-                            <p style="margin:0.25rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Set a name to track live broadcast analytics and engagement.</p>
+                            <h3 style="margin:0; font-size:1.2rem; font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+                                <span>🚀</span> Create New Campaign
+                            </h3>
+                            <p style="margin:0.35rem 0 0 0; font-size:0.825rem; color:var(--text-muted); line-height:1.4;">Set a name to track live broadcast analytics and engagement.</p>
                         </div>
-                        <button type="button" class="btn-close-modal" onclick="closeCreateCampaignModal()" style="background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text-muted);">✕</button>
+                        <button type="button" class="btn-close-modal" onclick="closeCreateCampaignModal()" style="background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text-muted); padding:0.25rem; line-height:1; border-radius:6px; transition:color 0.15s ease;" title="Close">✕</button>
                     </div>
-                    <div class="modal-body" style="padding:1.25rem 0;">
-                        <div class="form-group">
-                            <label style="font-weight:600; font-size:0.85rem; margin-bottom:0.45rem; display:block;">Campaign Name</label>
+                    <div class="modal-body" style="padding:0;">
+                        <div class="form-group" style="margin-bottom:1.15rem;">
+                            <label style="font-weight:600; font-size:0.85rem; margin-bottom:0.5rem; display:block; color:var(--text-main);">Campaign Name</label>
                             <input type="text" id="modal-campaign-name-input" placeholder="e.g. Republic Day Sale 2026" autofocus
-                                style="width:100%; padding:0.65rem 0.85rem; border-radius:8px; background:var(--bg-dark); border:1.5px solid var(--primary); color:var(--text-main); font-size:0.95rem; font-weight:600; outline:none;">
+                                style="width:100%; padding:0.75rem 1rem; border-radius:10px; background:var(--bg-dark); border:1.5px solid var(--border); color:var(--text-main); font-size:0.95rem; font-weight:600; outline:none; box-sizing:border-box; transition:border-color 0.2s ease, box-shadow 0.2s ease;">
                         </div>
                         <div style="margin-top:0.75rem;">
-                            <span style="font-size:0.725rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.4rem;">Quick Suggestions:</span>
-                            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                            <span style="font-size:0.725rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.6px; display:block; margin-bottom:0.5rem;">Quick Suggestions:</span>
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                                 <button type="button" class="btn-suggestion-chip" onclick="applySuggestedName('Republic Day Sale 2026')">🇮🇳 Republic Day Sale</button>
                                 <button type="button" class="btn-suggestion-chip" onclick="applySuggestedName('Weekend Flash Deal')">⚡ Weekend Flash Deal</button>
                                 <button type="button" class="btn-suggestion-chip" onclick="applySuggestedName('Festival Dhamaka Offer')">🎉 Festival Dhamaka</button>
@@ -1355,9 +1357,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:0.5rem; border-top:1px solid var(--border); padding-top:0.75rem;">
-                        <button type="button" class="btn secondary sm" onclick="closeCreateCampaignModal()" style="border-radius:6px;">Cancel</button>
-                        <button type="button" class="btn primary sm" onclick="submitCreateCampaignModal()" style="border-radius:6px; font-weight:700;">Continue to Setup →</button>
+                    <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:0.65rem; border-top:1px solid var(--border); padding-top:1.15rem; margin-top:1.5rem;">
+                        <button type="button" class="btn secondary sm" onclick="closeCreateCampaignModal()" style="border-radius:8px; padding:0.6rem 1.1rem; font-weight:600;">Cancel</button>
+                        <button type="button" class="btn primary sm" onclick="submitCreateCampaignModal()" style="border-radius:8px; padding:0.6rem 1.25rem; font-weight:700;">Continue to Setup →</button>
                     </div>
                 </div>
             </div>

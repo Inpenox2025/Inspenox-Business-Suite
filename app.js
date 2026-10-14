@@ -7461,9 +7461,28 @@ window.activeCampaignTab = 'clicked';
 window.openCreateCampaignModal = function openCreateCampaignModal() {
     const modal = document.getElementById('modal-create-campaign');
     const input = document.getElementById('modal-campaign-name-input');
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+        modal.classList.remove('hidden');
+        if (!modal._listenersAttached) {
+            modal._listenersAttached = true;
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeCreateCampaignModal();
+            });
+        }
+    }
     if (input) {
         input.value = '';
+        if (!input._listenersAttached) {
+            input._listenersAttached = true;
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitCreateCampaignModal();
+                } else if (e.key === 'Escape') {
+                    closeCreateCampaignModal();
+                }
+            });
+        }
         setTimeout(() => input.focus(), 100);
     }
 };
