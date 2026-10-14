@@ -3862,32 +3862,34 @@
 
     <!-- Workspace Payment Receipt / Tax Invoice Modal -->
     <div id="company-receipt-modal" class="modal-overlay hidden"
-        style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; position: fixed; inset: 0; padding: 1rem; overflow-y: auto;">
+        onclick="if (event.target === this) closeCompanyReceiptModal()"
+        style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; position: fixed; inset: 0; padding: clamp(0.5rem, 2vw, 1.25rem); overflow-y: auto; box-sizing: border-box;">
         <div class="card"
-            style="max-width: 680px; width: 100%; padding: 0; border-radius: 18px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden;">
-            <!-- Modal Header Bar -->
+            style="max-width: 680px; width: 100%; max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem); margin: auto; display: flex; flex-direction: column; padding: 0; border-radius: 18px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; position: relative;">
+            <!-- Modal Header Bar (Pinned to Top) -->
             <div
-                style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; background: var(--bg-dark); border-bottom: 1px solid var(--border);">
+                style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; background: var(--bg-dark); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10;">
                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                     <span style="font-size: 1.25rem;">📜</span>
-                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-main);">Official
-                        Payment Receipt</h3>
+                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-main);">Official Payment Receipt</h3>
                 </div>
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
                     <button type="button" class="btn primary sm" onclick="printCompanyReceipt()"
-                        style="display: inline-flex; align-items: center; gap: 6px;">
+                        style="display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
                         🖨️ <span>Print / Save PDF</span>
                     </button>
-                    <button type="button" onclick="closeCompanyReceiptModal()"
-                        style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.3rem; padding: 0 4px; line-height: 1;">✕</button>
+                    <button type="button" onclick="closeCompanyReceiptModal()" title="Close Receipt"
+                        style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.3rem; padding: 0 4px; line-height: 1; transition: color 0.15s ease;"
+                        onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'">✕</button>
                 </div>
             </div>
 
-            <!-- Printable Receipt Body -->
-            <div id="company-receipt-printable" style="padding: 2rem 2rem 1.5rem 2rem;">
+            <!-- Printable Receipt Body (Scrollable Interior) -->
+            <div id="company-receipt-printable"
+                style="flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: clamp(1rem, 2.5vw, 1.75rem);">
                 <!-- Receipt Brand Header -->
                 <div
-                    style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 1px dashed var(--border); margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.25rem; border-bottom: 1px dashed var(--border); margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
                     <div>
                         <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
                             <span
@@ -3912,7 +3914,7 @@
 
                 <!-- Invoice Meta Details Grid -->
                 <div
-                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; padding: 1.25rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px;">
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem; padding: 1.15rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px;">
                     <div>
                         <span
                             style="font-size: 0.725rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 4px;">CUSTOMER
@@ -3920,7 +3922,7 @@
                         <div id="rcpt-customer-name"
                             style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">-</div>
                         <div id="rcpt-customer-email"
-                            style="font-size: 0.825rem; color: var(--text-muted); margin-top: 2px;">-</div>
+                            style="font-size: 0.825rem; color: var(--text-muted); margin-top: 2px; word-break: break-all;">-</div>
                         <div id="rcpt-customer-phone"
                             style="font-size: 0.825rem; color: var(--text-muted); margin-top: 2px;">-</div>
                     </div>
@@ -3928,9 +3930,9 @@
                         <span
                             style="font-size: 0.725rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 4px;">PAYMENT
                             TRANSACTION DETAILS</span>
-                        <div style="font-size: 0.825rem; color: var(--text-muted);">Order ID: <code id="rcpt-order-id"
+                        <div style="font-size: 0.825rem; color: var(--text-muted); word-break: break-all;">Order ID: <code id="rcpt-order-id"
                                 style="color: var(--text-main); font-weight: 600;">-</code></div>
-                        <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Payment Ref: <code
+                        <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px; word-break: break-all;">Payment Ref: <code
                                 id="rcpt-payment-id" style="color: var(--text-main); font-weight: 600;">-</code></div>
                         <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Gateway: <span
                                 style="color: #3b82f6; font-weight: 600;">Razorpay Secure (INR)</span></div>
@@ -3941,8 +3943,8 @@
 
                 <!-- Line Items Table -->
                 <div
-                    style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem;">
-                    <table style="width: 100%; border-collapse: collapse;">
+                    style="border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; margin-bottom: 1.25rem;">
+                    <table style="width: 100%; border-collapse: collapse; min-width: 480px;">
                         <thead>
                             <tr
                                 style="background: var(--bg-dark); border-bottom: 1px solid var(--border); text-align: left; font-size: 0.775rem; color: var(--text-muted); text-transform: uppercase;">
@@ -3972,22 +3974,22 @@
                     <!-- Pricing Breakdown -->
                     <div style="padding: 1rem 1.25rem; background: rgba(255,255,255,0.015);">
                         <div
-                            style="display: flex; justify-content: flex-end; margin-bottom: 0.4rem; font-size: 0.85rem;">
-                            <span style="color: var(--text-muted); width: 160px;">Original Plan Price:</span>
+                            style="display: flex; justify-content: flex-end; margin-bottom: 0.4rem; font-size: 0.85rem; gap: 1rem;">
+                            <span style="color: var(--text-muted); min-width: 150px; text-align: right;">Original Plan Price:</span>
                             <span id="rcpt-subtotal"
-                                style="font-weight: 600; color: var(--text-main); width: 120px; text-align: right;">₹2,499.00</span>
+                                style="font-weight: 600; color: var(--text-main); min-width: 110px; text-align: right;">₹2,499.00</span>
                         </div>
                         <div id="rcpt-row-discount"
-                            style="display: flex; justify-content: flex-end; margin-bottom: 0.4rem; font-size: 0.85rem; color: #10b981;">
-                            <span style="width: 160px;">Coupon Discount:</span>
-                            <span id="rcpt-discount" style="font-weight: 600; width: 120px; text-align: right;">-
+                            style="display: flex; justify-content: flex-end; margin-bottom: 0.4rem; font-size: 0.85rem; color: #10b981; gap: 1rem;">
+                            <span style="min-width: 150px; text-align: right;">Coupon Discount:</span>
+                            <span id="rcpt-discount" style="font-weight: 600; min-width: 110px; text-align: right;">-
                                 ₹2,498.00</span>
                         </div>
                         <div
-                            style="display: flex; justify-content: flex-end; padding-top: 0.6rem; border-top: 1px solid var(--border); font-size: 1.05rem;">
-                            <span style="font-weight: 700; color: var(--text-main); width: 160px;">Total Paid:</span>
+                            style="display: flex; justify-content: flex-end; padding-top: 0.6rem; border-top: 1px solid var(--border); font-size: 1.05rem; gap: 1rem;">
+                            <span style="font-weight: 700; color: var(--text-main); min-width: 150px; text-align: right;">Total Paid:</span>
                             <span id="rcpt-total"
-                                style="font-weight: 800; color: #10b981; width: 120px; text-align: right;">₹1.00</span>
+                                style="font-weight: 800; color: #10b981; min-width: 110px; text-align: right;">₹1.00</span>
                         </div>
                     </div>
                 </div>
@@ -4001,9 +4003,9 @@
                 </div>
             </div>
 
-            <!-- Modal Footer Close Button -->
+            <!-- Modal Footer (Pinned to Bottom) -->
             <div
-                style="padding: 1rem 1.5rem; background: var(--bg-dark); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
+                style="flex-shrink: 0; padding: 0.85rem 1.25rem; background: var(--bg-dark); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; flex-wrap: wrap; position: sticky; bottom: 0; z-index: 10;">
                 <button type="button" class="btn secondary" onclick="closeCompanyReceiptModal()">Close</button>
                 <button type="button" class="btn secondary" id="btn-rcpt-resend-email" onclick="resendCurrentReceiptEmail()"
                     style="display: inline-flex; align-items: center; gap: 6px;">
@@ -4180,11 +4182,13 @@
                 left: 0 !important;
                 top: 0 !important;
                 width: 100vw !important;
-                height: 100vh !important;
+                height: auto !important;
+                max-height: none !important;
                 background: white !important;
                 padding: 0 !important;
                 margin: 0 !important;
                 display: block !important;
+                overflow: visible !important;
             }
 
             #company-receipt-modal .card {
@@ -4192,6 +4196,10 @@
                 box-shadow: none !important;
                 max-width: 100% !important;
                 width: 100% !important;
+                max-height: none !important;
+                height: auto !important;
+                display: block !important;
+                overflow: visible !important;
                 background: white !important;
                 color: black !important;
             }
@@ -4199,6 +4207,8 @@
             #company-receipt-printable {
                 color: black !important;
                 padding: 20px !important;
+                max-height: none !important;
+                overflow: visible !important;
             }
 
             #company-receipt-printable * {

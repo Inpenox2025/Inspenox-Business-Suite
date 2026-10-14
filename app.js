@@ -10199,3 +10199,19 @@ window.resendCurrentReceiptEmail = async function resendCurrentReceiptEmail() {
         loadSubscriptions();
     }
 })();
+
+// Global Escape Key Listener for Flexible Modal Dismissal
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+        const rcptModal = document.getElementById('company-receipt-modal');
+        if (rcptModal && !rcptModal.classList.contains('hidden') && rcptModal.style.display !== 'none') {
+            closeCompanyReceiptModal();
+            return;
+        }
+        const checkoutModal = document.getElementById('checkout-modal');
+        if (checkoutModal && !checkoutModal.classList.contains('hidden') && checkoutModal.style.display !== 'none') {
+            closeCheckoutModal();
+            return;
+        }
+    }
+});
