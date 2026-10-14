@@ -6417,7 +6417,7 @@ function populateBroadcastTagFilterOptions() {
     });
 
     if (sel) {
-        sel.innerHTML = '<option value="">-- All Tags (Show All) --</option>';
+        sel.innerHTML = '<option value="">-- Filter By Tags --</option>';
         availableTags.forEach(t => {
             const lower = (t.name || '').toLowerCase();
             const count = hasRange ? (tagCountsInRange[lower] || 0) : (tagCounts[lower] || 0);
@@ -6758,7 +6758,7 @@ async function loadCustomersForSelect() {
             list.innerHTML = '';
             customers.forEach((c, idx) => {
                 const label = document.createElement('label');
-                label.className = 'option-item';
+                label.className = 'option-item bc-customer-row';
                 label.setAttribute('data-id', c.id);
                 label.setAttribute('data-sr', idx + 1);
 
@@ -6769,19 +6769,22 @@ async function loadCustomersForSelect() {
                 const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
 
                 label.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0;">
-                        <input type="checkbox" class="bc-cust-cb" value="${c.id}" style="margin:0;">
+                    <div class="bc-cust-left">
+                        <input type="checkbox" class="bc-cust-cb" value="${c.id}">
                         <span class="bc-sr-badge" title="Customer Serial Number">#${srNo}</span>
-                        <span style="font-size: 0.825rem; color: var(--text-main); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            ${escapeHtml(c.name || 'Unnamed')} <code style="font-size: 0.75rem; color: var(--text-muted);">(${escapeHtml(c.phone || '')})</code>
-                        </span>
+                        <div class="bc-cust-meta">
+                            <span class="bc-cust-name" title="${escapeHtml(c.name || 'Unnamed')}">${escapeHtml(c.name || 'Unnamed')}</span>
+                            <span class="bc-cust-phone">(${escapeHtml(c.phone || '')})</span>
+                        </div>
+                    </div>
+                    <div class="bc-cust-right">
                         ${isSent 
                             ? `<span class="bc-sent-badge" title="Sent outbound broadcast/messages previously (${outboundCount} sent)">✓ Sent (${outboundCount})</span>`
                             : `<span class="bc-pending-badge" title="No outbound messages sent yet">• Unsent</span>`
                         }
-                    </div>
-                    <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: flex-end; align-items: center;">
-                        ${pillsHtml}
+                        <div class="bc-cust-tags">
+                            ${pillsHtml}
+                        </div>
                     </div>
                 `;
                 list.appendChild(label);

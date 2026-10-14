@@ -1003,6 +1003,7 @@ tr:hover td {
     max-height: 240px;
     min-height: 120px;
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
 }
 
@@ -1010,29 +1011,54 @@ tr:hover td {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.65rem 0.9rem;
-    font-size: 0.875rem;
+    gap: 0.6rem;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.85rem;
     cursor: pointer;
     color: var(--text-main);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.option-item span,
-.option-item strong {
-    flex: 1;
+    transition: background 0.15s ease;
 }
 
 .option-item:hover {
     background: var(--primary-light);
 }
 
-.option-item input[type="checkbox"] {
-    width: 17px;
-    height: 17px;
+.select-all-item {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+    flex-shrink: 0;
+}
+
+.select-all-item strong {
+    flex: 1;
+    font-size: 0.825rem;
+    color: var(--text-main);
+}
+
+.bc-customer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.5rem 0.85rem;
+}
+
+.bc-cust-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.bc-cust-cb {
+    width: 16px;
+    height: 16px;
     accent-color: var(--primary);
     cursor: pointer;
-    flex-shrink: 0;
+    flex: none !important;
+    flex-shrink: 0 !important;
     margin: 0;
 }
 
@@ -1042,33 +1068,84 @@ tr:hover td {
     font-weight: 700;
     color: var(--primary);
     background: rgba(0, 168, 132, 0.12);
-    border: 1px solid rgba(0, 168, 132, 0.28);
+    border: 1px solid rgba(0, 168, 132, 0.3);
     border-radius: 4px;
     padding: 1px 6px;
-    min-width: 36px;
-    text-align: center;
-    display: inline-block;
-    flex-shrink: 0;
+    min-width: 34px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    width: auto !important;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.bc-cust-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.bc-cust-name {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.825rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 0 1 auto;
+}
+
+.bc-cust-phone {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    white-space: nowrap;
+    flex: none !important;
+    flex-shrink: 0 !important;
+}
+
+.bc-cust-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: none !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    justify-content: flex-end;
 }
 
 .bc-sent-badge {
     font-size: 0.68rem;
     padding: 1px 6px;
+    height: 22px;
     border-radius: 4px;
     background: rgba(37, 211, 102, 0.12);
     color: #25D366;
-    border: 1px solid rgba(37, 211, 102, 0.28);
+    border: 1px solid rgba(37, 211, 102, 0.3);
     font-weight: 600;
     white-space: nowrap;
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    flex-shrink: 0;
+    flex: none !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    width: auto !important;
+    box-sizing: border-box;
 }
 
 .bc-pending-badge {
     font-size: 0.68rem;
     padding: 1px 6px;
+    height: 22px;
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.05);
     color: var(--text-muted);
@@ -1078,13 +1155,57 @@ tr:hover td {
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    flex-shrink: 0;
+    flex: none !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    width: auto !important;
+    box-sizing: border-box;
 }
 
-.select-all-item {
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-card);
-    flex-shrink: 0;
+.bc-cust-tags {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: none !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    width: auto !important;
+}
+
+.bc-cust-tags .tag-pill {
+    height: 22px;
+    padding: 0 8px;
+    font-size: 0.7rem;
+    display: inline-flex;
+    align-items: center;
+    flex: none !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    width: auto !important;
+    max-width: 140px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Responsive breakpoint for compact / mobile displays */
+@media (max-width: 580px) {
+    .bc-customer-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+        padding: 0.5rem 0.65rem;
+    }
+    .bc-cust-left {
+        width: 100%;
+    }
+    .bc-cust-right {
+        width: 100%;
+        justify-content: flex-start;
+        padding-left: 1.55rem;
+        gap: 0.35rem;
+    }
 }
 
 .bc-target-footer {
