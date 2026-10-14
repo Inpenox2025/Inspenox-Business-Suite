@@ -8749,9 +8749,10 @@ const BUILTIN_TEMPLATE_DEFINITIONS = {
     },
     'vinayaka_chavithi': {
         title: 'Happy Vinayaka Chavithi! 🪔',
+        headerImage: '/vinayaka_chavithi_header.png',
         headerBadge: 'Festive Greeting',
         headerIcon: '🙏',
-        body: 'Wishing you and your beloved family a joyous and blessed Vinayaka Chavithi! May Lord Ganesha bestow good health, boundless happiness, and prosperous milestones upon your home. Celebrate with special festive offers curated just for you.',
+        body: 'Dear {{customer_name}},\n\nWishing you and your beloved family a joyous and blessed Vinayaka Chavithi! May Lord Ganesha bestow good health, boundless happiness, and prosperous milestones upon your home. Celebrate with special festive offers curated just for you.',
         footer: 'Inspenox Business Suite · Festive Campaign',
         buttons: [
             { text: 'Explore Festive Offers', icon: '🎁', type: 'url' },
@@ -8781,18 +8782,52 @@ function formatTemplateDisplayName(slug) {
 function resolveTemplateCard(templateSlug, customerData) {
     const cleanSlug = String(templateSlug || '').trim().toLowerCase();
 
+    // Determine customer display name for variable replacement
+    let custName = '';
+    if (customerData && customerData.name && customerData.name !== customerData.phone) {
+        custName = customerData.name.trim();
+    } else {
+        const foundCust = (typeof inboxCustomersList !== 'undefined' && Array.isArray(inboxCustomersList))
+            ? inboxCustomersList.find(c => String(c.id) === String(activeInboxCustomer))
+            : null;
+        if (foundCust && foundCust.name && foundCust.name !== foundCust.phone) {
+            custName = foundCust.name.trim();
+        } else {
+            const chatHeaderName = document.getElementById('active-chat-name')?.textContent?.trim();
+            if (chatHeaderName && !chatHeaderName.startsWith('+') && !chatHeaderName.startsWith('Lead')) {
+                custName = chatHeaderName;
+            }
+        }
+    }
+    if (!custName) custName = 'Valued Customer';
+
+    function replaceVariables(text) {
+        if (!text) return '';
+        return text
+            .replace(/{{(?:1|customer_name|cust_name|name|user_name|client_name)}}/gi, custName)
+            .replace(/{{2}}/g, 'Special Festive Privilege')
+            .replace(/{{3}}/g, 'Inspenox')
+            .replace(/{{[^{}]+}}/g, custName); // Catch-all for any other unreplaced raw variable
+    }
+
     // 1. Check if template exists in templatesCache (Meta API cache)
     if (typeof templatesCache !== 'undefined' && Array.isArray(templatesCache) && templatesCache.length > 0) {
         const found = templatesCache.find(t => (t.name || '').toLowerCase() === cleanSlug);
         if (found && Array.isArray(found.components)) {
             let headerText = '';
+            let headerImage = '';
             let bodyText = '';
             let footerText = '';
             let buttons = [];
 
             found.components.forEach(c => {
                 if (c.type === 'HEADER') {
-                    headerText = c.text || (c.format ? `${c.format} Header` : '');
+                    if (c.format === 'IMAGE') {
+                        headerImage = c.example?.header_handle?.[0] || (cleanSlug.includes('vinayaka') ? '/vinayaka_chavithi_header.png' : '');
+                        headerText = ''; // Do NOT display raw string 'IMAGE Header'
+                    } else if (c.text) {
+                        headerText = c.text;
+                    }
                 } else if (c.type === 'BODY') {
                     bodyText = c.text || '';
                 } else if (c.type === 'FOOTER') {
@@ -8806,15 +8841,17 @@ function resolveTemplateCard(templateSlug, customerData) {
                 }
             });
 
+            if (cleanSlug.includes('vinayaka') && !headerImage) {
+                headerImage = '/vinayaka_chavithi_header.png';
+            }
+
             if (bodyText) {
-                if (customerData && customerData.name) {
-                    bodyText = bodyText.replace(/{{1}}/g, customerData.name).replace(/{{name}}/gi, customerData.name);
-                }
                 return {
-                    title: headerText || formatTemplateDisplayName(cleanSlug),
+                    title: headerText || (headerImage ? '' : formatTemplateDisplayName(cleanSlug)),
+                    headerImage: headerImage,
                     headerBadge: 'Meta Template',
-                    headerIcon: '⚡',
-                    body: bodyText,
+                    headerIcon: headerImage ? '' : '⚡',
+                    body: replaceVariables(bodyText),
                     footer: footerText || 'Official WhatsApp Cloud API',
                     buttons: buttons.length > 0 ? buttons : [{ text: 'Quick Reply', icon: '💬', type: 'quick_reply' }]
                 };
@@ -8825,27 +8862,27 @@ function resolveTemplateCard(templateSlug, customerData) {
     // 2. Check built-in persistent registry (Works unconditionally without active subscription or Meta session)
     if (BUILTIN_TEMPLATE_DEFINITIONS[cleanSlug]) {
         const def = BUILTIN_TEMPLATE_DEFINITIONS[cleanSlug];
-        let body = def.body;
-        if (customerData && customerData.name) {
-            body = body.replace(/{{1}}/g, customerData.name).replace(/{{name}}/gi, customerData.name);
-        }
-        return { ...def, body };
+        return {
+            ...def,
+            body: replaceVariables(def.body)
+        };
     }
 
     // 3. Fallback for any other template name (e.g. order_update, welcome_flow)
     const displayName = formatTemplateDisplayName(cleanSlug);
-    let sampleBody = `Hello! This is an official verified WhatsApp template message for ${displayName}. All details and updates have been synchronized to your conversation.`;
-    if (cleanSlug.includes('order') || cleanSlug.includes('invoice') || cleanSlug.includes('market')) {
-        sampleBody = `Thank you for your order! Your purchase has been confirmed and is being processed. Live status and tracking updates will follow here.`;
-    } else if (cleanSlug.includes('festiv') || cleanSlug.includes('chavithi') || cleanSlug.includes('diwali') || cleanSlug.includes('sale') || cleanSlug.includes('offer')) {
-        sampleBody = `Celebrate this festive occasion with special privileges, promotional bonuses, and instant discounts on your purchases today!`;
+    let sampleBody = `Hello ${custName}! This is an official verified WhatsApp template message for ${displayName}. All details and updates have been synchronized to your conversation.`;
+    let fallbackHeaderImg = '';
+    if (cleanSlug.includes('vinayaka')) {
+        fallbackHeaderImg = '/vinayaka_chavithi_header.png';
+        sampleBody = `Wishing you and your family a joyous and blessed Vinayaka Chavithi! May Lord Ganesha bestow good health, boundless happiness, and prosperous milestones upon your home.`;
     }
 
     return {
-        title: displayName,
+        title: fallbackHeaderImg ? '' : displayName,
+        headerImage: fallbackHeaderImg,
         headerBadge: 'Meta Template',
-        headerIcon: '⚡',
-        body: sampleBody,
+        headerIcon: fallbackHeaderImg ? '' : '⚡',
+        body: replaceVariables(sampleBody),
         footer: 'Official Meta WhatsApp Cloud API',
         buttons: [
             { text: 'View Details', icon: '↗️', type: 'url' },
@@ -8934,6 +8971,12 @@ async function fetchChatMessages(isInitial = false) {
                             </span>
                             <span class="tpl-slug-pill" title="Template Slug: ${templateSlug}">${templateSlug}</span>
                         </div>
+
+                        ${templateCard.headerImage ? `
+                            <div class="tpl-card-media-wrap">
+                                <img src="${templateCard.headerImage}" alt="${templateCard.title || 'Template Banner'}" class="tpl-card-header-img" onerror="this.style.display='none'" />
+                            </div>
+                        ` : ''}
 
                         ${templateCard.title ? `
                             <div class="tpl-card-title">

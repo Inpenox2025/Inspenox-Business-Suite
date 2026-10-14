@@ -267,9 +267,19 @@ module.exports = async (req, res) => {
                 let baseSlug = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'workspace';
                 const uniqueSlug = `${baseSlug}-${Math.random().toString(36).substring(2, 7)}`;
 
+                // Auto-cleanup any historical companies that received 'Starter (Free Forever)'
+                try {
+                    await sql`
+                        UPDATE companies 
+                        SET subscription_plan = NULL, subscription_status = 'inactive'
+                        WHERE (subscription_plan ILIKE '%free forever%' OR subscription_plan ILIKE 'starter%')
+                          AND name NOT ILIKE '%inspenox%' AND slug NOT ILIKE '%inspenox%';
+                    `;
+                } catch(e) {}
+
                 const compRes = await sql`
                     INSERT INTO companies (name, slug, email, phone, subscription_plan, subscription_status, is_active)
-                    VALUES (${companyName}, ${uniqueSlug}, ${cleanEmail}, ${cleanPhone || null}, 'Starter (Free Forever)', 'active', true)
+                    VALUES (${companyName}, ${uniqueSlug}, ${cleanEmail}, ${cleanPhone || null}, NULL, 'inactive', true)
                     RETURNING id;
                 `;
                 const companyId = compRes[0]?.id || null;
@@ -367,7 +377,7 @@ module.exports = async (req, res) => {
 
                     const compRes = await sql`
                         INSERT INTO companies (name, slug, email, subscription_plan, subscription_status, is_active)
-                        VALUES (${companyName}, ${uniqueSlug}, ${cleanEmail}, 'Starter (Free Forever)', 'active', true)
+                        VALUES (${companyName}, ${uniqueSlug}, ${cleanEmail}, NULL, 'inactive', true)
                         RETURNING id;
                     `;
                     const companyId = compRes[0]?.id || null;
@@ -464,7 +474,7 @@ module.exports = async (req, res) => {
                                     const userCountRes = await sql`SELECT COUNT(*)::int as count FROM users WHERE company_id = ${coId}`;
                                     const currentCount = userCountRes[0]?.count || 0;
                                     if (currentCount >= maxAllowedUsers) {
-                                        const planDisplayName = comp.subscription_plan || 'Unsubscribed (Free)';
+                                        const planDisplayName = comp.subscription_plan || 'No Active Plan';
                                         return res.status(403).json({
                                             error: `User creation limit reached (${currentCount}/${maxAllowedUsers} users for ${planDisplayName}). Cannot reassign user. Upgrade plan in Subscriptions & Billing.`
                                         });
@@ -528,7 +538,7 @@ module.exports = async (req, res) => {
                                 const currentCount = userCountRes[0]?.count || 0;
 
                                 if (currentCount >= maxAllowedUsers) {
-                                    const planDisplayName = comp.subscription_plan || 'Unsubscribed (Free)';
+                                    const planDisplayName = comp.subscription_plan || 'No Active Plan';
                                     return res.status(403).json({
                                         error: `User creation limit reached (${currentCount}/${maxAllowedUsers} users for ${planDisplayName} plan). Please upgrade your subscription plan in Subscriptions & Billing to add more team members.`
                                     });

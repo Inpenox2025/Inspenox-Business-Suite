@@ -67,13 +67,12 @@ module.exports = async (req, res) => {
             }
         } catch(e) {}
 
-        // Reset any child companies that inadvertently received 'Starter' plan default without payment
+        // Reset any child companies that inadvertently received 'Starter' or 'Free Forever' plan without payment
         try {
             await sql`
                 UPDATE companies 
                 SET subscription_plan = NULL, subscription_status = 'inactive'
-                WHERE (subscription_plan = 'Starter' OR subscription_plan = 'Starter Tier')
-                  AND (subscription_status = 'inactive' OR subscription_status IS NULL)
+                WHERE (subscription_plan ILIKE '%free forever%' OR subscription_plan ILIKE 'starter%' OR subscription_plan = 'Starter Tier')
                   AND name NOT ILIKE '%inspenox%' AND slug NOT ILIKE '%inspenox%';
             `;
         } catch(e) {}
