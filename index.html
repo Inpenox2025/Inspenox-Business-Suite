@@ -142,7 +142,7 @@
                                 <line x1="22" y1="2" x2="11" y2="13"></line>
                                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                             </svg>
-                            <span>Send Message</span>
+                            <span>Campaign</span>
                         </a>
                         <a href="#inbox" data-view="inbox" class="nav-subitem">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -731,58 +731,110 @@
                         <form id="broadcast-form">
                             <div class="form-group">
                                 <div
-                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; flex-wrap: wrap; gap: 0.5rem;">
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem; flex-wrap: wrap; gap: 0.5rem;">
                                     <label style="margin: 0; font-weight: 600;">Target Audience</label>
-                                    <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
-                                        <span
-                                            style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600;">🏷️
-                                            Filter / Send by Tag:</span>
-                                        <select id="bc-tag-filter-select"
-                                            onchange="applyBroadcastTagFilter(this.value, true)"
-                                            style="padding: 0.25rem 0.65rem; border-radius: 6px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.775rem; cursor: pointer; outline: none; min-width: 170px;">
-                                            <option value="">-- All Tags (Show All) --</option>
-                                        </select>
-                                        <button type="button" class="btn secondary sm" id="btn-bc-clear-tag-filter"
-                                            onclick="clearBroadcastTagFilter()"
-                                            style="display: none; padding: 0.2rem 0.5rem; font-size: 0.725rem;">
-                                            ✕ Clear
-                                        </button>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                        <!-- Range / Batch Selector in Header -->
+                                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                            <span style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600;">🔢 Range:</span>
+                                            <select id="bc-range-filter-select"
+                                                onchange="applyBroadcastRangeFilter(this.value, true)"
+                                                style="padding: 0.25rem 0.65rem; border-radius: 6px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.775rem; cursor: pointer; outline: none; min-width: 165px;">
+                                                <option value="">-- All Customers (1 to All) --</option>
+                                            </select>
+                                            <button type="button" class="btn secondary sm" id="btn-bc-clear-range-filter"
+                                                onclick="clearBroadcastRangeFilter()"
+                                                style="display: none; padding: 0.2rem 0.5rem; font-size: 0.725rem;" title="Clear Range Filter">
+                                                ✕
+                                            </button>
+                                        </div>
+
+                                        <!-- Tag Filter Dropdown in Header -->
+                                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                            <span style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600;">🏷️ Tag:</span>
+                                            <select id="bc-tag-filter-select"
+                                                onchange="applyBroadcastTagFilter(this.value, true)"
+                                                style="padding: 0.25rem 0.65rem; border-radius: 6px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.775rem; cursor: pointer; outline: none; min-width: 155px;">
+                                                <option value="">-- Filter By Tags --</option>
+                                            </select>
+                                            <button type="button" class="btn secondary sm" id="btn-bc-clear-tag-filter"
+                                                onclick="clearBroadcastTagFilter()"
+                                                style="display: none; padding: 0.2rem 0.5rem; font-size: 0.725rem;" title="Clear Tag Filter">
+                                                ✕
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="custom-select" id="bc-target-container">
                                     <div class="select-box" id="bc-target-display">Select Audience...</div>
                                     <div class="options-container" id="bc-target-options">
-                                        <!-- Search & Tag Filter Inside Options Box -->
+                                        <!-- Search & Filters Inside Options Box -->
                                         <div
-                                            style="padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.45rem; background: var(--bg-dark);">
+                                            style="padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.55rem; background: var(--bg-dark);">
                                             <input type="text" id="bc-customer-search"
-                                                placeholder="Search by name, phone or tag..."
+                                                placeholder="Search by Sr. No. (#1, #25), name, phone or tag..."
                                                 oninput="filterBroadcastCustomerList()"
                                                 style="width: 100%; padding: 0.35rem 0.6rem; font-size: 0.775rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); outline: none;">
 
-                                            <div style="display: flex; align-items: center; gap: 0.35rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin;"
-                                                id="bc-tag-chips-container">
-                                                <!-- Dynamic tag quick chips: All, Repeat Buyers, Recovered, etc. -->
+                                            <!-- Range / Batch Selection Chips -->
+                                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🔢 Select Range / Batch:</span>
+                                                    <button type="button" id="btn-bc-toggle-custom-range" onclick="toggleBroadcastCustomRangeInput()"
+                                                        style="background: none; border: none; color: var(--primary); font-size: 0.72rem; cursor: pointer; padding: 0; text-decoration: underline; font-weight: 600;">
+                                                        Custom Range...
+                                                    </button>
+                                                </div>
+                                                <div style="display: flex; align-items: center; gap: 0.35rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin;"
+                                                    id="bc-range-chips-container">
+                                                    <!-- Dynamic range quick chips: All, 1 - 250, 251 - 500, 501 - 1000, etc. -->
+                                                </div>
+                                                <!-- Custom Range Input Row -->
+                                                <div id="bc-custom-range-row" style="display: none; align-items: center; gap: 0.4rem; padding: 4px 8px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px;">
+                                                    <span style="font-size: 0.725rem; color: var(--text-muted); font-weight: 600;">From #</span>
+                                                    <input type="number" id="bc-range-custom-from" min="1" placeholder="1" style="width: 65px; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
+                                                    <span style="font-size: 0.725rem; color: var(--text-muted); font-weight: 600;">To #</span>
+                                                    <input type="number" id="bc-range-custom-to" min="1" placeholder="250" style="width: 65px; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
+                                                    <button type="button" class="btn primary sm" onclick="applyBroadcastCustomRange()" style="padding: 2px 8px; font-size: 0.72rem;">Apply</button>
+                                                    <button type="button" class="btn secondary sm" onclick="toggleBroadcastCustomRangeInput(false)" style="padding: 2px 6px; font-size: 0.72rem;">✕</button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Tag Selection Chips (Combine with Range) -->
+                                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🏷️ Filter / Target by Tag:</span>
+                                                    <span id="bc-active-filter-summary" style="font-size: 0.7rem; color: var(--primary); font-weight: 600;"></span>
+                                                </div>
+                                                <div style="display: flex; align-items: center; gap: 0.35rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin;"
+                                                    id="bc-tag-chips-container">
+                                                    <!-- Dynamic tag quick chips: All, Repeat Buyers, Recovered, etc. -->
+                                                </div>
                                             </div>
                                         </div>
 
                                         <label class="option-item select-all-item"
-                                            style="border-bottom: 1px solid var(--border); padding: 0.6rem 0.85rem;">
+                                            style="border-bottom: 1px solid var(--border); padding: 0.55rem 0.85rem;">
                                             <div style="display: flex; align-items: center; gap: 0.6rem; flex: 1;">
                                                 <input type="checkbox" id="bc-select-all" value="all">
-                                                <strong id="bc-select-all-label">Select All Customers</strong>
+                                                <strong id="bc-select-all-label">Select All Matching Customers</strong>
                                             </div>
                                             <span id="bc-matching-count-badge"
                                                 style="font-size: 0.725rem; color: var(--primary); font-weight: 600;"></span>
                                         </label>
                                         <div id="bc-target-list"></div>
                                         <div class="bc-target-footer">
-                                            <button type="button" id="btn-bc-select-24h-active" class="btn secondary sm"
-                                                style="font-size:0.725rem; padding:0.25rem 0.5rem;">⚡ Select 24h Free
-                                                Tier</button>
+                                            <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+                                                <button type="button" id="btn-bc-select-unsent" onclick="selectUnsentInCurrentFilter()" class="btn secondary sm"
+                                                    style="font-size:0.72rem; padding:0.25rem 0.55rem;" title="Select only customers in current range/tag who have not received messages yet">⚡ Select Unsent</button>
+                                                <button type="button" id="btn-bc-select-24h-active" class="btn secondary sm"
+                                                    style="font-size:0.72rem; padding:0.25rem 0.55rem;">⚡ 24h Free Tier</button>
+                                                <button type="button" onclick="clearBroadcastAudienceSelection()" class="btn secondary sm"
+                                                    style="font-size:0.72rem; padding:0.25rem 0.55rem;">Clear</button>
+                                            </div>
                                             <button type="button" id="btn-bc-target-done" class="btn primary sm"
-                                                style="font-size:0.75rem; padding:0.3rem 0.75rem;">Done</button>
+                                                style="font-size:0.75rem; padding:0.3rem 0.85rem;">Done</button>
                                         </div>
                                     </div>
                                 </div>

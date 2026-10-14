@@ -6269,18 +6269,149 @@ document.getElementById('btn-bc-target-done')?.addEventListener('click', () => {
 
 let broadcastCustomersCache = [];
 let activeBroadcastTagFilter = '';
+let activeBroadcastRangeFilter = null; // { start: number, end: number, label: string }
 
+// Dynamic customer range generator based on total audience size
+function generateCustomerRanges(totalCount) {
+    if (!totalCount || totalCount <= 0) return [];
+    const ranges = [];
+    const step = 250;
+
+    // Standard 250-sized chunks (1 - 250, 251 - 500, etc.)
+    for (let start = 1; start <= totalCount; start += step) {
+        const end = Math.min(start + step - 1, totalCount);
+        ranges.push({
+            start,
+            end,
+            label: `${start} - ${end}`,
+            count: end - start + 1
+        });
+    }
+
+    // Additional common tier buckets (e.g. 501 - 1000, 1 - 500, 1 - 1000)
+    if (totalCount > 500) {
+        const end501to1000 = Math.min(1000, totalCount);
+        if (end501to1000 > 500 && !ranges.some(r => r.start === 501 && r.end === end501to1000)) {
+            ranges.push({
+                start: 501,
+                end: end501to1000,
+                label: `501 - ${end501to1000} (Large)`,
+                count: end501to1000 - 501 + 1,
+                isLarge: true
+            });
+        }
+    }
+    if (totalCount >= 1000 && !ranges.some(r => r.start === 1 && r.end === 1000)) {
+        ranges.push({
+            start: 1,
+            end: 1000,
+            label: `1 - 1000 (Tier 1 Limit)`,
+            count: 1000,
+            isLarge: true
+        });
+    }
+
+    return ranges;
+}
+
+// Populate Range Selector in Top Bar & Chips inside Dropdown
+function populateBroadcastRangeOptions() {
+    const sel = document.getElementById('bc-range-filter-select');
+    const chipsContainer = document.getElementById('bc-range-chips-container');
+    const totalCount = broadcastCustomersCache.length;
+
+    const ranges = generateCustomerRanges(totalCount);
+
+    if (sel) {
+        sel.innerHTML = `<option value="">-- All Customers (1 to ${totalCount}) --</option>`;
+        ranges.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = `${r.start}-${r.end}`;
+
+            // Count sent vs unsent in this range
+            let sentCount = 0;
+            for (let i = r.start - 1; i < r.end && i < totalCount; i++) {
+                if (parseInt(broadcastCustomersCache[i]?.outbound_count || 0, 10) > 0) sentCount++;
+            }
+            const unsentCount = r.count - sentCount;
+
+            opt.textContent = `Range ${r.label} (${r.count} total • ${sentCount} sent, ${unsentCount} unsent)`;
+            if (activeBroadcastRangeFilter && activeBroadcastRangeFilter.start === r.start && activeBroadcastRangeFilter.end === r.end) {
+                opt.selected = true;
+            }
+            sel.appendChild(opt);
+        });
+    }
+
+    if (chipsContainer) {
+        chipsContainer.innerHTML = '';
+
+        // "All (1 - N)" Chip
+        const allChip = document.createElement('button');
+        allChip.type = 'button';
+        const isAllActive = !activeBroadcastRangeFilter;
+        allChip.className = `btn sm ${isAllActive ? 'primary' : 'secondary'}`;
+        allChip.style.cssText = 'padding: 0.2rem 0.55rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0;';
+        allChip.innerHTML = `All (1 - ${totalCount})`;
+        allChip.onclick = () => clearBroadcastRangeFilter();
+        chipsContainer.appendChild(allChip);
+
+        ranges.forEach(r => {
+            const isActive = activeBroadcastRangeFilter && activeBroadcastRangeFilter.start === r.start && activeBroadcastRangeFilter.end === r.end;
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'btn sm';
+            chip.style.cssText = `padding: 0.2rem 0.6rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0; cursor: pointer; border: 1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; background: ${isActive ? 'var(--primary-light)' : 'var(--bg-card)'}; color: ${isActive ? 'var(--primary)' : 'var(--text-main)'}; font-weight: ${isActive ? '700' : '500'};`;
+
+            // If a tag filter is active, compute how many matching that tag in this range
+            let tagSubtext = '';
+            if (activeBroadcastTagFilter) {
+                const lowerTag = activeBroadcastTagFilter.toLowerCase();
+                let tagInRange = 0;
+                for (let i = r.start - 1; i < r.end && i < totalCount; i++) {
+                    const c = broadcastCustomersCache[i];
+                    if (c && c.tags && c.tags.split(',').map(s => s.trim().toLowerCase()).includes(lowerTag)) {
+                        tagInRange++;
+                    }
+                }
+                tagSubtext = ` • ${tagInRange} ${activeBroadcastTagFilter}`;
+            }
+
+            chip.innerHTML = `🔢 ${r.label} <span style="opacity:0.75; font-size:0.68rem;">(${r.count}${tagSubtext})</span>`;
+            chip.onclick = () => {
+                if (isActive) {
+                    clearBroadcastRangeFilter();
+                } else {
+                    applyBroadcastRangeFilter(r, true);
+                }
+            };
+            chipsContainer.appendChild(chip);
+        });
+    }
+}
+
+// Populate Tag Selector in Top Bar & Chips inside Dropdown (co-aware of active range)
 function populateBroadcastTagFilterOptions() {
     const sel = document.getElementById('bc-tag-filter-select');
     const chipsContainer = document.getElementById('bc-tag-chips-container');
+    const hasRange = !!activeBroadcastRangeFilter;
 
-    // Calculate customer count per tag
+    // Calculate customer count per tag overall and within active range
     const tagCounts = {};
-    broadcastCustomersCache.forEach(c => {
+    const tagCountsInRange = {};
+    broadcastCustomersCache.forEach((c, idx) => {
+        const srNo = idx + 1;
+        const inRange = !hasRange || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
         if (c.tags) {
             c.tags.split(',').forEach(raw => {
                 const t = raw.trim();
-                if (t) tagCounts[t.toLowerCase()] = (tagCounts[t.toLowerCase()] || 0) + 1;
+                if (t) {
+                    const lower = t.toLowerCase();
+                    tagCounts[lower] = (tagCounts[lower] || 0) + 1;
+                    if (inRange) {
+                        tagCountsInRange[lower] = (tagCountsInRange[lower] || 0) + 1;
+                    }
+                }
             });
         }
     });
@@ -6288,10 +6419,12 @@ function populateBroadcastTagFilterOptions() {
     if (sel) {
         sel.innerHTML = '<option value="">-- All Tags (Show All) --</option>';
         availableTags.forEach(t => {
-            const count = tagCounts[(t.name || '').toLowerCase()] || 0;
+            const lower = (t.name || '').toLowerCase();
+            const count = hasRange ? (tagCountsInRange[lower] || 0) : (tagCounts[lower] || 0);
+            const totalTag = tagCounts[lower] || 0;
             const opt = document.createElement('option');
             opt.value = t.name;
-            opt.textContent = `🏷️ ${t.name} (${count})`;
+            opt.textContent = hasRange ? `🏷️ ${t.name} (${count} in range / ${totalTag} total)` : `🏷️ ${t.name} (${count})`;
             if (t.name.toLowerCase() === activeBroadcastTagFilter.toLowerCase()) opt.selected = true;
             sel.appendChild(opt);
         });
@@ -6300,24 +6433,29 @@ function populateBroadcastTagFilterOptions() {
     if (chipsContainer) {
         chipsContainer.innerHTML = '';
 
-        // "All" Chip
+        // "All Tags" Chip
         const allChip = document.createElement('button');
         allChip.type = 'button';
-        allChip.className = `btn sm ${!activeBroadcastTagFilter ? 'primary' : 'secondary'}`;
+        const isAllActive = !activeBroadcastTagFilter;
+        allChip.className = `btn sm ${isAllActive ? 'primary' : 'secondary'}`;
         allChip.style.cssText = 'padding: 0.2rem 0.55rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0;';
-        allChip.innerHTML = `All (${broadcastCustomersCache.length})`;
+        const allCount = hasRange
+            ? Math.max(0, Math.min(activeBroadcastRangeFilter.end, broadcastCustomersCache.length) - activeBroadcastRangeFilter.start + 1)
+            : broadcastCustomersCache.length;
+        allChip.innerHTML = `All (${allCount})`;
         allChip.onclick = () => clearBroadcastTagFilter();
         chipsContainer.appendChild(allChip);
 
         availableTags.forEach(t => {
-            const count = tagCounts[(t.name || '').toLowerCase()] || 0;
-            if (count === 0 && !t.is_default) return;
+            const lower = (t.name || '').toLowerCase();
+            const count = hasRange ? (tagCountsInRange[lower] || 0) : (tagCounts[lower] || 0);
+            if (count === 0 && !t.is_default && !hasRange) return;
             const isActive = t.name.toLowerCase() === activeBroadcastTagFilter.toLowerCase();
             const chip = document.createElement('button');
             chip.type = 'button';
             chip.className = 'btn sm';
             chip.style.cssText = `padding: 0.2rem 0.6rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0; cursor: pointer; border: 1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; background: ${isActive ? 'var(--primary-light)' : 'var(--bg-card)'}; color: ${isActive ? 'var(--primary)' : 'var(--text-main)'}; font-weight: ${isActive ? '700' : '500'};`;
-            chip.innerHTML = `🏷️ ${t.name} <span style="opacity:0.75; font-size:0.68rem;">(${count})</span>`;
+            chip.innerHTML = `🏷️ ${escapeHtml(t.name)} <span style="opacity:0.75; font-size:0.68rem;">(${count})</span>`;
             chip.onclick = () => {
                 if (isActive) {
                     clearBroadcastTagFilter();
@@ -6330,6 +6468,85 @@ function populateBroadcastTagFilterOptions() {
     }
 }
 
+// Apply Range Selection Filter (e.g. '1-250', '251-500', or {start: 1, end: 250})
+window.applyBroadcastRangeFilter = function applyBroadcastRangeFilter(rangeVal, autoSelect = true) {
+    if (!rangeVal) {
+        clearBroadcastRangeFilter();
+        return;
+    }
+
+    let start = 1, end = broadcastCustomersCache.length;
+    if (typeof rangeVal === 'string') {
+        const parts = rangeVal.split('-');
+        if (parts.length === 2) {
+            start = parseInt(parts[0], 10);
+            end = parseInt(parts[1], 10);
+        }
+    } else if (typeof rangeVal === 'object' && rangeVal.start && rangeVal.end) {
+        start = parseInt(rangeVal.start, 10);
+        end = parseInt(rangeVal.end, 10);
+    }
+
+    if (isNaN(start) || start < 1) start = 1;
+    if (isNaN(end) || end < start) end = start;
+
+    activeBroadcastRangeFilter = { start, end, label: `${start} - ${end}` };
+
+    const sel = document.getElementById('bc-range-filter-select');
+    if (sel) sel.value = `${start}-${end}`;
+
+    const clearBtn = document.getElementById('btn-bc-clear-range-filter');
+    if (clearBtn) clearBtn.style.display = 'inline-flex';
+
+    populateBroadcastRangeOptions();
+    populateBroadcastTagFilterOptions();
+
+    // If autoSelect: Check ONLY customers that match the active range AND active tag!
+    if (autoSelect) {
+        const lowerTag = (activeBroadcastTagFilter || '').toLowerCase().trim();
+        let selectedCount = 0;
+
+        document.querySelectorAll('.bc-cust-cb').forEach(cb => {
+            const custId = parseInt(cb.value, 10);
+            const label = cb.closest('.option-item');
+            const srNo = label ? parseInt(label.getAttribute('data-sr'), 10) : 0;
+            const cust = broadcastCustomersCache.find(c => c.id === custId);
+
+            const inRange = srNo >= start && srNo <= end;
+            const custTags = cust && cust.tags ? cust.tags.split(',').map(s => s.trim().toLowerCase()) : [];
+            const hasTag = !lowerTag || custTags.includes(lowerTag);
+
+            if (inRange && hasTag) {
+                cb.checked = true;
+                selectedCount++;
+            } else {
+                cb.checked = false;
+            }
+        });
+
+        const selectAll = document.getElementById('bc-select-all');
+        if (selectAll) selectAll.checked = selectedCount > 0;
+    }
+
+    filterBroadcastCustomerList();
+    updateBcDisplay();
+};
+
+window.clearBroadcastRangeFilter = function clearBroadcastRangeFilter() {
+    activeBroadcastRangeFilter = null;
+    const sel = document.getElementById('bc-range-filter-select');
+    if (sel) sel.value = '';
+
+    const clearBtn = document.getElementById('btn-bc-clear-range-filter');
+    if (clearBtn) clearBtn.style.display = 'none';
+
+    populateBroadcastRangeOptions();
+    populateBroadcastTagFilterOptions();
+    filterBroadcastCustomerList();
+    updateBcDisplay();
+};
+
+// Apply Tag Selection Filter (Combine with active range)
 window.applyBroadcastTagFilter = function applyBroadcastTagFilter(tagName, autoSelect = false) {
     activeBroadcastTagFilter = (tagName || '').trim();
     if (!activeBroadcastTagFilter) {
@@ -6344,22 +6561,32 @@ window.applyBroadcastTagFilter = function applyBroadcastTagFilter(tagName, autoS
     if (clearBtn) clearBtn.style.display = 'inline-flex';
 
     populateBroadcastTagFilterOptions();
+    populateBroadcastRangeOptions();
 
-    // If autoSelect: Check ONLY customers having this tag!
+    // If autoSelect: Check ONLY customers having this tag AND inside active range!
     if (autoSelect && activeBroadcastTagFilter) {
         const lowerTag = activeBroadcastTagFilter.toLowerCase();
         let matchedCount = 0;
 
         document.querySelectorAll('.bc-cust-cb').forEach(cb => {
-            const custId = parseInt(cb.value);
+            const custId = parseInt(cb.value, 10);
+            const label = cb.closest('.option-item');
+            const srNo = label ? parseInt(label.getAttribute('data-sr'), 10) : 0;
             const cust = broadcastCustomersCache.find(c => c.id === custId);
+
+            const inRange = !activeBroadcastRangeFilter || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
             const hasTag = cust && cust.tags && cust.tags.split(',').map(s => s.trim().toLowerCase()).includes(lowerTag);
-            cb.checked = !!hasTag;
-            if (hasTag) matchedCount++;
+
+            if (inRange && hasTag) {
+                cb.checked = true;
+                matchedCount++;
+            } else {
+                cb.checked = false;
+            }
         });
 
         const selectAll = document.getElementById('bc-select-all');
-        if (selectAll) selectAll.checked = false;
+        if (selectAll) selectAll.checked = matchedCount > 0;
 
         updateBcDisplay();
     }
@@ -6376,6 +6603,7 @@ window.clearBroadcastTagFilter = function clearBroadcastTagFilter() {
     if (clearBtn) clearBtn.style.display = 'none';
 
     populateBroadcastTagFilterOptions();
+    populateBroadcastRangeOptions();
     filterBroadcastCustomerList();
     updateBcDisplay();
 };
@@ -6385,6 +6613,68 @@ window.clearBroadcastAudienceSelection = function clearBroadcastAudienceSelectio
     const selectAll = document.getElementById('bc-select-all');
     if (selectAll) selectAll.checked = false;
     clearBroadcastTagFilter();
+    clearBroadcastRangeFilter();
+    updateBcDisplay();
+};
+
+window.toggleBroadcastCustomRangeInput = function toggleBroadcastCustomRangeInput(forceState) {
+    const row = document.getElementById('bc-custom-range-row');
+    if (!row) return;
+    const shouldShow = (typeof forceState === 'boolean') ? forceState : (row.style.display === 'none');
+    row.style.display = shouldShow ? 'flex' : 'none';
+    if (shouldShow) {
+        const fromInput = document.getElementById('bc-range-custom-from');
+        const toInput = document.getElementById('bc-range-custom-to');
+        if (fromInput && !fromInput.value) fromInput.value = '1';
+        if (toInput && !toInput.value) toInput.value = Math.min(250, broadcastCustomersCache.length || 250);
+        fromInput?.focus();
+    }
+};
+
+window.applyBroadcastCustomRange = function applyBroadcastCustomRange() {
+    const fromInput = document.getElementById('bc-range-custom-from');
+    const toInput = document.getElementById('bc-range-custom-to');
+    const start = parseInt(fromInput?.value, 10);
+    const end = parseInt(toInput?.value, 10);
+
+    if (isNaN(start) || start < 1) {
+        alert('Please enter a valid starting Serial Number (1 or higher).');
+        return;
+    }
+    if (isNaN(end) || end < start) {
+        alert('Ending Serial Number must be greater than or equal to starting Serial Number.');
+        return;
+    }
+
+    applyBroadcastRangeFilter({ start, end }, true);
+};
+
+// Select only customers in active range/tag who have not received outbound messages yet
+window.selectUnsentInCurrentFilter = function selectUnsentInCurrentFilter() {
+    let checkedCount = 0;
+    const lowerTag = (activeBroadcastTagFilter || '').toLowerCase().trim();
+
+    document.querySelectorAll('.bc-cust-cb').forEach(cb => {
+        const custId = parseInt(cb.value, 10);
+        const label = cb.closest('.option-item');
+        const srNo = label ? parseInt(label.getAttribute('data-sr'), 10) : 0;
+        const cust = broadcastCustomersCache.find(c => c.id === custId);
+
+        const inRange = !activeBroadcastRangeFilter || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
+        const hasTag = !lowerTag || (cust && cust.tags && cust.tags.split(',').map(s => s.trim().toLowerCase()).includes(lowerTag));
+        const isUnsent = !cust || !cust.outbound_count || parseInt(cust.outbound_count, 10) === 0;
+
+        if (inRange && hasTag && isUnsent) {
+            cb.checked = true;
+            checkedCount++;
+        } else {
+            cb.checked = false;
+        }
+    });
+
+    const selectAll = document.getElementById('bc-select-all');
+    if (selectAll) selectAll.checked = false;
+
     updateBcDisplay();
 };
 
@@ -6397,19 +6687,26 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
 
     optionLabels.forEach(label => {
         const custId = label.getAttribute('data-id');
+        const srNo = parseInt(label.getAttribute('data-sr'), 10) || 0;
         const cust = broadcastCustomersCache.find(c => String(c.id) === String(custId));
         if (!cust) return;
 
         const custTags = cust.tags ? cust.tags.split(',').map(s => s.trim().toLowerCase()) : [];
         const matchesTag = !lowerFilterTag || custTags.includes(lowerFilterTag);
 
+        const matchesRange = !activeBroadcastRangeFilter || (
+            srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end
+        );
+
         const matchesSearch = !searchVal || (
             (cust.name && cust.name.toLowerCase().includes(searchVal)) ||
             (cust.phone && cust.phone.includes(searchVal)) ||
+            String(srNo) === searchVal ||
+            ('#' + srNo) === searchVal ||
             custTags.some(t => t.includes(searchVal))
         );
 
-        if (matchesTag && matchesSearch) {
+        if (matchesTag && matchesRange && matchesSearch) {
             label.style.display = 'flex';
             visibleCount++;
         } else {
@@ -6419,7 +6716,11 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
 
     const selectAllLabel = document.getElementById('bc-select-all-label');
     if (selectAllLabel) {
-        if (activeBroadcastTagFilter) {
+        if (activeBroadcastRangeFilter && activeBroadcastTagFilter) {
+            selectAllLabel.textContent = `Select All with Tag "${activeBroadcastTagFilter}" in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} (${visibleCount})`;
+        } else if (activeBroadcastRangeFilter) {
+            selectAllLabel.textContent = `Select All in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} (${visibleCount})`;
+        } else if (activeBroadcastTagFilter) {
             selectAllLabel.textContent = `Select All with Tag "${activeBroadcastTagFilter}" (${visibleCount})`;
         } else if (searchVal) {
             selectAllLabel.textContent = `Select All Filtered (${visibleCount})`;
@@ -6431,6 +6732,14 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
     const countBadge = document.getElementById('bc-matching-count-badge');
     if (countBadge) {
         countBadge.textContent = `${visibleCount} shown`;
+    }
+
+    const summarySpan = document.getElementById('bc-active-filter-summary');
+    if (summarySpan) {
+        const parts = [];
+        if (activeBroadcastRangeFilter) parts.push(`Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end}`);
+        if (activeBroadcastTagFilter) parts.push(`Tag: ${activeBroadcastTagFilter}`);
+        summarySpan.textContent = parts.join(' • ');
     }
 };
 
@@ -6447,20 +6756,29 @@ async function loadCustomersForSelect() {
         const list = document.getElementById('bc-target-list');
         if (list && Array.isArray(customers)) {
             list.innerHTML = '';
-            customers.forEach(c => {
+            customers.forEach((c, idx) => {
                 const label = document.createElement('label');
                 label.className = 'option-item';
                 label.setAttribute('data-id', c.id);
+                label.setAttribute('data-sr', idx + 1);
 
+                const srNo = idx + 1;
+                const outboundCount = parseInt(c.outbound_count || 0, 10);
+                const isSent = outboundCount > 0;
                 const tagsArr = c.tags ? c.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
                 const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
 
                 label.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 0.65rem; flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0;">
                         <input type="checkbox" class="bc-cust-cb" value="${c.id}" style="margin:0;">
+                        <span class="bc-sr-badge" title="Customer Serial Number">#${srNo}</span>
                         <span style="font-size: 0.825rem; color: var(--text-main); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            ${c.name} <code style="font-size: 0.75rem; color: var(--text-muted);">(${c.phone})</code>
+                            ${escapeHtml(c.name || 'Unnamed')} <code style="font-size: 0.75rem; color: var(--text-muted);">(${escapeHtml(c.phone || '')})</code>
                         </span>
+                        ${isSent 
+                            ? `<span class="bc-sent-badge" title="Sent outbound broadcast/messages previously (${outboundCount} sent)">✓ Sent (${outboundCount})</span>`
+                            : `<span class="bc-pending-badge" title="No outbound messages sent yet">• Unsent</span>`
+                        }
                     </div>
                     <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: flex-end; align-items: center;">
                         ${pillsHtml}
@@ -6469,6 +6787,7 @@ async function loadCustomersForSelect() {
                 list.appendChild(label);
             });
 
+            populateBroadcastRangeOptions();
             populateBroadcastTagFilterOptions();
 
             const selectAll = document.getElementById('bc-select-all');
@@ -6476,7 +6795,7 @@ async function loadCustomersForSelect() {
 
             selectAll?.addEventListener('change', (e) => {
                 const isChecked = e.target.checked;
-                // Only toggle checkboxes of visible customers (matching active tag filter / search)
+                // Only toggle checkboxes of visible customers (matching active range, tag filter, and search)
                 document.querySelectorAll('#bc-target-list .option-item').forEach(item => {
                     if (item.style.display !== 'none') {
                         const cb = item.querySelector('.bc-cust-cb');
@@ -6501,7 +6820,7 @@ async function loadCustomersForSelect() {
                 if (selectAll) selectAll.checked = false;
 
                 cbs.forEach(cb => {
-                    const custId = parseInt(cb.value);
+                    const custId = parseInt(cb.value, 10);
                     const cust = broadcastCustomersCache.find(c => c.id === custId);
                     if (cust && cust.last_inbound_at && (now - new Date(cust.last_inbound_at).getTime() <= twentyFourHoursMs)) {
                         cb.checked = true;
@@ -6524,10 +6843,14 @@ function updateBcDisplay() {
     selectedCustomerIds = Array.from(cbs).map(cb => cb.value);
 
     const selectAll = document.getElementById('bc-select-all');
-    if (selectAll?.checked && !activeBroadcastTagFilter) {
-        bcDisplay.textContent = `All Customers Selected (${broadcastCustomersCache.length})`;
-    } else if (selectedCustomerIds.length === 0) {
+    if (selectedCustomerIds.length === 0) {
         bcDisplay.textContent = "Select Audience...";
+    } else if (selectAll?.checked && !activeBroadcastTagFilter && !activeBroadcastRangeFilter) {
+        bcDisplay.textContent = `All Customers Selected (${broadcastCustomersCache.length})`;
+    } else if (activeBroadcastRangeFilter && activeBroadcastTagFilter) {
+        bcDisplay.textContent = `🎯 ${selectedCustomerIds.length} with "${activeBroadcastTagFilter}" in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} Selected`;
+    } else if (activeBroadcastRangeFilter) {
+        bcDisplay.textContent = `🎯 ${selectedCustomerIds.length} Customer(s) in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} Selected`;
     } else if (activeBroadcastTagFilter) {
         bcDisplay.textContent = `🎯 ${selectedCustomerIds.length} Customer(s) with "${activeBroadcastTagFilter}" Selected`;
     } else {
@@ -6889,13 +7212,13 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
         const checkedCbs = document.querySelectorAll('.bc-cust-cb:checked');
         const checkedIds = Array.from(checkedCbs).map(cb => String(cb.value));
 
-        if (isSelectAll && !activeBroadcastTagFilter) {
+        if (isSelectAll && !activeBroadcastTagFilter && !activeBroadcastRangeFilter) {
             // Truly all customers in the workspace
             const res = await apiFetch('/api/customers');
             const allCust = await res.json();
             if (Array.isArray(allCust)) targetList = allCust;
         } else if (checkedIds.length > 0) {
-            // Specific customers checked individually or via tag auto-select
+            // Specific customers checked individually or via range/tag auto-select
             if (broadcastCustomersCache && broadcastCustomersCache.length > 0) {
                 targetList = broadcastCustomersCache.filter(c => checkedIds.includes(String(c.id)));
             } else {
@@ -6905,22 +7228,24 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                     targetList = allCust.filter(c => checkedIds.includes(String(c.id)));
                 }
             }
-        } else if (activeBroadcastTagFilter) {
-            // Tag is selected but no individual checkboxes were explicitly ticked
-            const lowerFilterTag = activeBroadcastTagFilter.toLowerCase().trim();
+        } else if (activeBroadcastRangeFilter || activeBroadcastTagFilter) {
+            // Range or tag selected but no individual checkboxes explicitly ticked
             const pool = (broadcastCustomersCache && broadcastCustomersCache.length > 0)
                 ? broadcastCustomersCache
                 : await (await apiFetch('/api/customers')).json();
             if (Array.isArray(pool)) {
-                targetList = pool.filter(c => {
-                    if (!c.tags) return false;
-                    return c.tags.split(',').map(s => s.trim().toLowerCase()).includes(lowerFilterTag);
+                targetList = pool.filter((c, idx) => {
+                    const sr = idx + 1;
+                    const matchesRange = !activeBroadcastRangeFilter || (sr >= activeBroadcastRangeFilter.start && sr <= activeBroadcastRangeFilter.end);
+                    const custTags = c.tags ? c.tags.split(',').map(s => s.trim().toLowerCase()) : [];
+                    const matchesTag = !activeBroadcastTagFilter || custTags.includes(activeBroadcastTagFilter.toLowerCase().trim());
+                    return matchesRange && matchesTag;
                 });
             }
         }
 
-        // 🔒 STRICT TAG FILTER CHECK:
-        // When a tag filter is active, guarantee that ONLY customers who have this tag are included!
+        // 🔒 STRICT TAG & RANGE FILTER CHECK:
+        // Guarantee that if a tag or range filter is active, only customers satisfying both are included
         if (activeBroadcastTagFilter) {
             const lowerFilterTag = activeBroadcastTagFilter.toLowerCase().trim();
             targetList = targetList.filter(c => {
@@ -6929,11 +7254,24 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                 return custTags.includes(lowerFilterTag);
             });
         }
+        if (activeBroadcastRangeFilter) {
+            targetList = targetList.filter(c => {
+                const idx = broadcastCustomersCache.findIndex(bc => bc.id === c.id);
+                const sr = idx !== -1 ? idx + 1 : 0;
+                return sr >= activeBroadcastRangeFilter.start && sr <= activeBroadcastRangeFilter.end;
+            });
+        }
 
         if (targetList.length === 0) {
-            throw new Error(activeBroadcastTagFilter
-                ? `No customers found with tag "${activeBroadcastTagFilter}".`
-                : "Please select at least one customer or tag.");
+            let errorMsg = "Please select at least one customer, range, or tag.";
+            if (activeBroadcastRangeFilter && activeBroadcastTagFilter) {
+                errorMsg = `No customers found with tag "${activeBroadcastTagFilter}" in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end}.`;
+            } else if (activeBroadcastRangeFilter) {
+                errorMsg = `No customers found in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end}.`;
+            } else if (activeBroadcastTagFilter) {
+                errorMsg = `No customers found with tag "${activeBroadcastTagFilter}".`;
+            }
+            throw new Error(errorMsg);
         }
 
         const type = document.getElementById('bc-type').value;
