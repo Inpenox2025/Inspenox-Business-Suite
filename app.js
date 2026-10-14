@@ -8635,18 +8635,24 @@ window.openSubscribeModal = function openSubscribeModal(planId) {
     const plan = allSubscriptionPlans.find(p => p.id === planId) || allSubscriptionPlans[0];
     if (!plan) return;
 
-    const isAnnual = currentBillingCycle === 'annual';
-    const basePrice = isAnnual ? plan.price_annual : plan.price_monthly;
+    const cycleVal = currentBillingCycle || 'monthly';
+    const checkoutSelect = document.getElementById('checkout-cycle-select');
+    if (checkoutSelect) checkoutSelect.value = cycleVal;
+
+    const basePrice = getPlanCyclePrice(plan, cycleVal);
+    const cycleInfo = getCyclePeriodInfo(cycleVal);
 
     document.getElementById('checkout-plan-id').value = plan.id;
-    document.getElementById('checkout-plan-name').value = `${plan.name} (${isAnnual ? 'Annual' : 'Monthly'})`;
+    document.getElementById('checkout-plan-name').value = `${plan.name} (${cycleInfo.label})`;
     document.getElementById('checkout-plan-price').value = basePrice;
     document.getElementById('checkout-applied-coupon-id').value = '';
     document.getElementById('checkout-applied-discount-amount').value = '0';
     document.getElementById('checkout-applied-final-amount').value = basePrice;
 
     document.getElementById('checkout-display-plan').textContent = plan.name;
-    document.getElementById('checkout-display-cycle').textContent = isAnnual ? 'Annual (20% Off)' : 'Monthly';
+    const dispCycle = document.getElementById('checkout-display-cycle');
+    if (dispCycle) dispCycle.textContent = cycleInfo.label;
+
     document.getElementById('checkout-display-base-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
     document.getElementById('checkout-display-final-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
 
@@ -8675,6 +8681,44 @@ window.openSubscribeModal = function openSubscribeModal(planId) {
 
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
+};
+
+window.onCheckoutCycleChange = function onCheckoutCycleChange(newCycle) {
+    currentBillingCycle = newCycle || 'monthly';
+
+    // Synchronize page-level selector
+    const pageSelect = document.getElementById('sub-billing-cycle-select');
+    if (pageSelect && pageSelect.value !== currentBillingCycle) {
+        pageSelect.value = currentBillingCycle;
+    }
+
+    const planId = document.getElementById('checkout-plan-id')?.value;
+    const plan = allSubscriptionPlans.find(p => p.id === planId) || allSubscriptionPlans[0];
+    if (!plan) return;
+
+    const basePrice = getPlanCyclePrice(plan, currentBillingCycle);
+    const cycleInfo = getCyclePeriodInfo(currentBillingCycle);
+
+    document.getElementById('checkout-plan-name').value = `${plan.name} (${cycleInfo.label})`;
+    document.getElementById('checkout-plan-price').value = basePrice;
+    document.getElementById('checkout-display-base-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+    const dispCycle = document.getElementById('checkout-display-cycle');
+    if (dispCycle) dispCycle.textContent = cycleInfo.label;
+
+    // If coupon is already present, recalculate coupon discount against the new base price
+    const couponCode = document.getElementById('checkout-coupon-code')?.value?.trim();
+    if (couponCode) {
+        applyCheckoutCoupon(true);
+    } else {
+        document.getElementById('checkout-applied-discount-amount').value = '0';
+        document.getElementById('checkout-applied-final-amount').value = basePrice;
+        document.getElementById('checkout-display-final-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        const rowDisc = document.getElementById('checkout-row-discount');
+        if (rowDisc) rowDisc.style.display = 'none';
+    }
+
+    renderPricingCards();
 };
 
 window.closeCheckoutModal = function closeCheckoutModal() {
