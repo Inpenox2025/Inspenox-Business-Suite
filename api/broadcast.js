@@ -31,12 +31,62 @@ function formatMetaMediaObject(media_id, req) {
     return { link: `${proto}://${host}${cleanPath}` };
 }
 
+let broadcastSchemaEnsured = false;
+async function ensureBroadcastSchema(sql) {
+    if (broadcastSchemaEnsured) return;
+    try {
+        await sql`
+            CREATE TABLE IF NOT EXISTS campaigns (
+                id SERIAL PRIMARY KEY,
+                company_id INT,
+                name TEXT,
+                channel TEXT DEFAULT 'whatsapp',
+                message_type TEXT,
+                content TEXT,
+                media_url TEXT,
+                cta_text TEXT,
+                cta_url TEXT,
+                sent_count INT DEFAULT 0,
+                failed_count INT DEFAULT 0,
+                delivered_count INT DEFAULT 0,
+                read_count INT DEFAULT 0,
+                replied_count INT DEFAULT 0,
+                clicked_count INT DEFAULT 0,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            );
+        `;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS company_id INT;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS name TEXT;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS channel TEXT DEFAULT 'whatsapp';`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS message_type TEXT;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS content TEXT;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS media_url TEXT;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS cta_text TEXT;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS cta_url TEXT;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS sent_count INT DEFAULT 0;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS failed_count INT DEFAULT 0;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS delivered_count INT DEFAULT 0;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS read_count INT DEFAULT 0;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS replied_count INT DEFAULT 0;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS clicked_count INT DEFAULT 0;`;
+
+        await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS campaign_id INT;`;
+        broadcastSchemaEnsured = true;
+    } catch (e) {
+        console.error('Broadcast schema migration error:', e);
+    }
+}
+
 module.exports = async (req, res) => {
+    const env = req.env || process.env || {};
+    const sql = getDb(env);
+
+    // Auto-ensure schema & columns exist in whichever DB environment is running
+    await ensureBroadcastSchema(sql);
+
     // --- GET /api/broadcast: Fetch campaigns list or single campaign analytics ---
     if (req.method === 'GET') {
         try {
-            const env = req.env || process.env || {};
-            const sql = getDb(env);
             const rawCompanyHeader = req.headers['x-company-id'];
             const companyId = (req.query && req.query.company_id) 
                 ? parseInt(req.query.company_id) 
@@ -594,10 +644,22 @@ module.exports = async (req, res) => {
                 sent++;
                 const wa_message_id = (data.messages && data.messages[0]) ? data.messages[0].id : 'sent_' + Date.now();
                 const saveContent = type === 'template' ? `[Template] ${template_name}` : replaceDynamicVars(content);
-                await sql`
-                    INSERT INTO messages (company_id, customer_id, direction, type, content, wa_message_id, status, campaign_id) 
-                    VALUES (${companyId}, ${cust.id}, 'outbound', ${type}, ${saveContent}, ${wa_message_id}, 'sent', ${activeCampaignId})
-                `;
+                try {
+                    await sql`
+                        INSERT INTO messages (company_id, customer_id, direction, type, content, wa_message_id, status, campaign_id) 
+                        VALUES (${companyId}, ${cust.id}, 'outbound', ${type}, ${saveContent}, ${wa_message_id}, 'sent', ${activeCampaignId})
+                    `;
+                } catch (msgErr) {
+                    console.warn('Logging message with campaign_id failed, attempting fallback without campaign_id:', msgErr);
+                    try {
+                        await sql`
+                            INSERT INTO messages (company_id, customer_id, direction, type, content, wa_message_id, status) 
+                            VALUES (${companyId}, ${cust.id}, 'outbound', ${type}, ${saveContent}, ${wa_message_id}, 'sent')
+                        `;
+                    } catch (e2) {
+                        console.error('Failed to log outbound message in database:', e2);
+                    }
+                }
             }
 
             // Small delay to prevent rate limits
@@ -606,12 +668,16 @@ module.exports = async (req, res) => {
 
         // Update campaign record counts
         if (activeCampaignId) {
-            await sql`
-                UPDATE campaigns 
-                SET sent_count = COALESCE(sent_count, 0) + ${sent},
-                    failed_count = COALESCE(failed_count, 0) + ${failed}
-                WHERE id = ${activeCampaignId}
-            `;
+            try {
+                await sql`
+                    UPDATE campaigns 
+                    SET sent_count = COALESCE(sent_count, 0) + ${sent},
+                        failed_count = COALESCE(failed_count, 0) + ${failed}
+                    WHERE id = ${activeCampaignId}
+                `;
+            } catch (e) {
+                console.error('Failed to update campaign record count:', e);
+            }
         }
 
         return res.status(200).json({ 

@@ -129,8 +129,15 @@ ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_saved BOOLEAN DEFAULT true;
 -- Add missing columns to messages, campaigns, users, media_library tables
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS channel TEXT DEFAULT 'whatsapp';
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS campaign_id INT REFERENCES campaigns(id) ON DELETE SET NULL;
 ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
 ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS channel TEXT DEFAULT 'whatsapp';
+ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS cta_text TEXT;
+ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS cta_url TEXT;
+ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS delivered_count INT DEFAULT 0;
+ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS read_count INT DEFAULT 0;
+ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS replied_count INT DEFAULT 0;
+ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS clicked_count INT DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
 ALTER TABLE media_library ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;
 ALTER TABLE companies RENAME COLUMN webhook_verify_token TO whatsapp_verify_token;
