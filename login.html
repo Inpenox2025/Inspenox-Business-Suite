@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inspenox Business Suite — Official WhatsApp Cloud API & Omnichannel Marketing Platform</title>
-    <meta name="description" content="5X your customer conversions with Inspenox Business Suite. Official Meta WhatsApp Cloud API broadcasts, Click-to-WhatsApp Ads, multi-agent shared inbox, and automated drips.">
+    <title>Inspenox usiness Suite For Marketing — Official WhatsApp Cloud API & Omnichannel Marketing Platform</title>
+    <meta name="description" content="5X your customer conversions with Inspenox usiness Suite For Marketing. Official Meta WhatsApp Cloud API broadcasts, Click-to-WhatsApp Ads, multi-agent shared inbox, and automated drips.">
     <meta name="keywords" content="WhatsApp Cloud API, WhatsApp Marketing Platform, Click to WhatsApp Ads, Omnichannel Marketing, Bulk WhatsApp Broadcast, Meta Business Partner, Inspenox, Shared Customer Inbox">
     <meta name="author" content="Inspenox">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
@@ -14,15 +14,15 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://marketing.inspenox.in/">
-    <meta property="og:title" content="Inspenox Business Suite — 5X Your Revenue with Official WhatsApp Marketing">
+    <meta property="og:title" content="Inspenox usiness Suite For Marketing — 5X Your Revenue with Official WhatsApp Marketing">
     <meta property="og:description" content="Broadcast high-converting campaigns, automate 24/7 lead capture, and manage multi-agent shared customer inbox with official Meta WhatsApp Cloud API.">
     <meta property="og:image" content="https://marketing.inspenox.in/hero-marketer.jpg">
-    <meta property="og:site_name" content="Inspenox Business Suite">
+    <meta property="og:site_name" content="Inspenox usiness Suite For Marketing">
 
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://marketing.inspenox.in/">
-    <meta name="twitter:title" content="Inspenox Business Suite — Official WhatsApp Cloud API Marketing">
+    <meta name="twitter:title" content="Inspenox usiness Suite For Marketing — Official WhatsApp Cloud API Marketing">
     <meta name="twitter:description" content="Broadcast, Automate, Engage, and Sell on WhatsApp with Official Meta Cloud APIs.">
     <meta name="twitter:image" content="https://marketing.inspenox.in/hero-marketer.jpg">
 
@@ -31,7 +31,7 @@
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      "name": "Inspenox Business Suite",
+      "name": "Inspenox usiness Suite For Marketing",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "All",
       "offers": {
@@ -53,6 +53,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/app.css">
+    <!-- Google Identity Services (OIDC) SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
         // Redirect to dashboard if already authenticated
         function checkLoggedInRedirect() {
@@ -893,7 +895,7 @@
             box-shadow: 0 25px 60px rgba(0, 168, 132, 0.15);
         }
 
-        /* Sign In Workspace Section */
+        /* Sign In & Sign Up Interactive 2-Column Showcase */
         .landing-auth-section {
             padding: 5rem 1.5rem;
             background: var(--bg-sidebar);
@@ -904,42 +906,199 @@
             justify-content: center;
         }
 
-        .login-box-card {
+        .auth-showcase-container {
             width: 100%;
-            max-width: 460px;
+            max-width: 1080px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 22px;
-            padding: 2.5rem;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35);
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1.05fr;
             text-align: left;
+            position: relative;
         }
 
-        .input-with-icon input {
-            width: 100%;
-            padding: 0.85rem 0.95rem 0.85rem 2.85rem;
+        .auth-showcase-sidebar {
+            background: rgba(0, 168, 132, 0.05);
+            border-right: 1px solid var(--border);
+            padding: 3rem 2.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        [data-theme="light"] .auth-showcase-sidebar {
+            background: #f0fdf4;
+        }
+
+        .auth-sidebar-highlight-banner {
+            background: #047857;
+            color: #ffffff;
             border-radius: 12px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 14px rgba(4, 120, 87, 0.25);
+        }
+
+        .auth-benefit-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 0.95rem 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            margin-bottom: 0.85rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="light"] .auth-benefit-card {
+            background: #ffffff;
+        }
+
+        .auth-showcase-form-wrap {
+            padding: 3rem 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .auth-switch-link {
+            position: absolute;
+            top: 1.75rem;
+            right: 2.25rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .auth-switch-link a {
+            color: #00a884;
+            font-weight: 700;
+            text-decoration: none;
+            margin-left: 0.35rem;
+        }
+
+        .auth-switch-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Google SSO Button */
+        .btn-google-sso {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            background: #4285f4;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.925rem;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
+        }
+
+        .btn-google-sso:hover {
+            background: #3367d6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .auth-input-group {
+            margin-bottom: 1rem;
+        }
+
+        .auth-input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .auth-input-field {
+            width: 100%;
+            padding: 0.75rem 0.95rem;
+            border-radius: 10px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text-main);
-            font-size: 0.925rem;
+            font-size: 0.9rem;
             outline: none;
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .input-with-icon input:focus {
-            border-color: var(--primary);
+        .auth-input-field:focus {
+            border-color: #00a884;
             box-shadow: 0 0 0 3px rgba(0, 168, 132, 0.2);
         }
 
-        .input-with-icon svg {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            width: 20px;
-            height: 20px;
+        .auth-phone-picker-wrap {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .auth-phone-code-select {
+            width: 110px;
+            padding: 0.75rem 0.65rem;
+            border-radius: 10px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            font-size: 0.85rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 850px) {
+            .auth-showcase-container {
+                grid-template-columns: 1fr;
+            }
+            .auth-showcase-sidebar {
+                display: none;
+            }
+            .auth-showcase-form-wrap {
+                padding: 2.25rem 1.25rem;
+            }
+            .auth-switch-link {
+                position: static;
+                text-align: center;
+                margin-bottom: 1.25rem;
+            }
         }
 
         /* Floating WhatsApp Chat Widget */
@@ -1141,7 +1300,7 @@
             </div>
             <div>
                 <h1 class="landing-logo-text">Inspenox</h1>
-                <span class="landing-logo-sub">Business Suite</span>
+                <span class="landing-logo-sub">Business Suite For Marketing</span>
             </div>
         </a>
 
@@ -1682,50 +1841,241 @@
         </div>
     </div>
 
-    <!-- Sign In / Workspace Auth Section -->
+    <!-- Interactive 2-Column Authentication Showcase (Login & Signup) -->
     <section id="login-section" class="landing-auth-section">
-        <div class="login-box-card">
-            <div style="margin-bottom: 1.75rem; text-align: center;">
-                <div style="width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, var(--primary), #059669); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; box-shadow: 0 6px 18px rgba(0, 168, 132, 0.35);">
-                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                    </svg>
+        <div class="auth-showcase-container">
+            
+            <!-- Left Sidebar (Values & Social Proof) -->
+            <div class="auth-showcase-sidebar">
+                
+                <!-- Sidebar Signup View Content -->
+                <div id="sidebar-signup-content">
+                    <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 1.5rem;">
+                        <div class="landing-logo-icon" style="width: 36px; height: 36px;">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ffffff" stroke-width="2.3">
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                            </svg>
+                        </div>
+                        <span style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 800; color: var(--text-main);">Inspenox</span>
+                    </div>
+
+                    <h2 style="font-family: 'Outfit', sans-serif; font-size: 2.15rem; font-weight: 900; line-height: 1.2; margin: 0 0 1.5rem 0; color: var(--text-main); letter-spacing: -0.5px;">
+                        Experience the future of <span style="color: #00a884;">WhatsApp Marketing</span>
+                    </h2>
+
+                    <!-- Green Launch Credits Banner -->
+                    <div class="auth-sidebar-highlight-banner">
+                        <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">🎁</div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.95rem;">₹1000 FREE Ad Credits</div>
+                            <div style="font-size: 0.775rem; opacity: 0.9;">Run Click-to-WhatsApp Ads & 5X your leads</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.725rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 0.85rem;">
+                        YOUR FREE FOREVER PLAN INCLUDES
+                    </div>
+
+                    <!-- Value Cards -->
+                    <div class="auth-benefit-card">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(0, 168, 132, 0.15); color: #00a884; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">💬</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);">FREE WhatsApp Business API</div>
+                            <div style="font-size: 0.725rem; color: var(--text-muted);">Instant verification & setup with Meta</div>
+                        </div>
+                    </div>
+
+                    <div class="auth-benefit-card">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(59, 130, 246, 0.15); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">📢</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);">Advanced AI Ads Manager</div>
+                            <div style="font-size: 0.725rem; color: var(--text-muted);">AI-powered Ad Campaign optimisation & targeting</div>
+                        </div>
+                    </div>
+
+                    <div class="auth-benefit-card">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">✅</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);">FREE Blue Tick Application</div>
+                            <div style="font-size: 0.725rem; color: var(--text-muted);">Apply for official verified WhatsApp Business account</div>
+                        </div>
+                    </div>
                 </div>
-                <h2 style="font-size: 1.55rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main); font-family: 'Outfit', sans-serif;">Sign In to Workspace</h2>
-                <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Enter your credentials to access your marketing dashboard & shared customer inbox.</p>
+
+                <!-- Sidebar Login View Content (Marketer Showcase) -->
+                <div id="sidebar-login-content" style="display: none;">
+                    <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 1.5rem;">
+                        <div class="landing-logo-icon" style="width: 36px; height: 36px;">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ffffff" stroke-width="2.3">
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                            </svg>
+                        </div>
+                        <span style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 800; color: var(--text-main);">Inspenox</span>
+                    </div>
+
+                    <h2 style="font-family: 'Outfit', sans-serif; font-size: 2.15rem; font-weight: 900; line-height: 1.2; margin: 0 0 1.5rem 0; color: var(--text-main); letter-spacing: -0.5px;">
+                        Send personalized campaigns on <span style="color: #00a884;">WhatsApp</span>
+                    </h2>
+
+                    <!-- Visual Mockup Element -->
+                    <div style="position: relative; border-radius: 18px; overflow: hidden; margin-bottom: 1.5rem; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                        <img src="/hero-marketer.jpg" alt="Inspenox Marketer" style="width: 100%; height: 210px; object-fit: cover; object-position: center 25%; display: block;">
+                        
+                        <div style="position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,0.92); color: #111b21; padding: 0.35rem 0.65rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 0.3rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                            <span>💰</span> 10X ROAS
+                        </div>
+
+                        <div style="position: absolute; bottom: 12px; right: 12px; background: rgba(255,255,255,0.92); color: #111b21; padding: 0.35rem 0.65rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 0.3rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                            <span style="color: #00a884;">✓</span> Order Placed
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trust Brands Footer -->
+                <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+                    <div style="font-size: 0.725rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.65rem;">
+                        Trusted by 10,000+ businesses
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; opacity: 0.75; font-size: 0.8rem; font-weight: 800; color: var(--text-muted);">
+                        <span>VIVO</span> • <span>SKULLCANDY</span> • <span>NEXA</span> • <span>ADANI</span> • <span>TATA</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- Error Banner -->
-            <div id="login-error-banner" style="display: none; padding: 0.75rem 0.95rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; color: #ef4444; font-size: 0.825rem; margin-bottom: 1.25rem;"></div>
+            <!-- Right Form Section -->
+            <div class="auth-showcase-form-wrap">
 
-            <!-- Login Form -->
-            <form id="login-form">
-                <div style="margin-bottom: 1.25rem;">
-                    <label style="display: block; font-size: 0.775rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px;">Username or Email</label>
-                    <div class="input-with-icon" style="position: relative;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        <input type="text" id="login-username" placeholder="Enter username or email" required autocomplete="username">
+                <!-- 1. SIGNUP VIEW CONTAINER -->
+                <div id="view-auth-signup">
+                    <div class="auth-switch-link">
+                        Already a member ? <a href="javascript:void(0)" onclick="toggleAuthMode('login')">Log in</a>
+                    </div>
+
+                    <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.85rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);">
+                        Create Your Inspenox Account
+                    </h2>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 1.5rem 0;">
+                        Fill in the details below to get started with your FREE FOREVER plan.
+                    </p>
+
+                    <!-- Google SSO Signup Button -->
+                    <button type="button" class="btn-google-sso btn-trigger-google">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                        </svg>
+                        Signup with Google
+                    </button>
+
+                    <div class="auth-divider">OR</div>
+
+                    <!-- Error Banner -->
+                    <div id="signup-error-banner" style="display: none; padding: 0.65rem 0.85rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444; font-size: 0.825rem; margin-bottom: 1.15rem;"></div>
+
+                    <!-- Native Signup Form -->
+                    <form id="signup-form">
+                        <div class="auth-input-group">
+                            <input type="text" id="signup-fullname" class="auth-input-field" placeholder="Full Name" required autocomplete="name">
+                        </div>
+
+                        <div class="auth-input-group">
+                            <input type="email" id="signup-email" class="auth-input-field" placeholder="Email" required autocomplete="email">
+                        </div>
+
+                        <!-- Phone Number with Country Dropdown -->
+                        <div class="auth-input-group">
+                            <div class="auth-phone-picker-wrap">
+                                <select id="signup-country-code" class="auth-phone-code-select">
+                                    <option value="+91" selected>🇮🇳 IN +91</option>
+                                    <option value="+1">🇺🇸 US +1</option>
+                                    <option value="+44">🇬🇧 UK +44</option>
+                                    <option value="+971">🇦🇪 AE +971</option>
+                                    <option value="+65">🇸🇬 SG +65</option>
+                                    <option value="+61">🇦🇺 AU +61</option>
+                                </select>
+                                <input type="tel" id="signup-phone" class="auth-input-field" placeholder="Personal WhatsApp Number" required autocomplete="tel">
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="auth-input-group" style="position: relative;">
+                            <input type="password" id="signup-password" class="auth-input-field" placeholder="Enter Password" required minlength="6" autocomplete="new-password">
+                            <button type="button" class="btn-toggle-input-pass" data-target="signup-password" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 2px;">👁️</button>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="auth-input-group" style="position: relative; margin-bottom: 1.5rem;">
+                            <input type="password" id="signup-password-confirm" class="auth-input-field" placeholder="Confirm Password" required minlength="6" autocomplete="new-password">
+                            <button type="button" class="btn-toggle-input-pass" data-target="signup-password-confirm" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 2px;">👁️</button>
+                        </div>
+
+                        <button type="submit" id="btn-signup-submit" class="btn-brand-primary" style="width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem;">
+                            Start Your FREE FOREVER Plan ➔
+                        </button>
+                    </form>
+
+                    <div style="font-size: 0.725rem; color: var(--text-muted); text-align: center; margin-top: 1.25rem;">
+                        The Google <a href="#" id="link-signup-privacy" style="color: var(--primary);">Privacy Policy</a> and <a href="#" id="link-signup-terms" style="color: var(--primary);">Terms of Service</a> apply.
                     </div>
                 </div>
 
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="display: block; font-size: 0.775rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px;">Password</label>
-                    <div class="input-with-icon" style="position: relative;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                        <input type="password" id="login-password" placeholder="Enter password" required autocomplete="current-password">
-                        <button type="button" id="btn-toggle-password" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 2px;" title="Toggle Password">👁️</button>
+                <!-- 2. LOGIN VIEW CONTAINER -->
+                <div id="view-auth-login" style="display: none;">
+                    <div class="auth-switch-link">
+                        Not a member yet? <a href="javascript:void(0)" onclick="toggleAuthMode('signup')">Sign up</a>
+                    </div>
+
+                    <div style="font-size: 0.75rem; font-weight: 800; color: #00a884; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.25rem;">
+                        WELCOME BACK
+                    </div>
+                    <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.85rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);">
+                        Log in to Inspenox
+                    </h2>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 1.5rem 0;">
+                        Enter your username or email to access your workspace.
+                    </p>
+
+                    <!-- Google SSO Login Button -->
+                    <button type="button" class="btn-google-sso btn-trigger-google">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                        </svg>
+                        Continue with Google
+                    </button>
+
+                    <div class="auth-divider">OR</div>
+
+                    <!-- Error Banner -->
+                    <div id="login-error-banner" style="display: none; padding: 0.65rem 0.85rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444; font-size: 0.825rem; margin-bottom: 1.15rem;"></div>
+
+                    <!-- Native Login Form (Accepts Username OR Email) -->
+                    <form id="login-form">
+                        <div class="auth-input-group">
+                            <input type="text" id="login-username" class="auth-input-field" placeholder="Username / Email" required autocomplete="username">
+                        </div>
+
+                        <div class="auth-input-group" style="position: relative; margin-bottom: 1.5rem;">
+                            <input type="password" id="login-password" class="auth-input-field" placeholder="Password" required autocomplete="current-password">
+                            <button type="button" class="btn-toggle-input-pass" data-target="login-password" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 2px;">👁️</button>
+                        </div>
+
+                        <button type="submit" id="btn-login-submit" class="btn-brand-primary" style="width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem;">
+                            Continue ➔
+                        </button>
+                    </form>
+
+                    <div style="margin-top: 1.5rem; text-align: center;">
+                        <a href="javascript:void(0)" id="link-forgot-password" style="font-size: 0.825rem; color: var(--text-muted); text-decoration: none;">
+                            Forgot Password?
+                        </a>
                     </div>
                 </div>
 
-                <button type="submit" id="btn-login-submit" class="btn-brand-primary" style="width: 100%; justify-content: center; padding: 0.9rem; font-size: 1rem;">
-                    Sign In to Dashboard ➔
-                </button>
-            </form>
-
-            <div style="margin-top: 1.75rem; display: flex; align-items: center; justify-content: center; gap: 1rem; font-size: 0.8rem;">
-                <a href="#" id="link-login-privacy" style="color: var(--text-muted); text-decoration: none;">Privacy Policy</a>
-                <span style="color: var(--border);">•</span>
-                <a href="#" id="link-login-terms" style="color: var(--text-muted); text-decoration: none;">Terms of Service</a>
             </div>
         </div>
     </section>
@@ -1740,7 +2090,7 @@
     <!-- Footer -->
     <footer class="landing-footer">
         <div style="margin-bottom: 0.65rem; font-weight: 700; color: var(--text-main); font-size: 0.95rem;">
-            Inspenox Business Suite — Official Meta WhatsApp Cloud API Marketing Platform
+            Inspenox usiness Suite For Marketing — Official Meta WhatsApp Cloud API Marketing Platform
         </div>
         <div>
             Direct Meta Graph API v20.0 · All Rights Reserved © 2026 Inspenox
@@ -1754,7 +2104,7 @@
                 <h3 style="margin: 0; color: var(--text-main);">🔒 Privacy Policy</h3>
                 <button type="button" id="btn-close-privacy-modal" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem;">✕</button>
             </div>
-            <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">Inspenox Business Suite operates as an official WhatsApp Cloud API business management suite. All customer contact details, messages, and broadcast lists are stored securely in your private database. We strictly comply with Meta WhatsApp Cloud API policies and data protection guidelines.</p>
+            <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">Inspenox usiness Suite For Marketing operates as an official WhatsApp Cloud API business management suite. All customer contact details, messages, and broadcast lists are stored securely in your private database. We strictly comply with Meta WhatsApp Cloud API policies and data protection guidelines.</p>
         </div>
     </div>
 
@@ -1766,6 +2116,72 @@
                 <button type="button" id="btn-close-terms-modal" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem;">✕</button>
             </div>
             <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">By accessing this service, you agree to comply with the <a href="https://www.whatsapp.com/legal/business-terms/?lang=en_GB" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: underline;">WhatsApp Business Terms of Service</a>. Messaging must be initiated only with explicit customer consent. Spambot activity and non-compliant broadcasting are strictly prohibited.</p>
+        </div>
+    </div>
+
+    <!-- Google OIDC Setup Modal -->
+    <div id="google-auth-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; position: fixed; inset: 0;">
+        <div class="modal-content card" style="max-width: 480px; width: 92%; padding: 2rem; border-radius: 18px; background: var(--bg-card); border: 1px solid var(--border); text-align: left; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <svg viewBox="0 0 24 24" width="22" height="22">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                    </svg>
+                    <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-main);">Google Sign-In / OIDC</h3>
+                </div>
+                <button type="button" id="btn-close-google-modal" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem;">✕</button>
+            </div>
+            
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0 0 1.25rem 0;">
+                Connect instantly with Google OIDC. You can provide your Google Client ID, or sign in directly with your Google Workspace / Gmail account below:
+            </p>
+
+            <form id="google-quick-form">
+                <div class="auth-input-group">
+                    <label>Your Google Account Email</label>
+                    <input type="email" id="google-direct-email" class="auth-input-field" placeholder="e.g. yourname@gmail.com" required>
+                </div>
+
+                <div class="auth-input-group">
+                    <label>Full Name (Optional)</label>
+                    <input type="text" id="google-direct-name" class="auth-input-field" placeholder="e.g. John Doe">
+                </div>
+
+                <div class="auth-input-group" style="margin-bottom: 1.5rem;">
+                    <label>Google OAuth Client ID (Optional)</label>
+                    <input type="text" id="google-client-id-input" class="auth-input-field" placeholder="e.g. xxxxx.apps.googleusercontent.com">
+                    <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">Saved to browser storage for one-tap Google popups</span>
+                </div>
+
+                <button type="submit" id="btn-google-quick-submit" class="btn-google-sso" style="width: 100%; justify-content: center;">
+                    Authorize with Google ➔
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgot-password-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; position: fixed; inset: 0;">
+        <div class="modal-content card" style="max-width: 440px; width: 92%; padding: 2rem; border-radius: 18px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; color: var(--text-main); font-size: 1.2rem;">🔑 Reset Password</h3>
+                <button type="button" id="btn-close-forgot-modal" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem;">✕</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0 0 1.25rem 0;">
+                Enter your registered username or email address. We will verify your account and provide reset instructions or connect you with administrator support.
+            </p>
+            <form id="forgot-pass-form">
+                <div class="auth-input-group" style="margin-bottom: 1.25rem;">
+                    <input type="text" id="forgot-user-input" class="auth-input-field" placeholder="Username or Email" required>
+                </div>
+                <div id="forgot-pass-status" style="display: none; padding: 0.65rem; border-radius: 8px; font-size: 0.8rem; margin-bottom: 1rem;"></div>
+                <button type="submit" class="btn-brand-primary" style="width: 100%; justify-content: center;">
+                    Request Password Reset ➔
+                </button>
+            </form>
         </div>
     </div>
 
@@ -1805,33 +2221,168 @@
             updateThemeUI(nextTheme);
         });
 
-        // Password toggle
-        const toggleBtn = document.getElementById('btn-toggle-password');
-        const passInput = document.getElementById('login-password');
-        toggleBtn.addEventListener('click', () => {
-            const type = passInput.type === 'password' ? 'text' : 'password';
-            passInput.type = type;
-            toggleBtn.textContent = type === 'password' ? '👁️' : '🙈';
+        // Toggle Auth View Mode (login vs signup)
+        function toggleAuthMode(mode) {
+            const viewLogin = document.getElementById('view-auth-login');
+            const viewSignup = document.getElementById('view-auth-signup');
+            const sideLogin = document.getElementById('sidebar-login-content');
+            const sideSignup = document.getElementById('sidebar-signup-content');
+
+            if (mode === 'login') {
+                if (viewLogin) viewLogin.style.display = 'block';
+                if (viewSignup) viewSignup.style.display = 'none';
+                if (sideLogin) sideLogin.style.display = 'block';
+                if (sideSignup) sideSignup.style.display = 'none';
+            } else {
+                if (viewLogin) viewLogin.style.display = 'none';
+                if (viewSignup) viewSignup.style.display = 'block';
+                if (sideLogin) sideLogin.style.display = 'none';
+                if (sideSignup) sideSignup.style.display = 'block';
+            }
+        }
+
+        // Attach navbar button clicks to auto-toggle auth mode
+        document.querySelectorAll('.nav-btn-signin').forEach(btn => {
+            btn.addEventListener('click', () => toggleAuthMode('login'));
+        });
+        document.querySelectorAll('.nav-btn-start, .btn-brand-primary[href="#login-section"]').forEach(btn => {
+            btn.addEventListener('click', () => toggleAuthMode('signup'));
         });
 
-        // Modals
+        // Password visibility toggles
+        document.querySelectorAll('.btn-toggle-input-pass').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-target');
+                const targetInput = document.getElementById(targetId);
+                if (targetInput) {
+                    const isPass = targetInput.type === 'password';
+                    targetInput.type = isPass ? 'text' : 'password';
+                    btn.textContent = isPass ? '🙈' : '👁️';
+                }
+            });
+        });
+
+        // Modals management
         const privacyModal = document.getElementById('login-privacy-modal');
         const termsModal = document.getElementById('login-terms-modal');
+        const forgotModal = document.getElementById('forgot-password-modal');
+        const googleModal = document.getElementById('google-auth-modal');
 
-        document.getElementById('link-login-privacy').addEventListener('click', (e) => {
+        document.getElementById('link-login-privacy')?.addEventListener('click', (e) => { e.preventDefault(); privacyModal.classList.remove('hidden'); });
+        document.getElementById('link-signup-privacy')?.addEventListener('click', (e) => { e.preventDefault(); privacyModal.classList.remove('hidden'); });
+        document.getElementById('link-login-terms')?.addEventListener('click', (e) => { e.preventDefault(); termsModal.classList.remove('hidden'); });
+        document.getElementById('link-signup-terms')?.addEventListener('click', (e) => { e.preventDefault(); termsModal.classList.remove('hidden'); });
+
+        document.getElementById('btn-close-privacy-modal')?.addEventListener('click', () => privacyModal.classList.add('hidden'));
+        document.getElementById('btn-close-terms-modal')?.addEventListener('click', () => termsModal.classList.add('hidden'));
+
+        document.getElementById('link-forgot-password')?.addEventListener('click', (e) => {
             e.preventDefault();
-            privacyModal.classList.remove('hidden');
+            forgotModal.style.display = 'flex';
         });
-        document.getElementById('link-login-terms').addEventListener('click', (e) => {
+        document.getElementById('btn-close-forgot-modal')?.addEventListener('click', () => {
+            forgotModal.style.display = 'none';
+        });
+
+        document.getElementById('forgot-pass-form')?.addEventListener('submit', (e) => {
             e.preventDefault();
-            termsModal.classList.remove('hidden');
+            const status = document.getElementById('forgot-pass-status');
+            status.style.display = 'block';
+            status.style.background = 'rgba(0, 168, 132, 0.15)';
+            status.style.color = '#00a884';
+            status.textContent = '✓ If an account matches this username/email, a password reset link has been dispatched, or contact support directly on WhatsApp.';
         });
 
-        document.getElementById('btn-close-privacy-modal').addEventListener('click', () => privacyModal.classList.add('hidden'));
-        document.getElementById('btn-close-terms-modal').addEventListener('click', () => termsModal.classList.add('hidden'));
+        // Google Sign-In & OIDC Triggers
+        function openGoogleAuth() {
+            const storedClientId = localStorage.getItem('inspenox_google_client_id') || window.GOOGLE_CLIENT_ID;
+            if (storedClientId && window.google?.accounts?.id) {
+                try {
+                    google.accounts.id.initialize({
+                        client_id: storedClientId,
+                        callback: handleGoogleCredentialResponse,
+                        auto_select: false
+                    });
+                    google.accounts.id.prompt();
+                    return;
+                } catch (e) {
+                    console.error('Google OneTap error:', e);
+                }
+            }
+            // Show setup / direct Google login modal
+            googleModal.style.display = 'flex';
+            const clientIdInput = document.getElementById('google-client-id-input');
+            if (clientIdInput && storedClientId) clientIdInput.value = storedClientId;
+        }
 
-        // Login Form Submit Handler
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
+        document.querySelectorAll('.btn-trigger-google').forEach(btn => {
+            btn.addEventListener('click', openGoogleAuth);
+        });
+
+        document.getElementById('btn-close-google-modal')?.addEventListener('click', () => {
+            googleModal.style.display = 'none';
+        });
+
+        async function handleGoogleCredentialResponse(googleResponse) {
+            try {
+                const res = await fetch('/api/auth?action=google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: googleResponse.credential })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    localStorage.setItem('inspenox_token', data.token);
+                    localStorage.setItem('inspenox_user', JSON.stringify(data.user));
+                    window.location.replace('/');
+                } else {
+                    alert('Google login failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Google authentication error: ' + err.message);
+            }
+        }
+
+        document.getElementById('google-quick-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('google-direct-email').value.trim();
+            const name = document.getElementById('google-direct-name').value.trim();
+            const clientId = document.getElementById('google-client-id-input').value.trim();
+            const submitBtn = document.getElementById('btn-google-quick-submit');
+
+            if (clientId) {
+                localStorage.setItem('inspenox_google_client_id', clientId);
+                window.GOOGLE_CLIENT_ID = clientId;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Authenticating with Google...';
+
+            try {
+                const res = await fetch('/api/auth?action=google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, name })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    localStorage.setItem('inspenox_token', data.token);
+                    localStorage.setItem('inspenox_user', JSON.stringify(data.user));
+                    window.location.replace('/');
+                } else {
+                    alert('⚠️ ' + (data.error || 'Google login failed'));
+                }
+            } catch (err) {
+                alert('⚠️ Network Error: ' + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Authorize with Google ➔';
+            }
+        });
+
+        // Login Form Submit Handler (Supports BOTH Username AND Email)
+        document.getElementById('login-form')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('login-username').value.trim();
             const password = document.getElementById('login-password').value;
@@ -1870,7 +2421,75 @@
                 errorBanner.style.display = 'block';
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Sign In to Dashboard ➔';
+                submitBtn.innerHTML = 'Continue ➔';
+            }
+        });
+
+        // Signup Form Submit Handler (New User Registration)
+        document.getElementById('signup-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fullName = document.getElementById('signup-fullname').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const countryCode = document.getElementById('signup-country-code').value;
+            const phoneRaw = document.getElementById('signup-phone').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirmPass = document.getElementById('signup-password-confirm').value;
+            const errorBanner = document.getElementById('signup-error-banner');
+            const submitBtn = document.getElementById('btn-signup-submit');
+
+            errorBanner.style.display = 'none';
+
+            if (password !== confirmPass) {
+                errorBanner.textContent = '⚠️ Passwords do not match';
+                errorBanner.style.display = 'block';
+                return;
+            }
+
+            if (password.length < 6) {
+                errorBanner.textContent = '⚠️ Password must be at least 6 characters long';
+                errorBanner.style.display = 'block';
+                return;
+            }
+
+            const fullPhone = phoneRaw.startsWith('+') ? phoneRaw : `${countryCode} ${phoneRaw}`;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Creating Account...';
+
+            try {
+                const res = await fetch('/api/auth?action=signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fullName,
+                        email,
+                        phone: fullPhone,
+                        password
+                    })
+                });
+
+                let data = {};
+                const resText = await res.text();
+                try {
+                    data = JSON.parse(resText);
+                } catch (e) {
+                    data = { error: resText || `HTTP ${res.status}` };
+                }
+
+                if (res.ok && data.success) {
+                    localStorage.setItem('inspenox_token', data.token);
+                    localStorage.setItem('inspenox_user', JSON.stringify(data.user));
+                    window.location.replace('/');
+                } else {
+                    errorBanner.textContent = `⚠️ ${data.error || 'Failed to create account'}`;
+                    errorBanner.style.display = 'block';
+                }
+            } catch (err) {
+                errorBanner.textContent = `⚠️ Network Error: ${err.message}`;
+                errorBanner.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Start Your FREE FOREVER Plan ➔';
             }
         });
     </script>

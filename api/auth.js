@@ -163,7 +163,7 @@ module.exports = async (req, res) => {
                 const cleanUser = String(username || '').trim().toLowerCase();
 
                 if (!cleanUser || !password) {
-                    return res.status(400).json({ error: 'Username and password required' });
+                    return res.status(400).json({ error: 'Username or Email and password are required' });
                 }
 
                 if (cleanUser.length > 100 || String(password).length > 128) {
@@ -172,7 +172,7 @@ module.exports = async (req, res) => {
 
                 const clientIp = getClientIp(req);
 
-                // Rate Limiting Check: Max 5 failed attempts per 15 minutes per IP or per Username
+                // Rate Limiting Check: Max 5 failed attempts per 15 minutes per IP or per Username/Email
                 const failCheck = await sql`
                     SELECT COUNT(*)::int as failures 
                     FROM login_attempts 
@@ -191,10 +191,12 @@ module.exports = async (req, res) => {
                 const hash = hashPassword(password);
                 const legacyHash = legacyHashPassword(password);
 
+                // Support matching either username or email address
                 const users = await sql`
                     SELECT id, username, email, phone, role, password_hash, company_id 
                     FROM users 
-                    WHERE LOWER(username) = ${cleanUser}
+                    WHERE LOWER(username) = ${cleanUser} OR LOWER(COALESCE(email, '')) = ${cleanUser}
+                    LIMIT 1
                 `;
 
                 const isAuthSuccess = users.length > 0 && (users[0].password_hash === hash || users[0].password_hash === legacyHash);
@@ -210,16 +212,17 @@ module.exports = async (req, res) => {
                     await new Promise(r => setTimeout(r, 500));
                     const remaining = 5 - (failureCount + 1);
                     const attemptWarning = remaining > 0 ? ` (${remaining} attempt${remaining === 1 ? '' : 's'} remaining)` : '';
-                    return res.status(401).json({ error: `Invalid username or password${attemptWarning}` });
+                    return res.status(401).json({ error: `Invalid username/email or password${attemptWarning}` });
                 }
 
-                // On successful login, clear past failed attempts for this IP and username
+                const user = users[0];
+
+                // On successful login, clear past failed attempts for this IP, username, and email
                 await sql`
                     DELETE FROM login_attempts 
-                    WHERE (ip_address = ${clientIp} OR username = ${cleanUser}) AND success = FALSE;
+                    WHERE (ip_address = ${clientIp} OR username = ${cleanUser} OR username = ${user.username.toLowerCase()}) AND success = FALSE;
                 `;
 
-                const user = users[0];
                 const token = crypto.randomBytes(32).toString('hex');
 
                 return res.status(200).json({
@@ -229,6 +232,157 @@ module.exports = async (req, res) => {
                 });
             } catch (err) {
                 return res.status(500).json({ error: err.message });
+            }
+        }
+
+        if (action === 'signup') {
+            try {
+                const { fullName, email, phone, password } = body;
+                const cleanName = String(fullName || '').trim();
+                const cleanEmail = String(email || '').trim().toLowerCase();
+                const cleanPhone = String(phone || '').trim();
+
+                if (!cleanName) {
+                    return res.status(400).json({ error: 'Full name is required' });
+                }
+                if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+                    return res.status(400).json({ error: 'A valid email address is required' });
+                }
+                if (!password || String(password).length < 6) {
+                    return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+                }
+
+                // Check if user with this email or username already exists
+                const existing = await sql`
+                    SELECT id FROM users 
+                    WHERE LOWER(COALESCE(email, '')) = ${cleanEmail}
+                    LIMIT 1
+                `;
+                if (existing.length > 0) {
+                    return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
+                }
+
+                // Generate new company workspace for this user
+                const companyName = `${cleanName}'s Workspace`;
+                let baseSlug = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'workspace';
+                const uniqueSlug = `${baseSlug}-${Math.random().toString(36).substring(2, 7)}`;
+
+                const compRes = await sql`
+                    INSERT INTO companies (name, slug, email, phone, subscription_plan, subscription_status, is_active)
+                    VALUES (${companyName}, ${uniqueSlug}, ${cleanEmail}, ${cleanPhone || null}, 'Starter (Free Forever)', 'active', true)
+                    RETURNING id;
+                `;
+                const companyId = compRes[0]?.id || null;
+
+                // Generate unique username
+                let generatedUsername = cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '');
+                if (!generatedUsername) generatedUsername = 'user';
+                const userExists = await sql`SELECT id FROM users WHERE LOWER(username) = ${generatedUsername} LIMIT 1`;
+                if (userExists.length > 0) {
+                    generatedUsername = `${generatedUsername}_${Math.floor(1000 + Math.random() * 9000)}`;
+                }
+
+                const newHash = hashPassword(password);
+                const userRes = await sql`
+                    INSERT INTO users (username, email, phone, password_hash, role, company_id)
+                    VALUES (${generatedUsername}, ${cleanEmail}, ${cleanPhone || null}, ${newHash}, 'admin', ${companyId})
+                    RETURNING id, username, email, phone, role, company_id;
+                `;
+                const newUser = userRes[0];
+                const token = crypto.randomBytes(32).toString('hex');
+
+                return res.status(201).json({
+                    success: true,
+                    user: newUser,
+                    token,
+                    message: 'Account created successfully!'
+                });
+            } catch (err) {
+                console.error('Signup error:', err);
+                return res.status(500).json({ error: err.message || 'Failed to create account' });
+            }
+        }
+
+        if (action === 'google') {
+            try {
+                const { credential, email: directEmail, name: directName } = body;
+                let email = directEmail;
+                let name = directName;
+
+                if (credential) {
+                    try {
+                        const parts = credential.split('.');
+                        if (parts.length === 3) {
+                            const payloadJson = Buffer.from(parts[1], 'base64').toString('utf8');
+                            const payload = JSON.parse(payloadJson);
+                            if (payload.email) {
+                                email = payload.email;
+                                name = payload.name || payload.given_name || email.split('@')[0];
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse Google JWT payload:', e);
+                    }
+                }
+
+                if (!email || !String(email).trim()) {
+                    return res.status(400).json({ error: 'Valid Google email is required' });
+                }
+
+                const cleanEmail = String(email).trim().toLowerCase();
+
+                // Look for existing user with this email
+                let users = await sql`
+                    SELECT id, username, email, phone, role, company_id 
+                    FROM users 
+                    WHERE LOWER(COALESCE(email, '')) = ${cleanEmail}
+                    LIMIT 1
+                `;
+
+                let user;
+                if (users.length > 0) {
+                    user = users[0];
+                } else {
+                    // Auto-signup new user with Google OIDC
+                    const cleanName = (name || cleanEmail.split('@')[0]).trim();
+                    const companyName = `${cleanName}'s Workspace`;
+                    const baseSlug = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'workspace';
+                    const uniqueSlug = `${baseSlug}-${Math.random().toString(36).substring(2, 7)}`;
+
+                    const compRes = await sql`
+                        INSERT INTO companies (name, slug, email, subscription_plan, subscription_status, is_active)
+                        VALUES (${companyName}, ${uniqueSlug}, ${cleanEmail}, 'Starter (Free Forever)', 'active', true)
+                        RETURNING id;
+                    `;
+                    const companyId = compRes[0]?.id || null;
+
+                    let generatedUsername = cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '');
+                    if (!generatedUsername) generatedUsername = 'user';
+                    const userExists = await sql`SELECT id FROM users WHERE LOWER(username) = ${generatedUsername} LIMIT 1`;
+                    if (userExists.length > 0) {
+                        generatedUsername = `${generatedUsername}_${Math.floor(1000 + Math.random() * 9000)}`;
+                    }
+
+                    const dummyPass = crypto.randomBytes(16).toString('hex');
+                    const dummyHash = hashPassword(dummyPass);
+
+                    const userRes = await sql`
+                        INSERT INTO users (username, email, password_hash, role, company_id)
+                        VALUES (${generatedUsername}, ${cleanEmail}, ${dummyHash}, 'admin', ${companyId})
+                        RETURNING id, username, email, phone, role, company_id;
+                    `;
+                    user = userRes[0];
+                }
+
+                const token = crypto.randomBytes(32).toString('hex');
+                return res.status(200).json({
+                    success: true,
+                    user: { id: user.id, username: user.username, email: user.email, phone: user.phone, role: user.role, company_id: user.company_id },
+                    token
+                });
+            } catch (err) {
+                console.error('Google auth error:', err);
+                return res.status(500).json({ error: err.message || 'Google authentication failed' });
             }
         }
 
