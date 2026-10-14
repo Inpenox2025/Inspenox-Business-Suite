@@ -81,7 +81,7 @@ function generateVideoThumbnail(file, maxWidth = 380) {
                 URL.revokeObjectURL(url);
                 resolve(null);
             };
-        } catch(e) {
+        } catch (e) {
             resolve(null);
         }
     });
@@ -132,7 +132,7 @@ window.getActiveCompanyId = getCompanyId;
 function apiFetch(url, options = {}) {
     const opts = { ...options };
     opts.headers = { ...(opts.headers || {}) };
-    
+
     if (typeof url === 'string' && url.startsWith('/api/')) {
         const companyId = getCompanyId();
         if (companyId) {
@@ -152,7 +152,7 @@ window.getStoredCompany = function getStoredCompany() {
         const u = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
         const cId = localStorage.getItem('inspenox_company_id') || u.company_id;
         return { id: cId, name: u.company_name || u.username || 'Registered Account' };
-    } catch(e) {
+    } catch (e) {
         return { id: null, name: 'Registered Account' };
     }
 };
@@ -161,7 +161,7 @@ window.isSuperAdmin = function isSuperAdmin() {
     let user = {};
     try {
         user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
-    } catch(e) {}
+    } catch (e) { }
 
     const uname = (user.username || '').toLowerCase();
     const role = (user.role || '').toLowerCase();
@@ -222,7 +222,7 @@ window.isParentAdmin = function isParentAdmin() {
     let user = {};
     try {
         user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
-    } catch(e) {}
+    } catch (e) { }
 
     const coId = user.company_id;
     const uname = (user.username || '').toLowerCase();
@@ -256,7 +256,7 @@ function updateBrandingForActiveCompany() {
     const footerCreditsEl = document.getElementById('app-footer-brand-credits');
 
     let user = {};
-    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch (e) { }
 
     // Find the current active company object from allCompanies
     const activeCo = (allCompanies || []).find(c => String(c.id) === String(currentCompanyId));
@@ -274,7 +274,7 @@ function updateBrandingForActiveCompany() {
         const userCoName = (user.company_name || '').toLowerCase().trim();
         const userCoId = user.company_id;
         const isChildUser = (userCoName && !userCoName.includes('inspenox') && !userCoName.includes('parent')) ||
-                            (userCoId !== undefined && userCoId !== null && String(userCoId) !== 'default' && String(userCoId) !== 'parent' && String(userCoId) !== 'null' && String(userCoId) !== '' && String(userCoId) !== '0');
+            (userCoId !== undefined && userCoId !== null && String(userCoId) !== 'default' && String(userCoId) !== 'parent' && String(userCoId) !== 'null' && String(userCoId) !== '' && String(userCoId) !== '0');
         if (isChildUser) {
             isParentCo = false;
         } else {
@@ -342,7 +342,7 @@ async function loadCompanies() {
     }
 
     let user = {};
-    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch (e) { }
 
     if (!isParent && user.company_id) {
         currentCompanyId = String(user.company_id);
@@ -407,7 +407,7 @@ async function loadCompanies() {
                 updateBroadcastSenderPhoneSelect();
             }
         }
-    } catch(e) {
+    } catch (e) {
         console.error('Error loading companies:', e);
     }
 }
@@ -478,7 +478,7 @@ async function loadCompaniesSettings() {
         }
         const res = await apiFetch(compUrl);
         const data = await res.json();
-        
+
         const companies = Array.isArray(data) ? data : (data.companies || []);
         const systemEnv = data.system_env || {};
         systemEnvGlobals = systemEnv;
@@ -602,11 +602,11 @@ async function loadCompaniesSettings() {
                     } else {
                         phoneDisplay = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Not Configured</span>`;
                     }
-                    wabaDisplay = c.whatsapp_business_account_id 
-                        ? `<code style="font-size:0.8rem; color:var(--text-main);">${c.whatsapp_business_account_id}</code>` 
+                    wabaDisplay = c.whatsapp_business_account_id
+                        ? `<code style="font-size:0.8rem; color:var(--text-main);">${c.whatsapp_business_account_id}</code>`
                         : `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Not Configured</span>`;
-                    verifyDisplay = c.whatsapp_verify_token 
-                        ? `<code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_verify_token}</code>` 
+                    verifyDisplay = c.whatsapp_verify_token
+                        ? `<code style="font-size:0.8rem; color:var(--text-muted);">${c.whatsapp_verify_token}</code>`
                         : `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Not Configured</span>`;
                 } else {
                     // Not paid: strictly locked!
@@ -632,7 +632,7 @@ async function loadCompaniesSettings() {
             });
         }
         loadUsersList();
-    } catch(e) {
+    } catch (e) {
         tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Failed to load companies settings.</td></tr>`;
     }
 }
@@ -745,11 +745,11 @@ function renderModalPhoneNumbersList() {
     // Update quota badge
     if (badge) {
         badge.textContent = `${currentModalPhoneNumbers.length} of ${currentModalPhoneLimit} Number${currentModalPhoneLimit === 1 ? '' : 's'}`;
-        badge.style.background = (currentModalPhoneLimit > 0 && currentModalPhoneNumbers.length >= currentModalPhoneLimit) 
-            ? 'rgba(239, 68, 68, 0.15)' 
+        badge.style.background = (currentModalPhoneLimit > 0 && currentModalPhoneNumbers.length >= currentModalPhoneLimit)
+            ? 'rgba(239, 68, 68, 0.15)'
             : 'rgba(0, 168, 132, 0.15)';
-        badge.style.color = (currentModalPhoneLimit > 0 && currentModalPhoneNumbers.length >= currentModalPhoneLimit) 
-            ? '#ef4444' 
+        badge.style.color = (currentModalPhoneLimit > 0 && currentModalPhoneNumbers.length >= currentModalPhoneLimit)
+            ? '#ef4444'
             : 'var(--primary)';
     }
 
@@ -824,7 +824,7 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
     document.getElementById('company-id-edit').value = '';
     if (document.getElementById('comp-email')) document.getElementById('comp-email').value = '';
     if (document.getElementById('comp-phone')) document.getElementById('comp-phone').value = '';
-    
+
     const isParent = isParentAdmin();
     const titleEl = document.getElementById('company-modal-title');
     const subAlert = document.getElementById('comp-modal-sub-alert');
@@ -855,8 +855,8 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
             verifyInput.value = comp.whatsapp_verify_token || (isMaster ? systemEnvGlobals.whatsapp_verify_token : '') || '';
 
             // Calculate and enforce phone number limits based on active plan
-            const planLimit = comp.phone_limit !== undefined 
-                ? comp.phone_limit 
+            const planLimit = comp.phone_limit !== undefined
+                ? comp.phone_limit
                 : getCompanyPhoneLimit(comp.subscription_plan, isMaster);
             currentModalPhoneLimit = planLimit;
 
@@ -953,7 +953,7 @@ window.openCompanyModal = function openCompanyModal(companyId = null) {
             saveBtn.style.cursor = 'pointer';
         }
     }
-    
+
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
 };
@@ -1061,7 +1061,7 @@ window.loadUsersList = async function loadUsersList() {
                 }
             }
         }
-    } catch(e) {
+    } catch (e) {
         tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Failed to load user accounts.</td></tr>`;
     }
 };
@@ -1110,7 +1110,7 @@ window.submitAdminResetPass = async function submitAdminResetPass(e) {
         } else {
             showModal('Error', data.error || 'Failed to reset password.');
         }
-    } catch(err) {
+    } catch (err) {
         showModal('Error', err.message);
     } finally {
         if (btn) {
@@ -1251,7 +1251,7 @@ window.saveUser = async function saveUser(e) {
                         localStorage.setItem('inspenox_user', JSON.stringify(curUser));
                         localStorage.setItem('induio_user', JSON.stringify(curUser));
                     }
-                } catch(err) {}
+                } catch (err) { }
             }
             closeUserModal();
             loadUsersList();
@@ -1259,7 +1259,7 @@ window.saveUser = async function saveUser(e) {
         } else {
             showModal('Error', data.error || 'Failed to save user.');
         }
-    } catch(err) {
+    } catch (err) {
         showModal('Error', err.message);
     } finally {
         if (btn) {
@@ -1279,7 +1279,7 @@ window.deleteUser = function deleteUser(id, username) {
             } else {
                 showModal('Error', data.error || 'Failed to delete user.');
             }
-        } catch(e) {
+        } catch (e) {
             showModal('Error', 'Error deleting user.');
         }
     });
@@ -1331,7 +1331,7 @@ window.loadDashboard = async function loadDashboard() {
                 `).join('');
             }
         }
-    } catch(e) {
+    } catch (e) {
         console.error('Error loading dashboard analytics:', e);
     }
 };
@@ -1370,8 +1370,8 @@ window.loadUsageAnalytics = async function loadUsageAnalytics(daysParam) {
         cardTitleEl.textContent = isParent ? 'Multi-Tenant Company Usage Breakdown' : 'Bills & Usage Summary';
     }
     if (cardSubEl) {
-        cardSubEl.textContent = isParent ? 
-            'Message counts and estimated charges broken down by company account.' : 
+        cardSubEl.textContent = isParent ?
+            'Message counts and estimated charges broken down by company account.' :
             'Itemized message usage breakdown and outstanding bill charges for your account.';
     }
 
@@ -1603,8 +1603,8 @@ window.loadUsageAnalytics = async function loadUsageAnalytics(daysParam) {
                     tbodyCompanies.innerHTML = usageList.map((u, idx) => {
                         const baseCost = u.base_cost || (u.est_cost / 1.18);
                         const gstAmount = u.gst_amount || (u.est_cost - baseCost);
-                        const actionTd = isParent ? 
-                            `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editCompanyUsageModal('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.wa_marketing_count}, ${u.wa_utility_count}, ${u.wa_auth_count}, ${u.email_count}, ${u.sms_count}, ${u.est_cost})">✏️ Edit</button></td>` : 
+                        const actionTd = isParent ?
+                            `<td style="text-align:center;"><button class="btn secondary sm" style="padding:0.2rem 0.45rem; font-size:0.7rem;" onclick="editCompanyUsageModal('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.wa_marketing_count}, ${u.wa_utility_count}, ${u.wa_auth_count}, ${u.email_count}, ${u.sms_count}, ${u.est_cost})">✏️ Edit</button></td>` :
                             `<td style="text-align:center;"><button class="btn primary sm" style="padding:0.25rem 0.6rem; font-size:0.75rem; background:#10b981; border:none; font-weight:700;" onclick="triggerCompanyPayment('${u.id}', '${u.name.replace(/'/g, "\\'")}', ${u.est_cost}, ${baseCost}, ${gstAmount})">💳 Pay Charges</button></td>`;
                         return `
                         <tr>
@@ -1629,7 +1629,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics(daysParam) {
                 }
             }
         }
-    } catch(e) {
+    } catch (e) {
         console.error('Error loading usage analytics:', e);
         if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">Failed to load direct Meta template insights.</td></tr>`;
         if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">Failed to load API usage statistics.</td></tr>`;
@@ -1719,8 +1719,8 @@ window.applyTemplateFiltersAndRender = function applyTemplateFiltersAndRender() 
     }
 
     tbodyTemplates.innerHTML = filtered.map((t, idx) => {
-        const statusBadge = t.status === 'APPROVED' || t.status === 'ACTIVE' ? 
-            '<span class="window-badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; font-weight:600;">Active</span>' : 
+        const statusBadge = t.status === 'APPROVED' || t.status === 'ACTIVE' ?
+            '<span class="window-badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; font-weight:600;">Active</span>' :
             '<span class="window-badge" style="background:rgba(234, 179, 8, 0.15); color:#eab308; font-weight:600;">Pending</span>';
         const categoryBadge = `<span class="window-badge" style="background:var(--primary-light); color:var(--primary); font-size:0.75rem; text-transform:uppercase;">${t.category}</span>`;
         const rateDisplay = (t.cost_per_delivered < 0.2 && t.cost_per_delivered > 0) ? `₹${t.cost_per_delivered.toFixed(4)}` : (t.cost_per_delivered === 0 ? 'FREE' : `₹${t.cost_per_delivered.toFixed(4)}`);
@@ -1750,7 +1750,7 @@ window.applyTemplateFiltersAndRender = function applyTemplateFiltersAndRender() 
 };
 
 // Payment Flow for Logged-In Registered Companies
-window.triggerCompanyPayment = function(id, name, amount, baseCost, gstAmt) {
+window.triggerCompanyPayment = function (id, name, amount, baseCost, gstAmt) {
     const currentCompany = getStoredCompany();
     const compName = name || currentCompany?.name || 'Registered Account';
     const totalAmt = (amount !== undefined && amount !== null) ? amount : (window.latestTotalCost || 0);
@@ -1803,7 +1803,7 @@ window.triggerCompanyPayment = function(id, name, amount, baseCost, gstAmt) {
     showModal(`💳 Pay Usage Charges - ${compName}`, paymentModalHtml);
 };
 
-window.processPaymentSubmit = function(compName, amount) {
+window.processPaymentSubmit = function (compName, amount) {
     const refId = `INS-${Date.now().toString().slice(-8)}`;
     showModal(
         '🎉 Payment Gateway Initiated',
@@ -1823,7 +1823,7 @@ window.processPaymentSubmit = function(compName, amount) {
 
 // --- Super Admin Manual Overrides Modals ---
 // Live Auto Calculation Helpers for Overrides
-window.autoCalcTplSpent = function() {
+window.autoCalcTplSpent = function () {
     const del = parseFloat(document.getElementById('ov-tpl-delivered')?.value || 0);
     const rate = parseFloat(document.getElementById('ov-tpl-rate')?.value || 0);
     const spentEl = document.getElementById('ov-tpl-spent');
@@ -1832,24 +1832,24 @@ window.autoCalcTplSpent = function() {
     }
 };
 
-window.autoCalcCoCost = function() {
+window.autoCalcCoCost = function () {
     const m = parseInt(document.getElementById('ov-co-m')?.value || 0);
     const u = parseInt(document.getElementById('ov-co-u')?.value || 0);
     const a = parseInt(document.getElementById('ov-co-a')?.value || 0);
     const email = parseInt(document.getElementById('ov-co-email')?.value || 0);
     const sms = parseInt(document.getElementById('ov-co-sms')?.value || 0);
-    
+
     // Rates: WA Mkt = 0.8631, WA Util = 0.115, WA Auth = 0.115, Email = 0.05, SMS = 0.25
     const baseCost = (m * 0.8631) + (u * 0.115) + (a * 0.115) + (email * 0.05) + (sms * 0.25);
     const costWithGst = baseCost * 1.18; // Includes 18% GST
-    
+
     const costEl = document.getElementById('ov-co-cost');
     if (costEl) {
         costEl.value = costWithGst.toFixed(2);
     }
 };
 
-window.editTemplateStatsModal = function(id, name, sent, delivered, read, replies, rate, amountSpent) {
+window.editTemplateStatsModal = function (id, name, sent, delivered, read, replies, rate, amountSpent) {
     const contentHtml = `
         <div style="display:flex; flex-direction:column; gap:0.85rem;">
             <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Manually edit analytics stats for template <strong>${name}</strong>. Values set here will be saved in DB and served to all company users.</p>
@@ -1888,7 +1888,7 @@ window.editTemplateStatsModal = function(id, name, sent, delivered, read, replie
     showModal(`Edit Template Stats: ${name}`, contentHtml);
 };
 
-window.editCompanyUsageModal = function(id, name, m, u, a, email, sms, cost) {
+window.editCompanyUsageModal = function (id, name, m, u, a, email, sms, cost) {
     const contentHtml = `
         <div style="display:flex; flex-direction:column; gap:0.85rem;">
             <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Manually edit API usage stats for company <strong>${name}</strong>.</p>
@@ -1927,7 +1927,7 @@ window.editCompanyUsageModal = function(id, name, m, u, a, email, sms, cost) {
     showModal(`Edit Company Usage: ${name}`, contentHtml);
 };
 
-window.editOverallMetaInsightsModal = function(spent, sent, delivered, read, replies) {
+window.editOverallMetaInsightsModal = function (spent, sent, delivered, read, replies) {
     const contentHtml = `
         <div style="display:flex; flex-direction:column; gap:0.85rem;">
             <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Manually edit overall Meta Direct Insights summary cards.</p>
@@ -1962,7 +1962,7 @@ window.editOverallMetaInsightsModal = function(spent, sent, delivered, read, rep
     showModal(`Edit Overall Meta Insights Summary`, contentHtml);
 };
 
-window.submitTplOverride = async function(id) {
+window.submitTplOverride = async function (id) {
     const data = {
         sent: parseInt(document.getElementById('ov-tpl-sent')?.value || 0),
         delivered: parseInt(document.getElementById('ov-tpl-delivered')?.value || 0),
@@ -1984,10 +1984,10 @@ window.submitTplOverride = async function(id) {
         } else {
             showModal('Error', result.error || 'Failed to save template override');
         }
-    } catch(e) { showModal('Error', e.message); }
+    } catch (e) { showModal('Error', e.message); }
 };
 
-window.submitCoOverride = async function(id) {
+window.submitCoOverride = async function (id) {
     const data = {
         wa_marketing_count: parseInt(document.getElementById('ov-co-m')?.value || 0),
         wa_utility_count: parseInt(document.getElementById('ov-co-u')?.value || 0),
@@ -2009,10 +2009,10 @@ window.submitCoOverride = async function(id) {
         } else {
             showModal('Error', result.error || 'Failed to save company usage override');
         }
-    } catch(e) { showModal('Error', e.message); }
+    } catch (e) { showModal('Error', e.message); }
 };
 
-window.submitGlobalOverride = async function() {
+window.submitGlobalOverride = async function () {
     const data = {
         total_amount_spent: parseFloat(document.getElementById('ov-global-spent')?.value || 0),
         total_sent: parseInt(document.getElementById('ov-global-sent')?.value || 0),
@@ -2033,10 +2033,10 @@ window.submitGlobalOverride = async function() {
         } else {
             showModal('Error', result.error || 'Failed to save global insights override');
         }
-    } catch(e) { showModal('Error', e.message); }
+    } catch (e) { showModal('Error', e.message); }
 };
 
-window.resetOverride = async function(type, targetId) {
+window.resetOverride = async function (type, targetId) {
     try {
         const res = await apiFetch('/api/analytics', {
             method: 'POST',
@@ -2050,7 +2050,7 @@ window.resetOverride = async function(type, targetId) {
         } else {
             showModal('Error', result.error || 'Failed to reset override');
         }
-    } catch(e) { showModal('Error', e.message); }
+    } catch (e) { showModal('Error', e.message); }
 };
 
 window.calculateEstimatorCost = function calculateEstimatorCost() {
@@ -2148,7 +2148,7 @@ window.saveCompany = async function saveCompany(e) {
         } else {
             showModal('Error', data.error || 'Failed to save company credentials.');
         }
-    } catch(err) {
+    } catch (err) {
         showModal('Error', err.message);
     } finally {
         if (btn) {
@@ -2182,7 +2182,7 @@ window.deleteCompany = function deleteCompany(id) {
             } else {
                 showModal('Error', data.error || 'Failed to delete company.');
             }
-        } catch(e) {
+        } catch (e) {
             showModal('Error', e.message || 'Error deleting company.');
         }
     }, 'Delete Company', 'btn danger');
@@ -2255,7 +2255,7 @@ window.submitChangePass = async function submitChangePass(e) {
     try {
         const storedUser = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
         if (storedUser.username) username = storedUser.username;
-    } catch(err) {}
+    } catch (err) { }
 
     if (submitBtn) {
         submitBtn.disabled = true;
@@ -2306,7 +2306,7 @@ let currentCustomersPage = 1;
 const CUSTOMERS_PER_PAGE = 10;
 
 // --- Modal Logic ---
-window.closeModal = function() {
+window.closeModal = function () {
     const overlay = document.getElementById('app-modal');
     if (overlay) {
         overlay.classList.add('hidden');
@@ -2328,10 +2328,10 @@ function showModal(title, message, type = 'info', onConfirm = null, confirmText 
             msgEl.textContent = message;
         }
     }
-    
+
     const confirmBtn = document.getElementById('modal-confirm-btn');
     const cancelBtn = document.getElementById('modal-cancel-btn');
-    
+
     const newConfirm = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
     const newCancel = cancelBtn.cloneNode(true);
@@ -2372,7 +2372,7 @@ function showModal(title, message, type = 'info', onConfirm = null, confirmText 
         if (onConfirm) {
             newConfirm.innerHTML = '<span class="spinner"></span> Processing...';
             newConfirm.disabled = true;
-            try { await onConfirm(); } catch(e) { console.error(e); }
+            try { await onConfirm(); } catch (e) { console.error(e); }
             newConfirm.disabled = false;
         }
         overlay.classList.add('hidden');
@@ -2430,7 +2430,9 @@ const DEFAULT_SUBSCRIPTION_PLANS = [
         name: 'Starter Tier',
         description: 'Perfect for small businesses beginning their automated WhatsApp messaging journey.',
         price_monthly: 999,
-        price_annual: 9590, // ~20% off
+        price_4months: 3596, // ~10% off (₹899/mo)
+        price_6months: 5095, // ~15% off (₹849/mo)
+        price_annual: 9590,  // ~20% off (₹799/mo)
         popular: false,
         badge: 'Essential',
         features: [
@@ -2447,7 +2449,9 @@ const DEFAULT_SUBSCRIPTION_PLANS = [
         name: 'Growth Pro',
         description: 'Built for scaling brands requiring multi-team access and intelligent broadcasts.',
         price_monthly: 2499,
-        price_annual: 23990, // ~20% off
+        price_4months: 8996,  // ~10% off (₹2,249/mo)
+        price_6months: 12745, // ~15% off (₹2,124/mo)
+        price_annual: 23990,  // ~20% off (₹1,999/mo)
         popular: true,
         badge: 'Most Popular',
         features: [
@@ -2465,7 +2469,9 @@ const DEFAULT_SUBSCRIPTION_PLANS = [
         name: 'Enterprise Elite',
         description: 'Complete multi-tenant ecosystem for corporate agencies and high-volume operations.',
         price_monthly: 5999,
-        price_annual: 57590, // ~20% off
+        price_4months: 21596, // ~10% off (₹5,399/mo)
+        price_6months: 30595, // ~15% off (₹5,099/mo)
+        price_annual: 57590,  // ~20% off (₹4,799/mo)
         popular: false,
         badge: 'Enterprise',
         features: [
@@ -2475,7 +2481,9 @@ const DEFAULT_SUBSCRIPTION_PLANS = [
             'Unlimited Team Members & Role Permissions',
             'Dedicated Webhooks & Custom Meta System Tokens',
             'White-Glove Onboarding & 24/7 SLA Support',
-            'Maximum Meta API Throughput (Tier 3/Unlimited)'
+            'Maximum Meta API Throughput (Tier 3/Unlimited)',
+            'This Plan pricing only for exisiting features for Extra Addon Features Billed Separately'
+
         ]
     }
 ];
@@ -2486,12 +2494,45 @@ let allCouponsList = [];
 let allPaymentLogsList = [];
 let activeCompanyPlanName = null;
 
+function getPlanCyclePrice(plan, cycle) {
+    if (!plan) return 0;
+    const c = String(cycle || 'monthly').toLowerCase();
+    if (c === '4_months' || c === '4months') {
+        return plan.price_4months || Math.round(plan.price_monthly * 4 * 0.9);
+    }
+    if (c === '6_months' || c === '6months') {
+        return plan.price_6months || Math.round(plan.price_monthly * 6 * 0.85);
+    }
+    if (c === 'annual' || c === '12_months' || c === 'year') {
+        return plan.price_annual || Math.round(plan.price_monthly * 12 * 0.8);
+    }
+    return plan.price_monthly;
+}
+window.getPlanCyclePrice = getPlanCyclePrice;
+
+function getCyclePeriodInfo(cycle) {
+    const c = String(cycle || 'monthly').toLowerCase();
+    if (c === '4_months' || c === '4months') {
+        return { text: '/4 months', badge: '✨ Includes 10% bundle discount', label: '4 Months' };
+    }
+    if (c === '6_months' || c === '6months') {
+        return { text: '/6 months', badge: '✨ Includes 15% bundle discount', label: '6 Months' };
+    }
+    if (c === 'annual' || c === '12_months' || c === 'year') {
+        return { text: '/year', badge: '✨ Includes 20% annual discount', label: 'Annual (12 Months)' };
+    }
+    return { text: '/month', badge: '', label: 'Monthly' };
+}
+window.getCyclePeriodInfo = getCyclePeriodInfo;
+
 function updateCompanySubscriptionStatusUI() {
     const coId = getCompanyId();
     const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
-    
-    // Strictly verify active paid subscription
-    const hasActiveSub = !!(activeComp && activeComp.subscription_status === 'active' && activeComp.subscription_plan && activeComp.subscription_plan.toLowerCase() !== 'none');
+
+    // Check if subscription has expired based on stored subscription_expires_at
+    const isMaster = !!(activeComp && ((activeComp.slug && activeComp.slug.toLowerCase() === 'inspenox') || (activeComp.name && activeComp.name.toLowerCase() === 'inspenox')));
+    const isExpired = !isMaster && !!(activeComp && activeComp.subscription_expires_at && (new Date(activeComp.subscription_expires_at) < new Date()));
+    const hasActiveSub = !!(activeComp && !isExpired && activeComp.subscription_status === 'active' && activeComp.subscription_plan && activeComp.subscription_plan.toLowerCase() !== 'none');
     activeCompanyPlanName = hasActiveSub ? activeComp.subscription_plan : null;
 
     // 1. Update Company Workspace Hero Banner (Shown for Child / Tenant Companies)
@@ -2500,9 +2541,11 @@ function updateCompanySubscriptionStatusUI() {
     const elHeroDesc = document.getElementById('sub-hero-plan-desc');
     const elHeroIcon = document.getElementById('sub-hero-icon-container');
 
+    let cycleInfo = getCyclePeriodInfo(activeComp?.subscription_billing_cycle || 'monthly');
+
     if (hasActiveSub) {
         if (elHeroPlanName) {
-            elHeroPlanName.textContent = activeCompanyPlanName;
+            elHeroPlanName.textContent = `${activeCompanyPlanName} (${cycleInfo.label})`;
             elHeroPlanName.style.color = '#10b981';
         }
         if (elHeroBadge) {
@@ -2511,12 +2554,41 @@ function updateCompanySubscriptionStatusUI() {
             elHeroBadge.style.color = '#10b981';
         }
         if (elHeroDesc) {
-            elHeroDesc.textContent = 'Verified subscription active via Razorpay. WhatsApp broadcast & marketing automation unlocked.';
+            if (activeComp.subscription_expires_at) {
+                const expDate = new Date(activeComp.subscription_expires_at);
+                const now = new Date();
+                const diffMs = expDate - now;
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                const formattedExp = expDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                elHeroDesc.textContent = `Valid until ${formattedExp} (${diffDays} day${diffDays === 1 ? '' : 's'} remaining) • WhatsApp broadcast & marketing automation unlocked.`;
+            } else {
+                elHeroDesc.textContent = 'Verified subscription active via Razorpay. WhatsApp broadcast & marketing automation unlocked.';
+            }
         }
         if (elHeroIcon) {
             elHeroIcon.style.color = '#10b981';
             elHeroIcon.style.background = 'rgba(16, 185, 129, 0.15)';
             elHeroIcon.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        }
+    } else if (isExpired) {
+        const expDate = new Date(activeComp.subscription_expires_at);
+        const formattedExp = expDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        if (elHeroPlanName) {
+            elHeroPlanName.textContent = `${activeComp.subscription_plan || 'Subscription'} (Expired)`;
+            elHeroPlanName.style.color = '#ef4444';
+        }
+        if (elHeroBadge) {
+            elHeroBadge.textContent = 'Expired ⚠️';
+            elHeroBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+            elHeroBadge.style.color = '#ef4444';
+        }
+        if (elHeroDesc) {
+            elHeroDesc.textContent = `Your subscription expired on ${formattedExp}. Please renew below to reactivate automated WhatsApp messaging.`;
+        }
+        if (elHeroIcon) {
+            elHeroIcon.style.color = '#ef4444';
+            elHeroIcon.style.background = 'rgba(239, 68, 68, 0.12)';
+            elHeroIcon.style.borderColor = 'rgba(239, 68, 68, 0.25)';
         }
     } else {
         if (elHeroPlanName) {
@@ -2553,7 +2625,28 @@ function updateCompanySubscriptionStatusUI() {
             elStatBadge.style.background = 'rgba(16,185,129,0.15)';
             elStatBadge.style.color = '#10b981';
         }
-        if (elStatCycle) elStatCycle.textContent = 'Renewing via Razorpay';
+        if (elStatCycle) {
+            if (activeComp?.subscription_expires_at) {
+                const formattedExp = new Date(activeComp.subscription_expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                elStatCycle.textContent = `Valid until ${formattedExp} (${cycleInfo.label})`;
+            } else {
+                elStatCycle.textContent = 'Renewing via Razorpay';
+            }
+        }
+    } else if (isExpired) {
+        if (elStatPlanName) {
+            elStatPlanName.textContent = activeComp.subscription_plan || 'Expired';
+            elStatPlanName.style.color = '#ef4444';
+        }
+        if (elStatBadge) {
+            elStatBadge.textContent = 'Expired ⚠️';
+            elStatBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+            elStatBadge.style.color = '#ef4444';
+        }
+        if (elStatCycle) {
+            const formattedExp = new Date(activeComp.subscription_expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+            elStatCycle.textContent = `Expired on ${formattedExp}`;
+        }
     } else {
         if (elStatPlanName) {
             elStatPlanName.textContent = 'None';
@@ -2582,19 +2675,19 @@ window.getPlanRank = getPlanRank;
 function renderPricingCards() {
     const grid = document.getElementById('pricing-plans-grid');
     if (!grid) return;
-    
-    const plansToRender = (Array.isArray(allSubscriptionPlans) && allSubscriptionPlans.length > 0) 
-        ? allSubscriptionPlans 
+
+    const plansToRender = (Array.isArray(allSubscriptionPlans) && allSubscriptionPlans.length > 0)
+        ? allSubscriptionPlans
         : DEFAULT_SUBSCRIPTION_PLANS;
 
-    const isAnnual = currentBillingCycle === 'annual';
+    const cycleInfo = getCyclePeriodInfo(currentBillingCycle);
     const hasActiveSub = !!activeCompanyPlanName;
     const activeRank = hasActiveSub ? getPlanRank(activeCompanyPlanName) : 0;
 
     grid.innerHTML = plansToRender.map(plan => {
-        const price = isAnnual ? plan.price_annual : plan.price_monthly;
-        const periodText = isAnnual ? '/year' : '/month';
-        
+        const price = getPlanCyclePrice(plan, currentBillingCycle);
+        const periodText = cycleInfo.text;
+
         const planRank = getPlanRank(plan.id);
         const isCurrentActive = hasActiveSub && (activeRank === planRank);
         const isUpgrade = hasActiveSub && (planRank > activeRank);
@@ -2673,7 +2766,7 @@ function renderPricingCards() {
                         <span class="pricing-strikethrough" style="font-size:1.2rem; font-weight:600; color:var(--text-muted); text-decoration:line-through; text-decoration-thickness:2px; text-decoration-color:#ef4444; opacity:0.75; margin-left:0.35rem;">₹${strikedPrice.toLocaleString('en-IN')}</span>
                         <span class="pricing-period">${periodText}</span>
                     </div>
-                    ${isAnnual ? '<div style="font-size:0.75rem; color:#10b981; font-weight:600; margin-top:0.25rem;">✨ Includes 20% annual discount</div>' : ''}
+                    ${cycleInfo.badge ? `<div style="font-size:0.75rem; color:#10b981; font-weight:600; margin-top:0.25rem;">${cycleInfo.badge}</div>` : ''}
                 </div>
 
                 <ul class="pricing-features-list">
@@ -2689,18 +2782,13 @@ window.renderPricingCards = renderPricingCards;
 
 function setBillingCycle(cycle) {
     currentBillingCycle = cycle;
-    const knob = document.getElementById('cycle-toggle-knob');
-    const labelMonthly = document.getElementById('label-cycle-monthly');
-    const labelAnnual = document.getElementById('label-cycle-annual');
-
-    if (cycle === 'annual') {
-        if (knob) knob.style.transform = 'translateX(24px)';
-        if (labelMonthly) labelMonthly.classList.remove('active');
-        if (labelAnnual) labelAnnual.classList.add('active');
-    } else {
-        if (knob) knob.style.transform = 'translateX(0px)';
-        if (labelMonthly) labelMonthly.classList.add('active');
-        if (labelAnnual) labelAnnual.classList.remove('active');
+    const subSelect = document.getElementById('sub-billing-cycle-select');
+    if (subSelect && subSelect.value !== cycle) {
+        subSelect.value = cycle;
+    }
+    const checkoutSelect = document.getElementById('checkout-cycle-select');
+    if (checkoutSelect && checkoutSelect.value !== cycle) {
+        checkoutSelect.value = cycle;
     }
     renderPricingCards();
 }
@@ -2799,7 +2887,7 @@ async function loadSubscriptions() {
     try {
         const res = await apiFetch('/api/payments?action=plans');
         const data = await res.json();
-        
+
         if (data.success && Array.isArray(data.plans) && data.plans.length > 0) {
             allSubscriptionPlans = data.plans;
             renderPricingCards();
@@ -2824,7 +2912,7 @@ async function loadSubscriptions() {
                 }
             }
         }
-    } catch(err) {
+    } catch (err) {
         console.warn('Live subscription plans check:', err);
     }
 
@@ -2838,12 +2926,12 @@ async function loadSubscriptions() {
                 const elOrders = document.getElementById('sub-stat-orders-count');
                 const elRevenue = document.getElementById('sub-stat-total-revenue');
                 const elSavings = document.getElementById('sub-stat-savings-claimed');
-                
+
                 if (elOrders) elOrders.textContent = s.total_orders || 0;
                 if (elRevenue) elRevenue.textContent = `Total Paid: ₹${Number(s.total_revenue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
                 if (elSavings) elSavings.textContent = `₹${Number(s.total_discounts || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
             }
-        } catch(e) {}
+        } catch (e) { }
     }
 }
 window.loadSubscriptions = loadSubscriptions;
@@ -2871,7 +2959,7 @@ window.switchView = function switchView(target, pushHistory = true) {
             parentGroup.classList.remove('collapsed');
         }
     }
-    
+
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById(`view-${target}`)?.classList.add('active');
 
@@ -2884,9 +2972,9 @@ window.switchView = function switchView(target, pushHistory = true) {
     if (target === 'usage') loadUsageAnalytics();
     if (target === 'customers') loadCustomers();
     if (target === 'templates') loadTemplates();
-    if (target === 'send') { 
-        loadCustomersForSelect(); 
-        loadTemplatesForSelect(); 
+    if (target === 'send') {
+        loadCustomersForSelect();
+        loadTemplatesForSelect();
         if (typeof updateBroadcastSenderPhoneSelect === 'function') updateBroadcastSenderPhoneSelect();
         if (typeof initVarPickers === 'function') initVarPickers();
     }
@@ -2940,7 +3028,7 @@ document.addEventListener('click', (e) => {
         localStorage.removeItem('inspenox_user');
         localStorage.removeItem('induio_token');
         localStorage.removeItem('induio_user');
-        try { sessionStorage.clear(); } catch(err) {}
+        try { sessionStorage.clear(); } catch (err) { }
         window.location.replace('/login.html');
         return;
     }
@@ -2987,8 +3075,8 @@ window.addEventListener('hashchange', () => {
 });
 
 const initialHash = window.location.hash.replace('#', '').trim();
-const savedView = (initialHash && document.getElementById(`view-${initialHash}`)) 
-    ? initialHash 
+const savedView = (initialHash && document.getElementById(`view-${initialHash}`))
+    ? initialHash
     : (localStorage.getItem('activeView') || 'dashboard');
 
 if (history.replaceState) {
@@ -3079,7 +3167,7 @@ async function loadTags() {
                 { name: 'Abandoned Cart' }
             ];
         }
-    } catch(err) {
+    } catch (err) {
         console.warn('Failed to load tags from API, using fallback defaults:', err);
         availableTags = [
             { name: 'Repeat Buyers' }, { name: 'Recovered' }, { name: 'Order Placed(Prepaid)' },
@@ -3196,7 +3284,7 @@ window.toggleTagOption = function toggleTagOption(context, tagName, e) {
     } else {
         updated = [...current, tagName];
     }
-    
+
     if (context === 'quick') {
         const custId = document.getElementById('quick-tag-cust-id')?.value;
         const cust = allCustomers.find(c => String(c.id) === String(custId));
@@ -3248,7 +3336,7 @@ window.submitNewTag = async function submitNewTag(context) {
             renderTagDropdownItems('excel');
             renderTagDropdownItems('quick');
         }
-    } catch(err) {
+    } catch (err) {
         console.error('Failed to create tag:', err);
     }
 };
@@ -3258,9 +3346,9 @@ window.toggleTagDropdown = function toggleTagDropdown(context, e) {
     const menu = document.getElementById(`${context}-tag-dropdown-menu`);
     if (!menu) return;
     const isShown = menu.classList.contains('show');
-    
+
     document.querySelectorAll('.tag-dropdown-menu').forEach(m => m.classList.remove('show'));
-    
+
     if (!isShown) {
         menu.classList.add('show');
         renderTagDropdownItems(context);
@@ -3286,7 +3374,7 @@ window.openQuickTagModal = function openQuickTagModal(custId, e) {
 
     document.getElementById('quick-tag-cust-id').value = cust.id;
     document.getElementById('quick-tag-cust-name').textContent = `${cust.name} (${cust.phone})`;
-    
+
     cancelNewTag('quick');
     const searchInput = document.getElementById('quick-tag-search');
     if (searchInput) searchInput.value = '';
@@ -3333,7 +3421,7 @@ window.saveQuickTags = async function saveQuickTags() {
             renderCustomersTable();
             showModal('Tags Updated', `Successfully updated tags for ${cust.name}.`);
         }
-    } catch(err) {
+    } catch (err) {
         console.error('Failed to update tags:', err);
         showModal('Error', 'Failed to update tags.');
     } finally {
@@ -3350,7 +3438,7 @@ window.filterCustomersByTag = function filterCustomersByTag(tagVal) {
 
     filteredCustomers = allCustomers.filter(c => {
         const matchesQuery = !query || (
-            (c.name && c.name.toLowerCase().includes(query)) || 
+            (c.name && c.name.toLowerCase().includes(query)) ||
             (c.phone && c.phone.toLowerCase().includes(query)) ||
             (c.email && c.email.toLowerCase().includes(query)) ||
             (c.company_name && c.company_name.toLowerCase().includes(query)) ||
@@ -3380,23 +3468,23 @@ async function loadCustomers() {
 
         const res = await apiFetch('/api/customers');
         const customers = await res.json();
-        
+
         if (customers.error) {
             console.error('API Error:', customers.error);
             if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="height:100px;">Failed to load customers.</td></tr>`;
             return;
         }
-        
+
         allCustomers = Array.isArray(customers) ? customers : [];
         filteredCustomers = [...allCustomers];
         currentCustomersPage = 1;
-        
+
         const statEl = document.getElementById('dash-stat-customers');
-        if(statEl) statEl.textContent = allCustomers.length;
+        if (statEl) statEl.textContent = allCustomers.length;
 
         renderCustomersTable();
         syncTagSelectorDisplay('form');
-    } catch (e) { 
+    } catch (e) {
         console.error('Error loading customers:', e);
         if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="height:100px;">Error loading data.</td></tr>`;
     }
@@ -3412,7 +3500,7 @@ function renderCustomersTable() {
 
     const totalItems = filteredCustomers.length;
     const totalPages = Math.ceil(totalItems / CUSTOMERS_PER_PAGE) || 1;
-    
+
     if (currentCustomersPage > totalPages) currentCustomersPage = totalPages;
     if (currentCustomersPage < 1) currentCustomersPage = 1;
 
@@ -3478,7 +3566,7 @@ document.getElementById('customers-search')?.addEventListener('input', (e) => {
 
     filteredCustomers = allCustomers.filter(c => {
         const matchesQuery = !query || (
-            (c.name && c.name.toLowerCase().includes(query)) || 
+            (c.name && c.name.toLowerCase().includes(query)) ||
             (c.phone && c.phone.toLowerCase().includes(query)) ||
             (c.email && c.email.toLowerCase().includes(query)) ||
             (c.company_name && c.company_name.toLowerCase().includes(query)) ||
@@ -3565,7 +3653,7 @@ document.getElementById('add-customer-form')?.addEventListener('submit', async (
     const performSave = async () => {
         await apiFetch('/api/customers', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 id: custId || undefined,
                 name,
@@ -3603,20 +3691,20 @@ async function loadDashboard() {
     const statCust = document.getElementById('dash-stat-customers');
     const statMsgs = document.getElementById('dash-stat-messages');
     const statChats = document.getElementById('dash-stat-chats');
-    
-    if(statCust) statCust.textContent = '...';
-    if(statMsgs) statMsgs.textContent = '...';
-    if(statChats) statChats.textContent = '...';
+
+    if (statCust) statCust.textContent = '...';
+    if (statMsgs) statMsgs.textContent = '...';
+    if (statChats) statChats.textContent = '...';
 
     try {
         const res = await apiFetch('/api/analytics');
         const analytics = await res.json();
-        
+
         if (!analytics.error) {
-            if(statCust) statCust.textContent = analytics.total_customers || 0;
-            if(statMsgs) statMsgs.textContent = analytics.messages_sent || 0;
-            if(statChats) statChats.textContent = (analytics.recent_inbound && analytics.recent_inbound.length) || 0;
-            
+            if (statCust) statCust.textContent = analytics.total_customers || 0;
+            if (statMsgs) statMsgs.textContent = analytics.messages_sent || 0;
+            if (statChats) statChats.textContent = (analytics.recent_inbound && analytics.recent_inbound.length) || 0;
+
             const inboxList = document.getElementById('dash-inbox-list');
             if (inboxList) {
                 if (analytics.recent_inbound && analytics.recent_inbound.length > 0) {
@@ -3642,7 +3730,7 @@ async function loadDashboard() {
         if (mediaGrid) {
             const mediaRes = await apiFetch('/api/media');
             const mediaList = await mediaRes.json();
-            
+
             if (!Array.isArray(mediaList) || mediaList.length === 0) {
                 mediaGrid.innerHTML = '<div class="empty-state" style="grid-column: span 2;">No media uploaded yet.</div>';
             } else {
@@ -3650,10 +3738,10 @@ async function loadDashboard() {
                 const recentFiles = mediaList.slice(0, 4);
                 recentFiles.forEach(m => {
                     const isVideo = m.type === 'video' || (m.name && m.name.endsWith('.mp4'));
-                    const mediaHtml = isVideo 
+                    const mediaHtml = isVideo
                         ? (m.file_url ? `<video src="${m.file_url}" muted></video>` : `<div style="font-size:0.75rem;padding:0.5rem;text-align:center;">🎥 ${m.name}</div>`)
                         : (m.file_url ? `<img src="${m.file_url}" alt="${m.name}">` : `<div style="font-size:0.75rem;padding:0.5rem;text-align:center;">🖼️ ${m.name}</div>`);
-                    
+
                     mediaGrid.innerHTML += `
                         <div class="dash-media-card">
                             ${mediaHtml}
@@ -3704,8 +3792,8 @@ window.executeExcelImport = async function executeExcelImport() {
     try {
         const res = await apiFetch('/api/customers-import', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
                 customers: pendingExcelCustomers,
                 company_id: getCompanyId(),
                 default_tags: defaultTags,
@@ -3720,7 +3808,7 @@ window.executeExcelImport = async function executeExcelImport() {
         } else {
             showModal('Error', data.error || 'Failed to import contacts.');
         }
-    } catch(err) {
+    } catch (err) {
         console.error('Import error:', err);
         showModal('Error', 'Failed to import contacts: ' + err.message);
     } finally {
@@ -3739,7 +3827,7 @@ document.getElementById('excel-upload')?.addEventListener('change', async (e) =>
     reader.onload = async (evt) => {
         try {
             const data = new Uint8Array(evt.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
+            const workbook = XLSX.read(data, { type: 'array' });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const json = XLSX.utils.sheet_to_json(worksheet);
@@ -3755,8 +3843,8 @@ document.getElementById('excel-upload')?.addEventListener('change', async (e) =>
 
                 const rawPhone = row[phoneKey];
                 const formattedPhone = formatIndiaPhone(rawPhone);
-                return { 
-                    name: row[nameKey] ? String(row[nameKey]).trim() : 'Customer', 
+                return {
+                    name: row[nameKey] ? String(row[nameKey]).trim() : 'Customer',
                     phone: formattedPhone,
                     email: emailKey && row[emailKey] ? String(row[emailKey]).trim() : '',
                     company_name: companyKey && row[companyKey] ? String(row[companyKey]).trim() : '',
@@ -3771,7 +3859,7 @@ document.getElementById('excel-upload')?.addEventListener('change', async (e) =>
                 const fileEl = document.getElementById('excel-import-file-info');
                 if (countEl) countEl.textContent = `${customers.length} contacts detected`;
                 if (fileEl) fileEl.textContent = `File: ${file.name} (${customers.length} valid rows)`;
-                
+
                 // Reset tag selector in Excel modal
                 const importTagsInp = document.getElementById('excel-import-tags');
                 if (importTagsInp) importTagsInp.value = '';
@@ -3786,7 +3874,7 @@ document.getElementById('excel-upload')?.addEventListener('change', async (e) =>
             } else {
                 showModal('Error', 'Could not find any valid phone numbers in the uploaded Excel/CSV file.');
             }
-        } catch(err) {
+        } catch (err) {
             console.error('Excel parse error:', err);
             showModal('Error', 'Error processing file: ' + err.message);
         }
@@ -3802,14 +3890,14 @@ document.getElementById('btn-download-template')?.addEventListener('click', () =
         { Name: "Rahul Verma", Phone: "919876543212", Email: "rahul@example.com", Company: "Tech Solutions", City: "Hyderabad", Tags: "Order Placed(Prepaid)" },
         { Name: "Priya Sharma", Phone: "919876543213", Email: "priya@example.com", Company: "Design Studio", City: "Delhi", Tags: "Abandoned Cart" }
     ];
-    
+
     const worksheet = XLSX.utils.json_to_sheet(templateData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
-    
+
     // Set column widths
     worksheet['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 22 }, { wch: 20 }, { wch: 16 }, { wch: 30 }];
-    
+
     XLSX.writeFile(workbook, "inspenox_customers_template.xlsx");
 });
 
@@ -3826,7 +3914,7 @@ async function loadTemplates() {
     try {
         const res = await apiFetch('/api/templates');
         const json = await res.json();
-        
+
         if (json.error) {
             templatesCache = [];
             if (grid) {
@@ -3841,7 +3929,7 @@ async function loadTemplates() {
             }
             return;
         }
-        
+
         const isViewOnly = json.is_view_only === true;
         const isConfigured = json.is_configured !== false;
         const list = Array.isArray(json) ? json : (json.data || json.templates || []);
@@ -3866,7 +3954,7 @@ async function loadTemplates() {
                 createBtn.title = 'Create Template';
             }
         }
-        
+
         if (grid) {
             grid.innerHTML = '';
             if (Array.isArray(templatesCache) && templatesCache.length > 0) {
@@ -3876,7 +3964,7 @@ async function loadTemplates() {
                     const bodySnippet = bodyComponent ? bodyComponent.text : 'Official Meta Message Template for WhatsApp broadcasts.';
                     const safeName = (t.name || '').replace(/'/g, "\\'");
                     const safeId = (t.id || '').replace(/'/g, "\\'");
-                    
+
                     let actionHtml = '';
                     if (isViewOnly) {
                         actionHtml = `
@@ -3924,7 +4012,7 @@ async function loadTemplates() {
                     `;
                 });
             } else {
-                grid.innerHTML = isViewOnly 
+                grid.innerHTML = isViewOnly
                     ? '<div class="empty-state" style="grid-column: 1 / -1;">No templates available. Configure Meta app details in Settings to create and manage templates.</div>'
                     : '<div class="empty-state" style="grid-column: 1 / -1;">No templates found. Click "+ Create Template" above to build your first template.</div>';
             }
@@ -3934,7 +4022,7 @@ async function loadTemplates() {
 
 window.loadTemplates = loadTemplates;
 
-window.navigateToSettingsMeta = function() {
+window.navigateToSettingsMeta = function () {
     switchView('settings');
     setTimeout(() => {
         const target = document.getElementById('panel-companies-title') || document.getElementById('env-credentials-card');
@@ -4247,8 +4335,8 @@ function checkSelectedTemplateMediaRequirement() {
                 const iconSvg = format === 'VIDEO'
                     ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`
                     : format === 'DOCUMENT'
-                    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`
-                    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`;
+                        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`
+                        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`;
 
                 const badgeText = isFallback ? 'Auto-Attached from Library' : 'Synced from Meta';
                 const subtitleText = isFallback
@@ -4305,7 +4393,7 @@ function checkSelectedTemplateMediaRequirement() {
 window.checkSelectedTemplateMediaRequirement = checkSelectedTemplateMediaRequirement;
 
 async function loadTemplatesForSelect() {
-    if(templatesCache.length === 0) await loadTemplates();
+    if (templatesCache.length === 0) await loadTemplates();
     const select = document.getElementById('bc-template');
     if (select) {
         select.innerHTML = '';
@@ -4403,7 +4491,7 @@ function goToStep(step) {
         if (btnPrev) btnPrev.style.display = 'block';
         if (btnNext) btnNext.style.display = 'none';
         if (btnSubmit) btnSubmit.style.display = 'block';
-        
+
         renderStep2Form(currentSelectedCategory, currentSelectedSubtype);
     }
 }
@@ -4598,7 +4686,7 @@ function renderStep2Form(category, subtype) {
     const bannerTitle = document.getElementById('tpl-banner-title');
     const bannerSubtitle = document.getElementById('tpl-banner-subtitle');
     const bannerIcon = document.querySelector('.tpl-banner-icon');
-    
+
     if (!form) return;
 
     // Update Banner Info
@@ -5206,7 +5294,7 @@ function attachStep2FormListeners() {
     function handleMediaFileSelected(file) {
         currentMediaSampleFile = file;
         currentMediaSampleUrl = URL.createObjectURL(file);
-        
+
         const mediaThumbEl = document.getElementById('tpl-media-file-thumb');
         const mediaIconEl = document.getElementById('tpl-media-file-icon');
 
@@ -5465,7 +5553,7 @@ function updateLivePreview() {
     const bodyEl = document.getElementById('wa-preview-body');
     if (bodyEl) {
         let textToDisplay = bodyVal.trim();
-        
+
         if (!textToDisplay) {
             if (currentSelectedCategory === 'MARKETING') {
                 if (currentSelectedSubtype === 'catalogue') {
@@ -5496,7 +5584,7 @@ function updateLivePreview() {
             .replace(/_(.*?)_/g, '<em>$1</em>')
             .replace(/~(.*?)~/g, '<del>$1</del>')
             .replace(/```(.*?)```/g, '<code style="font-family:monospace;background:#f0f2f5;padding:0.1rem 0.3rem;border-radius:3px;">$1</code>');
-        
+
         bodyEl.innerHTML = formatted;
     }
 
@@ -5915,7 +6003,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const otpRadio = document.querySelector('input[name="otp-type"]:checked')?.value;
             const consentCb = document.getElementById('zt-consent-cb');
             const errBanner = document.getElementById('zt-consent-error');
-            
+
             if (otpRadio === 'zero_tap' && consentCb && !consentCb.checked) {
                 if (errBanner) errBanner.style.display = 'flex';
                 resetSubmitBtn();
@@ -6170,7 +6258,7 @@ bcDisplay?.addEventListener('click', () => {
 });
 
 document.addEventListener('click', (e) => {
-    if(bcDisplay && !bcDisplay.contains(e.target) && !bcOptions?.contains(e.target)) {
+    if (bcDisplay && !bcDisplay.contains(e.target) && !bcOptions?.contains(e.target)) {
         bcOptions?.classList.remove('active');
     }
 });
@@ -6185,7 +6273,7 @@ let activeBroadcastTagFilter = '';
 function populateBroadcastTagFilterOptions() {
     const sel = document.getElementById('bc-tag-filter-select');
     const chipsContainer = document.getElementById('bc-tag-chips-container');
-    
+
     // Calculate customer count per tag
     const tagCounts = {};
     broadcastCustomersCache.forEach(c => {
@@ -6211,7 +6299,7 @@ function populateBroadcastTagFilterOptions() {
 
     if (chipsContainer) {
         chipsContainer.innerHTML = '';
-        
+
         // "All" Chip
         const allChip = document.createElement('button');
         allChip.type = 'button';
@@ -6261,7 +6349,7 @@ window.applyBroadcastTagFilter = function applyBroadcastTagFilter(tagName, autoS
     if (autoSelect && activeBroadcastTagFilter) {
         const lowerTag = activeBroadcastTagFilter.toLowerCase();
         let matchedCount = 0;
-        
+
         document.querySelectorAll('.bc-cust-cb').forEach(cb => {
             const custId = parseInt(cb.value);
             const cust = broadcastCustomersCache.find(c => c.id === custId);
@@ -6314,7 +6402,7 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
 
         const custTags = cust.tags ? cust.tags.split(',').map(s => s.trim().toLowerCase()) : [];
         const matchesTag = !lowerFilterTag || custTags.includes(lowerFilterTag);
-        
+
         const matchesSearch = !searchVal || (
             (cust.name && cust.name.toLowerCase().includes(searchVal)) ||
             (cust.phone && cust.phone.includes(searchVal)) ||
@@ -6351,19 +6439,19 @@ async function loadCustomersForSelect() {
         await loadTags();
         const res = await apiFetch('/api/customers');
         const customers = await res.json();
-        
+
         if (customers.error) return;
 
         broadcastCustomersCache = Array.isArray(customers) ? customers : [];
 
         const list = document.getElementById('bc-target-list');
-        if(list && Array.isArray(customers)) {
+        if (list && Array.isArray(customers)) {
             list.innerHTML = '';
             customers.forEach(c => {
                 const label = document.createElement('label');
                 label.className = 'option-item';
                 label.setAttribute('data-id', c.id);
-                
+
                 const tagsArr = c.tags ? c.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
                 const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
 
@@ -6385,7 +6473,7 @@ async function loadCustomersForSelect() {
 
             const selectAll = document.getElementById('bc-select-all');
             const cbs = document.querySelectorAll('.bc-cust-cb');
-            
+
             selectAll?.addEventListener('change', (e) => {
                 const isChecked = e.target.checked;
                 // Only toggle checkboxes of visible customers (matching active tag filter / search)
@@ -6400,7 +6488,7 @@ async function loadCustomersForSelect() {
 
             cbs.forEach(cb => {
                 cb.addEventListener('change', () => {
-                    if(!cb.checked && selectAll) selectAll.checked = false;
+                    if (!cb.checked && selectAll) selectAll.checked = false;
                     updateBcDisplay();
                 });
             });
@@ -6409,7 +6497,7 @@ async function loadCustomersForSelect() {
             document.getElementById('btn-bc-select-24h-active')?.addEventListener('click', () => {
                 const now = Date.now();
                 const twentyFourHoursMs = 24 * 60 * 60 * 1000;
-                
+
                 if (selectAll) selectAll.checked = false;
 
                 cbs.forEach(cb => {
@@ -6434,7 +6522,7 @@ async function loadCustomersForSelect() {
 function updateBcDisplay() {
     const cbs = document.querySelectorAll('.bc-cust-cb:checked');
     selectedCustomerIds = Array.from(cbs).map(cb => cb.value);
-    
+
     const selectAll = document.getElementById('bc-select-all');
     if (selectAll?.checked && !activeBroadcastTagFilter) {
         bcDisplay.textContent = `All Customers Selected (${broadcastCustomersCache.length})`;
@@ -6467,7 +6555,7 @@ async function loadMediaForSelect(targetType) {
 
         const typeLabel = currentBcType === 'image' ? 'Image' : currentBcType === 'video' ? 'Video' : 'Media';
         select.innerHTML = `<option value="">-- Select from uploaded ${typeLabel} files --</option>`;
-        
+
         const filteredMedia = mediaList.filter(m => {
             if (!currentBcType || currentBcType === 'template' || currentBcType === 'text') return true;
             if (currentBcType === 'image') return m.type === 'image' || (m.mime_type && m.mime_type.startsWith('image'));
@@ -6490,15 +6578,15 @@ document.getElementById('bc-media-select')?.addEventListener('change', (e) => {
     const url = e.target.value;
     const previewContainer = document.getElementById('bc-media-preview-container');
     const fileInput = document.getElementById('bc-media');
-    
+
     if (fileInput) fileInput.value = ''; // Reset file input if library item chosen
-    
+
     if (url && previewContainer) {
         if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('/')) {
             const isVideo = url.endsWith('.mp4');
             previewContainer.style.display = 'block';
-            previewContainer.innerHTML = isVideo 
-                ? `<video src="${url}" controls style="max-height:120px;border-radius:8px;"></video>` 
+            previewContainer.innerHTML = isVideo
+                ? `<video src="${url}" controls style="max-height:120px;border-radius:8px;"></video>`
                 : `<img src="${url}" style="max-height:120px;border-radius:8px;object-fit:cover;">`;
         } else {
             previewContainer.style.display = 'block';
@@ -6515,7 +6603,7 @@ bcType?.addEventListener('change', (e) => {
     const type = e.target.value;
     document.getElementById('bc-template-group').style.display = type === 'template' ? 'block' : 'none';
     document.getElementById('bc-content-group').style.display = type === 'template' ? 'none' : 'block';
-    
+
     if (type === 'image' || type === 'video') {
         document.getElementById('bc-media-group').style.display = 'block';
         const mediaLabel = document.getElementById('bc-media-group-label') || document.getElementById('bc-media-group')?.querySelector('label');
@@ -6539,7 +6627,7 @@ document.getElementById('bc-media')?.addEventListener('change', (e) => {
     const file = e.target.files[0];
     const dropzoneText = document.getElementById('dropzone-text');
     const mediaSelect = document.getElementById('bc-media-select');
-    
+
     if (mediaSelect) mediaSelect.value = ''; // Clear library dropdown if file chosen
     const previewContainer = document.getElementById('bc-media-preview-container');
     if (previewContainer) previewContainer.style.display = 'none';
@@ -6620,25 +6708,25 @@ function uploadMediaToMetaFast(file, config, onProgress) {
 }
 
 // Background sync to GitHub Media Storage (Removed)
-function syncToGithubBackground() {}
+function syncToGithubBackground() { }
 
 function resetBroadcastForm() {
     const form = document.getElementById('broadcast-form');
     if (form) form.reset();
-    
+
     if (typeof clearBroadcastTagFilter === 'function') {
         clearBroadcastTagFilter();
     }
-    
+
     selectedCustomerIds = [];
     document.querySelectorAll('.bc-cust-cb').forEach(cb => { cb.checked = false; });
     const selectAll = document.getElementById('bc-select-all');
     if (selectAll) selectAll.checked = false;
     const bcDisplay = document.getElementById('bc-target-display');
     if (bcDisplay) bcDisplay.textContent = "Select Audience...";
-    
+
     document.getElementById('bc-target-options')?.classList.remove('active');
-    
+
     const mediaSelect = document.getElementById('bc-media-select');
     if (mediaSelect) mediaSelect.value = '';
     const fileInput = document.getElementById('bc-media');
@@ -6650,7 +6738,7 @@ function resetBroadcastForm() {
     }
     const dropzoneText = document.getElementById('dropzone-text');
     if (dropzoneText) dropzoneText.textContent = "Drag & Drop media here, or Click to Browse";
-    
+
     const bcType = document.getElementById('bc-type');
     if (bcType) bcType.value = 'text';
     const tg = document.getElementById('bc-template-group');
@@ -6741,14 +6829,14 @@ btnCloseBcModalX?.addEventListener('click', handleCloseBcModal);
 
 function updateBcProgress(processed, total, sent, failed, logMsg = '') {
     const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
-    
+
     // SVG dashoffset: full circle radius is 50, circumference is 2 * PI * 50 = 314.16
     const dashoffset = 314.16 - (314.16 * (percent / 100));
     if (bcProgressCircle) bcProgressCircle.style.strokeDashoffset = dashoffset;
     if (bcProgressBarFill) bcProgressBarFill.style.width = `${percent}%`;
     if (bcProgressPercent) bcProgressPercent.textContent = `${percent}%`;
     if (bcProgressCounterSub) bcProgressCounterSub.textContent = `${processed} of ${total}`;
-    
+
     if (bcStatSent) bcStatSent.textContent = sent;
     if (bcStatFailed) bcStatFailed.textContent = failed;
     if (bcStatRemaining) bcStatRemaining.textContent = Math.max(0, total - processed);
@@ -6820,8 +6908,8 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
         } else if (activeBroadcastTagFilter) {
             // Tag is selected but no individual checkboxes were explicitly ticked
             const lowerFilterTag = activeBroadcastTagFilter.toLowerCase().trim();
-            const pool = (broadcastCustomersCache && broadcastCustomersCache.length > 0) 
-                ? broadcastCustomersCache 
+            const pool = (broadcastCustomersCache && broadcastCustomersCache.length > 0)
+                ? broadcastCustomersCache
                 : await (await apiFetch('/api/customers')).json();
             if (Array.isArray(pool)) {
                 targetList = pool.filter(c => {
@@ -6843,16 +6931,16 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
         }
 
         if (targetList.length === 0) {
-            throw new Error(activeBroadcastTagFilter 
+            throw new Error(activeBroadcastTagFilter
                 ? `No customers found with tag "${activeBroadcastTagFilter}".`
                 : "Please select at least one customer or tag.");
         }
 
         const type = document.getElementById('bc-type').value;
         const content = document.getElementById('bc-content').value;
-        
+
         let media_id = null;
-        if (type === 'image' || type === 'video' || type === 'document' ) {
+        if (type === 'image' || type === 'video' || type === 'document') {
             const librarySelectedUrl = document.getElementById('bc-media-select')?.value;
             const fileInput = document.getElementById('bc-media');
 
@@ -6862,7 +6950,7 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                 const file = fileInput.files[0];
                 const configRes = await apiFetch('/api/config');
                 const config = await configRes.json();
-                
+
                 if (statusDiv) statusDiv.innerHTML = `<span class="spinner"></span> Streaming ${file.name} to Meta Cloud...`;
                 const metaData = await uploadMediaToMetaFast(file, config, (percent) => {
                     if (statusDiv) statusDiv.innerHTML = `<span class="spinner"></span> Streaming ${file.name} to Meta Cloud (${percent}%)...`;
@@ -6882,7 +6970,7 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                 const file = fileInput.files[0];
                 const configRes = await apiFetch('/api/config');
                 const config = await configRes.json();
-                
+
                 if (statusDiv) statusDiv.innerHTML = `<span class="spinner"></span> Streaming ${file.name} to Meta Cloud...`;
                 const metaData = await uploadMediaToMetaFast(file, config, (percent) => {
                     if (statusDiv) statusDiv.innerHTML = `<span class="spinner"></span> Streaming ${file.name} to Meta Cloud (${percent}%)...`;
@@ -6939,25 +7027,25 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                 const senderPhoneId = document.getElementById('bc-sender-phone-select')?.value || null;
                 const res = await apiFetch('/api/broadcast', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        target: chunkIds, 
-                        type, 
-                        content, 
-                        media_id, 
-                        media_type, 
-                        template_name, 
-                        template_language, 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target: chunkIds,
+                        type,
+                        content,
+                        media_id,
+                        media_type,
+                        template_name,
+                        template_language,
                         company_id: activeCoId,
                         phone_number_id: senderPhoneId
                     })
                 });
-                
+
                 const result = await res.json();
                 if (result.success) {
                     sentTotal += result.sent || 0;
                     failedTotal += result.failed || 0;
-                    
+
                     if (result.errors && result.errors.length > 0) {
                         result.errors.forEach(errStr => {
                             updateBcProgress(i + chunk.length, targetList.length, sentTotal, failedTotal, `<span style="color:#ef4444;">⚠️ Error: ${errStr}</span>`);
@@ -7012,8 +7100,8 @@ async function loadInboxSidebar() {
     try {
         const res = await apiFetch('/api/customers');
         const customers = await res.json();
-        if(!sidebar) return;
-        
+        if (!sidebar) return;
+
         if (customers.error || !Array.isArray(customers)) {
             sidebar.innerHTML = '<div style="padding:1rem;font-size:0.85rem;color:var(--error);">Failed to load contacts.</div>';
             return;
@@ -7039,8 +7127,8 @@ async function loadInboxSidebar() {
 function isUnsavedLead(c) {
     if (c.is_saved === true || c.is_saved === 'true') return false;
     return (c.is_saved === false || c.is_saved === 'false') ||
-           (c.name === c.phone) ||
-           (parseInt(c.inbound_count) > 0 && parseInt(c.outbound_count) === 0 && !c.is_saved);
+        (c.name === c.phone) ||
+        (parseInt(c.inbound_count) > 0 && parseInt(c.outbound_count) === 0 && !c.is_saved);
 }
 
 function filterAndRenderInboxContacts() {
@@ -7050,7 +7138,7 @@ function filterAndRenderInboxContacts() {
 
     const filtered = inboxCustomersList.filter(c => {
         const matchesQuery = (c.name && c.name.toLowerCase().includes(query)) ||
-                             (c.phone && c.phone.toLowerCase().includes(query));
+            (c.phone && c.phone.toLowerCase().includes(query));
         if (!matchesQuery) return false;
 
         const is24hActive = c.last_inbound_at && (now - new Date(c.last_inbound_at).getTime() <= twentyFourHoursMs);
@@ -7088,22 +7176,22 @@ function renderInboxContacts(list) {
 
     sidebar.innerHTML = '';
     if (list.length === 0) {
-        const msg = currentInboxFilter === 'free' ? 'No active 24h free tier chats' 
-                  : currentInboxFilter === 'unsaved' ? 'No new unsaved / ad leads found' 
-                  : 'No contacts found';
+        const msg = currentInboxFilter === 'free' ? 'No active 24h free tier chats'
+            : currentInboxFilter === 'unsaved' ? 'No new unsaved / ad leads found'
+                : 'No contacts found';
         sidebar.innerHTML = `<div class="empty-state">${msg}</div>`;
         return;
     }
 
     list.forEach(c => {
         const unreadNum = parseInt(c.unread_count) || 0;
-        const unreadBadgeHtml = unreadNum > 0 
-            ? `<span class="badge-count" style="font-size:0.7rem;padding:0.1rem 0.45rem;">${unreadNum}</span>` 
+        const unreadBadgeHtml = unreadNum > 0
+            ? `<span class="badge-count" style="font-size:0.7rem;padding:0.1rem 0.45rem;">${unreadNum}</span>`
             : '';
 
         const isInboundLead = isUnsavedLead(c);
 
-        const leadTagHtml = isInboundLead 
+        const leadTagHtml = isInboundLead
             ? `<span style="font-size:0.6rem; background:rgba(234, 179, 8, 0.18); color:#eab308; padding:0.1rem 0.35rem; border-radius:4px; margin-left:0.35rem; font-weight:600; display:inline-block;">Ad Lead</span>`
             : '';
 
@@ -7159,7 +7247,7 @@ function openSaveUnsavedLeadsModal() {
         row.className = 'unsaved-lead-item-row';
         row.setAttribute('data-phone', formattedPhone);
         row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.65rem 0.85rem; background: var(--bg-sidebar); border-radius: 10px; border: 1px solid var(--border);';
-        
+
         row.innerHTML = `
             <div style="flex: 1; display: flex; flex-direction: column; gap: 0.25rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -7189,7 +7277,7 @@ function openSaveUnsavedLeadsModal() {
             try {
                 const res = await apiFetch('/api/customers', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name: newName, phone: formattedPhone, company_id: getCompanyId() })
                 });
                 const data = await res.json();
@@ -7266,7 +7354,7 @@ document.getElementById('btn-save-all-unsaved-leads')?.addEventListener('click',
     try {
         const res = await apiFetch('/api/customers-import', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ customers: toSave, company_id: getCompanyId() })
         });
         const result = await res.json();
@@ -7315,7 +7403,7 @@ async function openChat(customer, pushHistory = true) {
     const activeAvatar = document.getElementById('active-chat-avatar');
     const activeName = document.getElementById('active-chat-name');
     const activePhone = document.getElementById('active-chat-phone');
-    
+
     if (headerBar) headerBar.style.display = 'flex';
     if (activeAvatar) activeAvatar.textContent = getInitial(customer.name);
     if (activeName) activeName.textContent = customer.name;
@@ -7343,7 +7431,7 @@ async function openChat(customer, pushHistory = true) {
 
     document.getElementById('chat-active-customer').value = customer.id;
     document.getElementById('chat-reply-form').style.display = 'flex';
-    
+
     // Mobile toggle
     if (window.innerWidth <= 768) {
         document.getElementById('inbox-customers-panel')?.classList.add('hidden');
@@ -7351,8 +7439,8 @@ async function openChat(customer, pushHistory = true) {
     }
 
     await fetchChatMessages(true);
-    
-    if(inboxPollInterval) clearInterval(inboxPollInterval);
+
+    if (inboxPollInterval) clearInterval(inboxPollInterval);
     inboxPollInterval = setInterval(fetchChatMessages, 4000);
 }
 
@@ -7361,8 +7449,8 @@ document.getElementById('close-chat-btn')?.addEventListener('click', closeChat);
 function closeChat() {
     activeInboxCustomer = null;
     activeCustomerData = null;
-    if(inboxPollInterval) clearInterval(inboxPollInterval);
-    
+    if (inboxPollInterval) clearInterval(inboxPollInterval);
+
     const headerBar = document.getElementById('chat-header-bar');
     if (headerBar) headerBar.style.display = 'none';
 
@@ -7460,10 +7548,10 @@ let lastChatLatestMsgId = null;
 let lastChatStatusHash = '';
 
 async function fetchChatMessages(isInitial = false) {
-    if(!activeInboxCustomer) return;
+    if (!activeInboxCustomer) return;
     const chatContainer = document.getElementById('chat-messages');
     if (!chatContainer) return;
-    
+
     if (isInitial) {
         lastChatMsgCount = 0;
         lastChatLatestMsgId = null;
@@ -7474,7 +7562,7 @@ async function fetchChatMessages(isInitial = false) {
     try {
         const res = await apiFetch(`/api/messages?customer_id=${activeInboxCustomer}`);
         const messages = await res.json();
-        
+
         if (messages.error || !Array.isArray(messages)) return;
 
         update24hWindowBadge(messages);
@@ -7495,7 +7583,7 @@ async function fetchChatMessages(isInitial = false) {
         lastChatStatusHash = currentStatusHash;
 
         chatContainer.innerHTML = '';
-        
+
         if (messages.length === 0) {
             chatContainer.innerHTML = `
                 <div class="empty-state">
@@ -7519,7 +7607,7 @@ async function fetchChatMessages(isInitial = false) {
 
             const row = document.createElement('div');
             row.className = `msg-row ${m.direction}`;
-            
+
             const timeStr = formatTime(m.created_at);
             const tickHtml = renderTick(m.status, m.direction);
 
@@ -7573,27 +7661,27 @@ document.getElementById('chat-reply-form')?.addEventListener('submit', async (e)
 
     const customerId = document.getElementById('chat-active-customer').value;
     const btn = e.target.querySelector('button[type="submit"]');
-    
+
     inputEl.value = '';
     btn.disabled = true;
-    
+
     const res = await apiFetch('/api/send-message', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             customer_id: customerId,
             type: 'text',
             content: content
         })
     });
-    
+
     btn.disabled = false;
-    
+
     const result = await res.json();
     if (result.error) {
         showModal('Message Error', "Failed to send message: " + result.error);
     }
-    
+
     fetchChatMessages();
 });
 
@@ -7616,7 +7704,7 @@ document.addEventListener('click', (e) => {
 document.getElementById('btn-inbox-send-template')?.addEventListener('click', async () => {
     document.getElementById('chat-dropdown-menu')?.classList.add('hidden');
     if (!activeInboxCustomer) return;
-    
+
     showModal(
         'Loading Message Templates',
         `<div style="padding:1.25rem 0.5rem; text-align:center;">
@@ -7631,14 +7719,14 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
         const res = await apiFetch('/api/templates');
         const json = await res.json();
         const templates = Array.isArray(json) ? json : (json.data || json.templates || []);
-        
+
         if (!Array.isArray(templates) || templates.length === 0) {
             showModal('No Templates Found', 'No approved Meta message templates found in your WhatsApp Business Account.');
             return;
         }
 
         const templateOptions = templates.map(t => `<option value="${t.name}" data-lang="${t.language}">${t.name} (${t.language})</option>`).join('');
-        
+
         // Fetch media library items for template header selection
         let mediaOptions = '<option value="">-- Select from uploaded files --</option>';
         try {
@@ -7652,7 +7740,7 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
                     }
                 });
             }
-        } catch (e) {}
+        } catch (e) { }
 
         const modalHtml = `
             <div style="text-align:left; margin-top:0.75rem;">
@@ -7689,7 +7777,7 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
                 </div>
             </div>
         `;
-        
+
         showModal('Send Template Message', 'Select a template to initiate conversation:', 'confirm', async () => {
             const selectEl = document.getElementById('modal-template-select');
             const mediaSelectEl = document.getElementById('modal-media-select');
@@ -7698,7 +7786,7 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
             if (!selectEl) return;
             const templateName = selectEl.value;
             const templateLang = selectEl.options[selectEl.selectedIndex].getAttribute('data-lang') || 'en_US';
-            
+
             const tmpl = templates.find(t => t.name === templateName);
             const headerComp = tmpl && tmpl.components ? tmpl.components.find(c => c.type === 'HEADER') : null;
             const requiresMedia = headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format);
@@ -7728,10 +7816,10 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
                     media_id = tmpl && tmpl.header_media ? tmpl.header_media.media_id : null;
                 }
             }
-            
+
             const sendRes = await apiFetch('/api/send-message', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     customer_id: activeInboxCustomer,
                     type: 'template',
@@ -7748,7 +7836,7 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
                 fetchChatMessages();
             }
         }, 'Send Template', 'btn primary');
-        
+
         const msgEl = document.getElementById('modal-message');
         if (msgEl) {
             msgEl.innerHTML = modalHtml;
@@ -7833,7 +7921,7 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
             tSelect?.addEventListener('change', updateModalMediaVisibility);
             updateModalMediaVisibility();
         }
-    } catch(e) {
+    } catch (e) {
         showModal('Error', 'Failed to load templates: ' + e.message);
     }
 });
@@ -7863,7 +7951,7 @@ async function loadMedia() {
         mediaList.forEach(m => {
             const isVideo = m.type === 'video' || (m.name && m.name.endsWith('.mp4'));
             const safeName = (m.name || 'Media').replace(/'/g, "\\'");
-            
+
             let thumbnailHtml = '';
             if (m.file_url) {
                 if (isVideo) {
@@ -7903,7 +7991,7 @@ async function loadMedia() {
                 </div>
             `;
         });
-    } catch(e) {
+    } catch (e) {
         console.error('Error loading media', e);
         document.getElementById('media-grid').innerHTML = '<div class="empty-state">Failed to load media library.</div>';
     }
@@ -7915,7 +8003,7 @@ window.deleteMedia = (id) => {
             await apiFetch(`/api/media?id=${id}`, { method: 'DELETE' });
             loadMedia();
             loadMediaForSelect();
-        } catch(e) {
+        } catch (e) {
             showModal('Error', 'Failed to delete file.');
         }
     });
@@ -8010,7 +8098,7 @@ async function loadSecurityLogs() {
         const data = await res.json();
         if (data.success) {
             window.allSecurityLogs = data.attempts || [];
-            
+
             const stats = data.stats || {};
             if (document.getElementById('sec-stat-total')) document.getElementById('sec-stat-total').textContent = stats.total_attempts || 0;
             if (document.getElementById('sec-stat-failed-15m')) document.getElementById('sec-stat-failed-15m').textContent = stats.active_failed_15m || 0;
@@ -8021,7 +8109,7 @@ async function loadSecurityLogs() {
         } else {
             showModal('Error', data.error || 'Failed to fetch security logs.');
         }
-    } catch(err) {
+    } catch (err) {
         console.error('Error loading security logs:', err);
         showModal('Error', err.message);
     }
@@ -8035,7 +8123,7 @@ window.filterSecurityLogs = function filterSecurityLogs() {
     let filtered = window.allSecurityLogs || [];
 
     if (searchVal) {
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
             (item.ip_address && item.ip_address.toLowerCase().includes(searchVal)) ||
             (item.username && item.username.toLowerCase().includes(searchVal))
         );
@@ -8075,7 +8163,7 @@ window.renderSecurityLogsTable = function renderSecurityLogsTable(logs) {
                 : String(log.attempt_time);
         }
         const isSuccess = log.success === true || log.success === 'true';
-        const statusBadge = isSuccess 
+        const statusBadge = isSuccess
             ? `<span style="padding:0.2rem 0.55rem; border-radius:12px; background:rgba(16,185,129,0.15); color:#10b981; font-size:0.75rem; font-weight:700;">🟢 Success</span>`
             : `<span style="padding:0.2rem 0.55rem; border-radius:12px; background:rgba(239,68,68,0.15); color:#ef4444; font-size:0.75rem; font-weight:700;">🔴 Failed / Locked</span>`;
 
@@ -8117,7 +8205,7 @@ window.clearAllLockouts = async function clearAllLockouts(target = null) {
             } else {
                 showModal('Error', data.error || 'Failed to clear lockouts.');
             }
-        } catch(err) {
+        } catch (err) {
             showModal('Error', err.message);
         }
     });
@@ -8147,7 +8235,7 @@ window.promptManualLockout = function promptManualLockout() {
                 } else {
                     showModal('Error', data.error || 'Failed to apply manual lockout.');
                 }
-            } catch(err) {
+            } catch (err) {
                 showModal('Error', err.message);
             }
         });
@@ -8167,7 +8255,7 @@ window.deleteSecurityAttempt = async function deleteSecurityAttempt(id) {
         } else {
             showModal('Error', data.error || 'Failed to delete record.');
         }
-    } catch(err) {
+    } catch (err) {
         showModal('Error', err.message);
     }
 };
@@ -8223,7 +8311,7 @@ window.openSubscribeModal = function openSubscribeModal(planId) {
     document.getElementById('checkout-display-cycle').textContent = isAnnual ? 'Annual (20% Off)' : 'Monthly';
     document.getElementById('checkout-display-base-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
     document.getElementById('checkout-display-final-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-    
+
     const rowDisc = document.getElementById('checkout-row-discount');
     if (rowDisc) rowDisc.style.display = 'none';
 
@@ -8237,7 +8325,7 @@ window.openSubscribeModal = function openSubscribeModal(planId) {
 
     // Auto-prefill subscriber email & phone
     let user = {};
-    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch (e) { }
     const coId = getCompanyId();
     const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
 
@@ -8371,7 +8459,7 @@ window.applyCheckoutCoupon = async function applyCheckoutCoupon(isAuto = false) 
                 feedback.textContent = `⚠️ ${data.error || 'Invalid or expired coupon.'}`;
             }
         }
-    } catch(err) {
+    } catch (err) {
         if (feedback) {
             feedback.style.display = 'block';
             feedback.style.color = '#ef4444';
@@ -8446,6 +8534,7 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 plan_name: planName,
+                billing_cycle: currentBillingCycle,
                 original_amount: basePrice,
                 coupon_code: couponCode,
                 email,
@@ -8490,6 +8579,7 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_signature: response.razorpay_signature,
                                 plan_name: planName,
+                                billing_cycle: currentBillingCycle,
                                 original_amount: orderData.original_amount,
                                 discount_amount: orderData.discount_amount,
                                 final_amount: orderData.amount,
@@ -8509,7 +8599,7 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                         if (verifyData.success) {
                             closeCheckoutModal();
 
-                            // 1. Instantly update active company plan in memory
+                            // 1. Instantly update active company plan and stored validity in memory
                             activeCompanyPlanName = planName;
                             const coId = getCompanyId();
                             if (Array.isArray(allCompanies)) {
@@ -8517,6 +8607,9 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                                 if (comp) {
                                     comp.subscription_plan = planName;
                                     comp.subscription_status = 'active';
+                                    comp.subscription_expires_at = verifyData.subscription_expires_at;
+                                    comp.subscription_billing_cycle = verifyData.subscription_billing_cycle || currentBillingCycle;
+                                    comp.is_expired = false;
                                 }
                             }
 
@@ -8533,24 +8626,28 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                                 }
                             });
 
+                            const expDateStr = verifyData.subscription_expires_at 
+                                ? new Date(verifyData.subscription_expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) 
+                                : '';
+                            const validityNotice = expDateStr ? `<br><br>📅 <strong>Valid Until:</strong> ${expDateStr}` : '';
                             const emailNotice = verifyData.email_sent 
-                                ? `<br><br>📧 A detailed payment receipt and plan validity confirmation has been sent to <strong>${email}</strong>.` 
+                                ? `<br>📧 An official payment receipt and plan confirmation has been sent to <strong>${email}</strong>.` 
                                 : '';
 
                             showModal(
                                 'Payment Successful! 🎉', 
-                                `Thank you! Your payment of ₹${orderData.amount.toLocaleString('en-IN')} for <strong>${planName}</strong> has been verified and active features unlocked!${emailNotice}`
+                                `Thank you! Your payment of ₹${orderData.amount.toLocaleString('en-IN')} for <strong>${planName}</strong> has been verified and active features unlocked!${validityNotice}${emailNotice}`
                             );
                         } else {
                             showModal('Verification Failed', verifyData.error || 'Unable to verify payment signature.');
                         }
-                    } catch(err) {
+                    } catch (err) {
                         hidePaymentOverlay();
                         showModal('Error', err.message);
                     }
                 },
                 modal: {
-                    ondismiss: function() {
+                    ondismiss: function () {
                         hidePaymentOverlay();
                         if (btn) {
                             btn.disabled = false;
@@ -8586,6 +8683,7 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                             razorpay_order_id: orderData.order_id,
                             razorpay_signature: 'mock_signature_verified',
                             plan_name: planName,
+                            billing_cycle: currentBillingCycle,
                             original_amount: orderData.original_amount,
                             discount_amount: orderData.discount_amount,
                             final_amount: orderData.amount,
@@ -8613,6 +8711,9 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                             if (comp) {
                                 comp.subscription_plan = planName;
                                 comp.subscription_status = 'active';
+                                comp.subscription_expires_at = verifyData.subscription_expires_at;
+                                comp.subscription_billing_cycle = verifyData.subscription_billing_cycle || currentBillingCycle;
+                                comp.is_expired = false;
                             }
                         }
                         updateCompanySubscriptionStatusUI();
@@ -8621,20 +8722,27 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                         loadCompanies().then(() => {
                             updateCompanySubscriptionStatusUI();
                             renderPricingCards();
+                            if (typeof loadCompanyReceipts === 'function') {
+                                loadCompanyReceipts();
+                            }
                         });
 
+                        const expDateStr = verifyData.subscription_expires_at 
+                            ? new Date(verifyData.subscription_expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) 
+                            : '';
+                        const validityNotice = expDateStr ? `<br><br>📅 <strong>Valid Until:</strong> ${expDateStr}` : '';
                         const emailNotice = verifyData.email_sent 
-                            ? `<br><br>📧 A detailed payment receipt and plan validity confirmation has been sent to <strong>${email}</strong>.` 
+                            ? `<br>📧 An official payment receipt and plan confirmation has been sent to <strong>${email}</strong>.` 
                             : '';
 
-                        showModal('Subscription Activated! 🎉', `Payment verified successfully! Subscription activated for <strong>${planName}</strong>.${emailNotice}`);
+                        showModal('Subscription Activated! 🎉', `Payment verified successfully! Subscription activated for <strong>${planName}</strong>.${validityNotice}${emailNotice}`);
                     } else {
                         showModal('Error', verifyData.error || 'Verification failed.');
                     }
                 }
             );
         }
-    } catch(err) {
+    } catch (err) {
         hidePaymentOverlay();
         showModal('Payment Error', err.message);
     } finally {
@@ -8708,7 +8816,7 @@ window.loadCouponsList = async function loadCouponsList() {
                 `;
             }).join('');
         }
-    } catch(err) {
+    } catch (err) {
         tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Failed to load coupons.</td></tr>';
     }
 };
@@ -8783,7 +8891,7 @@ window.saveNewCoupon = async function saveNewCoupon(e) {
         } else {
             showModal('Error', data.error || 'Failed to create coupon.');
         }
-    } catch(err) {
+    } catch (err) {
         showModal('Error', err.message);
     } finally {
         if (btn) {
@@ -8806,7 +8914,7 @@ window.toggleCouponStatus = async function toggleCouponStatus(id, currentActive)
         } else {
             showModal('Error', data.error || 'Failed to update coupon status.');
         }
-    } catch(err) {
+    } catch (err) {
         showModal('Error', err.message);
     }
 };
@@ -8821,7 +8929,7 @@ window.deleteCoupon = function deleteCoupon(id, code) {
             } else {
                 showModal('Error', data.error || 'Failed to delete coupon.');
             }
-        } catch(err) {
+        } catch (err) {
             showModal('Error', err.message);
         }
     });
@@ -8847,7 +8955,7 @@ window.loadPaymentLogs = async function loadPaymentLogs() {
 
             renderPaymentLogs(allPaymentLogsList);
         }
-    } catch(err) {
+    } catch (err) {
         tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Failed to load payment transactions.</td></tr>';
     }
 };
@@ -8902,11 +9010,11 @@ window.filterPaymentLogs = function filterPaymentLogs() {
     }
     const filtered = allPaymentLogsList.filter(p => {
         return (p.order_id && p.order_id.toLowerCase().includes(q)) ||
-               (p.payment_id && p.payment_id.toLowerCase().includes(q)) ||
-               (p.user_email && p.user_email.toLowerCase().includes(q)) ||
-               (p.user_phone && p.user_phone.toLowerCase().includes(q)) ||
-               (p.plan_name && p.plan_name.toLowerCase().includes(q)) ||
-               (p.coupon_code && p.coupon_code.toLowerCase().includes(q));
+            (p.payment_id && p.payment_id.toLowerCase().includes(q)) ||
+            (p.user_email && p.user_email.toLowerCase().includes(q)) ||
+            (p.user_phone && p.user_phone.toLowerCase().includes(q)) ||
+            (p.plan_name && p.plan_name.toLowerCase().includes(q)) ||
+            (p.coupon_code && p.coupon_code.toLowerCase().includes(q));
     });
     renderPaymentLogs(filtered);
 };
@@ -8920,11 +9028,11 @@ window.loadCompanyReceipts = async function loadCompanyReceipts() {
     const tbody = document.getElementById('company-receipts-table-body');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><span class="spinner-icon" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Loading payment receipts...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="spinner-icon" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Loading payment receipts...</td></tr>';
 
     const coId = getCompanyId();
     let user = {};
-    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch (e) { }
     const email = user.email || '';
 
     try {
@@ -8936,12 +9044,13 @@ window.loadCompanyReceipts = async function loadCompanyReceipts() {
             allCompanyReceiptsList = data.logs;
 
             if (allCompanyReceiptsList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No payment receipts found for this workspace yet. When you subscribe or renew a package, official tax receipts will appear here.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No payment receipts found for this workspace yet. When you subscribe or renew a package, official tax receipts will appear here.</td></tr>';
                 return;
             }
 
             tbody.innerHTML = allCompanyReceiptsList.map((r, idx) => {
                 const formattedDate = r.created_at_formatted || (r.created_at ? new Date(r.created_at).toLocaleString('en-IN') : '-');
+                const formattedValidUntil = r.valid_until_formatted || (r.valid_until ? new Date(r.valid_until).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-');
                 const orderIdShort = r.order_id ? `<code>${r.order_id}</code>` : '-';
                 const paymentIdShort = r.payment_id ? `<code>${r.payment_id}</code>` : '-';
                 const finalAmt = Number(r.final_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
@@ -8955,6 +9064,7 @@ window.loadCompanyReceipts = async function loadCompanyReceipts() {
                         <td>${orderIdShort}</td>
                         <td><span style="font-size:0.8rem; color:var(--text-muted);">${paymentIdShort}</span></td>
                         <td><strong style="color:var(--primary); font-size:0.9rem;">${plan}</strong></td>
+                        <td><span style="font-size:0.85rem; color:#10b981; font-weight:600;">${formattedValidUntil}</span></td>
                         <td><strong style="color:var(--text-main); font-size:0.95rem;">₹${finalAmt}</strong></td>
                         <td>${statusBadge}</td>
                         <td style="text-align:right;">
@@ -8966,17 +9076,17 @@ window.loadCompanyReceipts = async function loadCompanyReceipts() {
                 `;
             }).join('');
         } else {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No payment receipts available.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No payment receipts available.</td></tr>';
         }
-    } catch(err) {
+    } catch (err) {
         console.error('Error loading receipts:', err);
-        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load payment receipts.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Failed to load payment receipts.</td></tr>';
     }
 };
 
 window.viewCompanyReceipt = function viewCompanyReceipt(receiptId) {
     const receipt = allCompanyReceiptsList.find(r => String(r.id) === String(receiptId)) ||
-                    allPaymentLogsList.find(r => String(r.id) === String(receiptId));
+        allPaymentLogsList.find(r => String(r.id) === String(receiptId));
     if (!receipt) {
         showModal('Receipt Not Found', 'Could not locate the requested transaction receipt.');
         return;
@@ -8985,7 +9095,7 @@ window.viewCompanyReceipt = function viewCompanyReceipt(receiptId) {
     const coId = getCompanyId();
     const comp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
     let user = {};
-    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+    try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch (e) { }
 
     const custName = comp?.name || user.company_name || user.username || 'Authorized Subscriber';
     const custEmail = receipt.user_email || user.email || comp?.email || '-';
@@ -8996,7 +9106,11 @@ window.viewCompanyReceipt = function viewCompanyReceipt(receiptId) {
     const discAmount = Number(receipt.discount_amount || 0);
     const finalAmount = Number(receipt.final_amount || 0);
 
-    const isAnnual = (receipt.plan_name || '').toLowerCase().includes('annual');
+    let cycleDisplay = 'Monthly';
+    const rCycle = String(receipt.billing_cycle || (receipt.plan_name || '')).toLowerCase();
+    if (rCycle.includes('annual') || rCycle.includes('year') || rCycle.includes('12_month')) cycleDisplay = 'Annual (20% Off)';
+    else if (rCycle.includes('4_month') || rCycle.includes('4month')) cycleDisplay = '4 Months (10% Off)';
+    else if (rCycle.includes('6_month') || rCycle.includes('6month')) cycleDisplay = '6 Months (15% Off)';
 
     const elDate = document.getElementById('rcpt-date-display');
     const elName = document.getElementById('rcpt-customer-name');
@@ -9006,6 +9120,7 @@ window.viewCompanyReceipt = function viewCompanyReceipt(receiptId) {
     const elPay = document.getElementById('rcpt-payment-id');
     const elPlan = document.getElementById('rcpt-plan-name');
     const elCycle = document.getElementById('rcpt-plan-cycle');
+    const elValidUntil = document.getElementById('rcpt-valid-until');
     const elBase = document.getElementById('rcpt-base-amount');
     const elSub = document.getElementById('rcpt-subtotal');
     const rowDisc = document.getElementById('rcpt-row-discount');
@@ -9021,7 +9136,12 @@ window.viewCompanyReceipt = function viewCompanyReceipt(receiptId) {
     if (elPay) elPay.textContent = receipt.payment_id || '-';
 
     if (elPlan) elPlan.textContent = receipt.plan_name || 'Standard Plan';
-    if (elCycle) elCycle.textContent = isAnnual ? 'Annual (20% Off)' : 'Monthly';
+    if (elCycle) elCycle.textContent = cycleDisplay;
+
+    if (elValidUntil) {
+        const validUntilDate = receipt.valid_until_formatted || (receipt.valid_until ? new Date(receipt.valid_until).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-');
+        elValidUntil.textContent = validUntilDate;
+    }
 
     if (elBase) elBase.textContent = `₹${origAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
     if (elSub) elSub.textContent = `₹${origAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;

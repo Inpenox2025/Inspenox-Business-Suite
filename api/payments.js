@@ -41,6 +41,10 @@ async function ensurePaymentTables(sql) {
         `;
 
         await sql`ALTER TABLE payment_logs ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;`;
+        await sql`ALTER TABLE payment_logs ADD COLUMN IF NOT EXISTS billing_cycle TEXT DEFAULT 'monthly';`;
+        await sql`ALTER TABLE payment_logs ADD COLUMN IF NOT EXISTS valid_until TIMESTAMPTZ DEFAULT NULL;`;
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ DEFAULT NULL;`;
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_billing_cycle TEXT DEFAULT 'monthly';`;
 
         // Ensure users table has influencer & bank fields if referenced
         await sql`
@@ -64,7 +68,9 @@ const SUBSCRIPTION_PLANS = [
         name: 'Starter Tier',
         description: 'Perfect for small businesses beginning their automated WhatsApp messaging journey.',
         price_monthly: 999,
-        price_annual: 9590, // ~20% off
+        price_4months: 3596, // ~10% off (₹899/mo)
+        price_6months: 5095, // ~15% off (₹849/mo)
+        price_annual: 9590, // ~20% off (₹799/mo)
         popular: false,
         badge: 'Essential',
         features: [
@@ -81,7 +87,9 @@ const SUBSCRIPTION_PLANS = [
         name: 'Growth Pro',
         description: 'Built for scaling brands requiring multi-team access and intelligent broadcasts.',
         price_monthly: 2499,
-        price_annual: 23990, // ~20% off
+        price_4months: 8996, // ~10% off (₹2,249/mo)
+        price_6months: 12745, // ~15% off (₹2,124/mo)
+        price_annual: 23990, // ~20% off (₹1,999/mo)
         popular: true,
         badge: 'Most Popular',
         features: [
@@ -99,7 +107,9 @@ const SUBSCRIPTION_PLANS = [
         name: 'Enterprise Elite',
         description: 'Complete multi-tenant ecosystem for corporate agencies and high-volume operations.',
         price_monthly: 5999,
-        price_annual: 57590, // ~20% off
+        price_4months: 21596, // ~10% off (₹5,399/mo)
+        price_6months: 30595, // ~15% off (₹5,099/mo)
+        price_annual: 57590, // ~20% off (₹4,799/mo)
         popular: false,
         badge: 'Enterprise',
         features: [
@@ -109,7 +119,8 @@ const SUBSCRIPTION_PLANS = [
             'Unlimited Team Members & Role Permissions',
             'Dedicated Webhooks & Custom Meta System Tokens',
             'White-Glove Onboarding & 24/7 SLA Support',
-            'Maximum Meta API Throughput (Tier 3/Unlimited)'
+            'Maximum Meta API Throughput (Tier 3/Unlimited)',
+            'This Plan pricing only for exisiting features for Extra Addon Features Billed Separately'
         ]
     }
 ];
@@ -170,7 +181,9 @@ module.exports = async (req, res) => {
                 if (coId && emailParam) {
                     logs = await sql`
                         SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
-                               p.plan_name, p.original_amount, p.discount_amount, p.final_amount,
+                               p.plan_name, p.billing_cycle, p.valid_until,
+                               TO_CHAR(p.valid_until, 'YYYY-MM-DD HH24:MI:SS') as valid_until_formatted,
+                               p.original_amount, p.discount_amount, p.final_amount,
                                p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
                                p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
                                p.created_at,
@@ -184,7 +197,9 @@ module.exports = async (req, res) => {
                 } else if (coId) {
                     logs = await sql`
                         SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
-                               p.plan_name, p.original_amount, p.discount_amount, p.final_amount,
+                               p.plan_name, p.billing_cycle, p.valid_until,
+                               TO_CHAR(p.valid_until, 'YYYY-MM-DD HH24:MI:SS') as valid_until_formatted,
+                               p.original_amount, p.discount_amount, p.final_amount,
                                p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
                                p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
                                p.created_at,
@@ -198,7 +213,9 @@ module.exports = async (req, res) => {
                 } else if (emailParam && action === 'receipts') {
                     logs = await sql`
                         SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
-                               p.plan_name, p.original_amount, p.discount_amount, p.final_amount,
+                               p.plan_name, p.billing_cycle, p.valid_until,
+                               TO_CHAR(p.valid_until, 'YYYY-MM-DD HH24:MI:SS') as valid_until_formatted,
+                               p.original_amount, p.discount_amount, p.final_amount,
                                p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
                                p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
                                p.created_at,
@@ -212,7 +229,9 @@ module.exports = async (req, res) => {
                 } else {
                     logs = await sql`
                         SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
-                               p.plan_name, p.original_amount, p.discount_amount, p.final_amount,
+                               p.plan_name, p.billing_cycle, p.valid_until,
+                               TO_CHAR(p.valid_until, 'YYYY-MM-DD HH24:MI:SS') as valid_until_formatted,
+                               p.original_amount, p.discount_amount, p.final_amount,
                                p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
                                p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
                                p.created_at,
@@ -332,7 +351,8 @@ module.exports = async (req, res) => {
 
             // 2. Create Razorpay Order
             if (action === 'create-order') {
-                const { plan_name, original_amount, coupon_code, email, phone, company_id } = body;
+                const { plan_name, billing_cycle, original_amount, coupon_code, email, phone, company_id } = body;
+                const billingCycle = String(billing_cycle || 'monthly').toLowerCase();
                 const numOriginal = parseFloat(original_amount) || 0;
                 let finalAmount = numOriginal;
                 let discountAmount = 0;
@@ -373,6 +393,7 @@ module.exports = async (req, res) => {
                         receipt: `rcpt_${Date.now()}`,
                         notes: {
                             plan_name: plan_name || 'Inspenox Plan',
+                            billing_cycle: billingCycle,
                             coupon_code: coupon_code || '',
                             user_email: email || '',
                             user_phone: phone || '',
@@ -402,6 +423,7 @@ module.exports = async (req, res) => {
                         key_id: razorpayKeyId,
                         original_amount: numOriginal,
                         discount_amount: discountAmount,
+                        billing_cycle: billingCycle,
                         coupon_code: coupon_code || null,
                         coupon_id: couponId,
                         influencer_id: influencerId,
@@ -419,6 +441,7 @@ module.exports = async (req, res) => {
                         key_id: 'rzp_test_placeholder',
                         original_amount: numOriginal,
                         discount_amount: discountAmount,
+                        billing_cycle: billingCycle,
                         coupon_code: coupon_code || null,
                         coupon_id: couponId,
                         influencer_id: influencerId,
@@ -436,6 +459,7 @@ module.exports = async (req, res) => {
                     razorpay_order_id,
                     razorpay_signature,
                     plan_name,
+                    billing_cycle,
                     original_amount,
                     discount_amount,
                     final_amount,
@@ -468,6 +492,7 @@ module.exports = async (req, res) => {
                     }
                 }
 
+                const cycleVal = String(billing_cycle || 'monthly').toLowerCase();
                 const numOrig = parseFloat(original_amount) || 0;
                 const numDisc = parseFloat(discount_amount) || 0;
                 const numFinal = parseFloat(final_amount) || Math.max(0, numOrig - numDisc);
@@ -487,10 +512,42 @@ module.exports = async (req, res) => {
                     } catch(e) {}
                 }
 
-                // Insert into payment_logs table with company_id
+                // Compute exact subscription expiration date & validity
+                let monthsToAdd = 1;
+                if (cycleVal === '4_months' || cycleVal === '4months') {
+                    monthsToAdd = 4;
+                } else if (cycleVal === '6_months' || cycleVal === '6months') {
+                    monthsToAdd = 6;
+                } else if (cycleVal === 'annual' || cycleVal === '12_months' || cycleVal === 'year') {
+                    monthsToAdd = 12;
+                }
+
+                let baseDate = new Date();
+                if (targetCompanyId) {
+                    try {
+                        const compRows = await sql`SELECT subscription_expires_at FROM companies WHERE id = ${targetCompanyId} LIMIT 1;`;
+                        if (compRows.length > 0 && compRows[0].subscription_expires_at) {
+                            const currentExp = new Date(compRows[0].subscription_expires_at);
+                            if (currentExp > baseDate) {
+                                baseDate = currentExp; // Extend existing active duration
+                            }
+                        }
+                    } catch(e) {}
+                }
+
+                const expiresAt = new Date(baseDate.getTime());
+                if (monthsToAdd === 12) {
+                    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+                } else {
+                    expiresAt.setMonth(expiresAt.getMonth() + monthsToAdd);
+                }
+                const expiresAtIso = expiresAt.toISOString();
+
+                // Insert into payment_logs table with company_id, billing_cycle, and valid_until
                 const logResult = await sql`
                     INSERT INTO payment_logs (
                         company_id, order_id, payment_id, user_email, user_phone, plan_name,
+                        billing_cycle, valid_until,
                         original_amount, discount_amount, final_amount,
                         coupon_code, coupon_id, influencer_id, commission_amount,
                         status, created_at
@@ -501,6 +558,8 @@ module.exports = async (req, res) => {
                         ${user_email || null},
                         ${user_phone || null},
                         ${plan_name || 'Inspenox Business Plan'},
+                        ${cycleVal},
+                        ${expiresAtIso},
                         ${numOrig},
                         ${numDisc},
                         ${numFinal},
@@ -527,13 +586,15 @@ module.exports = async (req, res) => {
                     }
                 }
 
-                // Update company subscription_plan and subscription_status in companies table
+                // Update company subscription_plan, subscription_status, subscription_billing_cycle, and subscription_expires_at
                 if (targetCompanyId) {
                     try {
                         await sql`
                             UPDATE companies 
                             SET subscription_plan = ${plan_name || 'Growth Pro'},
-                                subscription_status = 'active'
+                                subscription_status = 'active',
+                                subscription_billing_cycle = ${cycleVal},
+                                subscription_expires_at = ${expiresAtIso}
                             WHERE id = ${targetCompanyId};
                         `;
                     } catch (e) {
@@ -549,6 +610,8 @@ module.exports = async (req, res) => {
                             to: user_email,
                             phone: user_phone,
                             plan_name: plan_name || 'Inspenox Business Plan',
+                            billing_cycle: cycleVal,
+                            valid_until: expiresAtIso,
                             original_amount: numOrig,
                             discount_amount: numDisc,
                             final_amount: numFinal,
@@ -567,6 +630,9 @@ module.exports = async (req, res) => {
                     success: true,
                     message: 'Payment verified and subscription activated successfully!',
                     payment: logResult[0],
+                    subscription_expires_at: expiresAtIso,
+                    subscription_billing_cycle: cycleVal,
+                    valid_until: expiresAtIso,
                     email_sent: emailSent
                 });
             }

@@ -44,6 +44,8 @@ module.exports = async (req, res) => {
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS phone TEXT;`;
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_plan TEXT DEFAULT NULL;`;
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'inactive';`;
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ DEFAULT NULL;`;
+        await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_billing_cycle TEXT DEFAULT 'monthly';`;
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS whatsapp_phone_numbers JSONB DEFAULT '[]'::jsonb;`;
 
         // Auto-ensure default parent company Inspenox exists in DB with NULL DB credentials (loaded from ENV only)
@@ -90,6 +92,8 @@ module.exports = async (req, res) => {
 
             let companies = await sql`
                 SELECT id, name, slug, email, phone, subscription_plan, subscription_status,
+                       subscription_expires_at, subscription_billing_cycle,
+                       TO_CHAR(subscription_expires_at, 'YYYY-MM-DD HH24:MI:SS') as subscription_expires_at_formatted,
                        whatsapp_phone_number_id, whatsapp_business_account_id, whatsapp_access_token, 
                        whatsapp_verify_token, whatsapp_phone_numbers, is_active, created_at,
                        (SELECT COUNT(*) FROM customers c WHERE c.company_id = companies.id) as customer_count,
@@ -111,7 +115,9 @@ module.exports = async (req, res) => {
             // Hydrate environment variable fallbacks ONLY for primary parent Inspenox master company
             let resolvedCompanies = companies.map(c => {
                 const isMaster = (c.slug && c.slug.toLowerCase() === 'inspenox') || (c.name && c.name.toLowerCase() === 'inspenox');
-                const isPaid = c.subscription_status === 'active' && c.subscription_plan && c.subscription_plan.toLowerCase() !== 'none';
+                const isExpired = !isMaster && c.subscription_expires_at && (new Date(c.subscription_expires_at) < new Date());
+                const isPaid = isMaster || (!isExpired && c.subscription_status === 'active' && c.subscription_plan && c.subscription_plan.toLowerCase() !== 'none');
+                const effectiveStatus = isExpired ? 'expired' : (c.subscription_status || 'inactive');
 
                 if (isMaster) {
                     let masterPhoneNumbers = Array.isArray(c.whatsapp_phone_numbers) && c.whatsapp_phone_numbers.length > 0 
@@ -131,6 +137,10 @@ module.exports = async (req, res) => {
                         ...c,
                         name: 'Inspenox',
                         slug: 'inspenox',
+                        subscription_status: 'active',
+                        is_expired: false,
+                        subscription_expires_at: null,
+                        subscription_billing_cycle: c.subscription_billing_cycle || 'monthly',
                         whatsapp_phone_number_id: systemEnv.whatsapp_phone_number_id,
                         whatsapp_business_account_id: systemEnv.whatsapp_business_account_id,
                         whatsapp_access_token: systemEnv.whatsapp_access_token,
@@ -166,6 +176,11 @@ module.exports = async (req, res) => {
 
                 return {
                     ...c,
+                    subscription_status: effectiveStatus,
+                    is_expired: isExpired,
+                    subscription_expires_at: c.subscription_expires_at,
+                    subscription_billing_cycle: c.subscription_billing_cycle || 'monthly',
+                    subscription_expires_at_formatted: c.subscription_expires_at_formatted,
                     is_parent: false,
                     is_master: false,
                     phone_limit: isPaid ? planLimit : 0,
@@ -261,6 +276,8 @@ module.exports = async (req, res) => {
             // Strictly do NOT default to 'Starter'! Only set if explicitly provided
             const updatedPlan = subscription_plan !== undefined ? (subscription_plan || null) : (oldComp.subscription_plan || null);
             const updatedStatus = updatedPlan ? 'active' : (oldComp.subscription_status || 'inactive');
+            const updatedExpiresAt = subscription_expires_at !== undefined ? (subscription_expires_at || null) : (oldComp.subscription_expires_at || null);
+            const updatedCycle = subscription_billing_cycle !== undefined ? (subscription_billing_cycle || 'monthly') : (oldComp.subscription_billing_cycle || 'monthly');
 
             // Plan limits enforcement on multiple phone numbers
             let cleanPhoneNumbers = null;
@@ -311,6 +328,8 @@ module.exports = async (req, res) => {
                     phone = ${updatedPhone},
                     subscription_plan = ${updatedPlan},
                     subscription_status = ${updatedStatus},
+                    subscription_expires_at = ${updatedExpiresAt},
+                    subscription_billing_cycle = ${updatedCycle},
                     whatsapp_phone_number_id = ${updatedPhoneId},
                     whatsapp_phone_numbers = ${phoneNumbersJson}::jsonb,
                     whatsapp_business_account_id = ${updatedWabaId},

@@ -2196,17 +2196,25 @@
 
                 <!-- Tab 1: Pricing Plans Panel -->
                 <div id="sub-tab-panel-plans">
-                    <!-- Billing Cycle Toggle -->
-                    <div class="billing-toggle-container">
-                        <span id="label-cycle-monthly" class="billing-cycle-label active"
-                            onclick="setBillingCycle('monthly')">Monthly Billing</span>
-                        <div class="billing-toggle-switch" onclick="toggleBillingCycle()">
-                            <div id="cycle-toggle-knob" class="toggle-knob"></div>
-                        </div>
-                        <span id="label-cycle-annual" class="billing-cycle-label" onclick="setBillingCycle('annual')">
-                            Annual Billing
-                            <span class="save-badge">Save 20% 🎉</span>
+                    <!-- Billing Cycle Selector Dropdown -->
+                    <div class="billing-cycle-dropdown-wrapper"
+                        style="display: flex; align-items: center; justify-content: center; gap: 0.85rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); display: inline-flex; align-items: center; gap: 7px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="color:#00a884;">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            Choose Billing Interval:
                         </span>
+                        <select id="sub-billing-cycle-select" onchange="setBillingCycle(this.value)"
+                            style="padding: 0.65rem 1.25rem; border-radius: 12px; background: var(--bg-card); border: 1.5px solid #00a884; color: var(--text-main); font-weight: 700; font-size: 0.95rem; cursor: pointer; min-width: 290px; outline: none; box-shadow: 0 4px 15px rgba(0, 168, 132, 0.15); transition: all 0.2s ease;">
+                            <option value="monthly">Monthly (1 Month)</option>
+                            <option value="4_months">4 Months (Save 10% 🌟)</option>
+                            <option value="6_months">6 Months (Save 15% 🔥)</option>
+                            <option value="annual">Annual / 12 Months (Save 20% 🚀)</option>
+                        </select>
                     </div>
 
                     <!-- Pricing Cards Grid -->
@@ -2241,6 +2249,7 @@
                                         <th>Order ID</th>
                                         <th>Payment Reference</th>
                                         <th>Plan Subscribed</th>
+                                        <th>Valid Until</th>
                                         <th>Amount Paid</th>
                                         <th>Status</th>
                                         <th style="text-align:right;">Official Receipt</th>
@@ -2248,7 +2257,7 @@
                                 </thead>
                                 <tbody id="company-receipts-table-body">
                                     <tr>
-                                        <td colspan="8" class="empty-state">Loading receipts...</td>
+                                        <td colspan="9" class="empty-state">Loading receipts...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -2398,9 +2407,15 @@
                             Pro</strong>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.85rem; color:var(--text-muted);">Billing Interval</span>
-                        <span id="checkout-display-cycle" class="window-badge"
-                            style="background:rgba(255,255,255,0.06); color:var(--text-main);">Monthly</span>
+                        <label for="checkout-cycle-select" style="font-size:0.85rem; color:var(--text-muted); cursor:pointer;">Billing Interval</label>
+                        <select id="checkout-cycle-select" onchange="onCheckoutCycleChange(this.value)"
+                            style="padding: 0.4rem 0.75rem; border-radius: 8px; background: var(--bg-card); border: 1.5px solid #00a884; color: #10b981; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none;">
+                            <option value="monthly">Monthly (1 Month)</option>
+                            <option value="4_months">4 Months (Save 10% 🌟)</option>
+                            <option value="6_months">6 Months (Save 15% 🔥)</option>
+                            <option value="annual">Annual / 1 Year (Save 20% 🚀)</option>
+                        </select>
+                        <span id="checkout-display-cycle" style="display:none;">Monthly</span>
                     </div>
                 </div>
 
@@ -3273,6 +3288,8 @@
                                 id="rcpt-payment-id" style="color: var(--text-main); font-weight: 600;">-</code></div>
                         <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Gateway: <span
                                 style="color: #3b82f6; font-weight: 600;">Razorpay Secure (INR)</span></div>
+                        <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Valid Until: <strong
+                                id="rcpt-valid-until" style="color: #10b981; font-weight: 700;">-</strong></div>
                     </div>
                 </div>
 
