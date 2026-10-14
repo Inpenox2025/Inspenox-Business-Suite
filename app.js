@@ -7945,6 +7945,8 @@ function renderSampleCampaign() {
 // --- Inbox Logic (WhatsApp Web Inspired) ---
 
 let currentInboxFilter = 'all';
+let activeInboxTagFilter = null;
+let inboxModalSelectedTags = [];
 
 async function loadInboxSidebar() {
     const sidebar = document.getElementById('inbox-customers');
@@ -7952,6 +7954,10 @@ async function loadInboxSidebar() {
         sidebar.innerHTML = `<div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading chats...</span></div>`;
     }
     try {
+        if (!availableTags || availableTags.length === 0) {
+            loadTags().catch(() => {});
+        }
+
         const res = await apiFetch('/api/customers');
         const customers = await res.json();
         if (!sidebar) return;
@@ -7999,12 +8005,21 @@ function filterAndRenderInboxContacts() {
         const isInboundLead = isUnsavedLead(c);
 
         if (currentInboxFilter === 'free') {
-            return is24hActive;
+            if (!is24hActive) return false;
         } else if (currentInboxFilter === 'expired') {
-            return !is24hActive;
+            if (is24hActive) return false;
         } else if (currentInboxFilter === 'unsaved') {
-            return isInboundLead;
+            if (!isInboundLead) return false;
         }
+
+        // Tag filter check
+        if (activeInboxTagFilter) {
+            const custTags = (c.tags || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+            if (!custTags.includes(activeInboxTagFilter.toLowerCase())) {
+                return false;
+            }
+        }
+
         return true;
     });
 
@@ -8030,10 +8045,21 @@ function renderInboxContacts(list) {
 
     sidebar.innerHTML = '';
     if (list.length === 0) {
-        const msg = currentInboxFilter === 'free' ? 'No active 24h free tier chats'
-            : currentInboxFilter === 'unsaved' ? 'No new unsaved / ad leads found'
-                : 'No contacts found';
-        sidebar.innerHTML = `<div class="empty-state">${msg}</div>`;
+        let msg = 'No contacts found';
+        if (activeInboxTagFilter) {
+            msg = `No chats found with tag "🏷️ ${activeInboxTagFilter}"`;
+        } else if (currentInboxFilter === 'free') {
+            msg = 'No active 24h free tier chats';
+        } else if (currentInboxFilter === 'unsaved') {
+            msg = 'No new unsaved / ad leads found';
+        }
+        sidebar.innerHTML = `
+            <div class="empty-state" style="padding:2.5rem 1rem; text-align:center;">
+                <div style="font-size:1.8rem; margin-bottom:0.5rem;">🏷️</div>
+                <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:0.75rem;">${msg}</p>
+                ${activeInboxTagFilter ? `<button type="button" class="btn secondary sm" onclick="clearInboxTagFilter(event)">Clear Tag Filter</button>` : ''}
+            </div>
+        `;
         return;
     }
 
@@ -8049,6 +8075,21 @@ function renderInboxContacts(list) {
             ? `<span style="font-size:0.6rem; background:rgba(234, 179, 8, 0.18); color:#eab308; padding:0.1rem 0.35rem; border-radius:4px; margin-left:0.35rem; font-weight:600; display:inline-block;">Ad Lead</span>`
             : '';
 
+        // Render customer tags preview
+        let tagsHtml = '';
+        if (c.tags && String(c.tags).trim()) {
+            const tagNames = String(c.tags).split(',').map(t => t.trim()).filter(Boolean);
+            if (tagNames.length > 0) {
+                tagsHtml = `<div class="inbox-card-tags" style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-top:0.3rem;">` +
+                    tagNames.slice(0, 3).map(tn => {
+                        const style = getTagStyle(tn);
+                        return `<span class="contact-tag-pill ${style.cls}" style="${style.styleAttr}" title="${tn}">${tn}</span>`;
+                    }).join('') +
+                    (tagNames.length > 3 ? `<span style="font-size:0.6rem; color:var(--text-muted); align-self:center;">+${tagNames.length - 3}</span>` : '') +
+                    `</div>`;
+            }
+        }
+
         const div = document.createElement('div');
         div.className = `inbox-contact-card ${activeInboxCustomer === c.id ? 'active' : ''}`;
         div.setAttribute('data-id', c.id);
@@ -8057,6 +8098,7 @@ function renderInboxContacts(list) {
             <div class="contact-details">
                 <div class="contact-name" style="display:flex; align-items:center; gap:0.25rem;">${c.name} ${leadTagHtml}</div>
                 <div class="contact-phone">${formatDisplayPhone(c.phone)}</div>
+                ${tagsHtml}
             </div>
             ${unreadBadgeHtml}
         `;
@@ -8077,6 +8119,147 @@ document.querySelectorAll('.inbox-filter-chip').forEach(btn => {
         currentInboxFilter = btn.dataset.filter || 'all';
         filterAndRenderInboxContacts();
     });
+});
+
+// WhatsApp Style Tag Filter Dropdown Functions
+window.toggleInboxTagFilterDropdown = function toggleInboxTagFilterDropdown(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('inbox-tag-dropdown-menu');
+    if (!dropdown) return;
+    const isShown = dropdown.style.display !== 'none';
+    if (isShown) {
+        dropdown.style.display = 'none';
+    } else {
+        renderInboxTagFilterMenu();
+        dropdown.style.display = 'flex';
+        const searchInput = document.getElementById('inbox-tag-filter-search');
+        if (searchInput) {
+            searchInput.value = '';
+            setTimeout(() => searchInput.focus(), 50);
+        }
+    }
+};
+
+window.renderInboxTagFilterMenu = function renderInboxTagFilterMenu() {
+    const listEl = document.getElementById('inbox-tag-filter-list');
+    const clearBtn = document.getElementById('inbox-tag-dropdown-clear');
+    if (!listEl) return;
+
+    if (clearBtn) {
+        clearBtn.style.display = activeInboxTagFilter ? 'block' : 'none';
+    }
+
+    const searchVal = (document.getElementById('inbox-tag-filter-search')?.value || '').toLowerCase().trim();
+
+    // Calculate count of chats per tag in inboxCustomersList
+    const tagCounts = {};
+    if (Array.isArray(inboxCustomersList)) {
+        inboxCustomersList.forEach(c => {
+            if (c.tags) {
+                const ts = String(c.tags).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+                ts.forEach(t => {
+                    tagCounts[t] = (tagCounts[t] || 0) + 1;
+                });
+            }
+        });
+    }
+
+    const allTags = (typeof availableTags !== 'undefined' && Array.isArray(availableTags) && availableTags.length > 0)
+        ? availableTags
+        : [
+            { name: 'Repeat Buyers' }, { name: 'Recovered' }, { name: 'Order Placed(Prepaid)' },
+            { name: 'Order Placed(CoD)' }, { name: 'Loyal' }, { name: 'Lost' },
+            { name: 'High Spenders' }, { name: 'Curious Browsers' }, { name: 'At Risk' },
+            { name: 'Abandoned Cart' }
+        ];
+
+    const filteredTags = allTags.filter(t => !searchVal || (t.name || '').toLowerCase().includes(searchVal));
+
+    let html = `
+        <div class="inbox-tag-filter-item ${!activeInboxTagFilter ? 'active' : ''}" onclick="selectInboxTagFilter(null, event)">
+            <div class="inbox-tag-filter-item-left">
+                <span class="inbox-tag-color-dot" style="background:var(--text-muted, #9ca3af);"></span>
+                <span class="inbox-tag-item-name">All Chats (No Tag Filter)</span>
+            </div>
+            <span class="inbox-tag-item-count">${inboxCustomersList.length}</span>
+            ${!activeInboxTagFilter ? '<span class="inbox-tag-check-icon">✓</span>' : ''}
+        </div>
+    `;
+
+    if (filteredTags.length === 0) {
+        html += `<div style="font-size:0.78rem; color:var(--text-muted); text-align:center; padding:1rem 0;">No matching tags found</div>`;
+    } else {
+        filteredTags.forEach(t => {
+            const isSelected = activeInboxTagFilter && activeInboxTagFilter.toLowerCase() === (t.name || '').toLowerCase();
+            const count = tagCounts[(t.name || '').toLowerCase()] || 0;
+            const style = getTagStyle(t.name);
+            const dotColor = (t.text_color || (style.styleAttr.match(/color:\s*([^;]+)/)?.[1])) || '#10b981';
+            const escaped = (t.name || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+
+            html += `
+                <div class="inbox-tag-filter-item ${isSelected ? 'active' : ''}" onclick="selectInboxTagFilter('${escaped}', event)">
+                    <div class="inbox-tag-filter-item-left">
+                        <span class="inbox-tag-color-dot" style="background:${dotColor};"></span>
+                        <span class="inbox-tag-item-name">${t.name}</span>
+                    </div>
+                    <span class="inbox-tag-item-count">${count}</span>
+                    ${isSelected ? '<span class="inbox-tag-check-icon">✓</span>' : ''}
+                </div>
+            `;
+        });
+    }
+
+    listEl.innerHTML = html;
+};
+
+window.selectInboxTagFilter = function selectInboxTagFilter(tagName, e) {
+    if (e) e.stopPropagation();
+    activeInboxTagFilter = tagName || null;
+    updateInboxTagFilterUI();
+    filterAndRenderInboxContacts();
+    const dropdown = document.getElementById('inbox-tag-dropdown-menu');
+    if (dropdown) dropdown.style.display = 'none';
+};
+
+window.clearInboxTagFilter = function clearInboxTagFilter(e) {
+    if (e) e.stopPropagation();
+    selectInboxTagFilter(null);
+};
+
+function updateInboxTagFilterUI() {
+    const btn = document.getElementById('inbox-tag-filter-btn');
+    const badge = document.getElementById('inbox-tag-filter-indicator');
+    const banner = document.getElementById('inbox-active-tag-chip-row');
+    const nameEl = document.getElementById('inbox-active-tag-name');
+
+    if (activeInboxTagFilter) {
+        if (btn) btn.classList.add('active');
+        if (badge) badge.style.display = 'block';
+        if (banner) banner.style.display = 'flex';
+        if (nameEl) nameEl.textContent = activeInboxTagFilter;
+    } else {
+        if (btn) btn.classList.remove('active');
+        if (badge) badge.style.display = 'none';
+        if (banner) banner.style.display = 'none';
+    }
+}
+
+document.getElementById('inbox-tag-filter-btn')?.addEventListener('click', toggleInboxTagFilterDropdown);
+document.getElementById('inbox-tag-dropdown-clear')?.addEventListener('click', clearInboxTagFilter);
+document.getElementById('inbox-remove-tag-filter-btn')?.addEventListener('click', clearInboxTagFilter);
+document.getElementById('inbox-tag-filter-search')?.addEventListener('input', () => {
+    renderInboxTagFilterMenu();
+});
+
+// Close dropdown on click outside
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('inbox-tag-dropdown-menu');
+    const btn = document.getElementById('inbox-tag-filter-btn');
+    if (dropdown && dropdown.style.display !== 'none') {
+        if (!dropdown.contains(e.target) && !btn?.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    }
 });
 
 // Interactive Modal for Reviewing and Saving Unsaved Ad Leads
@@ -8262,6 +8445,7 @@ async function openChat(customer, pushHistory = true) {
     if (activeAvatar) activeAvatar.textContent = getInitial(customer.name);
     if (activeName) activeName.textContent = customer.name;
     if (activePhone) activePhone.textContent = formatDisplayPhone(customer.phone);
+    renderActiveChatTags(customer);
 
     const badge = document.getElementById('active-chat-window-badge');
     if (badge) {
@@ -8325,6 +8509,151 @@ function closeChat() {
         document.getElementById('inbox-chat-area')?.classList.add('hidden');
     }
 }
+
+function renderActiveChatTags(customer) {
+    const container = document.getElementById('active-chat-tags-list');
+    if (!container) return;
+    container.innerHTML = '';
+    const cust = customer || activeCustomerData;
+    if (!cust) return;
+
+    const tags = (cust.tags || '').split(',').map(s => s.trim()).filter(Boolean);
+    tags.forEach(tn => {
+        const style = getTagStyle(tn);
+        const pill = document.createElement('span');
+        pill.className = `contact-tag-pill ${style.cls}`;
+        pill.setAttribute('style', style.styleAttr + '; cursor:pointer; font-size:0.7rem; padding:0.12rem 0.45rem;');
+        pill.textContent = tn;
+        pill.title = 'Click to manage tags';
+        pill.onclick = () => openInboxAssignTagsModal();
+        container.appendChild(pill);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.style.cssText = 'font-size:0.68rem; font-weight:600; padding:0.12rem 0.45rem; border-radius:4px; background:rgba(0,0,0,0.05); color:var(--text-muted); border:1px dashed var(--border); cursor:pointer; display:inline-flex; align-items:center; gap:3px; transition:all 0.15s;';
+    addBtn.innerHTML = '<span>🏷️</span><span>+ Tag</span>';
+    addBtn.title = 'Assign or edit tags for this chat';
+    addBtn.onclick = () => openInboxAssignTagsModal();
+    container.appendChild(addBtn);
+}
+
+window.openInboxAssignTagsModal = function openInboxAssignTagsModal() {
+    if (!activeInboxCustomer || !activeCustomerData) {
+        showToast('Please select a chat first.', 'warning');
+        return;
+    }
+    const modal = document.getElementById('modal-inbox-tags');
+    if (!modal) return;
+
+    const custNameEl = document.getElementById('inbox-tag-modal-cust-name');
+    if (custNameEl) {
+        custNameEl.textContent = `Chat: ${activeCustomerData.name} (${formatDisplayPhone(activeCustomerData.phone)})`;
+    }
+
+    inboxModalSelectedTags = (activeCustomerData.tags || '').split(',').map(s => s.trim()).filter(Boolean);
+    renderInboxModalTagsList();
+    modal.style.display = 'flex';
+};
+
+window.closeInboxAssignTagsModal = function closeInboxAssignTagsModal() {
+    const modal = document.getElementById('modal-inbox-tags');
+    if (modal) modal.style.display = 'none';
+};
+
+window.renderInboxModalTagsList = function renderInboxModalTagsList() {
+    const listEl = document.getElementById('inbox-modal-tags-list');
+    if (!listEl) return;
+    const searchVal = (document.getElementById('inbox-modal-tag-search')?.value || '').toLowerCase().trim();
+
+    const allTags = (typeof availableTags !== 'undefined' && Array.isArray(availableTags) && availableTags.length > 0)
+        ? availableTags
+        : [
+            { name: 'Repeat Buyers' }, { name: 'Recovered' }, { name: 'Order Placed(Prepaid)' },
+            { name: 'Order Placed(CoD)' }, { name: 'Loyal' }, { name: 'Lost' },
+            { name: 'High Spenders' }, { name: 'Curious Browsers' }, { name: 'At Risk' },
+            { name: 'Abandoned Cart' }
+        ];
+
+    const filtered = allTags.filter(t => !searchVal || (t.name || '').toLowerCase().includes(searchVal));
+
+    if (filtered.length === 0) {
+        listEl.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:1rem;">No matching tags found</div>`;
+        return;
+    }
+
+    listEl.innerHTML = filtered.map(t => {
+        const isChecked = inboxModalSelectedTags.some(tag => tag.toLowerCase() === (t.name || '').toLowerCase());
+        const style = getTagStyle(t.name);
+        const escaped = (t.name || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+        return `
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:0.45rem 0.6rem; border-radius:8px; background:${isChecked ? 'rgba(37, 211, 102, 0.08)' : 'var(--bg-main, #fafafa)'}; border:1px solid ${isChecked ? 'rgba(37, 211, 102, 0.3)' : 'var(--border)'}; cursor:pointer;" onclick="toggleInboxModalTag('${escaped}')">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} style="cursor:pointer;" onclick="event.stopPropagation(); toggleInboxModalTag('${escaped}')">
+                    <span class="contact-tag-pill ${style.cls}" style="${style.styleAttr}">${t.name}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+window.toggleInboxModalTag = function toggleInboxModalTag(tagName) {
+    const idx = inboxModalSelectedTags.findIndex(t => t.toLowerCase() === tagName.toLowerCase());
+    if (idx >= 0) {
+        inboxModalSelectedTags.splice(idx, 1);
+    } else {
+        inboxModalSelectedTags.push(tagName);
+    }
+    renderInboxModalTagsList();
+};
+
+window.saveInboxCustomerTags = async function saveInboxCustomerTags() {
+    if (!activeInboxCustomer || !activeCustomerData) return;
+    const saveBtn = document.getElementById('btn-save-inbox-tags');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+    }
+
+    const newTagsStr = inboxModalSelectedTags.join(', ');
+
+    try {
+        const companyId = activeCustomerData.company_id || (typeof currentCompanyData !== 'undefined' && currentCompanyData ? currentCompanyData.id : null);
+        const res = await apiFetch('/api/customers', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: activeInboxCustomer,
+                tags: newTagsStr,
+                company_id: companyId
+            })
+        });
+        const data = await res.json();
+        if (data.error) {
+            showToast(data.error, 'error');
+        } else {
+            activeCustomerData.tags = newTagsStr;
+            const inListCust = inboxCustomersList.find(c => String(c.id) === String(activeInboxCustomer));
+            if (inListCust) inListCust.tags = newTagsStr;
+            
+            showToast('Tags updated successfully', 'success');
+            closeInboxAssignTagsModal();
+            renderActiveChatTags(activeCustomerData);
+            filterAndRenderInboxContacts();
+        }
+    } catch(e) {
+        showToast('Failed to save tags: ' + e.message, 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Tags';
+        }
+    }
+};
+
+document.getElementById('inbox-modal-tag-search')?.addEventListener('input', () => {
+    renderInboxModalTagsList();
+});
 
 function renderTick(status, direction) {
     if (direction === 'inbound') return '';

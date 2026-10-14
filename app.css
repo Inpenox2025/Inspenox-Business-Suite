@@ -1280,6 +1280,288 @@ tr:hover td {
     margin-bottom: 0.75rem;
 }
 
+/* WhatsApp Style Inbox Header & Filter */
+.inbox-chats-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    position: relative;
+}
+
+.inbox-chats-header-row h2 {
+    margin: 0 !important;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.01em;
+}
+
+.inbox-header-actions-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.inbox-header-icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.inbox-header-icon-btn:hover {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.06));
+    color: var(--text-main);
+}
+
+.inbox-header-icon-btn.active {
+    background: rgba(37, 211, 102, 0.15) !important;
+    color: #25d366 !important;
+}
+
+.inbox-tag-filter-indicator {
+    display: none;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    background: #25d366;
+    border-radius: 50%;
+    border: 2px solid var(--bg-card, #ffffff);
+    box-shadow: 0 0 0 1px rgba(37, 211, 102, 0.4);
+}
+
+.inbox-header-icon-btn.active .inbox-tag-filter-indicator {
+    display: block;
+}
+
+/* Tag filter dropdown menu */
+.inbox-tag-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 1050;
+    width: 280px;
+    max-height: 400px;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeInSlideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.inbox-tag-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.85rem;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    background: var(--bg-main, #fafafa);
+}
+
+.inbox-tag-dropdown-title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.inbox-tag-dropdown-clear-btn {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #ef4444;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.inbox-tag-dropdown-clear-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.inbox-tag-dropdown-search {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    background: var(--bg-card, #ffffff);
+}
+
+.inbox-tag-dropdown-search input {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 0.8rem;
+    background: transparent;
+    color: var(--text-main);
+}
+
+.inbox-tag-filter-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 280px;
+    padding: 0.4rem;
+}
+
+.inbox-tag-filter-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.65rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--text-main);
+    transition: all 0.15s ease;
+    user-select: none;
+    margin-bottom: 2px;
+}
+
+.inbox-tag-filter-item:hover {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.04));
+}
+
+.inbox-tag-filter-item.active {
+    background: rgba(37, 211, 102, 0.12);
+    font-weight: 600;
+}
+
+.inbox-tag-filter-item-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.inbox-tag-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.inbox-tag-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inbox-tag-item-count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-main, #f3f4f6);
+    padding: 0.1rem 0.45rem;
+    border-radius: 10px;
+    margin-left: 0.5rem;
+}
+
+.inbox-tag-filter-item.active .inbox-tag-item-count {
+    background: rgba(37, 211, 102, 0.25);
+    color: #15803d;
+}
+
+.inbox-tag-check-icon {
+    color: #25d366;
+    margin-left: 0.4rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Active tag filter banner */
+.inbox-active-tag-chip-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+    padding: 0.35rem 0.6rem;
+    background: rgba(37, 211, 102, 0.08);
+    border: 1px solid rgba(37, 211, 102, 0.25);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.active-tag-chip-label {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 500;
+}
+
+.active-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+    color: #047857;
+}
+
+.active-tag-chip button {
+    background: transparent;
+    border: none;
+    color: #047857;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 0 0.2rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.active-tag-chip button:hover {
+    background: rgba(4, 120, 87, 0.15);
+    color: #ef4444;
+}
+
+/* Contact card tag pills */
+.contact-tag-pill {
+    font-size: 0.62rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-weight: 600;
+    display: inline-block;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
 .inbox-contacts-list {
     flex: 1;
     overflow-y: auto;
