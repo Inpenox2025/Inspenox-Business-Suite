@@ -699,8 +699,10 @@
                 <div id="campaign-dashboard-view" class="campaign-subview">
                     <div class="camp-dash-header">
                         <div class="camp-dash-header-left">
-                            <button type="button" class="btn-camp-back" onclick="toggleCampaignsListView()" title="View All Campaigns">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <button type="button" class="btn-camp-back" onclick="toggleCampaignsListView()"
+                                title="View All Campaigns">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="19" y1="12" x2="5" y2="12"></line>
                                     <polyline points="12 19 5 12 12 5"></polyline>
                                 </svg>
@@ -717,8 +719,10 @@
                                     <option value="">-- Switch Campaign --</option>
                                 </select>
                             </div>
-                            <button type="button" class="btn secondary sm" onclick="toggleCampaignsListView()" style="border-radius:8px; font-weight:600; gap:0.4rem;">
-                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                            <button type="button" class="btn secondary sm" onclick="toggleCampaignsListView()"
+                                style="border-radius:8px; font-weight:600; gap:0.4rem;">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <line x1="8" y1="6" x2="21" y2="6"></line>
                                     <line x1="8" y1="12" x2="21" y2="12"></line>
                                     <line x1="8" y1="18" x2="21" y2="18"></line>
@@ -728,8 +732,10 @@
                                 </svg>
                                 All Campaigns
                             </button>
-                            <button type="button" class="btn primary sm" onclick="openCreateCampaignModal()" style="border-radius:8px; font-weight:700; gap:0.4rem; box-shadow:0 2px 10px rgba(0,168,132,0.25);">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <button type="button" class="btn primary sm" onclick="openCreateCampaignModal()"
+                                style="border-radius:8px; font-weight:700; gap:0.4rem; box-shadow:0 2px 10px rgba(0,168,132,0.25);">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
                                     <line x1="12" y1="5" x2="12" y2="19"></line>
                                     <line x1="5" y1="12" x2="19" y2="12"></line>
                                 </svg>
@@ -741,51 +747,80 @@
                     <!-- KPI Tabs Horizontal Strip (Image 3) -->
                     <div class="camp-kpi-strip">
                         <div class="camp-kpi-tab" data-tab="overview" onclick="selectCampaignTab('overview')">
-                            <div class="kpi-tab-stat"><span id="tab-rate-overview">100%</span> <span id="tab-count-overview" class="kpi-count">(17861)</span></div>
+                            <div class="kpi-tab-stat"><span id="tab-rate-overview">100%</span> <span
+                                    id="tab-count-overview" class="kpi-count">(17861)</span></div>
                             <div class="kpi-tab-label">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                    <line x1="3" y1="9" x2="21" y2="9" />
+                                    <line x1="9" y1="21" x2="9" y2="9" />
+                                </svg>
                                 Overview
                             </div>
                         </div>
                         <div class="camp-kpi-tab" data-tab="sent" onclick="selectCampaignTab('sent')">
-                            <div class="kpi-tab-stat"><span id="tab-rate-sent">100%</span> <span id="tab-count-sent" class="kpi-count">(17.9K)</span></div>
+                            <div class="kpi-tab-stat"><span id="tab-rate-sent">100%</span> <span id="tab-count-sent"
+                                    class="kpi-count">(17.9K)</span></div>
                             <div class="kpi-tab-label">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
                                 Sent
                             </div>
                         </div>
                         <div class="camp-kpi-tab" data-tab="delivered" onclick="selectCampaignTab('delivered')">
-                            <div class="kpi-tab-stat"><span id="tab-rate-delivered">97%</span> <span id="tab-count-delivered" class="kpi-count">(17.3K)</span></div>
+                            <div class="kpi-tab-stat"><span id="tab-rate-delivered">97%</span> <span
+                                    id="tab-count-delivered" class="kpi-count">(17.3K)</span></div>
                             <div class="kpi-tab-label">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 6 9 15 5 11"/><polyline points="22 10 13 19 11 17"/></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="18 6 9 15 5 11" />
+                                    <polyline points="22 10 13 19 11 17" />
+                                </svg>
                                 Delivered
                             </div>
                         </div>
                         <div class="camp-kpi-tab" data-tab="read" onclick="selectCampaignTab('read')">
-                            <div class="kpi-tab-stat"><span id="tab-rate-read">93%</span> <span id="tab-count-read" class="kpi-count">(16.6K)</span></div>
+                            <div class="kpi-tab-stat"><span id="tab-rate-read">93%</span> <span id="tab-count-read"
+                                    class="kpi-count">(16.6K)</span></div>
                             <div class="kpi-tab-label tick-read-label">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polyline points="18 6 9 15 5 11"/><polyline points="22 10 13 19 11 17"/></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5">
+                                    <polyline points="18 6 9 15 5 11" />
+                                    <polyline points="22 10 13 19 11 17" />
+                                </svg>
                                 Read
                             </div>
                         </div>
                         <div class="camp-kpi-tab active" data-tab="clicked" onclick="selectCampaignTab('clicked')">
-                            <div class="kpi-tab-stat"><span id="tab-rate-clicked">45%</span> <span id="tab-count-clicked" class="kpi-count">(7.3K)</span></div>
+                            <div class="kpi-tab-stat"><span id="tab-rate-clicked">45%</span> <span
+                                    id="tab-count-clicked" class="kpi-count">(7.3K)</span></div>
                             <div class="kpi-tab-label">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path
+                                        d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                                </svg>
                                 Clicked
                             </div>
                         </div>
                         <div class="camp-kpi-tab" data-tab="replied" onclick="selectCampaignTab('replied')">
-                            <div class="kpi-tab-stat"><span id="tab-rate-replied">42%</span> <span id="tab-count-replied" class="kpi-count">(7.5K)</span></div>
+                            <div class="kpi-tab-stat"><span id="tab-rate-replied">42%</span> <span
+                                    id="tab-count-replied" class="kpi-count">(7.5K)</span></div>
                             <div class="kpi-tab-label">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 14 4 9 9 4" />
+                                    <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+                                </svg>
                                 Replied
                             </div>
                         </div>
                         <div class="camp-kpi-tab" data-tab="failed" onclick="selectCampaignTab('failed')">
-                            <div class="kpi-tab-stat"><span id="tab-rate-failed">3%</span> <span id="tab-count-failed" class="kpi-count">(535)</span></div>
+                            <div class="kpi-tab-stat"><span id="tab-rate-failed">3%</span> <span id="tab-count-failed"
+                                    class="kpi-count">(535)</span></div>
                             <div class="kpi-tab-label kpi-failed-label">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
                                 Failed
                             </div>
                         </div>
@@ -801,7 +836,10 @@
                                         <div class="wa-bubble-header">
                                             <span class="wa-bubble-sender">Inspenox Verified</span>
                                             <div class="wa-icon-badge">
-                                                <svg viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
+                                                <svg viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z" />
+                                                </svg>
                                             </div>
                                         </div>
                                         <div class="wa-bubble-body" id="camp-preview-body">
@@ -815,21 +853,35 @@
                                     <!-- Product Cards / Media / Action Row -->
                                     <div class="wa-preview-media-cards" id="camp-preview-media-cards">
                                         <div class="wa-media-card">
-                                            <div class="wa-media-card-thumb" id="camp-preview-thumb-1" style="background-image: url('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&q=80');">
+                                            <div class="wa-media-card-thumb" id="camp-preview-thumb-1"
+                                                style="background-image: url('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&q=80');">
                                                 <span class="wa-card-badge">₹225</span>
                                             </div>
                                             <div class="wa-media-card-title">New range of Accessories</div>
                                             <div class="wa-media-card-actions">
-                                                <a href="#" class="wa-action-btn" id="camp-preview-cta-btn"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg> Buy Now</a>
+                                                <a href="#" class="wa-action-btn" id="camp-preview-cta-btn"><svg
+                                                        viewBox="0 0 24 24" width="12" height="12" fill="none"
+                                                        stroke="currentColor" stroke-width="2">
+                                                        <path
+                                                            d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6">
+                                                        </path>
+                                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                                                    </svg> Buy Now</a>
                                             </div>
                                         </div>
                                         <div class="wa-media-card">
-                                            <div class="wa-media-card-thumb" id="camp-preview-thumb-2" style="background-image: url('https://images.unsplash.com/photo-1484704849700-f032a568e944?w=300&q=80');">
+                                            <div class="wa-media-card-thumb" id="camp-preview-thumb-2"
+                                                style="background-image: url('https://images.unsplash.com/photo-1484704849700-f032a568e944?w=300&q=80');">
                                                 <span class="wa-card-badge">Razer 441</span>
                                             </div>
                                             <div class="wa-media-card-title">Explore headphones & gear</div>
                                             <div class="wa-media-card-actions">
-                                                <a href="#" class="wa-action-btn"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg> Show More</a>
+                                                <a href="#" class="wa-action-btn"><svg viewBox="0 0 24 24" width="12"
+                                                        height="12" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="9 14 4 9 9 4" />
+                                                        <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+                                                    </svg> Show More</a>
                                             </div>
                                         </div>
                                     </div>
@@ -844,7 +896,12 @@
                                 <div class="camp-meta-details">
                                     <div class="camp-meta-field">
                                         <div class="camp-meta-label">
-                                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                                                stroke="currentColor" stroke-width="2">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                            </svg>
                                             CAMPAIGN NAME
                                         </div>
                                         <div class="camp-meta-value" id="camp-detail-name">Republic_Day_Sale</div>
@@ -868,7 +925,9 @@
                                     <div class="camp-donut-box">
                                         <svg class="camp-donut-svg" viewBox="0 0 100 100">
                                             <circle class="donut-bg" cx="50" cy="50" r="38" stroke-width="14"></circle>
-                                            <circle class="donut-fill" id="camp-donut-fill" cx="50" cy="50" r="38" stroke-width="14" stroke-dasharray="238.76" stroke-dashoffset="131.3"></circle>
+                                            <circle class="donut-fill" id="camp-donut-fill" cx="50" cy="50" r="38"
+                                                stroke-width="14" stroke-dasharray="238.76" stroke-dashoffset="131.3">
+                                            </circle>
                                         </svg>
                                         <div class="donut-tooltip-badge" id="camp-donut-badge">45%</div>
                                     </div>
@@ -882,19 +941,20 @@
                                 </div>
                                 <div class="camp-chart-body">
                                     <div class="timeline-chart-container">
-                                        <svg class="timeline-svg" id="camp-timeline-svg" viewBox="0 0 600 220" preserveAspectRatio="none">
+                                        <svg class="timeline-svg" id="camp-timeline-svg" viewBox="0 0 600 220"
+                                            preserveAspectRatio="none">
                                             <defs>
                                                 <linearGradient id="purpleAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.45"/>
-                                                    <stop offset="70%" stop-color="#c4b5fd" stop-opacity="0.12"/>
-                                                    <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+                                                    <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.45" />
+                                                    <stop offset="70%" stop-color="#c4b5fd" stop-opacity="0.12" />
+                                                    <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0" />
                                                 </linearGradient>
                                             </defs>
-                                            <line x1="50" y1="20" x2="580" y2="20" class="chart-grid-line"/>
-                                            <line x1="50" y1="65" x2="580" y2="65" class="chart-grid-line"/>
-                                            <line x1="50" y1="110" x2="580" y2="110" class="chart-grid-line"/>
-                                            <line x1="50" y1="155" x2="580" y2="155" class="chart-grid-line"/>
-                                            <line x1="50" y1="195" x2="580" y2="195" class="chart-grid-line baseline"/>
+                                            <line x1="50" y1="20" x2="580" y2="20" class="chart-grid-line" />
+                                            <line x1="50" y1="65" x2="580" y2="65" class="chart-grid-line" />
+                                            <line x1="50" y1="110" x2="580" y2="110" class="chart-grid-line" />
+                                            <line x1="50" y1="155" x2="580" y2="155" class="chart-grid-line" />
+                                            <line x1="50" y1="195" x2="580" y2="195" class="chart-grid-line baseline" />
 
                                             <text x="42" y="24" class="chart-axis-text">3400</text>
                                             <text x="42" y="69" class="chart-axis-text">2550</text>
@@ -902,12 +962,18 @@
                                             <text x="42" y="159" class="chart-axis-text">850</text>
                                             <text x="42" y="199" class="chart-axis-text">0</text>
 
-                                            <path id="camp-chart-area" class="chart-area-path" d="M 60 195 Q 95 30, 130 50 T 210 110 T 290 80 T 370 115 T 450 75 T 520 195 Z" fill="url(#purpleAreaGrad)"/>
-                                            <path id="camp-chart-line" class="chart-line-path" d="M 60 195 Q 95 30, 130 50 T 210 110 T 290 80 T 370 115 T 450 75 T 520 195" fill="none" stroke="#8b5cf6" stroke-width="3"/>
-                                            <circle id="camp-chart-peak-dot" cx="290" cy="80" r="4.5" fill="#8b5cf6" stroke="#ffffff" stroke-width="2"/>
+                                            <path id="camp-chart-area" class="chart-area-path"
+                                                d="M 60 195 Q 95 30, 130 50 T 210 110 T 290 80 T 370 115 T 450 75 T 520 195 Z"
+                                                fill="url(#purpleAreaGrad)" />
+                                            <path id="camp-chart-line" class="chart-line-path"
+                                                d="M 60 195 Q 95 30, 130 50 T 210 110 T 290 80 T 370 115 T 450 75 T 520 195"
+                                                fill="none" stroke="#8b5cf6" stroke-width="3" />
+                                            <circle id="camp-chart-peak-dot" cx="290" cy="80" r="4.5" fill="#8b5cf6"
+                                                stroke="#ffffff" stroke-width="2" />
                                         </svg>
 
-                                        <div class="chart-floating-tooltip" id="camp-chart-tooltip" style="left: 48%; top: 24%;">
+                                        <div class="chart-floating-tooltip" id="camp-chart-tooltip"
+                                            style="left: 48%; top: 24%;">
                                             <span id="camp-chart-tooltip-text">CLICKED</span>
                                         </div>
 
@@ -939,13 +1005,16 @@
                     <div class="camp-dash-header" style="margin-bottom:1.25rem;">
                         <div>
                             <h1 class="camp-dash-title">All Broadcast Campaigns</h1>
-                            <p class="subtitle" style="margin:0.2rem 0 0 0;">View history, delivery rates, and analytics for all sent broadcasts.</p>
+                            <p class="subtitle" style="margin:0.2rem 0 0 0;">View history, delivery rates, and analytics
+                                for all sent broadcasts.</p>
                         </div>
                         <div style="display:flex; gap:0.5rem; align-items:center;">
-                            <button type="button" class="btn secondary sm" onclick="closeCampaignsListView()" style="border-radius:8px; font-weight:600;">
+                            <button type="button" class="btn secondary sm" onclick="closeCampaignsListView()"
+                                style="border-radius:8px; font-weight:600;">
                                 ← Back to Dashboard
                             </button>
-                            <button type="button" class="btn primary sm" onclick="openCreateCampaignModal()" style="border-radius:8px; font-weight:700;">
+                            <button type="button" class="btn primary sm" onclick="openCreateCampaignModal()"
+                                style="border-radius:8px; font-weight:700;">
                                 + Create Campaign
                             </button>
                         </div>
@@ -953,10 +1022,14 @@
 
                     <!-- Campaigns Table Card -->
                     <div class="card" style="padding:0; overflow:hidden;">
-                        <div style="padding:0.75rem 1rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-                            <input type="text" id="camp-search-input" placeholder="Search campaigns by name..." oninput="filterCampaignsList(this.value)"
+                        <div
+                            style="padding:0.75rem 1rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                            <input type="text" id="camp-search-input" placeholder="Search campaigns by name..."
+                                oninput="filterCampaignsList(this.value)"
                                 style="padding:0.4rem 0.75rem; border-radius:6px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.8rem; min-width:240px;">
-                            <span id="camp-total-count-badge" style="font-size:0.775rem; color:var(--text-muted); font-weight:600;">Loading campaigns...</span>
+                            <span id="camp-total-count-badge"
+                                style="font-size:0.775rem; color:var(--text-muted); font-weight:600;">Loading
+                                campaigns...</span>
                         </div>
                         <div class="table-responsive" style="max-height:550px; overflow-y:auto;">
                             <table class="data-table" id="camp-table">
@@ -985,19 +1058,24 @@
                     <div class="page-header"
                         style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.25rem;">
                         <div style="display:flex; align-items:center; gap:0.75rem;">
-                            <button type="button" class="btn-camp-back" onclick="closeCampaignCreateView()" title="Back to Dashboard">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <button type="button" class="btn-camp-back" onclick="closeCampaignCreateView()"
+                                title="Back to Dashboard">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="19" y1="12" x2="5" y2="12"></line>
                                     <polyline points="12 19 5 12 12 5"></polyline>
                                 </svg>
                             </button>
                             <div>
-                                <h1 style="font-size:1.35rem; font-weight:800; margin:0;" id="bc-setup-heading">Setup Broadcast Campaign</h1>
-                                <p class="subtitle" style="margin:0.2rem 0 0 0;">Configure audience, choose templates or messages, and launch your campaign.</p>
+                                <h1 style="font-size:1.35rem; font-weight:800; margin:0;" id="bc-setup-heading">Setup
+                                    Broadcast Campaign</h1>
+                                <p class="subtitle" style="margin:0.2rem 0 0 0;">Configure audience, choose templates or
+                                    messages, and launch your campaign.</p>
                             </div>
                         </div>
                         <div style="display:flex; gap:0.5rem; flex-shrink:0; align-items:center; flex-wrap:wrap;">
-                            <button type="button" class="btn secondary sm" onclick="closeCampaignCreateView()" style="border-radius:8px;">
+                            <button type="button" class="btn secondary sm" onclick="closeCampaignCreateView()"
+                                style="border-radius:8px;">
                                 Cancel
                             </button>
                             <a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing#rate-cards"
@@ -1029,345 +1107,431 @@
                                 <!-- Campaign Name Field -->
                                 <div class="form-group" style="margin-bottom: 1.25rem;">
                                     <label style="display:flex; justify-content:space-between; align-items:center;">
-                                        <span style="font-weight:700; color:var(--text-main);">🏷️ Campaign Name <span style="color:var(--primary); font-size:0.75rem;">(Required)</span></span>
-                                        <span style="font-size:0.75rem; color:var(--text-muted);">Descriptive name for reports & analytics</span>
+                                        <span style="font-weight:700; color:var(--text-main);">🏷️ Campaign Name <span
+                                                style="color:var(--primary); font-size:0.75rem;">(Required)</span></span>
+                                        <span style="font-size:0.75rem; color:var(--text-muted);">Descriptive name for
+                                            reports & analytics</span>
                                     </label>
-                                    <input type="text" id="bc-campaign-name" required placeholder="e.g. Republic Day Sale 2026"
+                                    <input type="text" id="bc-campaign-name" required
+                                        placeholder="e.g. Republic Day Sale 2026"
                                         style="width:100%; padding:0.6rem 0.85rem; font-size:0.95rem; font-weight:600; border-radius:8px; background:var(--bg-dark); border:1.5px solid var(--border); color:var(--text-main); outline:none;">
                                 </div>
-                            <div class="form-group">
-                                <div
-                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem; flex-wrap: wrap; gap: 0.5rem;">
-                                    <label style="margin: 0; font-weight: 600;">Target Audience</label>
-                                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                        <!-- Range / Batch Selector in Header -->
-                                        <div style="display: flex; align-items: center; gap: 0.35rem;">
-                                            <span style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600;">🔢 Range:</span>
-                                            <select id="bc-range-filter-select"
-                                                onchange="applyBroadcastRangeFilter(this.value, true)"
-                                                style="padding: 0.25rem 0.65rem; border-radius: 6px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.775rem; cursor: pointer; outline: none; min-width: 165px;">
-                                                <option value="">-- All Customers (1 to All) --</option>
+                                <div class="form-group">
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem; flex-wrap: wrap; gap: 0.5rem;">
+                                        <label style="margin: 0; font-weight: 600;">Target Audience</label>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                            <!-- Range / Batch Selector in Header -->
+                                            <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                                <span
+                                                    style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600;">🔢
+                                                    Range:</span>
+                                                <select id="bc-range-filter-select"
+                                                    onchange="applyBroadcastRangeFilter(this.value, true)"
+                                                    style="padding: 0.25rem 0.65rem; border-radius: 6px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.775rem; cursor: pointer; outline: none; min-width: 165px;">
+                                                    <option value="">-- All Customers (1 to All) --</option>
+                                                </select>
+                                                <button type="button" class="btn secondary sm"
+                                                    id="btn-bc-clear-range-filter" onclick="clearBroadcastRangeFilter()"
+                                                    style="display: none; padding: 0.2rem 0.5rem; font-size: 0.725rem;"
+                                                    title="Clear Range Filter">
+                                                    ✕
+                                                </button>
+                                            </div>
+
+                                            <!-- Tag Filter Dropdown in Header -->
+                                            <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                                <span
+                                                    style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600;">🏷️
+                                                    Tag:</span>
+                                                <select id="bc-tag-filter-select"
+                                                    onchange="applyBroadcastTagFilter(this.value, true)"
+                                                    style="padding: 0.25rem 0.65rem; border-radius: 6px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.775rem; cursor: pointer; outline: none; min-width: 155px;">
+                                                    <option value="">-- Filter By Tags --</option>
+                                                </select>
+                                                <button type="button" class="btn secondary sm"
+                                                    id="btn-bc-clear-tag-filter" onclick="clearBroadcastTagFilter()"
+                                                    style="display: none; padding: 0.2rem 0.5rem; font-size: 0.725rem;"
+                                                    title="Clear Tag Filter">
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="custom-select" id="bc-target-container">
+                                        <div class="select-box" id="bc-target-display">Select Audience...</div>
+                                        <div class="options-container" id="bc-target-options">
+                                            <!-- Search & Filters Inside Options Box -->
+                                            <div
+                                                style="padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.55rem; background: var(--bg-dark);">
+                                                <input type="text" id="bc-customer-search"
+                                                    placeholder="Search by Sr. No. (#1, #25), name, phone or tag..."
+                                                    oninput="filterBroadcastCustomerList()"
+                                                    style="width: 100%; padding: 0.35rem 0.6rem; font-size: 0.775rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); outline: none;">
+
+                                                <!-- Range / Batch Selection Chips -->
+                                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                                    <div
+                                                        style="display: flex; justify-content: space-between; align-items: center;">
+                                                        <span
+                                                            style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🔢
+                                                            Select Range / Batch:</span>
+                                                        <button type="button" id="btn-bc-toggle-custom-range"
+                                                            onclick="toggleBroadcastCustomRangeInput()"
+                                                            style="background: none; border: none; color: var(--primary); font-size: 0.72rem; cursor: pointer; padding: 0; text-decoration: underline; font-weight: 600;">
+                                                            Custom Range...
+                                                        </button>
+                                                    </div>
+                                                    <div style="display: flex; align-items: center; gap: 0.35rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin;"
+                                                        id="bc-range-chips-container">
+                                                        <!-- Dynamic range quick chips: All, 1 - 250, 251 - 500, 501 - 1000, etc. -->
+                                                    </div>
+                                                    <!-- Custom Range Input Row -->
+                                                    <div id="bc-custom-range-row"
+                                                        style="display: none; align-items: center; gap: 0.4rem; padding: 4px 8px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px;">
+                                                        <span
+                                                            style="font-size: 0.725rem; color: var(--text-muted); font-weight: 600;">From
+                                                            #</span>
+                                                        <input type="number" id="bc-range-custom-from" min="1"
+                                                            placeholder="1"
+                                                            style="width: 65px; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
+                                                        <span
+                                                            style="font-size: 0.725rem; color: var(--text-muted); font-weight: 600;">To
+                                                            #</span>
+                                                        <input type="number" id="bc-range-custom-to" min="1"
+                                                            placeholder="250"
+                                                            style="width: 65px; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
+                                                        <button type="button" class="btn primary sm"
+                                                            onclick="applyBroadcastCustomRange()"
+                                                            style="padding: 2px 8px; font-size: 0.72rem;">Apply</button>
+                                                        <button type="button" class="btn secondary sm"
+                                                            onclick="toggleBroadcastCustomRangeInput(false)"
+                                                            style="padding: 2px 6px; font-size: 0.72rem;">✕</button>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Tag Selection Chips (Combine with Range) -->
+                                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                                    <div
+                                                        style="display: flex; justify-content: space-between; align-items: center;">
+                                                        <span
+                                                            style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🏷️
+                                                            Filter / Target by Tag:</span>
+                                                        <span id="bc-active-filter-summary"
+                                                            style="font-size: 0.7rem; color: var(--primary); font-weight: 600;"></span>
+                                                    </div>
+                                                    <div style="display: flex; align-items: center; gap: 0.35rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin;"
+                                                        id="bc-tag-chips-container">
+                                                        <!-- Dynamic tag quick chips: All, Repeat Buyers, Recovered, etc. -->
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <label class="option-item select-all-item"
+                                                style="border-bottom: 1px solid var(--border); padding: 0.55rem 0.85rem;">
+                                                <div style="display: flex; align-items: center; gap: 0.6rem; flex: 1;">
+                                                    <input type="checkbox" id="bc-select-all" value="all">
+                                                    <strong id="bc-select-all-label">Select All Matching
+                                                        Customers</strong>
+                                                </div>
+                                                <span id="bc-matching-count-badge"
+                                                    style="font-size: 0.725rem; color: var(--primary); font-weight: 600;"></span>
+                                            </label>
+                                            <div id="bc-target-list"></div>
+                                            <div class="bc-target-footer">
+                                                <div
+                                                    style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+                                                    <button type="button" id="btn-bc-select-unsent"
+                                                        onclick="selectUnsentInCurrentFilter()" class="btn secondary sm"
+                                                        style="font-size:0.72rem; padding:0.25rem 0.55rem;"
+                                                        title="Select only customers in current range/tag who have not received messages yet">⚡
+                                                        Select Unsent</button>
+                                                    <button type="button" id="btn-bc-select-24h-active"
+                                                        class="btn secondary sm"
+                                                        style="font-size:0.72rem; padding:0.25rem 0.55rem;">⚡ 24h Free
+                                                        Tier</button>
+                                                    <button type="button" onclick="clearBroadcastAudienceSelection()"
+                                                        class="btn secondary sm"
+                                                        style="font-size:0.72rem; padding:0.25rem 0.55rem;">Clear</button>
+                                                </div>
+                                                <button type="button" id="btn-bc-target-done" class="btn primary sm"
+                                                    style="font-size:0.75rem; padding:0.3rem 0.85rem;">Done</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sender WhatsApp Phone Number Selector -->
+                                <div class="form-group" id="bc-sender-phone-group" style="display:none;">
+                                    <label style="display:flex; justify-content:space-between; align-items:center;">
+                                        <span>📱 Sender WhatsApp Number</span>
+                                        <span id="bc-sender-badge"
+                                            style="font-size:0.72rem; color:#10b981; font-weight:600; padding:1px 6px; border-radius:999px; background:#e6f4ea;">Registered</span>
+                                    </label>
+                                    <select id="bc-sender-phone-select"
+                                        style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                                        <option value="">Default Primary Number</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Message Type</label>
+                                    <select id="bc-type" required>
+                                        <option value="text">Text Message</option>
+                                        <option value="template">Meta Approved Template</option>
+                                        <option value="image">Image (JPEG / PNG)</option>
+                                        <option value="video">Video (MP4)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Template Selector -->
+                                <div class="form-group" id="bc-template-group" style="display:none;">
+                                    <label>Select Meta Template</label>
+                                    <select id="bc-template">
+                                        <option value="">Loading templates...</option>
+                                    </select>
+                                </div>
+
+                                <!-- Media Upload -->
+                                <div class="form-group" id="bc-media-group" style="display:none;">
+                                    <label id="bc-media-group-label">Attach Media</label>
+
+                                    <!-- Meta Auto-Attached Header Card (Zero Re-Upload) -->
+                                    <div id="bc-meta-header-auto-container"
+                                        style="display:none; margin-bottom: 0.75rem;"></div>
+
+                                    <!-- Custom Media Wrapper (Optional Override) -->
+                                    <div id="bc-custom-media-wrapper">
+                                        <div style="margin-bottom: 0.75rem;">
+                                            <label
+                                                style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Option
+                                                1: Choose from Media Library</label>
+                                            <select id="bc-media-select">
+                                                <option value="">-- Select from uploaded files --</option>
                                             </select>
-                                            <button type="button" class="btn secondary sm" id="btn-bc-clear-range-filter"
-                                                onclick="clearBroadcastRangeFilter()"
-                                                style="display: none; padding: 0.2rem 0.5rem; font-size: 0.725rem;" title="Clear Range Filter">
-                                                ✕
-                                            </button>
                                         </div>
-
-                                        <!-- Tag Filter Dropdown in Header -->
-                                        <div style="display: flex; align-items: center; gap: 0.35rem;">
-                                            <span style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600;">🏷️ Tag:</span>
-                                            <select id="bc-tag-filter-select"
-                                                onchange="applyBroadcastTagFilter(this.value, true)"
-                                                style="padding: 0.25rem 0.65rem; border-radius: 6px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.775rem; cursor: pointer; outline: none; min-width: 155px;">
-                                                <option value="">-- Filter By Tags --</option>
-                                            </select>
-                                            <button type="button" class="btn secondary sm" id="btn-bc-clear-tag-filter"
-                                                onclick="clearBroadcastTagFilter()"
-                                                style="display: none; padding: 0.2rem 0.5rem; font-size: 0.725rem;" title="Clear Tag Filter">
-                                                ✕
-                                            </button>
+                                        <div>
+                                            <label
+                                                style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Option
+                                                2: Or Upload New File</label>
+                                            <div class="file-dropzone"
+                                                onclick="document.getElementById('bc-media').click()">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                                </svg>
+                                                <span id="dropzone-text">Click to choose image or video</span>
+                                                <input type="file" id="bc-media" accept="image/*,video/*"
+                                                    style="display:none">
+                                            </div>
                                         </div>
+                                    </div>
+                                    <div id="bc-media-preview-container" style="margin-top: 0.75rem; display:none;">
                                     </div>
                                 </div>
 
-                                <div class="custom-select" id="bc-target-container">
-                                    <div class="select-box" id="bc-target-display">Select Audience...</div>
-                                    <div class="options-container" id="bc-target-options">
-                                        <!-- Search & Filters Inside Options Box -->
-                                        <div
-                                            style="padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.55rem; background: var(--bg-dark);">
-                                            <input type="text" id="bc-customer-search"
-                                                placeholder="Search by Sr. No. (#1, #25), name, phone or tag..."
-                                                oninput="filterBroadcastCustomerList()"
-                                                style="width: 100%; padding: 0.35rem 0.6rem; font-size: 0.775rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); outline: none;">
-
-                                            <!-- Range / Batch Selection Chips -->
-                                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🔢 Select Range / Batch:</span>
-                                                    <button type="button" id="btn-bc-toggle-custom-range" onclick="toggleBroadcastCustomRangeInput()"
-                                                        style="background: none; border: none; color: var(--primary); font-size: 0.72rem; cursor: pointer; padding: 0; text-decoration: underline; font-weight: 600;">
-                                                        Custom Range...
-                                                    </button>
+                                <div class="form-group" id="bc-content-group" style="position:relative;">
+                                    <div
+                                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                                        <label style="margin:0;">Message Text / Media Caption</label>
+                                        <div style="position:relative;">
+                                            <button type="button" id="btn-bc-add-var" class="btn secondary sm"
+                                                style="font-size:0.75rem; padding:0.25rem 0.6rem;">+ Add variable
+                                                ℹ</button>
+                                            <div id="bc-var-picker" class="tpl-var-picker-popover"
+                                                style="display:none; right:0;" data-target="bc-content">
+                                                <div class="tpl-var-picker-header">
+                                                    <h5>⚡ Dynamic Broadcast Variables</h5>
+                                                    <p>Insert customer columns or business name. When broadcasting,
+                                                        these placeholders dynamically resolve per recipient.</p>
                                                 </div>
-                                                <div style="display: flex; align-items: center; gap: 0.35rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin;"
-                                                    id="bc-range-chips-container">
-                                                    <!-- Dynamic range quick chips: All, 1 - 250, 251 - 500, 501 - 1000, etc. -->
+                                                <div class="tpl-var-group-title">👤 Customers Table Columns</div>
+                                                <div class="tpl-var-list">
+                                                    <div class="tpl-var-item" data-var-tag="{{name}}">
+                                                        <div class="tpl-var-item-info">
+                                                            <span class="tpl-var-item-label">👤 Customer Name</span>
+                                                            <span class="tpl-var-item-desc">Full customer name from
+                                                                directory</span>
+                                                        </div>
+                                                        <code class="tpl-var-badge">{{name}}</code>
+                                                    </div>
+                                                    <div class="tpl-var-item" data-var-tag="{{phone}}">
+                                                        <div class="tpl-var-item-info">
+                                                            <span class="tpl-var-item-label">📞 Phone Number</span>
+                                                            <span class="tpl-var-item-desc">WhatsApp / mobile
+                                                                number</span>
+                                                        </div>
+                                                        <code class="tpl-var-badge">{{phone}}</code>
+                                                    </div>
+                                                    <div class="tpl-var-item" data-var-tag="{{email}}">
+                                                        <div class="tpl-var-item-info">
+                                                            <span class="tpl-var-item-label">✉️ Email Address</span>
+                                                            <span class="tpl-var-item-desc">Recipient email
+                                                                address</span>
+                                                        </div>
+                                                        <code class="tpl-var-badge">{{email}}</code>
+                                                    </div>
+                                                    <div class="tpl-var-item" data-var-tag="{{city}}">
+                                                        <div class="tpl-var-item-info">
+                                                            <span class="tpl-var-item-label">🏙️ City / Location</span>
+                                                            <span class="tpl-var-item-desc">Customer city column</span>
+                                                        </div>
+                                                        <code class="tpl-var-badge">{{city}}</code>
+                                                    </div>
+                                                    <div class="tpl-var-item" data-var-tag="{{state}}">
+                                                        <div class="tpl-var-item-info">
+                                                            <span class="tpl-var-item-label">📍 State / Province</span>
+                                                            <span class="tpl-var-item-desc">Customer state column</span>
+                                                        </div>
+                                                        <code class="tpl-var-badge">{{state}}</code>
+                                                    </div>
+                                                    <div class="tpl-var-item" data-var-tag="{{tags}}">
+                                                        <div class="tpl-var-item-info">
+                                                            <span class="tpl-var-item-label">🏷️ Segment Tags</span>
+                                                            <span class="tpl-var-item-desc">Customer tags and
+                                                                categories</span>
+                                                        </div>
+                                                        <code class="tpl-var-badge">{{tags}}</code>
+                                                    </div>
+                                                    <div class="tpl-var-item" data-var-tag="{{customer_id}}">
+                                                        <div class="tpl-var-item-info">
+                                                            <span class="tpl-var-item-label">🆔 Customer ID</span>
+                                                            <span class="tpl-var-item-desc">Unique database ID /
+                                                                S.No</span>
+                                                        </div>
+                                                        <code class="tpl-var-badge">{{customer_id}}</code>
+                                                    </div>
+                                                    <div class="tpl-var-item" data-var-tag="{{address}}">
+                                                        <div class="tpl-var-item-info">
+                                                            <span class="tpl-var-item-label">🏠 Street Address</span>
+                                                            <span class="tpl-var-item-desc">Customer street
+                                                                address</span>
+                                                        </div>
+                                                        <code class="tpl-var-badge">{{address}}</code>
+                                                    </div>
+                                                    <div class="tpl-var-item" data-var-tag="{{pincode}}">
+                                                        <div class="tpl-var-item-info">
+                                                            <span class="tpl-var-item-label">📮 Pincode / ZIP</span>
+                                                            <span class="tpl-var-item-desc">Postal code column</span>
+                                                        </div>
+                                                        <code class="tpl-var-badge">{{pincode}}</code>
+                                                    </div>
                                                 </div>
-                                                <!-- Custom Range Input Row -->
-                                                <div id="bc-custom-range-row" style="display: none; align-items: center; gap: 0.4rem; padding: 4px 8px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px;">
-                                                    <span style="font-size: 0.725rem; color: var(--text-muted); font-weight: 600;">From #</span>
-                                                    <input type="number" id="bc-range-custom-from" min="1" placeholder="1" style="width: 65px; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
-                                                    <span style="font-size: 0.725rem; color: var(--text-muted); font-weight: 600;">To #</span>
-                                                    <input type="number" id="bc-range-custom-to" min="1" placeholder="250" style="width: 65px; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
-                                                    <button type="button" class="btn primary sm" onclick="applyBroadcastCustomRange()" style="padding: 2px 8px; font-size: 0.72rem;">Apply</button>
-                                                    <button type="button" class="btn secondary sm" onclick="toggleBroadcastCustomRangeInput(false)" style="padding: 2px 6px; font-size: 0.72rem;">✕</button>
+                                                <div class="tpl-var-group-title">🏢 Company Profile</div>
+                                                <div class="tpl-var-list">
+                                                    <div class="tpl-var-item" data-var-tag="{{company_name}}">
+                                                        <div class="tpl-var-item-info">
+                                                            <span class="tpl-var-item-label">🏢 Company Name</span>
+                                                            <span class="tpl-var-item-desc">Your active business
+                                                                name</span>
+                                                        </div>
+                                                        <code class="tpl-var-badge">{{company_name}}</code>
+                                                    </div>
                                                 </div>
                                             </div>
-
-                                            <!-- Tag Selection Chips (Combine with Range) -->
-                                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">🏷️ Filter / Target by Tag:</span>
-                                                    <span id="bc-active-filter-summary" style="font-size: 0.7rem; color: var(--primary); font-weight: 600;"></span>
-                                                </div>
-                                                <div style="display: flex; align-items: center; gap: 0.35rem; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin;"
-                                                    id="bc-tag-chips-container">
-                                                    <!-- Dynamic tag quick chips: All, Repeat Buyers, Recovered, etc. -->
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <label class="option-item select-all-item"
-                                            style="border-bottom: 1px solid var(--border); padding: 0.55rem 0.85rem;">
-                                            <div style="display: flex; align-items: center; gap: 0.6rem; flex: 1;">
-                                                <input type="checkbox" id="bc-select-all" value="all">
-                                                <strong id="bc-select-all-label">Select All Matching Customers</strong>
-                                            </div>
-                                            <span id="bc-matching-count-badge"
-                                                style="font-size: 0.725rem; color: var(--primary); font-weight: 600;"></span>
-                                        </label>
-                                        <div id="bc-target-list"></div>
-                                        <div class="bc-target-footer">
-                                            <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
-                                                <button type="button" id="btn-bc-select-unsent" onclick="selectUnsentInCurrentFilter()" class="btn secondary sm"
-                                                    style="font-size:0.72rem; padding:0.25rem 0.55rem;" title="Select only customers in current range/tag who have not received messages yet">⚡ Select Unsent</button>
-                                                <button type="button" id="btn-bc-select-24h-active" class="btn secondary sm"
-                                                    style="font-size:0.72rem; padding:0.25rem 0.55rem;">⚡ 24h Free Tier</button>
-                                                <button type="button" onclick="clearBroadcastAudienceSelection()" class="btn secondary sm"
-                                                    style="font-size:0.72rem; padding:0.25rem 0.55rem;">Clear</button>
-                                            </div>
-                                            <button type="button" id="btn-bc-target-done" class="btn primary sm"
-                                                style="font-size:0.75rem; padding:0.3rem 0.85rem;">Done</button>
                                         </div>
                                     </div>
+                                    <textarea id="bc-content" rows="4"
+                                        placeholder="Write your broadcast message here... e.g. Hello {{name}}, welcome to {{company_name}}!"></textarea>
                                 </div>
-                            </div>
 
-                            <!-- Sender WhatsApp Phone Number Selector -->
-                            <div class="form-group" id="bc-sender-phone-group" style="display:none;">
-                                <label style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span>📱 Sender WhatsApp Number</span>
-                                    <span id="bc-sender-badge" style="font-size:0.72rem; color:#10b981; font-weight:600; padding:1px 6px; border-radius:999px; background:#e6f4ea;">Registered</span>
-                                </label>
-                                <select id="bc-sender-phone-select" style="width:100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
-                                    <option value="">Default Primary Number</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Message Type</label>
-                                <select id="bc-type" required>
-                                    <option value="text">Text Message</option>
-                                    <option value="template">Meta Approved Template</option>
-                                    <option value="image">Image (JPEG / PNG)</option>
-                                    <option value="video">Video (MP4)</option>
-                                </select>
-                            </div>
-
-                            <!-- Template Selector -->
-                            <div class="form-group" id="bc-template-group" style="display:none;">
-                                <label>Select Meta Template</label>
-                                <select id="bc-template">
-                                    <option value="">Loading templates...</option>
-                                </select>
-                            </div>
-
-                            <!-- Media Upload -->
-                            <div class="form-group" id="bc-media-group" style="display:none;">
-                                <label id="bc-media-group-label">Attach Media</label>
-                                
-                                <!-- Meta Auto-Attached Header Card (Zero Re-Upload) -->
-                                <div id="bc-meta-header-auto-container" style="display:none; margin-bottom: 0.75rem;"></div>
-
-                                <!-- Custom Media Wrapper (Optional Override) -->
-                                <div id="bc-custom-media-wrapper">
-                                    <div style="margin-bottom: 0.75rem;">
+                                <!-- Optional CTA URL & Text Inputs -->
+                                <div style="display:flex; gap:0.75rem; margin-bottom:1.25rem; flex-wrap:wrap;">
+                                    <div style="flex:1; min-width:180px;">
                                         <label
-                                            style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Option
-                                            1: Choose from Media Library</label>
-                                        <select id="bc-media-select">
-                                            <option value="">-- Select from uploaded files --</option>
-                                        </select>
+                                            style="font-size:0.775rem; color:var(--text-muted); margin-bottom:0.25rem; display:block; font-weight:600;">CTA
+                                            Button Text (Optional)</label>
+                                        <input type="text" id="bc-cta-text" placeholder="e.g. Shop Now / Order Today"
+                                            style="width:100%; padding:0.5rem 0.75rem; border-radius:6px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.825rem;">
                                     </div>
-                                    <div>
+                                    <div style="flex:1; min-width:180px;">
                                         <label
-                                            style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Option
-                                            2: Or Upload New File</label>
-                                        <div class="file-dropzone" onclick="document.getElementById('bc-media').click()">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                                <polyline points="17 8 12 3 7 8"></polyline>
-                                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                                            </svg>
-                                            <span id="dropzone-text">Click to choose image or video</span>
-                                            <input type="file" id="bc-media" accept="image/*,video/*" style="display:none">
-                                        </div>
+                                            style="font-size:0.775rem; color:var(--text-muted); margin-bottom:0.25rem; display:block; font-weight:600;">CTA
+                                            Link URL (Optional)</label>
+                                        <input type="url" id="bc-cta-url" placeholder="https://yourstore.com/sale"
+                                            style="width:100%; padding:0.5rem 0.75rem; border-radius:6px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.825rem;">
                                     </div>
                                 </div>
-                                <div id="bc-media-preview-container" style="margin-top: 0.75rem; display:none;"></div>
-                            </div>
 
-                            <div class="form-group" id="bc-content-group" style="position:relative;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-                                    <label style="margin:0;">Message Text / Media Caption</label>
-                                    <div style="position:relative;">
-                                        <button type="button" id="btn-bc-add-var" class="btn secondary sm" style="font-size:0.75rem; padding:0.25rem 0.6rem;">+ Add variable ℹ</button>
-                                        <div id="bc-var-picker" class="tpl-var-picker-popover" style="display:none; right:0;" data-target="bc-content">
-                                            <div class="tpl-var-picker-header">
-                                                <h5>⚡ Dynamic Broadcast Variables</h5>
-                                                <p>Insert customer columns or business name. When broadcasting, these placeholders dynamically resolve per recipient.</p>
-                                            </div>
-                                            <div class="tpl-var-group-title">👤 Customers Table Columns</div>
-                                            <div class="tpl-var-list">
-                                                <div class="tpl-var-item" data-var-tag="{{name}}">
-                                                    <div class="tpl-var-item-info">
-                                                        <span class="tpl-var-item-label">👤 Customer Name</span>
-                                                        <span class="tpl-var-item-desc">Full customer name from directory</span>
-                                                    </div>
-                                                    <code class="tpl-var-badge">{{name}}</code>
-                                                </div>
-                                                <div class="tpl-var-item" data-var-tag="{{phone}}">
-                                                    <div class="tpl-var-item-info">
-                                                        <span class="tpl-var-item-label">📞 Phone Number</span>
-                                                        <span class="tpl-var-item-desc">WhatsApp / mobile number</span>
-                                                    </div>
-                                                    <code class="tpl-var-badge">{{phone}}</code>
-                                                </div>
-                                                <div class="tpl-var-item" data-var-tag="{{email}}">
-                                                    <div class="tpl-var-item-info">
-                                                        <span class="tpl-var-item-label">✉️ Email Address</span>
-                                                        <span class="tpl-var-item-desc">Recipient email address</span>
-                                                    </div>
-                                                    <code class="tpl-var-badge">{{email}}</code>
-                                                </div>
-                                                <div class="tpl-var-item" data-var-tag="{{city}}">
-                                                    <div class="tpl-var-item-info">
-                                                        <span class="tpl-var-item-label">🏙️ City / Location</span>
-                                                        <span class="tpl-var-item-desc">Customer city column</span>
-                                                    </div>
-                                                    <code class="tpl-var-badge">{{city}}</code>
-                                                </div>
-                                                <div class="tpl-var-item" data-var-tag="{{state}}">
-                                                    <div class="tpl-var-item-info">
-                                                        <span class="tpl-var-item-label">📍 State / Province</span>
-                                                        <span class="tpl-var-item-desc">Customer state column</span>
-                                                    </div>
-                                                    <code class="tpl-var-badge">{{state}}</code>
-                                                </div>
-                                                <div class="tpl-var-item" data-var-tag="{{tags}}">
-                                                    <div class="tpl-var-item-info">
-                                                        <span class="tpl-var-item-label">🏷️ Segment Tags</span>
-                                                        <span class="tpl-var-item-desc">Customer tags and categories</span>
-                                                    </div>
-                                                    <code class="tpl-var-badge">{{tags}}</code>
-                                                </div>
-                                                <div class="tpl-var-item" data-var-tag="{{customer_id}}">
-                                                    <div class="tpl-var-item-info">
-                                                        <span class="tpl-var-item-label">🆔 Customer ID</span>
-                                                        <span class="tpl-var-item-desc">Unique database ID / S.No</span>
-                                                    </div>
-                                                    <code class="tpl-var-badge">{{customer_id}}</code>
-                                                </div>
-                                                <div class="tpl-var-item" data-var-tag="{{address}}">
-                                                    <div class="tpl-var-item-info">
-                                                        <span class="tpl-var-item-label">🏠 Street Address</span>
-                                                        <span class="tpl-var-item-desc">Customer street address</span>
-                                                    </div>
-                                                    <code class="tpl-var-badge">{{address}}</code>
-                                                </div>
-                                                <div class="tpl-var-item" data-var-tag="{{pincode}}">
-                                                    <div class="tpl-var-item-info">
-                                                        <span class="tpl-var-item-label">📮 Pincode / ZIP</span>
-                                                        <span class="tpl-var-item-desc">Postal code column</span>
-                                                    </div>
-                                                    <code class="tpl-var-badge">{{pincode}}</code>
-                                                </div>
-                                            </div>
-                                            <div class="tpl-var-group-title">🏢 Company Profile</div>
-                                            <div class="tpl-var-list">
-                                                <div class="tpl-var-item" data-var-tag="{{company_name}}">
-                                                    <div class="tpl-var-item-info">
-                                                        <span class="tpl-var-item-label">🏢 Company Name</span>
-                                                        <span class="tpl-var-item-desc">Your active business name</span>
-                                                    </div>
-                                                    <code class="tpl-var-badge">{{company_name}}</code>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <textarea id="bc-content" rows="4"
-                                    placeholder="Write your broadcast message here... e.g. Hello {{name}}, welcome to {{company_name}}!"></textarea>
-                            </div>
-
-                            <!-- Optional CTA URL & Text Inputs -->
-                            <div style="display:flex; gap:0.75rem; margin-bottom:1.25rem; flex-wrap:wrap;">
-                                <div style="flex:1; min-width:180px;">
-                                    <label style="font-size:0.775rem; color:var(--text-muted); margin-bottom:0.25rem; display:block; font-weight:600;">CTA Button Text (Optional)</label>
-                                    <input type="text" id="bc-cta-text" placeholder="e.g. Shop Now / Order Today" style="width:100%; padding:0.5rem 0.75rem; border-radius:6px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.825rem;">
-                                </div>
-                                <div style="flex:1; min-width:180px;">
-                                    <label style="font-size:0.775rem; color:var(--text-muted); margin-bottom:0.25rem; display:block; font-weight:600;">CTA Link URL (Optional)</label>
-                                    <input type="url" id="bc-cta-url" placeholder="https://yourstore.com/sale" style="width:100%; padding:0.5rem 0.75rem; border-radius:6px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.825rem;">
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn primary w-full" id="btn-broadcast">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    style="width:18px;height:18px;">
-                                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                </svg>
-                                Send Broadcast Campaign
-                            </button>
-                        </form>
-                        <div id="broadcast-status" class="status-banner"></div>
+                                <button type="submit" class="btn primary w-full" id="btn-broadcast">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        style="width:18px;height:18px;">
+                                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                    </svg>
+                                    Send Broadcast Campaign
+                                </button>
+                            </form>
+                            <div id="broadcast-status" class="status-banner"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- CREATE CAMPAIGN NAME MODAL -->
-            <div id="modal-create-campaign" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(8px);">
-                <div class="modal-content card modal-card" style="max-width: 490px; width: 92%; padding: 1.75rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); position: relative; color: var(--text-main);">
-                    <div class="modal-header" style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border); padding-bottom:0.85rem; margin-bottom: 1.25rem;">
-                        <div>
-                            <h3 style="margin:0; font-size:1.2rem; font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
-                                <span>🚀</span> Create New Campaign
-                            </h3>
-                            <p style="margin:0.35rem 0 0 0; font-size:0.825rem; color:var(--text-muted); line-height:1.4;">Set a name to track live broadcast analytics and engagement.</p>
+                <!-- CREATE CAMPAIGN NAME MODAL -->
+                <div id="modal-create-campaign" class="modal-overlay hidden"
+                    style="z-index: 10000; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(8px);">
+                    <div class="modal-content card modal-card"
+                        style="max-width: 490px; width: 92%; padding: 1.75rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); position: relative; color: var(--text-main);">
+                        <div class="modal-header"
+                            style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border); padding-bottom:0.85rem; margin-bottom: 1.25rem;">
+                            <div>
+                                <h3
+                                    style="margin:0; font-size:1.2rem; font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+                                    <span>🚀</span> Create New Campaign
+                                </h3>
+                                <p
+                                    style="margin:0.35rem 0 0 0; font-size:0.825rem; color:var(--text-muted); line-height:1.4;">
+                                    Set a name to track live broadcast analytics and engagement.</p>
+                            </div>
+                            <button type="button" class="btn-close-modal" onclick="closeCreateCampaignModal()"
+                                style="background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text-muted); padding:0.25rem; line-height:1; border-radius:6px; transition:color 0.15s ease;"
+                                title="Close">✕</button>
                         </div>
-                        <button type="button" class="btn-close-modal" onclick="closeCreateCampaignModal()" style="background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text-muted); padding:0.25rem; line-height:1; border-radius:6px; transition:color 0.15s ease;" title="Close">✕</button>
-                    </div>
-                    <div class="modal-body" style="padding:0;">
-                        <div class="form-group" style="margin-bottom:1.15rem;">
-                            <label style="font-weight:600; font-size:0.85rem; margin-bottom:0.5rem; display:block; color:var(--text-main);">Campaign Name</label>
-                            <input type="text" id="modal-campaign-name-input" placeholder="e.g. Republic Day Sale 2026" autofocus
-                                style="width:100%; padding:0.75rem 1rem; border-radius:10px; background:var(--bg-dark); border:1.5px solid var(--border); color:var(--text-main); font-size:0.95rem; font-weight:600; outline:none; box-sizing:border-box; transition:border-color 0.2s ease, box-shadow 0.2s ease;">
-                        </div>
-                        <div style="margin-top:0.75rem;">
-                            <span style="font-size:0.725rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.6px; display:block; margin-bottom:0.5rem;">Quick Suggestions:</span>
-                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                                <button type="button" class="btn-suggestion-chip" onclick="applySuggestedName('Republic Day Sale 2026')">🇮🇳 Republic Day Sale</button>
-                                <button type="button" class="btn-suggestion-chip" onclick="applySuggestedName('Weekend Flash Deal')">⚡ Weekend Flash Deal</button>
-                                <button type="button" class="btn-suggestion-chip" onclick="applySuggestedName('Festival Dhamaka Offer')">🎉 Festival Dhamaka</button>
-                                <button type="button" class="btn-suggestion-chip" onclick="applySuggestedName('VIP Exclusive Promo')">⭐ VIP Exclusive</button>
+                        <div class="modal-body" style="padding:0;">
+                            <div class="form-group" style="margin-bottom:1.15rem;">
+                                <label
+                                    style="font-weight:600; font-size:0.85rem; margin-bottom:0.5rem; display:block; color:var(--text-main);">Campaign
+                                    Name</label>
+                                <input type="text" id="modal-campaign-name-input"
+                                    placeholder="e.g. Republic Day Sale 2026" autofocus
+                                    style="width:100%; padding:0.75rem 1rem; border-radius:10px; background:var(--bg-dark); border:1.5px solid var(--border); color:var(--text-main); font-size:0.95rem; font-weight:600; outline:none; box-sizing:border-box; transition:border-color 0.2s ease, box-shadow 0.2s ease;">
+                            </div>
+                            <div style="margin-top:0.75rem;">
+                                <span
+                                    style="font-size:0.725rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.6px; display:block; margin-bottom:0.5rem;">Quick
+                                    Suggestions:</span>
+                                <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                                    <button type="button" class="btn-suggestion-chip"
+                                        onclick="applySuggestedName('Republic Day Sale 2026')">🇮🇳 Republic Day
+                                        Sale</button>
+                                    <button type="button" class="btn-suggestion-chip"
+                                        onclick="applySuggestedName('Weekend Flash Deal')">⚡ Weekend Flash Deal</button>
+                                    <button type="button" class="btn-suggestion-chip"
+                                        onclick="applySuggestedName('Festival Dhamaka Offer')">🎉 Festival
+                                        Dhamaka</button>
+                                    <button type="button" class="btn-suggestion-chip"
+                                        onclick="applySuggestedName('VIP Exclusive Promo')">⭐ VIP Exclusive</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:0.65rem; border-top:1px solid var(--border); padding-top:1.15rem; margin-top:1.5rem;">
-                        <button type="button" class="btn secondary sm" onclick="closeCreateCampaignModal()" style="border-radius:8px; padding:0.6rem 1.1rem; font-weight:600;">Cancel</button>
-                        <button type="button" class="btn primary sm" onclick="submitCreateCampaignModal()" style="border-radius:8px; padding:0.6rem 1.25rem; font-weight:700;">Continue to Setup →</button>
+                        <div class="modal-footer"
+                            style="display:flex; justify-content:flex-end; gap:0.65rem; border-top:1px solid var(--border); padding-top:1.15rem; margin-top:1.5rem;">
+                            <button type="button" class="btn secondary sm" onclick="closeCreateCampaignModal()"
+                                style="border-radius:8px; padding:0.6rem 1.1rem; font-weight:600;">Cancel</button>
+                            <button type="button" class="btn primary sm" onclick="submitCreateCampaignModal()"
+                                style="border-radius:8px; padding:0.6rem 1.25rem; font-weight:700;">Continue to Setup
+                                →</button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <footer class="page-footer">
-                <p>Inspenox Business Suite For Marketing</p>
-            </footer>
-        </section>
+                <footer class="page-footer">
+                    <p>Inspenox Business Suite For Marketing</p>
+                </footer>
+            </section>
 
             <!-- Inbox View (WhatsApp Style) -->
             <section id="view-inbox" class="view">
@@ -2051,19 +2215,25 @@
                                 performance stats, read rates, and exact spend per message template.</p>
                         </div>
                         <div id="tpl-insights-filter-summary" style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span id="tpl-filter-count-badge" class="badge" style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-weight: 600; padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.8rem;">Showing all templates</span>
+                            <span id="tpl-filter-count-badge" class="badge"
+                                style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-weight: 600; padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.8rem;">Showing
+                                all templates</span>
                         </div>
                     </div>
 
                     <!-- Meta WhatsApp Manager Filter Controls Bar -->
-                    <div class="tpl-filter-bar" style="display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px;">
+                    <div class="tpl-filter-bar"
+                        style="display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px;">
                         <div style="flex: 1.6; min-width: 170px; position: relative;">
-                            <input type="text" id="filter-tpl-search" placeholder="Search templates..." style="width: 100%; padding: 0.45rem 0.75rem 0.45rem 2rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
-                            <span style="position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); font-size: 0.85rem; color: var(--text-muted); pointer-events: none;">🔍</span>
+                            <input type="text" id="filter-tpl-search" placeholder="Search templates..."
+                                style="width: 100%; padding: 0.45rem 0.75rem 0.45rem 2rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+                            <span
+                                style="position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); font-size: 0.85rem; color: var(--text-muted); pointer-events: none;">🔍</span>
                         </div>
 
                         <div style="flex: 1; min-width: 130px;">
-                            <select id="filter-tpl-category" style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+                            <select id="filter-tpl-category"
+                                style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
                                 <option value="ALL">Category ▾ (All)</option>
                                 <option value="MARKETING">Marketing</option>
                                 <option value="UTILITY">Utility</option>
@@ -2072,13 +2242,15 @@
                         </div>
 
                         <div style="flex: 1; min-width: 130px;">
-                            <select id="filter-tpl-language" style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+                            <select id="filter-tpl-language"
+                                style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
                                 <option value="ALL">Language ▾ (All)</option>
                             </select>
                         </div>
 
                         <div style="flex: 1; min-width: 130px;">
-                            <select id="filter-tpl-status" style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+                            <select id="filter-tpl-status"
+                                style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
                                 <option value="ALL">Status ▾ (All)</option>
                                 <option value="APPROVED">Active / Approved</option>
                                 <option value="PENDING">Pending</option>
@@ -2088,7 +2260,8 @@
                         </div>
 
                         <div style="flex: 1.1; min-width: 140px;">
-                            <select id="filter-tpl-date-range" style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid #10b981; background: var(--bg-card); color: #10b981; font-weight: 600;">
+                            <select id="filter-tpl-date-range"
+                                style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.825rem; border-radius: 6px; border: 1px solid #10b981; background: var(--bg-card); color: #10b981; font-weight: 600;">
                                 <option value="7">Last 7 days</option>
                                 <option value="30">Last 30 days</option>
                                 <option value="60" selected>Last 60 days</option>
@@ -2096,7 +2269,9 @@
                             </select>
                         </div>
 
-                        <button type="button" id="btn-reset-tpl-filters" class="btn secondary sm" style="padding: 0.45rem 0.75rem; font-size: 0.8rem; border-radius: 6px; white-space: nowrap;" title="Reset all filters">
+                        <button type="button" id="btn-reset-tpl-filters" class="btn secondary sm"
+                            style="padding: 0.45rem 0.75rem; font-size: 0.8rem; border-radius: 6px; white-space: nowrap;"
+                            title="Reset all filters">
                             ↺ Reset
                         </button>
                     </div>
@@ -2606,8 +2781,10 @@
                     <!-- Billing Cycle Selector Dropdown -->
                     <div class="billing-cycle-dropdown-wrapper"
                         style="display: flex; align-items: center; justify-content: center; gap: 0.85rem; margin-bottom: 2rem; flex-wrap: wrap;">
-                        <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); display: inline-flex; align-items: center; gap: 7px;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="color:#00a884;">
+                        <span
+                            style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); display: inline-flex; align-items: center; gap: 7px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"
+                                height="18" style="color:#00a884;">
                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                 <line x1="16" y1="2" x2="16" y2="6"></line>
                                 <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -2814,7 +2991,8 @@
                             Pro</strong>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <label for="checkout-cycle-select" style="font-size:0.85rem; color:var(--text-muted); cursor:pointer;">Billing Interval</label>
+                        <label for="checkout-cycle-select"
+                            style="font-size:0.85rem; color:var(--text-muted); cursor:pointer;">Billing Interval</label>
                         <select id="checkout-cycle-select" onchange="onCheckoutCycleChange(this.value)"
                             style="padding: 0.4rem 0.75rem; border-radius: 8px; background: var(--bg-card); border: 1.5px solid #00a884; color: #10b981; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none;">
                             <option value="monthly">Monthly (1 Month)</option>
@@ -3318,17 +3496,21 @@
         style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); padding: 1.25rem 1rem; overflow-y: auto; box-sizing: border-box;">
         <div class="modal-content card"
             style="max-width: 580px; width: 100%; max-height: min(90vh, 840px); display: flex; flex-direction: column; padding: 0; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); overflow: hidden; text-align: left; margin: auto;">
-            
+
             <!-- Sticky Modal Header -->
-            <div style="padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); flex-shrink: 0;">
-                <h3 id="company-modal-title" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">🏢 Add / Edit Company Account</h3>
+            <div
+                style="padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); flex-shrink: 0;">
+                <h3 id="company-modal-title"
+                    style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">🏢 Add / Edit
+                    Company Account</h3>
                 <button type="button" onclick="closeCompanyModal()"
                     style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 0.25rem 0.45rem; border-radius: 6px; transition: color 0.15s;"
                     title="Close">✕</button>
             </div>
 
             <!-- Form with scrollable body and sticky footer -->
-            <form id="company-form" onsubmit="saveCompany(event)" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; margin: 0;">
+            <form id="company-form" onsubmit="saveCompany(event)"
+                style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; margin: 0;">
                 <input type="hidden" id="company-id-edit">
 
                 <!-- Scrollable Body Content -->
@@ -3337,7 +3519,8 @@
                         style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1rem; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
                         <div style="font-size: 0.825rem; color: #ef4444; line-height: 1.45;">
                             <strong>🔒 Active Subscription Required:</strong><br>
-                            Please subscribe to an Inspenox plan to configure Meta WhatsApp Business API credentials & launch broadcasts.
+                            Please subscribe to an Inspenox plan to configure Meta WhatsApp Business API credentials &
+                            launch broadcasts.
                         </div>
                         <button type="button" class="btn primary sm"
                             onclick="closeCompanyModal(); switchView('subscriptions');"
@@ -3354,7 +3537,8 @@
                             style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 0.85rem;">
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 0.85rem;">
                         <div>
                             <label
                                 style="display: block; font-size: 0.775rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">COMPANY
@@ -3380,15 +3564,20 @@
                     </div>
 
                     <!-- Meta WhatsApp Phone Numbers Management (Plan-enforced) -->
-                    <div style="margin-bottom: 1rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div
+                        style="margin-bottom: 1rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 1rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
                             <div>
-                                <span style="font-size: 0.775rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">Registered Meta Phone Numbers</span>
+                                <span
+                                    style="font-size: 0.775rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">Registered
+                                    Meta Phone Numbers</span>
                                 <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
                                     Associated phone numbers & Phone Number IDs registered in Meta Business Suite
                                 </div>
                             </div>
-                            <span id="comp-phone-quota-badge" style="font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(0, 168, 132, 0.15); color: var(--primary);">
+                            <span id="comp-phone-quota-badge"
+                                style="font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(0, 168, 132, 0.15); color: var(--primary);">
                                 1 of 1 Number
                             </span>
                         </div>
@@ -3397,36 +3586,50 @@
                         <input type="hidden" id="comp-phone-id">
 
                         <!-- List of Registered Phone Numbers -->
-                        <div id="comp-phone-numbers-list" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.65rem; margin-bottom: 0.75rem;">
+                        <div id="comp-phone-numbers-list"
+                            style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.65rem; margin-bottom: 0.75rem;">
                             <!-- Rendered dynamically -->
                         </div>
 
                         <!-- Plan limit note matching Meta's interface -->
-                        <div id="comp-phone-plan-note" style="font-size: 0.74rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.65rem;">
-                            You can add phone numbers as per your active subscription plan. Once you upgrade your plan, you can add up to 20 numbers.
+                        <div id="comp-phone-plan-note"
+                            style="font-size: 0.74rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.65rem;">
+                            You can add phone numbers as per your active subscription plan. Once you upgrade your plan,
+                            you can add up to 20 numbers.
                         </div>
 
                         <!-- Add new number trigger button -->
-                        <button type="button" id="btn-show-add-phone" onclick="toggleAddPhoneForm(true)" class="btn secondary sm" style="font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <button type="button" id="btn-show-add-phone" onclick="toggleAddPhoneForm(true)"
+                            class="btn secondary sm"
+                            style="font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
                             Add new number
                         </button>
 
                         <!-- Add new number inline form -->
-                        <div id="comp-add-phone-form" style="display: none; background: var(--bg-dark); border: 1px dashed var(--border); border-radius: 8px; padding: 0.85rem; margin-top: 0.75rem;">
-                            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.6rem;">
+                        <div id="comp-add-phone-form"
+                            style="display: none; background: var(--bg-dark); border: 1px dashed var(--border); border-radius: 8px; padding: 0.85rem; margin-top: 0.75rem;">
+                            <div
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.6rem;">
                                 📞 Connect WhatsApp Phone Number
                             </div>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.6rem; margin-bottom: 0.6rem;">
+                            <div
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.6rem; margin-bottom: 0.6rem;">
                                 <div>
-                                    <label style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                    <label
+                                        style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
                                         ASSOCIATED PHONE NUMBER *
                                     </label>
                                     <input type="text" id="comp-new-phone-num" placeholder="e.g. +91 79816 56294"
                                         style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
                                 </div>
                                 <div>
-                                    <label style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                    <label
+                                        style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
                                         PHONE NUMBER ID (META) *
                                     </label>
                                     <input type="text" id="comp-new-phone-id" placeholder="e.g. 1196613980211733"
@@ -3434,15 +3637,19 @@
                                 </div>
                             </div>
                             <div style="margin-bottom: 0.75rem;">
-                                <label style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
+                                <label
+                                    style="display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
                                     VERIFIED NAME / LABEL (OPTIONAL)
                                 </label>
-                                <input type="text" id="comp-new-phone-name" placeholder="e.g. Manasa Geetha Enterprises / Support Desk"
+                                <input type="text" id="comp-new-phone-name"
+                                    placeholder="e.g. Manasa Geetha Enterprises / Support Desk"
                                     style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);">
                             </div>
                             <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                                <button type="button" onclick="toggleAddPhoneForm(false)" class="btn secondary sm" style="font-size: 0.75rem; padding: 0.35rem 0.7rem;">Cancel</button>
-                                <button type="button" onclick="saveNewPhoneToCompanyList()" class="btn primary sm" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">Confirm & Add</button>
+                                <button type="button" onclick="toggleAddPhoneForm(false)" class="btn secondary sm"
+                                    style="font-size: 0.75rem; padding: 0.35rem 0.7rem;">Cancel</button>
+                                <button type="button" onclick="saveNewPhoneToCompanyList()" class="btn primary sm"
+                                    style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">Confirm & Add</button>
                             </div>
                         </div>
                     </div>
@@ -3465,9 +3672,12 @@
                 </div>
 
                 <!-- Sticky Modal Actions Footer -->
-                <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; justify-content: flex-end; align-items: center; background: var(--bg-card); flex-shrink: 0;">
-                    <button type="button" onclick="closeCompanyModal()" class="btn secondary" style="padding: 0.5rem 1.1rem;">Cancel</button>
-                    <button type="submit" id="btn-save-company" class="btn primary" style="padding: 0.5rem 1.3rem;">Save Company Account</button>
+                <div
+                    style="padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; justify-content: flex-end; align-items: center; background: var(--bg-card); flex-shrink: 0;">
+                    <button type="button" onclick="closeCompanyModal()" class="btn secondary"
+                        style="padding: 0.5rem 1.1rem;">Cancel</button>
+                    <button type="submit" id="btn-save-company" class="btn primary" style="padding: 0.5rem 1.3rem;">Save
+                        Company Account</button>
                 </div>
             </form>
         </div>
@@ -3530,6 +3740,7 @@
                         ROLE *</label>
                     <select id="user-role-select"
                         style="width: 100%; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                        <!-- <option value="superadmin">Superadmin (Global Platform Owner)</option> -->
                         <option value="admin" selected>Admin (Full Company Control)</option>
                         <option value="member">Member (Read / Broadcast Only)</option>
                     </select>
@@ -3695,8 +3906,8 @@
                                 id="rcpt-payment-id" style="color: var(--text-main); font-weight: 600;">-</code></div>
                         <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Gateway: <span
                                 style="color: #3b82f6; font-weight: 600;">Razorpay Secure (INR)</span></div>
-                        <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Valid Until: <strong
-                                id="rcpt-valid-until" style="color: #10b981; font-weight: 700;">-</strong></div>
+                        <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">Valid Until:
+                            <strong id="rcpt-valid-until" style="color: #10b981; font-weight: 700;">-</strong></div>
                     </div>
                 </div>
 
