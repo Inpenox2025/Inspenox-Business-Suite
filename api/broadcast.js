@@ -120,20 +120,42 @@ module.exports = async (req, res) => {
             : (rawCompanyHeader ? parseInt(rawCompanyHeader) : 1);
 
         let customersToMessage = [];
-        const custCols = sql`id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id`;
         if (target === 'all') {
             if (req.body.tag && String(req.body.tag).trim()) {
                 const tagPattern = `%${String(req.body.tag).trim()}%`;
-                customersToMessage = await sql`SELECT ${custCols} FROM customers WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}`;
+                customersToMessage = await sql`
+                    SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id 
+                    FROM customers 
+                    WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}
+                `;
             } else {
-                customersToMessage = await sql`SELECT ${custCols} FROM customers WHERE company_id = ${companyId} OR company_id IS NULL`;
+                customersToMessage = await sql`
+                    SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id 
+                    FROM customers 
+                    WHERE company_id = ${companyId} OR company_id IS NULL
+                `;
             }
         } else if (Array.isArray(target)) {
-            customersToMessage = await sql`SELECT ${custCols} FROM customers WHERE id = ANY(${target})`;
+            const targetIds = target
+                .map(t => (typeof t === 'object' && t !== null) ? parseInt(t.id, 10) : parseInt(t, 10))
+                .filter(n => !isNaN(n));
+
+            if (targetIds.length === 0) {
+                return res.status(400).json({ error: 'No valid customer IDs provided' });
+            }
+            customersToMessage = await sql`
+                SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id 
+                FROM customers 
+                WHERE id = ANY(${targetIds})
+            `;
         } else if (typeof target === 'string' && target.startsWith('tag:')) {
             const rawTag = target.replace('tag:', '').trim();
             const tagPattern = `%${rawTag}%`;
-            customersToMessage = await sql`SELECT ${custCols} FROM customers WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}`;
+            customersToMessage = await sql`
+                SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id 
+                FROM customers 
+                WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}
+            `;
         } else {
             return res.status(400).json({ error: 'Invalid target' });
         }
@@ -269,10 +291,11 @@ module.exports = async (req, res) => {
         }
 
         for (const cust of customersToMessage) {
-            const cleanPhone = cust.phone ? cust.phone.replace(/[^0-9]/g, '') : '';
+            const cleanPhone = cust.phone ? String(cust.phone).replace(/[^0-9]/g, '') : '';
             if (!cleanPhone) {
                 failed++;
-                errors.push(`Invalid phone format for customer ID ${cust.id}`);
+                const custLabel = cust.name ? `"${cust.name}" (ID: ${cust.id || 'unknown'})` : `ID ${cust.id || 'unknown'}`;
+                errors.push(`Invalid phone format for customer ${custLabel}`);
                 continue;
             }
 
@@ -478,6 +501,7 @@ module.exports = async (req, res) => {
                         const mType = (req.body.media_type || 'image').toLowerCase();
                         const isVid = (mType === 'video');
                         const isDoc = (mType === 'document');
+                        const mediaFormat = isVid ? 'video' : (isDoc ? 'document' : 'image');
                         const mediaObj = formatMetaMediaObject(media_id, req);
                         if (mediaObj) {
                             baseHeaderComp.push({

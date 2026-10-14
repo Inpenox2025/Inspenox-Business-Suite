@@ -243,7 +243,7 @@ module.exports = async (req, res) => {
     if (req.method === 'PUT') {
         try {
             const { 
-                id, name, email, phone, subscription_plan, 
+                id, name, email, phone, subscription_plan, subscription_expires_at, subscription_billing_cycle,
                 whatsapp_phone_number_id, whatsapp_phone_numbers,
                 whatsapp_access_token, whatsapp_business_account_id, whatsapp_verify_token, is_active 
             } = req.body || {};
