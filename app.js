@@ -163,36 +163,38 @@ window.isSuperAdmin = function isSuperAdmin() {
         user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
     } catch (e) { }
 
-    const uname = (user.username || '').toLowerCase();
-    const role = (user.role || '').toLowerCase();
-    const cname = (user.company_name || '').toLowerCase();
+    const uname = (user.username || '').toLowerCase().trim();
+    const role = (user.role || '').toLowerCase().trim();
+    const cname = (user.company_name || '').toLowerCase().trim();
     const coId = user.company_id;
 
-    // 1. Explicit superadmin role or master admin username is ALWAYS superadmin (unconditional)
-    if (role === 'superadmin' || uname === 'admin' || uname === 'superadmin' || uname === 'inspenox') {
+    // 1. Explicit superadmin role or master superadmin username is ALWAYS superadmin
+    if (role === 'superadmin' || uname === 'superadmin' || uname === 'inspenox') {
         return true;
     }
 
-    // 2. Parent organization Inspenox admin (coId is 1, '1', 'default', 'parent', null, or cname contains inspenox)
-    const isParentCo = (cname.includes('inspenox') || coId === 1 || String(coId) === '1' || coId === 'default' || coId === 'parent' || !coId);
-    if (isParentCo && (role === 'admin' || !role)) {
+    // Check if user's company is Inspenox by company list or name
+    let isUserCompanyInspenox = false;
+    if (cname && cname.includes('inspenox')) {
+        isUserCompanyInspenox = true;
+    } else if (coId && typeof allCompanies !== 'undefined' && Array.isArray(allCompanies)) {
+        const comp = allCompanies.find(c => String(c.id) === String(coId));
+        if (comp && ((comp.slug && comp.slug.toLowerCase() === 'inspenox') || (comp.name && comp.name.toLowerCase() === 'inspenox') || comp.is_parent || comp.is_master)) {
+            isUserCompanyInspenox = true;
+        }
+    }
+
+    // 2. Inspenox parent organization admin (NOT child companies like Manaswini, Kubera, etc.)
+    if (isUserCompanyInspenox && (role === 'admin' || !role || uname === 'admin')) {
         return true;
     }
 
-    // 3. Child tenant/company accounts (company_id > 1 and not inspenox and not superadmin role) are strictly NOT superadmin
-    if (coId !== undefined && coId !== null && String(coId) !== 'default' && String(coId) !== 'parent' && String(coId) !== '0' && String(coId) !== '1' && String(coId) !== 'null' && String(coId) !== '') {
-        return false;
-    }
-
-    if (cname && !cname.includes('inspenox') && !cname.includes('parent')) {
-        return false;
-    }
-
-    // 4. Fallback for default session (fresh or unconfigured session)
-    if (!uname && !role) {
+    // 3. Unassigned root admin with no company or default/parent company
+    if (uname === 'admin' && (!coId || coId === 'default' || coId === 'parent' || isUserCompanyInspenox)) {
         return true;
     }
 
+    // 4. Any tenant user belonging to child companies (Manaswini, Kubera, etc.) is strictly NOT superadmin
     return false;
 };
 
@@ -210,32 +212,39 @@ window.isParentAdmin = function isParentAdmin() {
         user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
     } catch (e) { }
 
+    const uname = (user.username || '').toLowerCase().trim();
+    const role = (user.role || '').toLowerCase().trim();
+    const cname = (user.company_name || '').toLowerCase().trim();
     const coId = user.company_id;
-    const uname = (user.username || '').toLowerCase();
-    const cname = (user.company_name || '').toLowerCase();
-    const role = (user.role || '').toLowerCase();
 
-    // 1. Superadmin role or master usernames are ALWAYS parent admin
-    if (role === 'superadmin' || uname === 'admin' || uname === 'inspenox' || uname === 'superadmin') {
+    // 1. Explicit superadmin role or master username
+    if (role === 'superadmin' || uname === 'superadmin' || uname === 'inspenox') {
         return true;
     }
 
-    // 2. Parent organization Inspenox (coId is 1 or '1' or cname includes inspenox or null/default)
-    if (cname.includes('inspenox') || coId === 1 || String(coId) === '1' || !coId || coId === 'default' || coId === 'parent') {
+    // Check if user's company is Inspenox
+    let isUserCompanyInspenox = false;
+    if (cname && cname.includes('inspenox')) {
+        isUserCompanyInspenox = true;
+    } else if (coId && typeof allCompanies !== 'undefined' && Array.isArray(allCompanies)) {
+        const comp = allCompanies.find(c => String(c.id) === String(coId));
+        if (comp && ((comp.slug && comp.slug.toLowerCase() === 'inspenox') || (comp.name && comp.name.toLowerCase() === 'inspenox') || comp.is_parent || comp.is_master)) {
+            isUserCompanyInspenox = true;
+        }
+    }
+
+    // 2. Parent organization Inspenox (by slug/name, NOT by ID!)
+    if (isUserCompanyInspenox) {
         return true;
     }
 
-    // 3. If explicit child company ID (e.g. > 1 and not inspenox)
-    if (coId !== undefined && coId !== null && String(coId) !== 'default' && String(coId) !== 'parent' && String(coId) !== 'null' && String(coId) !== '' && String(coId) !== '0' && String(coId) !== '1') {
-        return false;
+    // 3. Unassigned root admin
+    if (uname === 'admin' && (!coId || coId === 'default' || coId === 'parent')) {
+        return true;
     }
 
-    // 4. If explicit child company name
-    if (cname && !cname.includes('inspenox') && !cname.includes('parent')) {
-        return false;
-    }
-
-    return true;
+    // Child companies (Manaswini, Kubera, etc.) are NOT parent admin
+    return false;
 };
 
 
@@ -335,13 +344,13 @@ async function loadCompanies() {
     try { user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch (e) { }
 
     // Child tenant employee restricted to their specific non-parent company
-    const isRestrictedChildUser = !isParent && !isSuper && user.company_id && String(user.company_id) !== '1' && String(user.company_id) !== 'default' && String(user.company_id) !== 'parent';
-    if (isRestrictedChildUser) {
+    const isChildTenant = !isParent && !isSuper;
+    if (isChildTenant && user.company_id && String(user.company_id) !== 'default' && String(user.company_id) !== 'parent') {
         currentCompanyId = String(user.company_id);
         localStorage.setItem('inspenox_company_id', currentCompanyId);
         if (switcherContainer) switcherContainer.style.display = 'none';
     } else {
-        // Superadmin and Parent Admin MUST ALWAYS see the company switcher dropdown in sidebar!
+        // Superadmin and Inspenox Parent Admin MUST ALWAYS see the company switcher dropdown in sidebar!
         if (switcherContainer) switcherContainer.style.display = 'block';
     }
 
@@ -351,33 +360,44 @@ async function loadCompanies() {
         const companies = await res.json();
         if (Array.isArray(companies)) {
             allCompanies = companies;
+
+            // Re-evaluate role now that allCompanies is loaded
+            const activeIsSuper = isSuperAdmin();
+            const activeIsParent = isParentAdmin();
+            if (!activeIsParent && !activeIsSuper) {
+                if (switcherContainer) switcherContainer.style.display = 'none';
+            } else {
+                if (switcherContainer) switcherContainer.style.display = 'block';
+            }
+
             const selectEl = document.getElementById('company-switcher');
             if (selectEl) {
                 selectEl.innerHTML = '';
-                // Sort so parent Inspenox is always top
+                // Sort so Inspenox parent is always top (strictly by slug / name 'inspenox', NOT by ID!)
                 const sortedCos = [...companies].sort((a, b) => {
-                    const aMaster = (a.slug && a.slug.toLowerCase() === 'inspenox') || (a.name && a.name.toLowerCase() === 'inspenox') || String(a.id) === '1' || a.is_parent === true;
-                    const bMaster = (b.slug && b.slug.toLowerCase() === 'inspenox') || (b.name && b.name.toLowerCase() === 'inspenox') || String(b.id) === '1' || b.is_parent === true;
+                    const aMaster = (a.slug && a.slug.toLowerCase() === 'inspenox') || (a.name && a.name.toLowerCase() === 'inspenox') || a.is_parent === true || a.is_master === true;
+                    const bMaster = (b.slug && b.slug.toLowerCase() === 'inspenox') || (b.name && b.name.toLowerCase() === 'inspenox') || b.is_parent === true || b.is_master === true;
                     if (aMaster && !bMaster) return -1;
                     if (!aMaster && bMaster) return 1;
                     return a.id - b.id;
                 });
 
-                const hasInspenox = sortedCos.some(c => (c.slug && c.slug.toLowerCase() === 'inspenox') || (c.name && c.name.toLowerCase() === 'inspenox') || String(c.id) === '1');
-                if (!hasInspenox && (isParent || isSuper)) {
+                const inspenoxComp = sortedCos.find(c => (c.slug && c.slug.toLowerCase() === 'inspenox') || (c.name && c.name.toLowerCase() === 'inspenox') || c.is_parent === true || c.is_master === true);
+                const hasInspenox = !!inspenoxComp;
+                if (!hasInspenox && (activeIsParent || activeIsSuper)) {
                     const optDef = document.createElement('option');
                     optDef.value = 'default';
                     optDef.textContent = 'Inspenox (Parent)';
-                    if (!currentCompanyId || currentCompanyId === 'default' || currentCompanyId === '1') optDef.selected = true;
+                    if (!currentCompanyId || currentCompanyId === 'default') optDef.selected = true;
                     selectEl.appendChild(optDef);
                 }
 
                 sortedCos.forEach(comp => {
                     const opt = document.createElement('option');
                     opt.value = comp.id;
-                    const isMaster = (comp.slug && comp.slug.toLowerCase() === 'inspenox') || (comp.name && comp.name.toLowerCase() === 'inspenox') || String(comp.id) === '1' || comp.is_parent === true;
+                    const isMaster = (comp.slug && comp.slug.toLowerCase() === 'inspenox') || (comp.name && comp.name.toLowerCase() === 'inspenox') || comp.is_parent === true || comp.is_master === true;
                     opt.textContent = isMaster ? 'Inspenox (Parent)' : comp.name;
-                    if (String(comp.id) === String(currentCompanyId) || (isMaster && (!currentCompanyId || currentCompanyId === 'default' || currentCompanyId === '1'))) {
+                    if (String(comp.id) === String(currentCompanyId) || (isMaster && (!currentCompanyId || currentCompanyId === 'default' || (inspenoxComp && String(currentCompanyId) === String(inspenoxComp.id))))) {
                         opt.selected = true;
                     }
                     selectEl.appendChild(opt);
