@@ -825,6 +825,141 @@
             gap: 0.85rem;
         }
 
+        /* Showcase Browser / App Mockup Windows */
+        .showcase-window {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .showcase-window:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 32px 70px -15px rgba(0, 168, 132, 0.18), 0 0 0 1px rgba(0, 168, 132, 0.3);
+        }
+
+        .showcase-window-header {
+            padding: 0.75rem 1.25rem;
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .window-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .window-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .window-dot.red { background: #ff5f56; }
+        .window-dot.yellow { background: #ffbd2e; }
+        .window-dot.green { background: #27c93f; }
+
+        .showcase-window-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .showcase-image-wrap {
+            position: relative;
+            background: #ffffff;
+            line-height: 0;
+            overflow: hidden;
+        }
+
+        .showcase-image-wrap img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .showcase-window:hover .showcase-image-wrap img {
+            transform: scale(1.018);
+        }
+
+        .showcase-float-badge {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(17, 27, 33, 0.94);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 168, 132, 0.45);
+            border-radius: 12px;
+            padding: 0.55rem 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            z-index: 2;
+            text-align: left;
+            line-height: 1.25;
+        }
+
+        .showcase-feature-ribbon {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+        }
+
+        .showcase-metric-chip {
+            text-align: center;
+            padding: 0.5rem 0.25rem;
+            background: var(--bg-sidebar);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .showcase-metric-chip .chip-val {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 2px;
+        }
+
+        .showcase-metric-chip .chip-lbl {
+            font-size: 0.675rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        @media (max-width: 640px) {
+            .showcase-feature-ribbon {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .showcase-float-badge {
+                display: none;
+            }
+        }
+
         /* Pricing Section */
         .pricing-section {
             padding: 5.5rem 1.5rem;
@@ -1485,83 +1620,91 @@
         </div>
     </section>
 
-    <!-- Feature Spotlight 1: Broadcast Marketing Messages (Officially) -->
+    <!-- Feature Spotlight 1: Broadcast Marketing Messages (Officially) & Campaign Analytics -->
     <section id="broadcasts" class="spotlight-section">
         <div class="spotlight-grid">
             <!-- Left: High Impact Feature Points -->
             <div>
                 <span class="spotlight-pill">🚀 Official WhatsApp Cloud API</span>
-                <h2 class="spotlight-title">Broadcast Marketing Messages on WhatsApp (Officially)</h2>
-                <p class="spotlight-desc">Enjoy a Limitless Broadcasting experience on WhatsApp. Deliver personalized bulk promotions, time-sensitive offers, and product launches with 99%+ deliverability and zero ban risk.</p>
+                <h2 class="spotlight-title">Broadcast Campaigns with Live Funnel Analytics</h2>
+                <p class="spotlight-desc">Enjoy a Limitless Broadcasting experience on WhatsApp. Deliver personalized bulk promotions, time-sensitive offers, and interactive product carousels with 99%+ deliverability and zero ban risk.</p>
 
                 <div class="spotlight-points-list">
                     <div class="spotlight-point">
                         <div class="point-icon-box">✨</div>
                         <div>
-                            <h3 class="point-title">8+ Powerful Messaging Categories</h3>
-                            <p class="point-desc">Send Promotions, Festive Deals, Coupon Codes, Rich Media Carousels, and Re-engagement Alerts 100% Risk-Free on Official Cloud API!</p>
+                            <h3 class="point-title">Interactive Product Carousels & Shopping Vouchers</h3>
+                            <p class="point-desc">Showcase products directly inside WhatsApp with multi-card carousels, instant <strong>Buy Now</strong> CTA buttons, and high-converting discount vouchers.</p>
                         </div>
                     </div>
 
                     <div class="spotlight-point">
-                        <div class="point-icon-box">🎯</div>
+                        <div class="point-icon-box">📊</div>
                         <div>
-                            <h3 class="point-title">Add CTAs. Drive 3X Conversions</h3>
-                            <p class="point-desc">Turn conversations into instant revenue with high-visibility CTA buttons, website redirect links, and interactive Quick Reply choices.</p>
+                            <h3 class="point-title">Real-Time Funnel Analytics & Click Tracking</h3>
+                            <p class="point-desc">Monitor full funnel metrics live: Sent (17.9K), Delivered (97%), Read (93%), and Clicked (45%). Track audience engagement timelines to optimize ROI.</p>
                         </div>
                     </div>
 
                     <div class="spotlight-point">
                         <div class="point-icon-box">📅</div>
                         <div>
-                            <h3 class="point-title">Schedule Your WhatsApp Broadcasts</h3>
-                            <p class="point-desc">Streamline your marketing roadmap. Schedule broadcasts weeks ahead of time and trigger automated multi-stage drip sequences.</p>
+                            <h3 class="point-title">Automated Scheduling & Segment Targeting</h3>
+                            <p class="point-desc">Schedule campaigns for festivals and flash sales. Target high spenders and repeat buyers with tailored message templates.</p>
                         </div>
                     </div>
                 </div>
 
                 <a href="#login-section" class="btn-brand-primary">
-                    Start for FREE ➔
+                    Launch Campaign ➔
                 </a>
             </div>
 
-            <!-- Right: Realistic Phone Frame Mockup -->
+            <!-- Right: Real Campaign Analytics Dashboard Window -->
             <div>
-                <div class="phone-mockup-frame">
-                    <div class="phone-dynamic-island"></div>
-                    
-                    <div style="background: #00a884; color: #ffffff; padding: 0.65rem 1rem; display: flex; align-items: center; gap: 0.65rem;">
-                        <div style="width: 32px; height: 32px; border-radius: 50%; background: #ffffff; color: #00a884; display: flex; align-items: center; justify-content: center; font-weight: 800;">H</div>
-                        <div>
-                            <div style="font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 0.25rem;">
-                                Headway Audio
-                                <svg viewBox="0 0 24 24" width="13" height="13" fill="#ffffff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                            </div>
-                            <div style="font-size: 0.65rem; opacity: 0.9;">Official Business Account</div>
+                <div class="showcase-window">
+                    <div class="showcase-window-header">
+                        <div class="window-controls">
+                            <span class="window-dot red"></span>
+                            <span class="window-dot yellow"></span>
+                            <span class="window-dot green"></span>
+                        </div>
+                        <div class="showcase-window-title">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                            Inspenox Campaign Studio · Republic Day Sale
+                        </div>
+                        <div style="font-size: 0.7rem; font-weight: 800; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 2px 8px; border-radius: 6px;">
+                            ● ACTIVE META BROADCAST
                         </div>
                     </div>
 
-                    <div class="phone-screen-content">
-                        <!-- Incoming Broadcast Card -->
-                        <div style="background: var(--bubble-in); color: var(--bubble-in-text); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                            <img src="/product-showcase.jpg" alt="Rockway Headphones Broadcast" style="width: 100%; height: 170px; object-fit: cover; display: block;">
-                            <div style="padding: 0.85rem;">
-                                <div style="font-size: 0.85rem; font-weight: 800; margin-bottom: 0.25rem;">Your Order: Rockway 450 ANC Headphones</div>
-                                <p style="font-size: 0.775rem; color: var(--text-muted); margin: 0 0 0.5rem 0; line-height: 1.4;">Dispatched today! Expected delivery by Tuesday, 21st October. Tap below to track package live.</p>
-                                
-                                <a href="#login-section" class="chat-bot-action-btn" style="background: rgba(0, 168, 132, 0.1); border-color: var(--primary);">📦 Track Real-Time Delivery</a>
-                                <a href="#login-section" class="chat-bot-action-btn">💬 Need Support? Chat with Agent</a>
-
-                                <div style="text-align: right; font-size: 0.625rem; color: var(--text-muted); margin-top: 0.4rem;">
-                                    3:35 PM <span style="color: #53bdeb; font-weight: bold;">✓✓</span>
-                                </div>
+                    <div class="showcase-image-wrap">
+                        <img src="/campaign-showcase.png" alt="Republic Day Sale WhatsApp Marketing Campaign Analytics in Inspenox" loading="lazy">
+                        <div class="showcase-float-badge">
+                            <span style="font-size: 1.15rem;">🔥</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 800; color: #ffffff;">45% Click-Through Rate</div>
+                                <div style="font-size: 0.7rem; color: #94a3b8;">7.3K Clicks · 97% Delivered</div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Customer Reply -->
-                        <div style="align-self: flex-end; background: var(--bubble-out); color: var(--bubble-out-text); padding: 0.55rem 0.85rem; border-radius: 12px 12px 2px 12px; font-size: 0.8rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
-                            Thank You! Can't wait 🎧
-                            <div style="text-align: right; font-size: 0.6rem; opacity: 0.7; margin-top: 2px;">3:36 PM ✓✓</div>
+                    <div class="showcase-feature-ribbon">
+                        <div class="showcase-metric-chip">
+                            <div class="chip-val" style="color: #00a884;">100% (17.9K)</div>
+                            <div class="chip-lbl">Sent on Cloud API</div>
+                        </div>
+                        <div class="showcase-metric-chip">
+                            <div class="chip-val" style="color: #3b82f6;">93% (16.6K)</div>
+                            <div class="chip-lbl">Verified Read</div>
+                        </div>
+                        <div class="showcase-metric-chip">
+                            <div class="chip-val" style="color: #8b5cf6;">45% (7.3K)</div>
+                            <div class="chip-lbl">Button CTAs Clicked</div>
+                        </div>
+                        <div class="showcase-metric-chip">
+                            <div class="chip-val" style="color: #10b981;">42% (7.5K)</div>
+                            <div class="chip-lbl">Customer Replies</div>
                         </div>
                     </div>
                 </div>
@@ -1665,12 +1808,12 @@
         </div>
     </section>
 
-    <!-- Feature Spotlight 3: Multi-Agent Shared Team Inbox (with Tag Filtering!) -->
+    <!-- Feature Spotlight 3: Multi-Agent Shared Team Inbox (with Tag Filtering & Privacy Number Masking!) -->
     <section id="shared-inbox" class="spotlight-section">
         <div class="spotlight-grid">
             <!-- Left: Text Content -->
             <div>
-                <span class="spotlight-pill">👥 Multi-Agent Collaboration</span>
+                <span class="spotlight-pill">👥 Multi-Agent WhatsApp Web Inbox</span>
                 <h2 class="spotlight-title">Shared Team Inbox with WhatsApp-Style Tag Filters</h2>
                 <p class="spotlight-desc">Manage thousands of live customer queries collaboratively from a single official WhatsApp number. Route tickets, track Meta's 24-hour service window, and filter chats with one click.</p>
 
@@ -1679,7 +1822,7 @@
                         <div class="point-icon-box">🏷️</div>
                         <div>
                             <h3 class="point-title">WhatsApp-Style Tag & Label Filter</h3>
-                            <p class="point-desc">Organize incoming chats with custom color-coded tags like <code>VIP Customer</code>, <code>Hot Lead</code>, <code>Payment Pending</code>, or <code>Resolved</code>. Filter any segment instantly.</p>
+                            <p class="point-desc">Organize incoming chats with custom color-coded tags like <code>Repeat Buyers</code>, <code>High Spenders</code>, <code>Recovered</code>, or <code>Order Placed</code>. Filter any segment with instant counts.</p>
                         </div>
                     </div>
 
@@ -1687,15 +1830,23 @@
                         <div class="point-icon-box">⏱️</div>
                         <div>
                             <h3 class="point-title">24-Hour Customer Service Window Tracker</h3>
-                            <p class="point-desc">Visual countdown timer alerts your team to respond within Meta's free customer service window before session closure.</p>
+                            <p class="point-desc">Smart countdown timer badges (<code>24h Window Expired</code> / <code>24h Active Free Tier</code>) alert your agents to respond within Meta's free window before session closure.</p>
+                        </div>
+                    </div>
+
+                    <div class="spotlight-point">
+                        <div class="point-icon-box">🔒</div>
+                        <div>
+                            <h3 class="point-title">Enterprise Data Privacy & Number Masking</h3>
+                            <p class="point-desc">Keep customer contact numbers securely masked (e.g. <code>+91 95532 •••••</code>) across shared multi-agent support teams to prevent lead leakage and protect privacy.</p>
                         </div>
                     </div>
 
                     <div class="spotlight-point">
                         <div class="point-icon-box">✓✓</div>
                         <div>
-                            <h3 class="point-title">Real-Time Message Status Delivery</h3>
-                            <p class="point-desc">Live synchronization of Sent, Delivered, Read receipts (blue double checkmarks), and Failed delivery notifications via real-time webhooks.</p>
+                            <h3 class="point-title">Verified Meta Delivery Statuses</h3>
+                            <p class="point-desc">Live synchronization of Sent, Delivered, and Read receipts (blue double checkmarks) for official Meta Cloud templates and customer messages via webhooks.</p>
                         </div>
                     </div>
                 </div>
@@ -1705,56 +1856,51 @@
                 </a>
             </div>
 
-            <!-- Right: Interactive Inbox UI Mockup -->
+            <!-- Right: Interactive Inbox UI Mockup with Masked Numbers -->
             <div>
-                <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 22px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.35);">
-                    <!-- Inbox Mockup Topbar -->
-                    <div style="padding: 0.85rem 1.25rem; background: var(--bg-sidebar); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <div style="width: 10px; height: 10px; border-radius: 50%; background: #10b981;"></div>
-                            <span style="font-weight: 800; font-size: 0.9rem;">Team Live Inbox (3 Agents Online)</span>
+                <div class="showcase-window">
+                    <div class="showcase-window-header">
+                        <div class="window-controls">
+                            <span class="window-dot red"></span>
+                            <span class="window-dot yellow"></span>
+                            <span class="window-dot green"></span>
                         </div>
-                        <!-- Tag Filter Pill -->
-                        <div style="padding: 0.3rem 0.75rem; border-radius: 8px; background: rgba(0, 168, 132, 0.15); border: 1px solid var(--primary); color: var(--primary); font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.35rem;">
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                            Filter by Tags: <strong>VIP Only</strong>
+                        <div class="showcase-window-title">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            Inspenox Live Shared Inbox · Meta Cloud API
+                        </div>
+                        <div style="font-size: 0.7rem; font-weight: 800; color: #00a884; background: rgba(0, 168, 132, 0.15); padding: 2px 8px; border-radius: 6px;">
+                            🟢 3 AGENTS LIVE
                         </div>
                     </div>
 
-                    <!-- Chat List Mockup -->
-                    <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                        <div style="padding: 0.75rem 1rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <div style="width: 36px; height: 36px; border-radius: 50%; background: #10b981; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800;">R</div>
-                                <div>
-                                    <div style="font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
-                                        Rahul Sharma
-                                        <span style="padding: 1px 6px; border-radius: 4px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 0.65rem; font-weight: 800;">VIP CLIENT</span>
-                                    </div>
-                                    <div style="font-size: 0.75rem; color: var(--text-muted);">Please send invoice for bulk order #992...</div>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-size: 0.7rem; color: #10b981; font-weight: 700;">Just now</div>
-                                <span style="color: #53bdeb; font-size: 0.75rem; font-weight: bold;">✓✓ Read</span>
+                    <div class="showcase-image-wrap">
+                        <img src="/inbox-showcase.png" alt="Official WhatsApp Multi-Agent Shared Team Inbox with Tag Filtering and Phone Masking" loading="lazy">
+                        <div class="showcase-float-badge">
+                            <span style="font-size: 1.15rem;">🏷️</span>
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 800; color: #ffffff;">Tagged Segments & 24h Tracker</div>
+                                <div style="font-size: 0.7rem; color: #94a3b8;">Repeat Buyers · High Spenders · Masked Numbers</div>
                             </div>
                         </div>
+                    </div>
 
-                        <div style="padding: 0.75rem 1rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <div style="width: 36px; height: 36px; border-radius: 50%; background: #3b82f6; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800;">A</div>
-                                <div>
-                                    <div style="font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
-                                        Ananya Roy
-                                        <span style="padding: 1px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #10b981; font-size: 0.65rem; font-weight: 800;">PAYMENT DONE</span>
-                                    </div>
-                                    <div style="font-size: 0.75rem; color: var(--text-muted);">Thank you, payment confirmed!</div>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-size: 0.7rem; color: var(--text-muted);">2m ago</div>
-                                <span style="color: #53bdeb; font-size: 0.75rem; font-weight: bold;">✓✓ Read</span>
-                            </div>
+                    <div class="showcase-feature-ribbon">
+                        <div class="showcase-metric-chip">
+                            <div class="chip-val" style="color: #ec4899;">Repeat Buyers</div>
+                            <div class="chip-lbl">Customer Tag</div>
+                        </div>
+                        <div class="showcase-metric-chip">
+                            <div class="chip-val" style="color: #8b5cf6;">High Spenders</div>
+                            <div class="chip-lbl">VIP Segment</div>
+                        </div>
+                        <div class="showcase-metric-chip">
+                            <div class="chip-val" style="color: #ef4444;">24h Timer</div>
+                            <div class="chip-lbl">Window Alert</div>
+                        </div>
+                        <div class="showcase-metric-chip">
+                            <div class="chip-val" style="color: #10b981;">+91 •••••</div>
+                            <div class="chip-lbl">Privacy Shield</div>
                         </div>
                     </div>
                 </div>
