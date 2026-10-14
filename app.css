@@ -1817,6 +1817,125 @@ tr:hover td {
     color: var(--tick-sent);
 }
 
+/* Full WhatsApp Template Cards Rendering in Chat Bubbles */
+.template-card-rendered {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-width: 250px;
+    max-width: 380px;
+    text-align: left;
+}
+
+.tpl-card-badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+    margin-bottom: 0.15rem;
+}
+
+[data-theme="dark"] .tpl-card-badge-row {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+.tpl-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #00a884;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tpl-slug-pill {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    font-family: monospace;
+    background: rgba(0, 0, 0, 0.06);
+    padding: 1px 6px;
+    border-radius: 4px;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+[data-theme="dark"] .tpl-slug-pill {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.tpl-card-title {
+    font-size: 0.925rem;
+    font-weight: 800;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    line-height: 1.3;
+}
+
+.tpl-card-body {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-main);
+    margin: 0.2rem 0;
+    word-break: break-word;
+}
+
+.tpl-card-footer {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 0.1rem;
+}
+
+.tpl-card-buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .tpl-card-buttons-container {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.tpl-card-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.75rem;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    font-size: 0.775rem;
+    font-weight: 700;
+    color: #00a884;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+}
+
+[data-theme="dark"] .tpl-card-action-btn {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #25d366;
+}
+
+.tpl-card-action-btn:hover {
+    background: rgba(0, 168, 132, 0.12);
+    border-color: #00a884;
+    transform: translateY(-1px);
+}
+
 .chat-input-bar {
     padding: 0.85rem 1.25rem;
     background: var(--bg-sidebar);

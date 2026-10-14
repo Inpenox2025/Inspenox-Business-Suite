@@ -321,7 +321,23 @@ module.exports = async (req, res) => {
                             }
                         }
                     } catch (e) {
-                        console.error('Failed to parse Google JWT payload:', e);
+                        console.error('Failed to parse Google JWT payload locally:', e);
+                    }
+
+                    // Fallback to Google tokeninfo endpoint if email not extracted
+                    if (!email) {
+                        try {
+                            const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
+                            if (verifyRes.ok) {
+                                const verifyData = await verifyRes.json();
+                                if (verifyData.email) {
+                                    email = verifyData.email;
+                                    name = verifyData.name || verifyData.given_name || email.split('@')[0];
+                                }
+                            }
+                        } catch (fetchErr) {
+                            console.warn('Google tokeninfo fetch warning:', fetchErr);
+                        }
                     }
                 }
 
