@@ -9764,6 +9764,41 @@ window.purgeOldSecurityLogs = async function purgeOldSecurityLogs(days = 30) {
 /* ========================================================
    Subscriptions Checkout, Coupons & Management Handlers
    ======================================================== */
+const RAZORPAY_CONVENIENCE_FEE_PCT = 2.36; // 2% Razorpay transaction fee + 18% GST on Gateway fee
+
+function recalculateCheckoutSummary(basePrice, discountAmount = 0) {
+    const numBase = parseFloat(basePrice) || 0;
+    const numDisc = Math.min(numBase, parseFloat(discountAmount) || 0);
+    const subtotal = Math.max(0, numBase - numDisc);
+    const convenienceFee = Math.round(subtotal * (RAZORPAY_CONVENIENCE_FEE_PCT / 100) * 100) / 100;
+    const finalAmount = Math.round((subtotal + convenienceFee) * 100) / 100;
+
+    const elBase = document.getElementById('checkout-display-base-price');
+    const elDiscRow = document.getElementById('checkout-row-discount');
+    const elFee = document.getElementById('checkout-display-fee');
+    const elFinal = document.getElementById('checkout-display-final-price');
+
+    const inpDisc = document.getElementById('checkout-applied-discount-amount');
+    const inpFee = document.getElementById('checkout-applied-convenience-fee');
+    const inpFinal = document.getElementById('checkout-applied-final-amount');
+
+    if (inpDisc) inpDisc.value = numDisc;
+    if (inpFee) inpFee.value = convenienceFee;
+    if (inpFinal) inpFinal.value = finalAmount;
+
+    if (elBase) elBase.textContent = `₹${numBase.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    if (elFee) elFee.textContent = `+ ₹${convenienceFee.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    if (elFinal) elFinal.textContent = `₹${finalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+    if (numDisc > 0) {
+        if (elDiscRow) elDiscRow.style.display = 'flex';
+    } else {
+        if (elDiscRow) elDiscRow.style.display = 'none';
+    }
+
+    return { basePrice: numBase, discountAmount: numDisc, subtotal, convenienceFee, finalAmount };
+}
+
 window.openSubscribeModal = function openSubscribeModal(planId) {
     const modal = document.getElementById('checkout-modal');
     if (!modal) return;
@@ -9782,18 +9817,12 @@ window.openSubscribeModal = function openSubscribeModal(planId) {
     document.getElementById('checkout-plan-name').value = `${plan.name} (${cycleInfo.label})`;
     document.getElementById('checkout-plan-price').value = basePrice;
     document.getElementById('checkout-applied-coupon-id').value = '';
-    document.getElementById('checkout-applied-discount-amount').value = '0';
-    document.getElementById('checkout-applied-final-amount').value = basePrice;
 
     document.getElementById('checkout-display-plan').textContent = plan.name;
     const dispCycle = document.getElementById('checkout-display-cycle');
     if (dispCycle) dispCycle.textContent = cycleInfo.label;
 
-    document.getElementById('checkout-display-base-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-    document.getElementById('checkout-display-final-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-
-    const rowDisc = document.getElementById('checkout-row-discount');
-    if (rowDisc) rowDisc.style.display = 'none';
+    recalculateCheckoutSummary(basePrice, 0);
 
     const couponFeedback = document.getElementById('checkout-coupon-feedback');
     if (couponFeedback) {
@@ -9837,7 +9866,6 @@ window.onCheckoutCycleChange = function onCheckoutCycleChange(newCycle) {
 
     document.getElementById('checkout-plan-name').value = `${plan.name} (${cycleInfo.label})`;
     document.getElementById('checkout-plan-price').value = basePrice;
-    document.getElementById('checkout-display-base-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
 
     const dispCycle = document.getElementById('checkout-display-cycle');
     if (dispCycle) dispCycle.textContent = cycleInfo.label;
@@ -9847,11 +9875,7 @@ window.onCheckoutCycleChange = function onCheckoutCycleChange(newCycle) {
     if (couponCode) {
         applyCheckoutCoupon(true);
     } else {
-        document.getElementById('checkout-applied-discount-amount').value = '0';
-        document.getElementById('checkout-applied-final-amount').value = basePrice;
-        document.getElementById('checkout-display-final-price').textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-        const rowDisc = document.getElementById('checkout-row-discount');
-        if (rowDisc) rowDisc.style.display = 'none';
+        recalculateCheckoutSummary(basePrice, 0);
     }
 
     renderPricingCards();
@@ -9895,17 +9919,11 @@ window.hidePaymentOverlay = hidePaymentOverlay;
 window.resetCheckoutDiscount = function resetCheckoutDiscount() {
     const basePrice = parseFloat(document.getElementById('checkout-plan-price')?.value) || 0;
     const appliedCoupon = document.getElementById('checkout-applied-coupon-id');
-    const appliedDisc = document.getElementById('checkout-applied-discount-amount');
-    const appliedFinal = document.getElementById('checkout-applied-final-amount');
-    const rowDisc = document.getElementById('checkout-row-discount');
-    const elFinal = document.getElementById('checkout-display-final-price');
     const feedback = document.getElementById('checkout-coupon-feedback');
 
     if (appliedCoupon) appliedCoupon.value = '';
-    if (appliedDisc) appliedDisc.value = '0';
-    if (appliedFinal) appliedFinal.value = basePrice;
-    if (rowDisc) rowDisc.style.display = 'none';
-    if (elFinal) elFinal.textContent = `₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    recalculateCheckoutSummary(basePrice, 0);
+
     if (feedback) {
         feedback.style.display = 'none';
         feedback.innerHTML = '';
@@ -9952,17 +9970,14 @@ window.applyCheckoutCoupon = async function applyCheckoutCoupon(isAuto = false) 
 
         if (data.success && data.valid) {
             document.getElementById('checkout-applied-coupon-id').value = data.coupon_id;
-            document.getElementById('checkout-applied-discount-amount').value = data.discount_amount;
-            document.getElementById('checkout-applied-final-amount').value = data.final_amount;
+            recalculateCheckoutSummary(basePrice, data.discount_amount);
 
-            // Update UI prices
+            // Update UI discount badge
             const rowDisc = document.getElementById('checkout-row-discount');
             const elDisc = document.getElementById('checkout-display-discount');
-            const elFinal = document.getElementById('checkout-display-final-price');
 
             if (rowDisc) rowDisc.style.display = 'flex';
             if (elDisc) elDisc.textContent = `- ₹${Number(data.discount_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })} (${data.discount_percent}% OFF)`;
-            if (elFinal) elFinal.textContent = `₹${Number(data.final_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
 
             if (feedback) {
                 feedback.style.display = 'block';
@@ -10100,6 +10115,7 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                                 billing_cycle: currentBillingCycle,
                                 original_amount: orderData.original_amount,
                                 discount_amount: orderData.discount_amount,
+                                convenience_fee: orderData.convenience_fee,
                                 final_amount: orderData.amount,
                                 coupon_code: orderData.coupon_code,
                                 coupon_id: orderData.coupon_id,
@@ -10205,6 +10221,7 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                             billing_cycle: currentBillingCycle,
                             original_amount: orderData.original_amount,
                             discount_amount: orderData.discount_amount,
+                            convenience_fee: orderData.convenience_fee,
                             final_amount: orderData.amount,
                             coupon_code: orderData.coupon_code,
                             coupon_id: orderData.coupon_id,
@@ -10672,6 +10689,18 @@ window.viewCompanyReceipt = function viewCompanyReceipt(receiptId) {
         if (elDisc) elDisc.textContent = `- ₹${discAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}${receipt.coupon_code ? ` (${receipt.coupon_code})` : ''}`;
     } else {
         if (rowDisc) rowDisc.style.display = 'none';
+    }
+
+    const feeAmount = Number(receipt.convenience_fee || 0);
+    const rowFee = document.getElementById('rcpt-row-fee');
+    const elFee = document.getElementById('rcpt-fee');
+    if (rowFee && elFee) {
+        if (feeAmount > 0) {
+            rowFee.style.display = 'flex';
+            elFee.textContent = `+ ₹${feeAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        } else {
+            rowFee.style.display = 'none';
+        }
     }
 
     if (elTotal) elTotal.textContent = `₹${finalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;

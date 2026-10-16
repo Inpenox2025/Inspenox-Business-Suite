@@ -3090,6 +3090,7 @@
                 <input type="hidden" id="checkout-plan-price">
                 <input type="hidden" id="checkout-applied-coupon-id">
                 <input type="hidden" id="checkout-applied-discount-amount" value="0">
+                <input type="hidden" id="checkout-applied-convenience-fee" value="0">
                 <input type="hidden" id="checkout-applied-final-amount" value="0">
 
                 <div
@@ -3158,6 +3159,14 @@
                         style="display:none; justify-content:space-between; margin-bottom:0.35rem; font-size:0.85rem; color:#10b981;">
                         <span>Coupon Discount</span>
                         <span id="checkout-display-discount">- ₹0.00</span>
+                    </div>
+                    <div id="checkout-row-fee"
+                        style="display:flex; justify-content:space-between; margin-bottom:0.35rem; font-size:0.85rem; color:var(--text-muted);">
+                        <span style="display:inline-flex; align-items:center; gap:6px;">
+                            <span>Gateway Convenience Fee</span>
+                            <span style="font-size:0.7rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); padding:1px 6px; border-radius:4px; color:var(--text-muted);">2% + 18% GST (2.36%)</span>
+                        </span>
+                        <span id="checkout-display-fee" style="color:var(--text-main); font-weight:600;">+ ₹0.00</span>
                     </div>
                     <div
                         style="display:flex; justify-content:space-between; border-top:1px solid var(--border); padding-top:0.5rem; margin-top:0.35rem; font-weight:700;">
@@ -4066,6 +4075,11 @@
                             <span style="min-width: 150px; text-align: right;">Coupon Discount:</span>
                             <span id="rcpt-discount" style="font-weight: 600; min-width: 110px; text-align: right;">-
                                 ₹2,498.00</span>
+                        </div>
+                        <div id="rcpt-row-fee"
+                            style="display: none; justify-content: flex-end; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--text-muted); gap: 1rem;">
+                            <span style="min-width: 150px; text-align: right;">Gateway Fee (2.36%):</span>
+                            <span id="rcpt-fee" style="font-weight: 600; min-width: 110px; text-align: right; color: var(--text-main);">+ ₹0.00</span>
                         </div>
                         <div
                             style="display: flex; justify-content: flex-end; padding-top: 0.6rem; border-top: 1px solid var(--border); font-size: 1.05rem; gap: 1rem;">

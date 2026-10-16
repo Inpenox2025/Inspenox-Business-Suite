@@ -2,6 +2,11 @@ const { getDb } = require('../lib/db');
 const crypto = require('node:crypto');
 const { sendSubscriptionReceiptEmail } = require('../lib/email');
 
+// Standard Razorpay Fee Structure (India Domestic: 2% + 18% GST on Gateway Fee = 2.36%)
+const RAZORPAY_FEE_PERCENT = 2.0;
+const GST_ON_FEE_PERCENT = 18.0;
+const RAZORPAY_CONVENIENCE_FEE_PCT = 2.36; // 2% + 18% GST
+
 async function ensurePaymentTables(sql) {
     try {
         await sql`
@@ -30,6 +35,7 @@ async function ensurePaymentTables(sql) {
                 plan_name TEXT,
                 original_amount NUMERIC,
                 discount_amount NUMERIC,
+                convenience_fee NUMERIC DEFAULT 0,
                 final_amount NUMERIC,
                 coupon_code TEXT,
                 coupon_id INT REFERENCES coupons(id),
@@ -43,6 +49,7 @@ async function ensurePaymentTables(sql) {
         await sql`ALTER TABLE payment_logs ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(id) ON DELETE SET NULL;`;
         await sql`ALTER TABLE payment_logs ADD COLUMN IF NOT EXISTS billing_cycle TEXT DEFAULT 'monthly';`;
         await sql`ALTER TABLE payment_logs ADD COLUMN IF NOT EXISTS valid_until TIMESTAMPTZ DEFAULT NULL;`;
+        await sql`ALTER TABLE payment_logs ADD COLUMN IF NOT EXISTS convenience_fee NUMERIC DEFAULT 0;`;
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ DEFAULT NULL;`;
         await sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_billing_cycle TEXT DEFAULT 'monthly';`;
 
@@ -183,7 +190,7 @@ module.exports = async (req, res) => {
                         SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
                                p.plan_name, p.billing_cycle, p.valid_until,
                                TO_CHAR(p.valid_until, 'YYYY-MM-DD HH24:MI:SS') as valid_until_formatted,
-                               p.original_amount, p.discount_amount, p.final_amount,
+                               p.original_amount, p.discount_amount, p.convenience_fee, p.final_amount,
                                p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
                                p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
                                p.created_at,
@@ -199,7 +206,7 @@ module.exports = async (req, res) => {
                         SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
                                p.plan_name, p.billing_cycle, p.valid_until,
                                TO_CHAR(p.valid_until, 'YYYY-MM-DD HH24:MI:SS') as valid_until_formatted,
-                               p.original_amount, p.discount_amount, p.final_amount,
+                               p.original_amount, p.discount_amount, p.convenience_fee, p.final_amount,
                                p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
                                p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
                                p.created_at,
@@ -215,7 +222,7 @@ module.exports = async (req, res) => {
                         SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
                                p.plan_name, p.billing_cycle, p.valid_until,
                                TO_CHAR(p.valid_until, 'YYYY-MM-DD HH24:MI:SS') as valid_until_formatted,
-                               p.original_amount, p.discount_amount, p.final_amount,
+                               p.original_amount, p.discount_amount, p.convenience_fee, p.final_amount,
                                p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
                                p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
                                p.created_at,
@@ -231,7 +238,7 @@ module.exports = async (req, res) => {
                         SELECT p.id, p.company_id, p.order_id, p.payment_id, p.user_email, p.user_phone,
                                p.plan_name, p.billing_cycle, p.valid_until,
                                TO_CHAR(p.valid_until, 'YYYY-MM-DD HH24:MI:SS') as valid_until_formatted,
-                               p.original_amount, p.discount_amount, p.final_amount,
+                               p.original_amount, p.discount_amount, p.convenience_fee, p.final_amount,
                                p.coupon_code, p.coupon_id, p.influencer_id, p.commission_amount,
                                p.status, TO_CHAR(p.created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at_formatted,
                                p.created_at,
@@ -249,6 +256,7 @@ module.exports = async (req, res) => {
                         COUNT(*)::int as total_orders,
                         COALESCE(SUM(final_amount), 0)::numeric as total_revenue,
                         COALESCE(SUM(discount_amount), 0)::numeric as total_discounts,
+                        COALESCE(SUM(convenience_fee), 0)::numeric as total_convenience_fees,
                         COALESCE(SUM(commission_amount), 0)::numeric as total_commissions
                     FROM payment_logs
                     WHERE status = 'paid';
@@ -329,10 +337,12 @@ module.exports = async (req, res) => {
 
                 const discountPercent = parseFloat(coupon.discount_percent) || 0;
                 const discountAmount = Math.round((numAmount * discountPercent) / 100 * 100) / 100;
-                const finalAmount = Math.max(0, Math.round((numAmount - discountAmount) * 100) / 100);
+                const subtotal = Math.max(0, Math.round((numAmount - discountAmount) * 100) / 100);
+                const convenienceFee = Math.round(subtotal * (RAZORPAY_CONVENIENCE_FEE_PCT / 100) * 100) / 100;
+                const finalAmount = Math.round((subtotal + convenienceFee) * 100) / 100;
 
                 const commissionPercent = parseFloat(coupon.commission_percent) || 0;
-                const commissionAmount = Math.round((finalAmount * commissionPercent) / 100 * 100) / 100;
+                const commissionAmount = Math.round((subtotal * commissionPercent) / 100 * 100) / 100;
 
                 return res.status(200).json({
                     success: true,
@@ -341,6 +351,9 @@ module.exports = async (req, res) => {
                     coupon_code: coupon.coupon_code,
                     discount_percent: discountPercent,
                     discount_amount: discountAmount,
+                    subtotal: subtotal,
+                    convenience_fee: convenienceFee,
+                    convenience_fee_percent: RAZORPAY_CONVENIENCE_FEE_PCT,
                     final_amount: finalAmount,
                     commission_percent: commissionPercent,
                     commission_amount: commissionAmount,
@@ -354,7 +367,6 @@ module.exports = async (req, res) => {
                 const { plan_name, billing_cycle, original_amount, coupon_code, email, phone, company_id } = body;
                 const billingCycle = String(billing_cycle || 'monthly').toLowerCase();
                 const numOriginal = parseFloat(original_amount) || 0;
-                let finalAmount = numOriginal;
                 let discountAmount = 0;
                 let couponId = null;
                 let influencerId = null;
@@ -375,14 +387,20 @@ module.exports = async (req, res) => {
                         if (notExpired && withinLimit) {
                             const discPct = parseFloat(c.discount_percent) || 0;
                             discountAmount = Math.round((numOriginal * discPct) / 100 * 100) / 100;
-                            finalAmount = Math.max(0, Math.round((numOriginal - discountAmount) * 100) / 100);
                             couponId = c.id;
                             influencerId = c.user_id;
                             const commPct = parseFloat(c.commission_percent) || 0;
-                            commissionAmount = Math.round((finalAmount * commPct) / 100 * 100) / 100;
+                            const netSubtotal = Math.max(0, numOriginal - discountAmount);
+                            commissionAmount = Math.round((netSubtotal * commPct) / 100 * 100) / 100;
                         }
                     }
                 }
+
+                // Subtotal after coupon discount
+                const subtotal = Math.max(0, Math.round((numOriginal - discountAmount) * 100) / 100);
+                // Gateway convenience fee: 2% Razorpay fee + 18% GST on the fee = 2.36%
+                const convenienceFee = Math.round(subtotal * (RAZORPAY_CONVENIENCE_FEE_PCT / 100) * 100) / 100;
+                const finalAmount = Math.round((subtotal + convenienceFee) * 100) / 100;
 
                 // If Razorpay Keys configured, call official Razorpay Orders API
                 if (razorpayKeyId && razorpayKeySecret) {
@@ -395,6 +413,9 @@ module.exports = async (req, res) => {
                             plan_name: plan_name || 'Inspenox Plan',
                             billing_cycle: billingCycle,
                             coupon_code: coupon_code || '',
+                            subtotal: String(subtotal),
+                            convenience_fee: String(convenienceFee),
+                            convenience_fee_percent: String(RAZORPAY_CONVENIENCE_FEE_PCT),
                             user_email: email || '',
                             user_phone: phone || '',
                             company_id: company_id ? String(company_id) : ''
@@ -423,6 +444,9 @@ module.exports = async (req, res) => {
                         key_id: razorpayKeyId,
                         original_amount: numOriginal,
                         discount_amount: discountAmount,
+                        subtotal: subtotal,
+                        convenience_fee: convenienceFee,
+                        convenience_fee_percent: RAZORPAY_CONVENIENCE_FEE_PCT,
                         billing_cycle: billingCycle,
                         coupon_code: coupon_code || null,
                         coupon_id: couponId,
@@ -441,6 +465,9 @@ module.exports = async (req, res) => {
                         key_id: 'rzp_test_placeholder',
                         original_amount: numOriginal,
                         discount_amount: discountAmount,
+                        subtotal: subtotal,
+                        convenience_fee: convenienceFee,
+                        convenience_fee_percent: RAZORPAY_CONVENIENCE_FEE_PCT,
                         billing_cycle: billingCycle,
                         coupon_code: coupon_code || null,
                         coupon_id: couponId,
@@ -462,6 +489,7 @@ module.exports = async (req, res) => {
                     billing_cycle,
                     original_amount,
                     discount_amount,
+                    convenience_fee,
                     final_amount,
                     coupon_code,
                     coupon_id,
@@ -495,7 +523,11 @@ module.exports = async (req, res) => {
                 const cycleVal = String(billing_cycle || 'monthly').toLowerCase();
                 const numOrig = parseFloat(original_amount) || 0;
                 const numDisc = parseFloat(discount_amount) || 0;
-                const numFinal = parseFloat(final_amount) || Math.max(0, numOrig - numDisc);
+                const subtotal = Math.max(0, numOrig - numDisc);
+                const numFee = (convenience_fee !== undefined && convenience_fee !== null)
+                    ? parseFloat(convenience_fee)
+                    : (Math.round(subtotal * (RAZORPAY_CONVENIENCE_FEE_PCT / 100) * 100) / 100);
+                const numFinal = parseFloat(final_amount) || Math.round((subtotal + numFee) * 100) / 100;
                 const numComm = parseFloat(commission_amount) || 0;
                 const validCouponId = coupon_id ? parseInt(coupon_id) : null;
                 const validInfluencerId = influencer_id ? parseInt(influencer_id) : null;
@@ -559,12 +591,12 @@ module.exports = async (req, res) => {
                     }
                 }
 
-                // Insert into payment_logs table with company_id, billing_cycle, and valid_until
+                // Insert into payment_logs table with company_id, billing_cycle, valid_until, and convenience_fee
                 const logResult = await sql`
                     INSERT INTO payment_logs (
                         company_id, order_id, payment_id, user_email, user_phone, plan_name,
                         billing_cycle, valid_until,
-                        original_amount, discount_amount, final_amount,
+                        original_amount, discount_amount, convenience_fee, final_amount,
                         coupon_code, coupon_id, influencer_id, commission_amount,
                         status, created_at
                     ) VALUES (
@@ -578,6 +610,7 @@ module.exports = async (req, res) => {
                         ${expiresAtIso},
                         ${numOrig},
                         ${numDisc},
+                        ${numFee},
                         ${numFinal},
                         ${coupon_code || null},
                         ${validCouponId},
@@ -631,6 +664,7 @@ module.exports = async (req, res) => {
                             valid_until: expiresAtIso,
                             original_amount: numOrig,
                             discount_amount: numDisc,
+                            convenience_fee: numFee,
                             final_amount: numFinal,
                             coupon_code,
                             order_id: razorpay_order_id,
@@ -752,6 +786,7 @@ module.exports = async (req, res) => {
                     valid_until: log.valid_until,
                     original_amount: log.original_amount,
                     discount_amount: log.discount_amount,
+                    convenience_fee: log.convenience_fee,
                     final_amount: log.final_amount,
                     coupon_code: log.coupon_code,
                     order_id: log.order_id,
