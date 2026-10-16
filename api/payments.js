@@ -3,8 +3,8 @@ const crypto = require('node:crypto');
 const { sendSubscriptionReceiptEmail } = require('../lib/email');
 
 // Standard Razorpay Fee Structure (India Domestic: 2% + 18% GST on Gateway Fee = 2.36%)
-const RAZORPAY_FEE_PERCENT = 2.0;
-const GST_ON_FEE_PERCENT = 18.0;
+const RAZORPAY_FEE_PERCENT = 0;
+const GST_ON_FEE_PERCENT = 0;
 const RAZORPAY_CONVENIENCE_FEE_PCT = 2.36; // 2% + 18% GST
 
 async function ensurePaymentTables(sql) {
