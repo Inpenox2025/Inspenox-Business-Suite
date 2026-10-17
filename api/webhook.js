@@ -122,12 +122,51 @@ module.exports = async (req, res) => {
                 }
 
                 let content = "";
+                let mediaUrl = null;
+
                 if (messageType === "text") {
                   content = message.text ? message.text.body : "";
                 } else if (messageType === "image") {
-                  content = message.image ? (message.image.caption || "[Image]") : "[Image]";
+                  const img = message.image || {};
+                  const mediaId = img.id;
+                  const mimeType = img.mime_type || "image/jpeg";
+                  content = img.caption || "[Image]";
+                  if (mediaId) {
+                    mediaUrl = `/api/media-proxy?media_id=${encodeURIComponent(mediaId)}&company_id=${targetCompanyId}&mime=${encodeURIComponent(mimeType)}`;
+                  }
                 } else if (messageType === "video") {
-                  content = message.video ? (message.video.caption || "[Video]") : "[Video]";
+                  const vid = message.video || {};
+                  const mediaId = vid.id;
+                  const mimeType = vid.mime_type || "video/mp4";
+                  content = vid.caption || "[Video]";
+                  if (mediaId) {
+                    mediaUrl = `/api/media-proxy?media_id=${encodeURIComponent(mediaId)}&company_id=${targetCompanyId}&mime=${encodeURIComponent(mimeType)}`;
+                  }
+                } else if (messageType === "document") {
+                  const doc = message.document || {};
+                  const mediaId = doc.id;
+                  const filename = doc.filename || "Document";
+                  const mimeType = doc.mime_type || "application/octet-stream";
+                  content = doc.caption || filename || "[Document]";
+                  if (mediaId) {
+                    mediaUrl = `/api/media-proxy?media_id=${encodeURIComponent(mediaId)}&company_id=${targetCompanyId}&filename=${encodeURIComponent(filename)}&mime=${encodeURIComponent(mimeType)}`;
+                  }
+                } else if (messageType === "audio") {
+                  const aud = message.audio || {};
+                  const mediaId = aud.id;
+                  const mimeType = aud.mime_type || "audio/ogg";
+                  content = aud.voice ? "Voice Note" : "[Audio]";
+                  if (mediaId) {
+                    mediaUrl = `/api/media-proxy?media_id=${encodeURIComponent(mediaId)}&company_id=${targetCompanyId}&mime=${encodeURIComponent(mimeType)}`;
+                  }
+                } else if (messageType === "sticker") {
+                  const stk = message.sticker || {};
+                  const mediaId = stk.id;
+                  const mimeType = stk.mime_type || "image/webp";
+                  content = "[Sticker]";
+                  if (mediaId) {
+                    mediaUrl = `/api/media-proxy?media_id=${encodeURIComponent(mediaId)}&company_id=${targetCompanyId}&mime=${encodeURIComponent(mimeType)}`;
+                  }
                 } else if (messageType === "button") {
                   content = message.button ? (message.button.text || message.button.payload || "Button Clicked") : "Button Clicked";
                 } else if (messageType === "interactive") {
@@ -161,10 +200,11 @@ module.exports = async (req, res) => {
                   customerId = customer[0].id;
                 }
 
-                const dbMsgType = (messageType === "text" || messageType === "image" || messageType === "video" || messageType === "template" || messageType === "button" || messageType === "interactive") ? messageType : "text";
+                const validTypes = ["text", "image", "video", "document", "audio", "sticker", "template", "button", "interactive"];
+                const dbMsgType = validTypes.includes(messageType) ? messageType : "text";
                 await sql`
-                  INSERT INTO messages (company_id, customer_id, direction, type, content, wa_message_id, status) 
-                  VALUES (${targetCompanyId}, ${customerId}, 'inbound', ${dbMsgType}, ${content}, ${messageId}, 'delivered')
+                  INSERT INTO messages (company_id, customer_id, direction, type, content, media_url, wa_message_id, status) 
+                  VALUES (${targetCompanyId}, ${customerId}, 'inbound', ${dbMsgType}, ${content}, ${mediaUrl}, ${messageId}, 'delivered')
                 `;
               }
             }

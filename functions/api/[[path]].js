@@ -15,6 +15,7 @@ const uploadMediaHandler = require('../../api/upload-media');
 const webhookHandler = require('../../api/webhook');
 const paymentsHandler = require('../../api/payments');
 const tagsHandler = require('../../api/tags');
+const mediaProxyHandler = require('../../api/media-proxy');
 
 const routes = {
     'analytics': analyticsHandler,
@@ -26,6 +27,7 @@ const routes = {
     'customers-import': customersImportHandler,
     'customers': customersHandler,
     'media': mediaHandler,
+    'media-proxy': mediaProxyHandler,
     'messages': messagesHandler,
     'send-message': sendMessageHandler,
     'templates': templatesHandler,

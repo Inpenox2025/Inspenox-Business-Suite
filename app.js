@@ -8891,6 +8891,237 @@ function resolveTemplateCard(templateSlug, customerData) {
     };
 }
 
+function renderChatMessageMedia(m) {
+    const rawContent = (m.content || '').trim();
+    const type = (m.type || '').toLowerCase();
+    const mediaUrl = (m.media_url || '').trim();
+
+    const isImage = type === 'image' || rawContent === '[Image]' || rawContent === '[image]' || 
+                    (mediaUrl && (mediaUrl.includes('mime=image') || /\.(jpe?g|png|webp|gif)($|\?)/i.test(mediaUrl)));
+
+    const isVideo = type === 'video' || rawContent === '[Video]' || rawContent === '[video]' || 
+                    (mediaUrl && (mediaUrl.includes('mime=video') || /\.(mp4|mov|webm|avi|m4v)($|\?)/i.test(mediaUrl)));
+
+    const isAudio = type === 'audio' || rawContent === '[Audio]' || rawContent === '[audio]' || rawContent.toLowerCase().includes('voice note') ||
+                    (mediaUrl && (mediaUrl.includes('mime=audio') || /\.(ogg|opus|mp3|wav|m4a|aac)($|\?)/i.test(mediaUrl)));
+
+    const isSticker = type === 'sticker' || rawContent === '[Sticker]' || rawContent === '[sticker]';
+
+    // Extract caption if not a generic placeholder
+    let caption = rawContent;
+    if (caption === '[Image]' || caption === '[image]' || caption === '[Video]' || caption === '[video]' || 
+        caption === '[Document]' || caption === '[document]' || caption === '[Audio]' || caption === '[audio]' || 
+        caption === '[Sticker]' || caption === '[sticker]') {
+        caption = '';
+    }
+
+    if (isImage) {
+        if (mediaUrl) {
+            return `
+                <div class="chat-media-wrapper">
+                    <div class="chat-media-img-box" onclick="openMediaLightbox('${escapeHtml(mediaUrl)}', 'image')">
+                        <img src="${escapeHtml(mediaUrl)}" alt="Photo" class="chat-media-img" loading="lazy" onerror="handleMediaImgError(this, 'Photo')">
+                        <div class="chat-media-overlay">
+                            <span>🔍 Click to zoom</span>
+                        </div>
+                    </div>
+                    ${caption ? `<div class="chat-media-caption">${escapeHtml(caption).replace(/\n/g, '<br>')}</div>` : ''}
+                </div>
+            `;
+        }
+        return `
+            <div class="chat-media-placeholder image-placeholder">
+                <div class="media-placeholder-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                </div>
+                <div class="media-placeholder-info">
+                    <div class="media-placeholder-title">Photo</div>
+                    <div class="media-placeholder-subtitle">${caption ? escapeHtml(caption) : 'Photo received on WhatsApp'}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    if (isVideo) {
+        if (mediaUrl) {
+            return `
+                <div class="chat-media-wrapper">
+                    <div class="chat-media-video-box">
+                        <video src="${escapeHtml(mediaUrl)}" controls class="chat-media-video" preload="metadata"></video>
+                    </div>
+                    ${caption ? `<div class="chat-media-caption">${escapeHtml(caption).replace(/\n/g, '<br>')}</div>` : ''}
+                </div>
+            `;
+        }
+        return `
+            <div class="chat-media-placeholder video-placeholder">
+                <div class="media-placeholder-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                </div>
+                <div class="media-placeholder-info">
+                    <div class="media-placeholder-title">Video</div>
+                    <div class="media-placeholder-subtitle">${caption ? escapeHtml(caption) : 'Video received on WhatsApp'}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    if (isAudio) {
+        if (mediaUrl) {
+            return `
+                <div class="chat-media-wrapper chat-media-audio-card">
+                    <div class="audio-header-tag">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
+                        <span>Voice Note</span>
+                    </div>
+                    <audio src="${escapeHtml(mediaUrl)}" controls class="chat-audio-player" preload="metadata"></audio>
+                    ${caption && caption !== 'Voice Note' ? `<div class="chat-media-caption">${escapeHtml(caption)}</div>` : ''}
+                </div>
+            `;
+        }
+        return `
+            <div class="chat-media-placeholder audio-placeholder">
+                <div class="media-placeholder-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
+                </div>
+                <div class="media-placeholder-info">
+                    <div class="media-placeholder-title">Voice Note</div>
+                    <div class="media-placeholder-subtitle">Audio received on WhatsApp</div>
+                </div>
+            </div>
+        `;
+    }
+
+    if (isSticker) {
+        if (mediaUrl) {
+            return `
+                <div class="chat-media-sticker-box">
+                    <img src="${escapeHtml(mediaUrl)}" alt="Sticker" class="chat-media-sticker" loading="lazy">
+                </div>
+            `;
+        }
+        return `<span style="font-size:1.5rem;" title="Sticker">🎨 [Sticker]</span>`;
+    }
+
+    // Default: Document / Attachment
+    let docName = 'Document';
+    if (mediaUrl) {
+        try {
+            const urlObj = new URL(mediaUrl, window.location.origin);
+            const fnParam = urlObj.searchParams.get('filename');
+            if (fnParam) docName = fnParam;
+            else {
+                const parts = urlObj.pathname.split('/');
+                const last = parts[parts.length - 1];
+                if (last && last.includes('.')) docName = decodeURIComponent(last);
+            }
+        } catch(e) {}
+    }
+    if (docName === 'Document' && caption && caption.includes('.')) {
+        docName = caption;
+        caption = '';
+    }
+
+    const docExt = (docName.includes('.') ? docName.split('.').pop() : 'FILE').toLowerCase();
+    let badgeClass = 'generic';
+    if (docExt === 'pdf') badgeClass = 'pdf';
+    else if (docExt === 'doc' || docExt === 'docx') badgeClass = 'doc';
+    else if (docExt === 'xls' || docExt === 'xlsx' || docExt === 'csv') badgeClass = 'xls';
+
+    if (mediaUrl) {
+        const downloadUrl = mediaUrl.includes('?') ? `${mediaUrl}&download=1` : `${mediaUrl}?download=1`;
+        return `
+            <div class="chat-media-wrapper">
+                <a href="${escapeHtml(downloadUrl)}" target="_blank" download="${escapeHtml(docName)}" class="chat-media-doc-card" title="Click to download ${escapeHtml(docName)}">
+                    <div class="doc-icon-badge ${badgeClass}">
+                        ${escapeHtml(docExt.toUpperCase().slice(0, 4))}
+                    </div>
+                    <div class="doc-details">
+                        <div class="doc-name" title="${escapeHtml(docName)}">${escapeHtml(docName)}</div>
+                        <div class="doc-meta">
+                            <span>${escapeHtml(docExt.toUpperCase())} File</span>
+                            <span>•</span>
+                            <span style="color:#00a884; font-weight:600;">Download</span>
+                        </div>
+                    </div>
+                    <div class="doc-download-btn">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    </div>
+                </a>
+                ${caption && caption !== docName ? `<div class="chat-media-caption">${escapeHtml(caption).replace(/\n/g, '<br>')}</div>` : ''}
+            </div>
+        `;
+    }
+
+    return `
+        <div class="chat-media-placeholder doc-placeholder">
+            <div class="media-placeholder-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            </div>
+            <div class="media-placeholder-info">
+                <div class="media-placeholder-title">${escapeHtml(docName || 'Document')}</div>
+                <div class="media-placeholder-subtitle">${caption && caption !== docName ? escapeHtml(caption) : 'Document attachment received on WhatsApp'}</div>
+            </div>
+        </div>
+    `;
+}
+
+function handleMediaImgError(imgEl, fallbackTitle) {
+    if (!imgEl) return;
+    const box = imgEl.closest('.chat-media-wrapper') || imgEl.parentElement;
+    if (box) {
+        box.innerHTML = `
+            <div class="chat-media-placeholder image-placeholder">
+                <div class="media-placeholder-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                </div>
+                <div class="media-placeholder-info">
+                    <div class="media-placeholder-title">${fallbackTitle || 'Photo'}</div>
+                    <div class="media-placeholder-subtitle">Media unavailable or expired on WhatsApp</div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+window.openMediaLightbox = function(url, type) {
+    const modal = document.getElementById('modal-media-lightbox');
+    const container = document.getElementById('lightbox-media-container');
+    const downloadBtn = document.getElementById('lightbox-download-btn');
+    if (!modal || !container) return;
+
+    container.innerHTML = '';
+    const downloadUrl = url.includes('?') ? `${url}&download=1` : `${url}?download=1`;
+    if (downloadBtn) {
+        downloadBtn.href = downloadUrl;
+    }
+
+    if (type === 'video' || /\.(mp4|mov|webm)($|\?)/i.test(url)) {
+        container.innerHTML = `<video src="${escapeHtml(url)}" controls autoplay style="max-width:88vw; max-height:78vh; border-radius:10px;"></video>`;
+    } else {
+        container.innerHTML = `<img src="${escapeHtml(url)}" alt="Full view" style="max-width:88vw; max-height:78vh; object-fit:contain; border-radius:10px;">`;
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.closeMediaLightbox = function() {
+    const modal = document.getElementById('modal-media-lightbox');
+    const container = document.getElementById('lightbox-media-container');
+    if (modal) modal.style.display = 'none';
+    if (container) {
+        const vid = container.querySelector('video');
+        if (vid) vid.pause();
+        container.innerHTML = '';
+    }
+};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        window.closeMediaLightbox();
+    }
+});
+
 async function fetchChatMessages(isInitial = false) {
     if (!activeInboxCustomer) return;
     const chatContainer = document.getElementById('chat-messages');
@@ -8956,6 +9187,11 @@ async function fetchChatMessages(isInitial = false) {
             const tickHtml = renderTick(m.status, m.direction);
 
             let contentHtml = m.content || '';
+            const rawContentTrimmed = (m.content || '').trim();
+            const msgType = (m.type || '').toLowerCase();
+            const mediaUrl = (m.media_url || '').trim();
+            let isMedia = false;
+
             const isTemplate = contentHtml.startsWith('[Template]') || (m.type === 'template' && !contentHtml.includes('template-card-rendered'));
 
             if (isTemplate) {
@@ -9012,10 +9248,20 @@ async function fetchChatMessages(isInitial = false) {
                 contentHtml = `<span style="display:inline-flex;align-items:center;gap:0.35rem;background:rgba(16,185,129,0.12);color:#10b981;padding:0.25rem 0.55rem;border-radius:6px;font-weight:600;font-size:0.8rem;">🔘 Tapped: "${btnText || 'Quick Reply'}"</span>`;
             } else if (m.type === 'button' || m.type === 'interactive') {
                 contentHtml = `<span style="display:inline-flex;align-items:center;gap:0.35rem;background:rgba(16,185,129,0.12);color:#10b981;padding:0.25rem 0.55rem;border-radius:6px;font-weight:600;font-size:0.8rem;">🔘 Tapped: "${contentHtml}"</span>`;
+            } else if (
+                msgType === 'image' || rawContentTrimmed === '[Image]' || rawContentTrimmed === '[image]' ||
+                msgType === 'video' || rawContentTrimmed === '[Video]' || rawContentTrimmed === '[video]' ||
+                msgType === 'document' || rawContentTrimmed === '[Document]' || rawContentTrimmed === '[document]' ||
+                msgType === 'audio' || rawContentTrimmed === '[Audio]' || rawContentTrimmed === '[audio]' || rawContentTrimmed.toLowerCase().includes('voice note') ||
+                msgType === 'sticker' || rawContentTrimmed === '[Sticker]' || rawContentTrimmed === '[sticker]' ||
+                (mediaUrl && !mediaUrl.startsWith('/api/messages'))
+            ) {
+                isMedia = true;
+                contentHtml = renderChatMessageMedia(m);
             }
 
             row.innerHTML = `
-                <div class="message-bubble ${m.direction}">
+                <div class="message-bubble ${m.direction}${isMedia ? ' has-media' : ''}">
                     <div class="msg-content">${contentHtml}</div>
                     <div class="msg-meta">
                         <span>${timeStr}</span>
@@ -9046,36 +9292,130 @@ async function fetchChatMessages(isInitial = false) {
     }
 }
 
+// Staged file attachment handling for chat input
+let stagedChatFile = null;
+
+document.getElementById('chat-attach-btn')?.addEventListener('click', () => {
+    document.getElementById('chat-file-input')?.click();
+});
+
+document.getElementById('chat-file-input')?.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    stagedChatFile = file;
+    const previewChip = document.getElementById('chat-attachment-preview');
+    const previewName = document.getElementById('chat-attachment-name');
+    const previewIcon = document.getElementById('chat-attachment-icon');
+
+    if (previewChip && previewName) {
+        previewName.textContent = file.name;
+        if (file.type.startsWith('image/')) previewIcon.textContent = '📷';
+        else if (file.type.startsWith('video/')) previewIcon.textContent = '🎥';
+        else if (file.type.includes('pdf')) previewIcon.textContent = '📄';
+        else previewIcon.textContent = '📎';
+        previewChip.style.display = 'inline-flex';
+        document.getElementById('chat-reply-text')?.removeAttribute('required');
+    }
+});
+
+document.getElementById('chat-attachment-remove')?.addEventListener('click', () => {
+    clearChatAttachment();
+});
+
+function clearChatAttachment() {
+    stagedChatFile = null;
+    const fileInput = document.getElementById('chat-file-input');
+    if (fileInput) fileInput.value = '';
+    const previewChip = document.getElementById('chat-attachment-preview');
+    if (previewChip) previewChip.style.display = 'none';
+    document.getElementById('chat-reply-text')?.setAttribute('required', 'required');
+}
+
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
 document.getElementById('chat-reply-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const inputEl = document.getElementById('chat-reply-text');
     const content = inputEl.value.trim();
-    if (!content) return;
+    if (!content && !stagedChatFile) return;
 
     const customerId = document.getElementById('chat-active-customer').value;
     const btn = e.target.querySelector('button[type="submit"]');
 
-    inputEl.value = '';
+    const originalBtnHtml = btn.innerHTML;
     btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="width:1rem;height:1rem;border-width:2px;display:inline-block;"></span>`;
 
-    const res = await apiFetch('/api/send-message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+    try {
+        let mediaId = null;
+        let msgType = 'text';
+
+        if (stagedChatFile) {
+            const base64Data = await readFileAsBase64(stagedChatFile);
+            const uploadRes = await apiFetch('/api/upload-media', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    base64Data,
+                    fileName: stagedChatFile.name,
+                    mimeType: stagedChatFile.type || 'application/octet-stream'
+                })
+            });
+            const uploadResult = await uploadRes.json();
+            if (uploadResult.error) {
+                showModal('Upload Error', 'Failed to upload media attachment: ' + uploadResult.error);
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHtml;
+                return;
+            }
+            mediaId = uploadResult.media_id || uploadResult.handle;
+            if (stagedChatFile.type.startsWith('image/')) msgType = 'image';
+            else if (stagedChatFile.type.startsWith('video/')) msgType = 'video';
+            else msgType = 'document';
+        }
+
+        const payload = {
             customer_id: customerId,
-            type: 'text',
-            content: content
-        })
-    });
+            type: msgType,
+            content: content || (stagedChatFile ? stagedChatFile.name : '')
+        };
+        if (mediaId) {
+            payload.media_id = mediaId;
+            if (stagedChatFile) {
+                payload.filename = stagedChatFile.name;
+                payload.media_type = msgType;
+            }
+        }
 
-    btn.disabled = false;
+        const res = await apiFetch('/api/send-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-    const result = await res.json();
-    if (result.error) {
-        showModal('Message Error', "Failed to send message: " + result.error);
+        const result = await res.json();
+        if (result.error) {
+            showModal('Message Error', "Failed to send message: " + result.error);
+        } else {
+            inputEl.value = '';
+            clearChatAttachment();
+        }
+
+        fetchChatMessages();
+    } catch (err) {
+        showModal('Error', err.message || 'Failed to send message');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
     }
-
-    fetchChatMessages();
 });
 
 // Toggle Chat Header 3-Dots Dropdown Menu

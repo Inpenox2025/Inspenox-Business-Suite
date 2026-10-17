@@ -1960,17 +1960,413 @@ tr:hover td {
     transform: translateY(-1px);
 }
 
+/* Chat Media Message Styles */
+.message-bubble.has-media {
+    padding: 0.35rem 0.35rem 0.4rem 0.35rem;
+    max-width: 78%;
+}
+
+.chat-media-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 220px;
+    max-width: 330px;
+    box-sizing: border-box;
+}
+
+.chat-media-img-box {
+    position: relative;
+    overflow: hidden;
+    border-radius: 9px;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-media-img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 360px;
+    object-fit: cover;
+    display: block;
+    border-radius: 9px;
+    transition: transform 0.22s ease, filter 0.2s ease;
+}
+
+.chat-media-img-box:hover .chat-media-img {
+    transform: scale(1.02);
+}
+
+.chat-media-overlay {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(15, 23, 42, 0.72);
+    color: #fff;
+    padding: 4px 9px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.chat-media-img-box:hover .chat-media-overlay {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+.chat-media-video-box {
+    position: relative;
+    width: 100%;
+    border-radius: 9px;
+    overflow: hidden;
+    background: #000;
+}
+
+.chat-media-video {
+    width: 100%;
+    max-height: 360px;
+    display: block;
+    border-radius: 9px;
+    outline: none;
+}
+
+.chat-media-caption {
+    padding: 0.45rem 0.5rem 0.15rem 0.5rem;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    word-break: break-word;
+    color: inherit;
+}
+
+/* Document Attachment Cards */
+.chat-media-doc-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.18s ease;
+    cursor: pointer;
+}
+
+[data-theme="dark"] .chat-media-doc-card {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.chat-media-doc-card:hover {
+    background: rgba(0, 168, 132, 0.08);
+    border-color: rgba(0, 168, 132, 0.35);
+    transform: translateY(-1px);
+}
+
+.doc-icon-badge {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.72rem;
+    color: #fff;
+    text-transform: uppercase;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.doc-icon-badge.pdf {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+.doc-icon-badge.doc,
+.doc-icon-badge.docx {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.doc-icon-badge.xls,
+.doc-icon-badge.xlsx,
+.doc-icon-badge.csv {
+    background: linear-gradient(135deg, #10b981, #047857);
+}
+
+.doc-icon-badge.generic {
+    background: linear-gradient(135deg, #64748b, #334155);
+}
+
+.doc-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.doc-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.doc-meta {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.doc-download-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+    background: var(--bg-card, #ffffff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    transition: all 0.15s ease;
+}
+
+.chat-media-doc-card:hover .doc-download-btn {
+    background: #00a884;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+/* Audio Notes in Chat */
+.chat-media-audio-card {
+    min-width: 250px;
+    max-width: 320px;
+    padding: 0.35rem 0.5rem;
+}
+
+.audio-header-tag {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #00a884;
+    margin-bottom: 0.4rem;
+}
+
+.chat-audio-player {
+    width: 100%;
+    height: 38px;
+    outline: none;
+    border-radius: 20px;
+}
+
+/* Sticker in Chat */
+.chat-media-sticker-box {
+    padding: 0.25rem;
+}
+
+.chat-media-sticker {
+    width: 140px;
+    height: 140px;
+    object-fit: contain;
+    display: block;
+}
+
+/* WhatsApp Styled Media Placeholders (for historical or metadata-only messages) */
+.chat-media-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    min-width: 220px;
+    max-width: 320px;
+}
+
+[data-theme="dark"] .chat-media-placeholder {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.09);
+}
+
+.media-placeholder-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-placeholder .media-placeholder-icon {
+    background: rgba(0, 168, 132, 0.14);
+    color: #00a884;
+}
+
+.video-placeholder .media-placeholder-icon {
+    background: rgba(99, 102, 241, 0.14);
+    color: #6366f1;
+}
+
+.doc-placeholder .media-placeholder-icon {
+    background: rgba(239, 68, 68, 0.14);
+    color: #ef4444;
+}
+
+.audio-placeholder .media-placeholder-icon {
+    background: rgba(245, 158, 11, 0.14);
+    color: #f59e0b;
+}
+
+.media-placeholder-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.media-placeholder-title {
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--text-main);
+}
+
+.media-placeholder-subtitle {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Lightbox Modal */
+.lightbox-close-btn {
+    position: absolute;
+    top: -42px;
+    right: 0;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: none;
+    font-size: 1.35rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.lightbox-close-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.08);
+}
+
+#lightbox-media-container img {
+    max-width: 90vw;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 8px;
+    display: block;
+}
+
+#lightbox-media-container video {
+    max-width: 90vw;
+    max-height: 80vh;
+    border-radius: 8px;
+    display: block;
+    outline: none;
+}
+
+/* Chat Input Bar & Attachments */
 .chat-input-bar {
-    padding: 0.85rem 1.25rem;
+    padding: 0.75rem 1.15rem;
     background: var(--bg-sidebar);
     border-top: 1px solid var(--border);
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.65rem;
+}
+
+.chat-attach-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.45rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.18s ease;
+}
+
+.chat-attach-btn:hover {
+    background: rgba(0, 168, 132, 0.12);
+    color: #00a884;
+    transform: rotate(15deg);
+}
+
+.chat-attachment-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0, 168, 132, 0.12);
+    border: 1px solid rgba(0, 168, 132, 0.25);
+    border-radius: 16px;
+    padding: 0.25rem 0.65rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.78rem;
+    color: #00a884;
+    font-weight: 600;
+}
+
+.chat-attachment-chip .chip-filename {
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-attachment-chip button {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    display: flex;
+    align-items: center;
+}
+
+.chat-attachment-chip button:hover {
+    opacity: 0.75;
 }
 
 .chat-input-wrapper {
     flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .chat-input-wrapper input {

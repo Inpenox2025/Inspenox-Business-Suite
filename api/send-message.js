@@ -119,6 +119,10 @@ module.exports = async (req, res) => {
             payload.image = mediaObjFormatted ? { ...mediaObjFormatted, caption: content } : { caption: content };
         } else if (type === 'video') {
             payload.video = mediaObjFormatted ? { ...mediaObjFormatted, caption: content } : { caption: content };
+        } else if (type === 'document') {
+            payload.document = mediaObjFormatted ? { ...mediaObjFormatted, caption: content, filename: req.body.filename || 'Document' } : { caption: content };
+        } else if (type === 'audio') {
+            payload.audio = mediaObjFormatted || {};
         }
 
         let responseData = null;
@@ -393,9 +397,17 @@ module.exports = async (req, res) => {
         // Insert into messages table
         const saveContent = type === 'template' ? `[Template] ${template_name}` : content;
         const msgCompanyId = companyId || customer.company_id || 1;
+        let outMediaUrl = null;
+        if (media_id) {
+            if (mediaObjFormatted && mediaObjFormatted.link) {
+                outMediaUrl = mediaObjFormatted.link;
+            } else {
+                outMediaUrl = `/api/media-proxy?media_id=${encodeURIComponent(media_id)}&company_id=${msgCompanyId}`;
+            }
+        }
         await sql`
-            INSERT INTO messages (company_id, customer_id, direction, type, content, wa_message_id, status) 
-            VALUES (${msgCompanyId}, ${customer_id}, 'outbound', ${type}, ${saveContent}, ${wa_message_id}, 'sent')
+            INSERT INTO messages (company_id, customer_id, direction, type, content, media_url, wa_message_id, status) 
+            VALUES (${msgCompanyId}, ${customer_id}, 'outbound', ${type}, ${saveContent}, ${outMediaUrl}, ${wa_message_id}, 'sent')
         `;
 
         return res.status(200).json({ success: true, message_id: wa_message_id });

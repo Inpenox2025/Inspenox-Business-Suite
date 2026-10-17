@@ -1681,7 +1681,18 @@
                         <!-- Chat Reply Input Bar -->
                         <form id="chat-reply-form" class="chat-input-bar" style="display:none;">
                             <input type="hidden" id="chat-active-customer">
+                            <input type="file" id="chat-file-input" style="display:none;" accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv,.txt">
+                            <button type="button" id="chat-attach-btn" class="chat-attach-btn" title="Attach Image, Video, or Document">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                                </svg>
+                            </button>
                             <div class="chat-input-wrapper">
+                                <div id="chat-attachment-preview" style="display:none;" class="chat-attachment-chip">
+                                    <span id="chat-attachment-icon">📎</span>
+                                    <span id="chat-attachment-name" class="chip-filename"></span>
+                                    <button type="button" id="chat-attachment-remove" title="Remove attachment">✕</button>
+                                </div>
                                 <input type="text" id="chat-reply-text" placeholder="Type a WhatsApp message..."
                                     required autocomplete="off">
                             </div>
@@ -1692,6 +1703,21 @@
                                 </svg>
                             </button>
                         </form>
+                    </div>
+                </div>
+
+                <!-- Media Lightbox / Fullscreen Viewer Modal -->
+                <div id="modal-media-lightbox" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.88); z-index:10000; align-items:center; justify-content:center; padding:1.5rem; backdrop-filter:blur(6px);">
+                    <div class="lightbox-content-wrap" style="position:relative; max-width:92vw; max-height:90vh; display:flex; flex-direction:column; align-items:center;">
+                        <button type="button" class="lightbox-close-btn" onclick="closeMediaLightbox()" title="Close Viewer">✕</button>
+                        <div id="lightbox-media-container" style="display:flex; justify-content:center; align-items:center; overflow:hidden; border-radius:12px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);"></div>
+                        <div class="lightbox-actions" style="margin-top:1rem; display:flex; gap:0.75rem;">
+                            <a id="lightbox-download-btn" href="#" target="_blank" download class="btn primary sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                <span>Download</span>
+                            </a>
+                            <button type="button" class="btn secondary sm" onclick="closeMediaLightbox()">Close</button>
+                        </div>
                     </div>
                 </div>
 
