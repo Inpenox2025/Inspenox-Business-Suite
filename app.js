@@ -8095,7 +8095,7 @@ function renderInboxContacts(list) {
         }
 
         const div = document.createElement('div');
-        div.className = `inbox-contact-card ${activeInboxCustomer === c.id ? 'active' : ''}`;
+        div.className = `inbox-contact-card ${String(activeInboxCustomer) === String(c.id) ? 'active' : ''}`;
         div.setAttribute('data-id', c.id);
         div.innerHTML = `
             <div class="contact-avatar">${getInitial(c.name)}</div>
@@ -8611,8 +8611,86 @@ window.toggleInboxModalTag = function toggleInboxModalTag(tagName) {
     renderInboxModalTagsList();
 };
 
+window.showToast = function showToast(message, type = 'info') {
+    if (!message) return;
+    let toastContainer = document.getElementById('global-toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'global-toast-container';
+        toastContainer.style.cssText = 'position:fixed; top:20px; right:20px; z-index:999999; display:flex; flex-direction:column; gap:8px; pointer-events:none; max-width:380px; width:calc(100% - 40px);';
+        document.body.appendChild(toastContainer);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast-popup toast-${type}`;
+    
+    let bg = '#0f172a';
+    let border = '#334155';
+    let text = '#f8fafc';
+    let icon = 'ℹ️';
+
+    if (type === 'success') {
+        bg = '#064e3b';
+        border = '#10b981';
+        text = '#ecfdf5';
+        icon = '✅';
+    } else if (type === 'error') {
+        bg = '#7f1d1d';
+        border = '#ef4444';
+        text = '#fef2f2';
+        icon = '⚠️';
+    } else if (type === 'warning') {
+        bg = '#78350f';
+        border = '#f59e0b';
+        text = '#fffbeb';
+        icon = '⚡';
+    }
+
+    toast.style.cssText = `
+        background: ${bg};
+        border: 1px solid ${border};
+        color: ${text};
+        padding: 0.65rem 0.95rem;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        backdrop-filter: blur(8px);
+        pointer-events: auto;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    `;
+
+    const safeMsg = (typeof escapeHtml === 'function') ? escapeHtml(message) : String(message);
+    toast.innerHTML = `
+        <span style="font-size: 1rem; line-height: 1;">${icon}</span>
+        <span style="flex: 1; word-break: break-word;">${safeMsg}</span>
+        <button type="button" style="background:none; border:none; color:inherit; opacity:0.75; cursor:pointer; font-size:1rem; padding:0; line-height:1;" onclick="this.parentElement.remove()">✕</button>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    });
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-8px)';
+        setTimeout(() => toast.remove(), 200);
+    }, 3200);
+};
+
 window.saveInboxCustomerTags = async function saveInboxCustomerTags() {
-    if (!activeInboxCustomer || !activeCustomerData) return;
+    if (!activeInboxCustomer || !activeCustomerData) {
+        if (typeof showToast === 'function') showToast('Please select a chat first.', 'warning');
+        return;
+    }
     const saveBtn = document.getElementById('btn-save-inbox-tags');
     if (saveBtn) {
         saveBtn.disabled = true;
@@ -8636,17 +8714,65 @@ window.saveInboxCustomerTags = async function saveInboxCustomerTags() {
         if (data.error) {
             showToast(data.error, 'error');
         } else {
+            // 1. Immediately update active customer object reference
             activeCustomerData.tags = newTagsStr;
-            const inListCust = inboxCustomersList.find(c => String(c.id) === String(activeInboxCustomer));
-            if (inListCust) inListCust.tags = newTagsStr;
             
-            showToast('Tags updated successfully', 'success');
+            // 2. Immediately update in inboxCustomersList
+            if (typeof inboxCustomersList !== 'undefined' && Array.isArray(inboxCustomersList)) {
+                const inListCust = inboxCustomersList.find(c => String(c.id) === String(activeInboxCustomer));
+                if (inListCust) inListCust.tags = newTagsStr;
+            }
+
+            // 3. Update in allCustomers directory list if present
+            if (typeof allCustomers !== 'undefined' && Array.isArray(allCustomers)) {
+                const inAllCust = allCustomers.find(c => String(c.id) === String(activeInboxCustomer));
+                if (inAllCust) inAllCust.tags = newTagsStr;
+            }
+            
+            // 4. Close modal immediately
             closeInboxAssignTagsModal();
+
+            // 5. Re-render active chat header tags pills immediately
             renderActiveChatTags(activeCustomerData);
-            filterAndRenderInboxContacts();
+
+            // 6. Directly update the sidebar contact card tags preview in place
+            const activeCard = document.querySelector(`.inbox-contact-card[data-id="${activeInboxCustomer}"]`);
+            if (activeCard) {
+                let tagsContainer = activeCard.querySelector('.inbox-card-tags');
+                if (newTagsStr.trim()) {
+                    const tagNames = newTagsStr.split(',').map(t => t.trim()).filter(Boolean);
+                    const tagsHtml = tagNames.slice(0, 3).map(tn => {
+                        const style = getTagStyle(tn);
+                        return `<span class="contact-tag-pill ${style.cls}" style="${style.styleAttr}" title="${tn}">${tn}</span>`;
+                    }).join('') + (tagNames.length > 3 ? `<span style="font-size:0.6rem; color:var(--text-muted); align-self:center;">+${tagNames.length - 3}</span>` : '');
+                    
+                    if (tagsContainer) {
+                        tagsContainer.innerHTML = tagsHtml;
+                    } else {
+                        const details = activeCard.querySelector('.contact-details');
+                        if (details) {
+                            const newTagDiv = document.createElement('div');
+                            newTagDiv.className = 'inbox-card-tags';
+                            newTagDiv.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.25rem; margin-top:0.3rem;';
+                            newTagDiv.innerHTML = tagsHtml;
+                            details.appendChild(newTagDiv);
+                        }
+                    }
+                } else if (tagsContainer) {
+                    tagsContainer.remove();
+                }
+            }
+
+            // 7. Refresh sidebar filters so active tag filter accounts for change
+            if (typeof filterAndRenderInboxContacts === 'function') {
+                filterAndRenderInboxContacts();
+            }
+
+            showToast('Tags updated successfully', 'success');
         }
     } catch(e) {
-        showToast('Failed to save tags: ' + e.message, 'error');
+        console.error('Failed to save inbox tags:', e);
+        showToast('Failed to save tags: ' + (e.message || 'Unknown error'), 'error');
     } finally {
         if (saveBtn) {
             saveBtn.disabled = false;

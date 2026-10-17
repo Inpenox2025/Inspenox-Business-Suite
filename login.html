@@ -1552,16 +1552,328 @@
         /* Pricing Section */
         .pricing-section {
             padding: 5.5rem 1.5rem;
-            max-width: 1200px;
+            max-width: 1240px;
             margin: 0 auto;
             text-align: center;
         }
 
+        /* Billing Cycle Selector */
+        .pricing-cycle-switcher {
+            display: inline-flex;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 5px;
+            gap: 4px;
+            margin: 0 auto 3rem auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .pricing-cycle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.825rem;
+            font-weight: 700;
+            padding: 0.55rem 1.15rem;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            white-space: nowrap;
+        }
+
+        .pricing-cycle-btn:hover {
+            color: var(--text-main);
+        }
+
+        .pricing-cycle-btn.active {
+            background: var(--primary, #00a884);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 168, 132, 0.35);
+        }
+
+        .pricing-cycle-discount {
+            font-size: 0.68rem;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 7px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        .pricing-cycle-btn:not(.active) .pricing-cycle-discount {
+            background: rgba(0, 168, 132, 0.12);
+            color: #00a884;
+        }
+
+        .pricing-cycle-discount.best-value {
+            background: #f59e0b;
+            color: #111b21;
+        }
+
+        /* Subscription Plan Cards Grid */
+        .sub-plans-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.75rem;
+            align-items: stretch;
+            text-align: left;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 980px) {
+            .sub-plans-grid {
+                grid-template-columns: 1fr;
+                max-width: 520px;
+                margin: 1.5rem auto 0 auto;
+            }
+        }
+
+        .sub-plan-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 2.25rem 1.85rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .sub-plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+            border-color: rgba(0, 168, 132, 0.5);
+        }
+
+        .sub-plan-card.featured {
+            border: 2px solid var(--primary, #00a884);
+            background: linear-gradient(180deg, rgba(0, 168, 132, 0.08) 0%, var(--bg-card) 45%);
+            box-shadow: 0 14px 40px rgba(0, 168, 132, 0.2);
+            transform: scale(1.02);
+        }
+
+        .sub-plan-card.featured:hover {
+            transform: scale(1.02) translateY(-5px);
+            box-shadow: 0 20px 48px rgba(0, 168, 132, 0.28);
+        }
+
+        @media (max-width: 980px) {
+            .sub-plan-card.featured {
+                transform: none;
+            }
+            .sub-plan-card.featured:hover {
+                transform: translateY(-5px);
+            }
+        }
+
+        .sub-plan-popular-pill {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #00a884 0%, #10b981 100%);
+            color: #ffffff;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 4px 14px;
+            border-radius: 50px;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 168, 132, 0.4);
+        }
+
+        .sub-plan-tier-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: rgba(100, 116, 139, 0.15);
+            color: var(--text-muted);
+            margin-bottom: 0.85rem;
+        }
+
+        .sub-plan-tier-badge.pro {
+            background: rgba(0, 168, 132, 0.18);
+            color: #00a884;
+        }
+
+        .sub-plan-tier-badge.enterprise {
+            background: rgba(168, 85, 247, 0.18);
+            color: #a855f7;
+        }
+
+        .sub-plan-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 800;
+            margin: 0 0 0.5rem 0;
+            color: var(--text-main);
+            letter-spacing: -0.3px;
+        }
+
+        .sub-plan-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0 0 1.5rem 0;
+            line-height: 1.5;
+            min-height: 48px;
+        }
+
+        .sub-plan-pricing-box {
+            padding: 1.25rem 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .sub-plan-price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .sub-plan-curr {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--primary, #00a884);
+        }
+
+        .sub-plan-amount {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.75rem;
+            font-weight: 900;
+            color: var(--text-main);
+            line-height: 1;
+        }
+
+        .sub-plan-period {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .sub-plan-billing-note {
+            font-size: 0.775rem;
+            color: var(--text-muted);
+            margin-top: 0.35rem;
+        }
+
+        .sub-plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 2rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .sub-plan-features li {
+            font-size: 0.85rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            line-height: 1.4;
+        }
+
+        .sub-plan-features .feature-check {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(0, 168, 132, 0.15);
+            color: #00a884;
+            font-size: 0.7rem;
+            font-weight: 800;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .sub-plan-features .feature-check.highlight {
+            background: #00a884;
+            color: #ffffff;
+        }
+
+        .sub-plan-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            margin-top: auto;
+        }
+
+        .btn-plan-cta {
+            width: 100%;
+            padding: 0.9rem 1.25rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            border: 1px solid var(--border);
+            background: var(--bg-dark);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .btn-plan-cta:hover {
+            border-color: var(--primary, #00a884);
+            background: rgba(0, 168, 132, 0.1);
+            color: var(--primary, #00a884);
+            transform: translateY(-2px);
+        }
+
+        .btn-plan-cta.featured-cta {
+            background: linear-gradient(135deg, #00a884 0%, #10b981 100%);
+            border: none;
+            color: #ffffff;
+            box-shadow: 0 4px 16px rgba(0, 168, 132, 0.35);
+        }
+
+        .btn-plan-cta.featured-cta:hover {
+            background: linear-gradient(135deg, #029474 0%, #059669 100%);
+            color: #ffffff;
+            box-shadow: 0 6px 22px rgba(0, 168, 132, 0.45);
+            transform: translateY(-2px);
+        }
+
+        .sub-plan-login-link {
+            font-size: 0.775rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-align: center;
+            text-decoration: none;
+            transition: color 0.15s ease;
+            cursor: pointer;
+        }
+
+        .sub-plan-login-link:hover {
+            color: var(--primary, #00a884);
+        }
+
+        /* Pass-through rates grid */
         .rates-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1.5rem;
-            margin-top: 3rem;
+            margin-top: 1.5rem;
         }
 
         .rate-card {
@@ -2339,7 +2651,7 @@
             <a href="#shared-inbox" class="landing-nav-link">Shared Inbox</a>
             <a href="#omnichannel" class="landing-nav-link">Omnichannel</a>
             <a href="#why-us" class="landing-nav-link">Why Choose Us</a>
-            <a href="#pricing" class="landing-nav-link">Rates & Pricing</a>
+            <a href="#pricing" class="landing-nav-link">Plans & Pricing</a>
         </nav>
 
         <div class="landing-header-actions">
@@ -3384,35 +3696,192 @@
 
     <!-- Pricing Section -->
     <section id="pricing" class="pricing-section">
-        <span class="spotlight-pill">💳 Transparent Pricing</span>
-        <h2 class="spotlight-title">Transparent & Itemized Pay-As-You-Go Rates</h2>
-        <p class="spotlight-desc" style="max-width: 720px; margin: 0 auto;">No hidden monthly lock-ins. Zero platform commission. Pay Meta directly for actual delivered messages with full GST tax invoice breakdown and 100% Input Tax Credit eligibility.</p>
+        <span class="spotlight-pill">💳 Subscription & Billing Plans</span>
+        <h2 class="spotlight-title">Predictable Plans Built to Scale Your Growth</h2>
+        <p class="spotlight-desc" style="max-width: 740px; margin: 0 auto 2.5rem auto;">
+            Choose a workspace plan designed for your team's size and messaging volume. All plans include 0% commission on Meta WhatsApp delivery — pay Meta directly at raw base rates with 100% GST ITC eligibility.
+        </p>
 
-        <div class="rates-grid">
-            <div class="rate-card">
-                <span style="display: inline-block; font-size: 0.65rem; font-weight: 800; background: rgba(0, 168, 132, 0.15); color: #00a884; padding: 2px 8px; border-radius: 20px; margin-bottom: 0.5rem;">0% COMMISSION · DIRECT META PAY</span>
-                <span class="rate-category">WhatsApp Marketing</span>
-                <div class="rate-price">₹0.8631</div>
-                <p class="rate-desc">per delivered message (Raw Meta Cloud API Base Rate)</p>
+        <!-- Billing Cycle Selector Tabs -->
+        <div class="pricing-cycle-switcher" role="tablist">
+            <button type="button" class="pricing-cycle-btn active" data-cycle="monthly" onclick="setLandingBillingCycle('monthly')">
+                <span>Monthly</span>
+            </button>
+            <button type="button" class="pricing-cycle-btn" data-cycle="4months" onclick="setLandingBillingCycle('4months')">
+                <span>4 Months</span>
+                <span class="pricing-cycle-discount">Save 10%</span>
+            </button>
+            <button type="button" class="pricing-cycle-btn" data-cycle="6months" onclick="setLandingBillingCycle('6months')">
+                <span>6 Months</span>
+                <span class="pricing-cycle-discount">Save 15%</span>
+            </button>
+            <button type="button" class="pricing-cycle-btn" data-cycle="annual" onclick="setLandingBillingCycle('annual')">
+                <span>Annual</span>
+                <span class="pricing-cycle-discount best-value">Save 20% · Best Value</span>
+            </button>
+        </div>
+
+        <!-- 3 Subscription Plan Cards Grid -->
+        <div class="sub-plans-grid">
+            
+            <!-- 1. Starter Tier -->
+            <div class="sub-plan-card" id="plan-card-starter">
+                <div class="sub-plan-header">
+                    <div class="sub-plan-badge-row">
+                        <span class="sub-plan-tier-badge">ESSENTIAL</span>
+                    </div>
+                    <h3 class="sub-plan-title">Starter Tier</h3>
+                    <p class="sub-plan-desc">Perfect for small businesses beginning their automated WhatsApp messaging journey.</p>
+                </div>
+
+                <div class="sub-plan-pricing-box">
+                    <div class="sub-plan-price-row">
+                        <span class="sub-plan-curr">₹</span>
+                        <span class="sub-plan-amount" id="starter-price-display">999</span>
+                        <span class="sub-plan-period" id="starter-period-display">/month</span>
+                    </div>
+                    <div class="sub-plan-billing-note" id="starter-billed-note">Billed monthly (₹999)</div>
+                </div>
+
+                <ul class="sub-plan-features">
+                    <li><span class="feature-check">✓</span> <span><strong>1</strong> Connected WhatsApp Business Number</span></li>
+                    <li><span class="feature-check">✓</span> <span>Up to <strong>1,500</strong> Active Customer Contacts</span></li>
+                    <li><span class="feature-check">✓</span> <span>Pre-Approved WhatsApp Templates</span></li>
+                    <li><span class="feature-check">✓</span> <span>Basic Direct Broadcast Campaigns</span></li>
+                    <li><span class="feature-check">✓</span> <span>Shared Inbox with Real-Time Chat</span></li>
+                    <li><span class="feature-check">✓</span> <span>Standard Message Delivery Speed</span></li>
+                    <li><span class="feature-check">✓</span> <span>Customer Support (Standard Email)</span></li>
+                </ul>
+
+                <div class="sub-plan-actions">
+                    <button type="button" class="btn-plan-cta" onclick="selectLandingPlan('starter', 'Starter Tier', 999, 'signup')">
+                        Get Started with Starter ➔
+                    </button>
+                    <a href="javascript:void(0)" class="sub-plan-login-link" onclick="selectLandingPlan('starter', 'Starter Tier', 999, 'login')">
+                        Already have an account? Log in ➔
+                    </a>
+                </div>
             </div>
 
-            <div class="rate-card">
-                <span style="display: inline-block; font-size: 0.65rem; font-weight: 800; background: rgba(56, 189, 248, 0.15); color: #0284c7; padding: 2px 8px; border-radius: 20px; margin-bottom: 0.5rem;">0% MARKUP · 100% GST ITC</span>
-                <span class="rate-category">WhatsApp Utility</span>
-                <div class="rate-price">₹0.1150</div>
-                <p class="rate-desc">per delivered message (Order updates & OTP verification)</p>
+            <!-- 2. Growth Pro (Featured / Most Popular) -->
+            <div class="sub-plan-card featured" id="plan-card-growth">
+                <div class="sub-plan-popular-pill">👑 MOST POPULAR · RECOMMENDED</div>
+                <div class="sub-plan-header">
+                    <div class="sub-plan-badge-row">
+                        <span class="sub-plan-tier-badge pro">SCALE & GROW</span>
+                    </div>
+                    <h3 class="sub-plan-title">Growth Pro</h3>
+                    <p class="sub-plan-desc">Built for scaling brands requiring multi-team access, dynamic tags, and intelligent broadcasts.</p>
+                </div>
+
+                <div class="sub-plan-pricing-box">
+                    <div class="sub-plan-price-row">
+                        <span class="sub-plan-curr">₹</span>
+                        <span class="sub-plan-amount" id="growth-price-display">2,499</span>
+                        <span class="sub-plan-period" id="growth-period-display">/month</span>
+                    </div>
+                    <div class="sub-plan-billing-note" id="growth-billed-note">Billed monthly (₹2,499)</div>
+                </div>
+
+                <ul class="sub-plan-features">
+                    <li><span class="feature-check highlight">✓</span> <span>Up to <strong>3</strong> WhatsApp Phone Numbers</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Up to <strong>15,000</strong> Active Contacts</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Dynamic Broadcast Variables & Tags</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Multi-Channel Inbox (Live Chat & WhatsApp)</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span><strong>5 Team Members</strong> / Agent Accounts</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Detailed Meta Delivery & Read Analytics</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Priority Queue Broadcast Engine</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Priority Chat & SLA Support</span></li>
+                </ul>
+
+                <div class="sub-plan-actions">
+                    <button type="button" class="btn-plan-cta featured-cta" onclick="selectLandingPlan('growth', 'Growth Pro', 2499, 'signup')">
+                        Start with Growth Pro ➔
+                    </button>
+                    <a href="javascript:void(0)" class="sub-plan-login-link" onclick="selectLandingPlan('growth', 'Growth Pro', 2499, 'login')">
+                        Already have an account? Log in ➔
+                    </a>
+                </div>
             </div>
 
-            <div class="rate-card">
-                <span class="rate-category">Email Marketing</span>
-                <div class="rate-price">₹0.0500</div>
-                <p class="rate-desc">per email sent (AWS SES High Inbox Rate)</p>
+            <!-- 3. Enterprise Elite -->
+            <div class="sub-plan-card" id="plan-card-enterprise">
+                <div class="sub-plan-header">
+                    <div class="sub-plan-badge-row">
+                        <span class="sub-plan-tier-badge enterprise">ENTERPRISE</span>
+                    </div>
+                    <h3 class="sub-plan-title">Enterprise Elite</h3>
+                    <p class="sub-plan-desc">Complete multi-tenant ecosystem for corporate agencies and high-volume operations.</p>
+                </div>
+
+                <div class="sub-plan-pricing-box">
+                    <div class="sub-plan-price-row">
+                        <span class="sub-plan-curr">₹</span>
+                        <span class="sub-plan-amount" id="enterprise-price-display">5,999</span>
+                        <span class="sub-plan-period" id="enterprise-period-display">/month</span>
+                    </div>
+                    <div class="sub-plan-billing-note" id="enterprise-billed-note">Billed monthly (₹5,999)</div>
+                </div>
+
+                <ul class="sub-plan-features">
+                    <li><span class="feature-check">✓</span> <span><strong>Unlimited</strong> WhatsApp Business Accounts</span></li>
+                    <li><span class="feature-check">✓</span> <span><strong>Unlimited</strong> Active Customer Records</span></li>
+                    <li><span class="feature-check">✓</span> <span>Multi-Tenant Company Workspace Switcher</span></li>
+                    <li><span class="feature-check">✓</span> <span>Unlimited Team Members & Role Permissions</span></li>
+                    <li><span class="feature-check">✓</span> <span>Dedicated Webhooks & Custom System Tokens</span></li>
+                    <li><span class="feature-check">✓</span> <span>White-Glove Onboarding & 24/7 SLA Support</span></li>
+                    <li><span class="feature-check">✓</span> <span>Maximum Meta API Throughput (Tier 3/Unlimited)</span></li>
+                    <li><span class="feature-check">✓</span> <span>Custom Add-on Features & Dedicated Manager</span></li>
+                </ul>
+
+                <div class="sub-plan-actions">
+                    <button type="button" class="btn-plan-cta" onclick="selectLandingPlan('enterprise', 'Enterprise Elite', 5999, 'signup')">
+                        Scale with Enterprise ➔
+                    </button>
+                    <a href="javascript:void(0)" class="sub-plan-login-link" onclick="selectLandingPlan('enterprise', 'Enterprise Elite', 5999, 'login')">
+                        Already have an account? Log in ➔
+                    </a>
+                </div>
             </div>
 
-            <div class="rate-card">
-                <span class="rate-category">DLT Bulk SMS</span>
-                <div class="rate-price">₹0.2500</div>
-                <p class="rate-desc">per DLT-compliant domestic SMS</p>
+        </div>
+
+        <!-- Raw Meta Delivery Rates Sub-Section -->
+        <div style="margin-top: 5rem; padding-top: 3.5rem; border-top: 1px solid var(--border);">
+            <span class="spotlight-pill">⚡ Direct Meta Pass-Through Rates</span>
+            <h3 style="font-family:'Outfit',sans-serif; font-size:1.85rem; font-weight:800; margin:0.75rem 0 0.5rem 0; color:var(--text-main);">
+                Transparent & Itemized Pay-As-You-Go Delivery Rates
+            </h3>
+            <p class="spotlight-desc" style="max-width: 720px; margin: 0 auto 2.5rem auto;">
+                Zero platform markup. Pay Meta directly for delivered messages with full GST tax invoice breakdown and 100% Input Tax Credit (ITC) eligibility.
+            </p>
+
+            <div class="rates-grid">
+                <div class="rate-card">
+                    <span style="display: inline-block; font-size: 0.65rem; font-weight: 800; background: rgba(0, 168, 132, 0.15); color: #00a884; padding: 2px 8px; border-radius: 20px; margin-bottom: 0.5rem;">0% COMMISSION · DIRECT META PAY</span>
+                    <span class="rate-category">WhatsApp Marketing</span>
+                    <div class="rate-price">₹0.8631</div>
+                    <p class="rate-desc">per delivered message (Raw Meta Cloud API Base Rate)</p>
+                </div>
+
+                <div class="rate-card">
+                    <span style="display: inline-block; font-size: 0.65rem; font-weight: 800; background: rgba(56, 189, 248, 0.15); color: #0284c7; padding: 2px 8px; border-radius: 20px; margin-bottom: 0.5rem;">0% MARKUP · 100% GST ITC</span>
+                    <span class="rate-category">WhatsApp Utility</span>
+                    <div class="rate-price">₹0.1150</div>
+                    <p class="rate-desc">per delivered message (Order updates & OTP verification)</p>
+                </div>
+
+                <div class="rate-card">
+                    <span class="rate-category">Email Marketing</span>
+                    <div class="rate-price">₹0.0500</div>
+                    <p class="rate-desc">per email sent (AWS SES High Inbox Rate)</p>
+                </div>
+
+                <div class="rate-card">
+                    <span class="rate-category">DLT Bulk SMS</span>
+                    <div class="rate-price">₹0.2500</div>
+                    <p class="rate-desc">per DLT-compliant domestic SMS</p>
+                </div>
             </div>
         </div>
     </section>
@@ -3545,6 +4014,18 @@
                         Already a member ? <a href="javascript:void(0)" onclick="toggleAuthMode('login')">Log in</a>
                     </div>
 
+                    <!-- Selected Plan Highlight Banner -->
+                    <div id="selected-plan-banner" style="display: none; margin-bottom: 1.25rem; padding: 0.85rem 1rem; border-radius: 12px; background: rgba(0, 168, 132, 0.12); border: 1px solid rgba(0, 168, 132, 0.35); align-items: center; justify-content: space-between; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #00a884; color: #fff; font-size: 0.8rem; font-weight: 800; flex-shrink: 0;">✓</span>
+                            <div>
+                                <div style="font-size: 0.875rem; font-weight: 700; color: var(--text-main);">Selected: <strong id="selected-plan-name-display" style="color: #00a884;">Growth Pro</strong> (<span id="selected-plan-price-display">₹2,499/mo</span>)</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1px;">Workspace setup will be customized for this plan upon creation.</div>
+                            </div>
+                        </div>
+                        <a href="#pricing" style="font-size: 0.75rem; font-weight: 800; color: var(--primary); text-decoration: none; white-space: nowrap; padding: 0.25rem 0.6rem; border-radius: 6px; background: rgba(0, 168, 132, 0.15);">Change ➔</a>
+                    </div>
+
                     <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.85rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);">
                         Create Your Inspenox Account
                     </h2>
@@ -3570,6 +4051,7 @@
 
                     <!-- Native Signup Form -->
                     <form id="signup-form">
+                        <input type="hidden" id="selected-signup-plan-id" name="plan" value="">
                         <div class="auth-input-group">
                             <input type="text" id="signup-fullname" class="auth-input-field" placeholder="Full Name" required autocomplete="name">
                         </div>
@@ -3619,6 +4101,18 @@
                 <div id="view-auth-login" style="display: none;">
                     <div class="auth-switch-link">
                         Not a member yet? <a href="javascript:void(0)" onclick="toggleAuthMode('signup')">Sign up</a>
+                    </div>
+
+                    <!-- Selected Plan Banner for Login -->
+                    <div id="login-selected-plan-banner" style="display: none; margin-bottom: 1.25rem; padding: 0.85rem 1rem; border-radius: 12px; background: rgba(0, 168, 132, 0.12); border: 1px solid rgba(0, 168, 132, 0.35); align-items: center; justify-content: space-between; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #00a884; color: #fff; font-size: 0.8rem; font-weight: 800; flex-shrink: 0;">✓</span>
+                            <div>
+                                <div style="font-size: 0.875rem; font-weight: 700; color: var(--text-main);">Selected: <strong id="login-selected-plan-name-display" style="color: #00a884;">Growth Pro</strong> (<span id="login-selected-plan-price-display">₹2,499/mo</span>)</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 1px;">Sign in to your account to activate or upgrade to this plan.</div>
+                            </div>
+                        </div>
+                        <a href="#pricing" style="font-size: 0.75rem; font-weight: 800; color: var(--primary); text-decoration: none; white-space: nowrap; padding: 0.25rem 0.6rem; border-radius: 6px; background: rgba(0, 168, 132, 0.15);">Change ➔</a>
                     </div>
 
                     <div style="font-size: 0.75rem; font-weight: 800; color: #00a884; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.25rem;">
@@ -3894,6 +4388,132 @@
                 if (sideSignup) sideSignup.style.display = 'block';
             }
         }
+
+        // Landing Page Subscription Plans Data & Switching Engine
+        const LANDING_PLANS_DATA = {
+            monthly: {
+                starter: { price: '999', period: '/month', note: 'Billed monthly (₹999)' },
+                growth: { price: '2,499', period: '/month', note: 'Billed monthly (₹2,499)' },
+                enterprise: { price: '5,999', period: '/month', note: 'Billed monthly (₹5,999)' }
+            },
+            '4months': {
+                starter: { price: '899', period: '/month', note: 'Billed every 4 months · ₹3,596 total (10% OFF)' },
+                growth: { price: '2,249', period: '/month', note: 'Billed every 4 months · ₹8,996 total (10% OFF)' },
+                enterprise: { price: '5,399', period: '/month', note: 'Billed every 4 months · ₹21,596 total (10% OFF)' }
+            },
+            '6months': {
+                starter: { price: '849', period: '/month', note: 'Billed half-yearly · ₹5,095 total (15% OFF)' },
+                growth: { price: '2,124', period: '/month', note: 'Billed half-yearly · ₹12,745 total (15% OFF)' },
+                enterprise: { price: '5,099', period: '/month', note: 'Billed half-yearly · ₹30,595 total (15% OFF)' }
+            },
+            annual: {
+                starter: { price: '799', period: '/month', note: 'Billed annually · ₹9,590 total (20% OFF · Best Value)' },
+                growth: { price: '1,999', period: '/month', note: 'Billed annually · ₹23,990 total (20% OFF · Best Value)' },
+                enterprise: { price: '4,799', period: '/month', note: 'Billed annually · ₹57,590 total (20% OFF · Best Value)' }
+            }
+        };
+
+        let currentLandingCycle = 'monthly';
+
+        window.setLandingBillingCycle = function setLandingBillingCycle(cycle) {
+            currentLandingCycle = cycle;
+            document.querySelectorAll('.pricing-cycle-btn').forEach(b => {
+                if (b.getAttribute('data-cycle') === cycle) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+
+            const data = LANDING_PLANS_DATA[cycle] || LANDING_PLANS_DATA.monthly;
+            
+            const sp = document.getElementById('starter-price-display');
+            const sn = document.getElementById('starter-billed-note');
+            if (sp) sp.textContent = data.starter.price;
+            if (sn) sn.textContent = data.starter.note;
+
+            const gp = document.getElementById('growth-price-display');
+            const gn = document.getElementById('growth-billed-note');
+            if (gp) gp.textContent = data.growth.price;
+            if (gn) gn.textContent = data.growth.note;
+
+            const ep = document.getElementById('enterprise-price-display');
+            const en = document.getElementById('enterprise-billed-note');
+            if (ep) ep.textContent = data.enterprise.price;
+            if (en) en.textContent = data.enterprise.note;
+        };
+
+        window.selectLandingPlan = function selectLandingPlan(planId, planName, defaultPrice, authMode = 'signup') {
+            const cycleData = (LANDING_PLANS_DATA[currentLandingCycle] || LANDING_PLANS_DATA.monthly)[planId];
+            const priceDisplay = cycleData ? `₹${cycleData.price}/mo` : `₹${defaultPrice}/mo`;
+            const noteDisplay = cycleData ? cycleData.note : '';
+
+            // Store in sessionStorage so post-signup or post-login checkout can seamlessly pick it up
+            try {
+                sessionStorage.setItem('selected_landing_plan', JSON.stringify({
+                    planId,
+                    planName,
+                    cycle: currentLandingCycle,
+                    priceDisplay
+                }));
+            } catch(e) {}
+
+            // Populate hidden input on signup form
+            const hiddenPlanInput = document.getElementById('selected-signup-plan-id');
+            if (hiddenPlanInput) hiddenPlanInput.value = planId;
+
+            // Switch to requested auth mode
+            toggleAuthMode(authMode);
+
+            // Display plan highlight banner in signup view
+            const signupBanner = document.getElementById('selected-plan-banner');
+            const signupPlanName = document.getElementById('selected-plan-name-display');
+            const signupPlanPrice = document.getElementById('selected-plan-price-display');
+            if (signupBanner && signupPlanName && signupPlanPrice) {
+                signupPlanName.textContent = planName;
+                signupPlanPrice.textContent = `${priceDisplay} · ${noteDisplay}`;
+                signupBanner.style.display = 'flex';
+            }
+
+            // Display plan highlight banner in login view
+            const loginBanner = document.getElementById('login-selected-plan-banner');
+            const loginPlanName = document.getElementById('login-selected-plan-name-display');
+            const loginPlanPrice = document.getElementById('login-selected-plan-price-display');
+            if (loginBanner && loginPlanName && loginPlanPrice) {
+                loginPlanName.textContent = planName;
+                loginPlanPrice.textContent = `${priceDisplay} · ${noteDisplay}`;
+                loginBanner.style.display = 'flex';
+            }
+
+            // Smoothly scroll to the auth showcase section
+            const targetEl = document.getElementById('login-section');
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // Auto-focus first input field
+            setTimeout(() => {
+                if (authMode === 'signup') {
+                    document.getElementById('signup-fullname')?.focus();
+                } else {
+                    document.getElementById('login-username')?.focus();
+                }
+            }, 500);
+        };
+
+        // Auto-check for plan URL parameter (e.g., login.html?plan=growth&mode=signup)
+        (function() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const planParam = urlParams.get('plan');
+                if (planParam) {
+                    const planNames = { starter: 'Starter Tier', growth: 'Growth Pro', enterprise: 'Enterprise Elite' };
+                    const defaultPrices = { starter: 999, growth: 2499, enterprise: 5999 };
+                    if (planNames[planParam]) {
+                        setTimeout(() => {
+                            window.selectLandingPlan(planParam, planNames[planParam], defaultPrices[planParam], urlParams.get('mode') || 'signup');
+                        }, 250);
+                    }
+                }
+            } catch(e) {}
+        })();
 
         // Attach navbar button clicks to auto-toggle auth mode
         document.querySelectorAll('.nav-btn-signin').forEach(btn => {

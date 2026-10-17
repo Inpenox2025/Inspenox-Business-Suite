@@ -66,12 +66,20 @@ module.exports = async (req, res) => {
             } = req.body || {};
 
             if (id && (!name || !phone) && tags !== undefined) {
-                const updated = await sql`
-                    UPDATE customers 
-                    SET tags = ${tags || null}
-                    WHERE id = ${id}
-                    RETURNING *
-                `;
+                const targetId = parseInt(id, 10);
+                const updated = isNaN(targetId)
+                    ? await sql`
+                        UPDATE customers 
+                        SET tags = ${tags || null}
+                        WHERE id = ${id}
+                        RETURNING *
+                    `
+                    : await sql`
+                        UPDATE customers 
+                        SET tags = ${tags || null}
+                        WHERE id = ${targetId}
+                        RETURNING *
+                    `;
                 if (updated.length > 0) {
                     return res.status(200).json({ success: true, customer: updated[0] });
                 }
