@@ -9032,7 +9032,7 @@ function renderChatMessageMedia(m) {
         const downloadUrl = mediaUrl.includes('?') ? `${mediaUrl}&download=1` : `${mediaUrl}?download=1`;
         return `
             <div class="chat-media-wrapper">
-                <a href="${escapeHtml(downloadUrl)}" target="_blank" download="${escapeHtml(docName)}" class="chat-media-doc-card" title="Click to download ${escapeHtml(docName)}">
+                <div onclick="downloadChatMedia('${escapeHtml(mediaUrl)}', '${escapeHtml(docName)}')" class="chat-media-doc-card" title="Click to download ${escapeHtml(docName)}">
                     <div class="doc-icon-badge ${badgeClass}">
                         ${escapeHtml(docExt.toUpperCase().slice(0, 4))}
                     </div>
@@ -9047,7 +9047,7 @@ function renderChatMessageMedia(m) {
                     <div class="doc-download-btn">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     </div>
-                </a>
+                </div>
                 ${caption && caption !== docName ? `<div class="chat-media-caption">${escapeHtml(caption).replace(/\n/g, '<br>')}</div>` : ''}
             </div>
         `;
@@ -9071,18 +9071,83 @@ function handleMediaImgError(imgEl, fallbackTitle) {
     const box = imgEl.closest('.chat-media-wrapper') || imgEl.parentElement;
     if (box) {
         box.innerHTML = `
-            <div class="chat-media-placeholder image-placeholder">
-                <div class="media-placeholder-icon">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            <div class="chat-media-placeholder image-placeholder" style="border: 1px solid rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.05);">
+                <div class="media-placeholder-icon" style="background: rgba(239, 68, 68, 0.12); color: #ef4444;">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                 </div>
                 <div class="media-placeholder-info">
-                    <div class="media-placeholder-title">${fallbackTitle || 'Photo'}</div>
-                    <div class="media-placeholder-subtitle">Media unavailable or expired on WhatsApp</div>
+                    <div class="media-placeholder-title" style="color: #ef4444;">${fallbackTitle || 'Media'} Unavailable</div>
+                    <div class="media-placeholder-subtitle">Meta Access Token expired • Update in Settings</div>
                 </div>
             </div>
         `;
     }
 }
+
+window.downloadChatMedia = async function(url, defaultFilename) {
+    if (!url) return;
+    try {
+        const res = await fetch(url);
+        if (!res.ok) {
+            let errMsg = 'Failed to download media file.';
+            try {
+                const data = await res.json();
+                if (data.code === 190 || data.is_auth_error) {
+                    errMsg = 'Meta WhatsApp Access Token has expired. Please update your permanent System User Access Token in Workspace / Company Settings to view and download customer media.';
+                } else if (data.error) {
+                    errMsg = data.error;
+                }
+            } catch(e) {}
+            showModal('Download Error', errMsg);
+            return;
+        }
+
+        const blob = await res.blob();
+        const contentType = (res.headers.get('content-type') || blob.type || '').toLowerCase();
+        let ext = '.jpg';
+        if (contentType.includes('jpeg') || contentType.includes('jpg')) ext = '.jpg';
+        else if (contentType.includes('png')) ext = '.png';
+        else if (contentType.includes('webp')) ext = '.webp';
+        else if (contentType.includes('gif')) ext = '.gif';
+        else if (contentType.includes('mp4') || contentType.includes('video')) ext = '.mp4';
+        else if (contentType.includes('pdf')) ext = '.pdf';
+        else if (contentType.includes('ogg') || contentType.includes('opus')) ext = '.ogg';
+        else if (contentType.includes('mp3') || contentType.includes('audio')) ext = '.mp3';
+        else if (contentType.includes('csv')) ext = '.csv';
+        else if (contentType.includes('sheet') || contentType.includes('excel') || contentType.includes('xls')) ext = '.xlsx';
+        else if (contentType.includes('word') || contentType.includes('docx')) ext = '.docx';
+        else if (contentType.includes('plain')) ext = '.txt';
+
+        let filename = '';
+        const disposition = res.headers.get('content-disposition');
+        if (disposition && disposition.includes('filename=')) {
+            const match = disposition.match(/filename="?([^";]+)"?/);
+            if (match && match[1]) filename = match[1].trim();
+        }
+        if (!filename) {
+            filename = defaultFilename || 'whatsapp_media';
+        }
+
+        // Guarantee filename has an extension
+        if (!filename.includes('.')) {
+            filename += ext;
+        }
+
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            window.URL.revokeObjectURL(blobUrl);
+            a.remove();
+        }, 1000);
+    } catch (e) {
+        showModal('Download Error', e.message || 'Could not download media.');
+    }
+};
 
 window.openMediaLightbox = function(url, type) {
     const modal = document.getElementById('modal-media-lightbox');
@@ -9091,15 +9156,17 @@ window.openMediaLightbox = function(url, type) {
     if (!modal || !container) return;
 
     container.innerHTML = '';
-    const downloadUrl = url.includes('?') ? `${url}&download=1` : `${url}?download=1`;
     if (downloadBtn) {
-        downloadBtn.href = downloadUrl;
+        downloadBtn.onclick = (e) => {
+            e.preventDefault();
+            downloadChatMedia(url, `whatsapp_${type || 'media'}`);
+        };
     }
 
     if (type === 'video' || /\.(mp4|mov|webm)($|\?)/i.test(url)) {
         container.innerHTML = `<video src="${escapeHtml(url)}" controls autoplay style="max-width:88vw; max-height:78vh; border-radius:10px;"></video>`;
     } else {
-        container.innerHTML = `<img src="${escapeHtml(url)}" alt="Full view" style="max-width:88vw; max-height:78vh; object-fit:contain; border-radius:10px;">`;
+        container.innerHTML = `<img src="${escapeHtml(url)}" alt="Full view" style="max-width:88vw; max-height:78vh; object-fit:contain; border-radius:10px;" onerror="handleMediaImgError(this, 'Photo')">`;
     }
 
     modal.style.display = 'flex';

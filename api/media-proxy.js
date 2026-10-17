@@ -65,7 +65,11 @@ module.exports = async (req, res) => {
         // 2. Query Meta Graph API for media information if media_id is provided
         if (cleanMediaId) {
             if (!token) {
-                return sendMediaError(res, hintMime, 'WhatsApp Access Token is not configured');
+                return res.status(401).json({ 
+                    error: 'WhatsApp Access Token is not configured for this workspace. Please configure it in Meta Credentials.',
+                    code: 190,
+                    is_auth_error: true
+                });
             }
 
             try {
@@ -79,16 +83,23 @@ module.exports = async (req, res) => {
                     if (metaData.mime_type) mimeType = metaData.mime_type;
                 } else if (metaData && metaData.error) {
                     console.error('Meta Graph API media query error:', metaData.error);
-                    return sendMediaError(res, hintMime, metaData.error.message || 'Media expired or inaccessible');
+                    const isAuthErr = metaData.error.code === 190 || metaData.error.type === 'OAuthException';
+                    return res.status(isAuthErr ? 401 : 404).json({
+                        error: isAuthErr 
+                            ? 'Meta WhatsApp Access Token has expired or is invalid. Please update the System User Access Token in Workspace / Company Settings.' 
+                            : (metaData.error.message || 'Media expired on Meta servers.'),
+                        code: metaData.error.code || (isAuthErr ? 190 : 404),
+                        is_auth_error: isAuthErr
+                    });
                 }
             } catch (err) {
                 console.error('Error fetching media details from Meta Graph API:', err);
-                return sendMediaError(res, hintMime, err.message);
+                return res.status(502).json({ error: 'Failed to contact Meta Graph API: ' + err.message });
             }
         }
 
         if (!downloadUrl) {
-            return sendMediaError(res, hintMime, 'Media download URL not found');
+            return res.status(404).json({ error: 'Media download URL not found or media has expired.' });
         }
 
         // 3. Fetch media binary from Meta CDN URL
@@ -102,20 +113,42 @@ module.exports = async (req, res) => {
         const binaryRes = await fetch(downloadUrl, { headers });
         if (!binaryRes.ok) {
             console.error('Failed to download media binary from CDN:', binaryRes.status, binaryRes.statusText);
-            return sendMediaError(res, mimeType, `Failed to download media: ${binaryRes.statusText}`);
+            const isAuthErr = binaryRes.status === 401 || binaryRes.status === 403;
+            return res.status(isAuthErr ? 401 : 404).json({
+                error: isAuthErr 
+                    ? 'Meta authorization failed when downloading media. Please refresh the WhatsApp Access Token.' 
+                    : `Failed to download media: ${binaryRes.statusText}`,
+                is_auth_error: isAuthErr
+            });
         }
 
-        const finalContentType = binaryRes.headers.get('content-type') || mimeType;
         const arrayBuf = await binaryRes.arrayBuffer();
         const buffer = Buffer.from(arrayBuf);
 
-        // 4. Return binary media with caching and content disposition
+        // 4. Detect real file type from binary magic bytes (100% reliable)
+        const detected = detectFileTypeFromBuffer(buffer);
+        const cdnContentType = binaryRes.headers.get('content-type');
+        let finalContentType = (detected && detected.mime) 
+            || (mimeType && mimeType !== 'application/octet-stream' ? mimeType : null) 
+            || (cdnContentType && cdnContentType !== 'application/octet-stream' ? cdnContentType : null) 
+            || mimeType 
+            || 'application/octet-stream';
+
+        const finalExt = (detected && detected.ext) || getExtFromMime(finalContentType);
+
+        let outFilename = filename ? String(filename).trim() : `whatsapp_media_${cleanMediaId || Date.now()}`;
+        if (!outFilename.includes('.')) {
+            outFilename += finalExt;
+        } else if (outFilename.endsWith('.bin') && finalExt !== '.bin') {
+            outFilename = outFilename.replace(/\.bin$/, finalExt);
+        }
+
+        // 5. Return binary media with caching and content disposition
         res.setHeader('Content-Type', finalContentType);
         res.setHeader('Content-Length', buffer.length);
         res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
         res.setHeader('Access-Control-Allow-Origin', '*');
 
-        const outFilename = filename || `whatsapp_media_${cleanMediaId || 'file'}`;
         if (download === '1' || download === 'true') {
             res.setHeader('Content-Disposition', `attachment; filename="${outFilename}"`);
         } else {
@@ -130,18 +163,65 @@ module.exports = async (req, res) => {
     }
 };
 
-function sendMediaError(res, mime, message) {
-    if (mime && (mime.startsWith('image/') || mime.includes('image') || mime.includes('png') || mime.includes('jpg') || mime.includes('jpeg'))) {
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180" fill="none">
-            <rect width="100%" height="100%" fill="#f1f5f9" rx="10"/>
-            <circle cx="150" cy="75" r="28" fill="#e2e8f0"/>
-            <path d="M141 75a9 9 0 1018 0 9 9 0 00-18 0zm14-18h-10l-3 4h-5c-1.65 0-3 1.35-3 3v18c0 1.65 1.35 3 3 3h26c1.65 0 3-1.35 3-3V64c0-1.65-1.35-3-3-3h-5l-3-4z" fill="#94a3b8"/>
-            <text x="150" y="125" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="12" font-weight="600" fill="#64748b" text-anchor="middle">Media Unavailable</text>
-            <text x="150" y="142" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Expired on Meta servers</text>
-        </svg>`;
-        res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Cache-Control', 'public, max-age=300');
-        return res.status(200).send(svg);
+function detectFileTypeFromBuffer(buffer) {
+    if (!buffer || buffer.length < 4) return null;
+    
+    // JPEG: FF D8 FF
+    if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+        return { ext: '.jpg', mime: 'image/jpeg' };
     }
-    return res.status(404).json({ error: message || 'Media unavailable' });
+    // PNG: 89 50 4E 47
+    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
+        return { ext: '.png', mime: 'image/png' };
+    }
+    // GIF: 47 49 46 38
+    if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) {
+        return { ext: '.gif', mime: 'image/gif' };
+    }
+    // WebP: RIFF .... WEBP
+    if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+        buffer.length >= 12 && buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) {
+        return { ext: '.webp', mime: 'image/webp' };
+    }
+    // PDF: %PDF (25 50 44 46)
+    if (buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46) {
+        return { ext: '.pdf', mime: 'application/pdf' };
+    }
+    // Ogg audio (WhatsApp voice notes): OggS (4F 67 67 53)
+    if (buffer[0] === 0x4F && buffer[1] === 0x67 && buffer[2] === 0x67 && buffer[3] === 0x53) {
+        return { ext: '.ogg', mime: 'audio/ogg' };
+    }
+    // MP4 / QuickTime: ....ftyp
+    if (buffer.length >= 12 && buffer[4] === 0x66 && buffer[5] === 0x74 && buffer[6] === 0x79 && buffer[7] === 0x70) {
+        return { ext: '.mp4', mime: 'video/mp4' };
+    }
+    // MP3: ID3
+    if (buffer[0] === 0x49 && buffer[1] === 0x44 && buffer[2] === 0x33) {
+        return { ext: '.mp3', mime: 'audio/mpeg' };
+    }
+
+    return null;
+}
+
+function getExtFromMime(mime) {
+    if (!mime) return '.bin';
+    const m = mime.toLowerCase();
+    if (m.includes('jpeg') || m.includes('jpg')) return '.jpg';
+    if (m.includes('png')) return '.png';
+    if (m.includes('webp')) return '.webp';
+    if (m.includes('gif')) return '.gif';
+    if (m.includes('svg')) return '.svg';
+    if (m.includes('mp4') || m.includes('video/mp4')) return '.mp4';
+    if (m.includes('quicktime') || m.includes('mov')) return '.mov';
+    if (m.includes('webm')) return '.webm';
+    if (m.includes('pdf')) return '.pdf';
+    if (m.includes('ogg') || m.includes('opus')) return '.ogg';
+    if (m.includes('mp3') || m.includes('mpeg')) return '.mp3';
+    if (m.includes('wav')) return '.wav';
+    if (m.includes('csv')) return '.csv';
+    if (m.includes('sheet') || m.includes('excel') || m.includes('xls')) return '.xlsx';
+    if (m.includes('word') || m.includes('docx')) return '.docx';
+    if (m.includes('text/plain')) return '.txt';
+    if (m.includes('zip')) return '.zip';
+    return '.bin';
 }
