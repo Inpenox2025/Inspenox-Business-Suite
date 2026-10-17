@@ -93,11 +93,14 @@
         html {
             scroll-behavior: smooth;
             scroll-padding-top: 80px;
+            height: auto !important;
+            min-height: 100% !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
         }
 
         html, body {
             max-width: 100%;
-            overflow-x: clip;
         }
 
         body {
@@ -106,6 +109,10 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             margin: 0;
             padding: 0;
+            height: auto !important;
+            min-height: 100% !important;
+            overflow-x: hidden !important;
+            overflow-y: visible !important;
             scroll-behavior: smooth;
         }
 
@@ -3196,8 +3203,15 @@
 
         /* Dedicated Fixes for Mobile Devices <= 320px (e.g. 280px-320px foldables & compacts) */
         @media (max-width: 320px) {
-            html, body {
-                overflow-x: clip !important;
+            html {
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                height: auto !important;
+            }
+            body {
+                overflow-x: hidden !important;
+                overflow-y: visible !important;
+                height: auto !important;
                 width: 100% !important;
                 max-width: 100% !important;
             }
@@ -5374,6 +5388,9 @@
             window.addEventListener('scroll', updateNavbarScrolled, { passive: true });
             window.addEventListener('resize', updateNavbarScrolled, { passive: true });
             document.addEventListener('scroll', updateNavbarScrolled, { passive: true });
+            if (document.body) {
+                document.body.addEventListener('scroll', updateNavbarScrolled, { passive: true });
+            }
             window.addEventListener('hashchange', () => {
                 setTimeout(updateNavbarScrolled, 50);
             });
