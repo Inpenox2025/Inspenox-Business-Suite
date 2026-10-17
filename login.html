@@ -1868,6 +1868,219 @@
             color: var(--primary, #00a884);
         }
 
+        /* Trust Badges Row */
+        .pricing-trust-badges {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1.25rem auto 2.5rem auto;
+            max-width: 700px;
+        }
+
+        .trust-badge-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .trust-badge-icon {
+            font-size: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .pricing-trust-badges {
+                gap: 0.75rem 1rem;
+            }
+            .trust-badge-item {
+                font-size: 0.72rem;
+            }
+        }
+
+        /* Money-Back Guarantee Banner */
+        .pricing-guarantee-banner {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            background: linear-gradient(135deg, rgba(0, 168, 132, 0.1) 0%, rgba(16, 185, 129, 0.06) 100%);
+            border: 1px solid rgba(0, 168, 132, 0.25);
+            border-radius: 18px;
+            padding: 1.75rem 2rem;
+            margin: 2.5rem auto 0 auto;
+            max-width: 680px;
+            text-align: left;
+        }
+
+        .guarantee-icon {
+            font-size: 2.5rem;
+            flex-shrink: 0;
+        }
+
+        .guarantee-content h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 0.35rem 0;
+        }
+
+        .guarantee-content p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 600px) {
+            .pricing-guarantee-banner {
+                flex-direction: column;
+                text-align: center;
+                padding: 1.5rem;
+                gap: 0.75rem;
+            }
+        }
+
+        /* FAQ Accordion Section */
+        .pricing-faq-section {
+            margin-top: 4.5rem;
+            padding-top: 3rem;
+            border-top: 1px solid var(--border);
+            max-width: 760px;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: left;
+        }
+
+        .pricing-faq-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: var(--text-main);
+            text-align: center;
+            margin: 0 0 2rem 0;
+        }
+
+        .faq-accordion {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .faq-item:hover {
+            border-color: rgba(0, 168, 132, 0.4);
+        }
+
+        .faq-item.open {
+            border-color: rgba(0, 168, 132, 0.5);
+            box-shadow: 0 4px 16px rgba(0, 168, 132, 0.1);
+        }
+
+        .faq-question {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.15rem 1.35rem;
+            font-size: 0.925rem;
+            font-weight: 700;
+            color: var(--text-main);
+            gap: 1rem;
+        }
+
+        .faq-arrow {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            transition: transform 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .faq-item.open .faq-arrow {
+            transform: rotate(90deg);
+            color: #00a884;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), padding 0.25s ease;
+            padding: 0 1.35rem;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 300px;
+            padding: 0 1.35rem 1.15rem 1.35rem;
+        }
+
+        .faq-answer p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.65;
+        }
+
+        /* Pricing Section Mobile Responsiveness Enhancements */
+        @media (max-width: 480px) {
+            .pricing-section {
+                padding: 3rem 1rem;
+            }
+
+            .pricing-cycle-switcher {
+                flex-wrap: wrap;
+                justify-content: center;
+                border-radius: 16px;
+                padding: 6px;
+                gap: 4px;
+            }
+
+            .pricing-cycle-btn {
+                font-size: 0.75rem;
+                padding: 0.5rem 0.85rem;
+            }
+
+            .sub-plan-card {
+                padding: 1.75rem 1.25rem;
+            }
+
+            .sub-plan-title {
+                font-size: 1.4rem;
+            }
+
+            .sub-plan-amount {
+                font-size: 2.25rem;
+            }
+
+            .rate-price {
+                font-size: 1.85rem;
+            }
+
+            .pricing-faq-section {
+                margin-top: 3rem;
+                padding-top: 2rem;
+            }
+
+            .faq-question {
+                font-size: 0.85rem;
+                padding: 1rem;
+            }
+
+            .faq-answer p {
+                font-size: 0.8rem;
+            }
+        }
+
         /* Pass-through rates grid */
         .rates-grid {
             display: grid;
@@ -3696,11 +3909,31 @@
 
     <!-- Pricing Section -->
     <section id="pricing" class="pricing-section">
-        <span class="spotlight-pill">💳 Subscription & Billing Plans</span>
-        <h2 class="spotlight-title">Predictable Plans Built to Scale Your Growth</h2>
-        <p class="spotlight-desc" style="max-width: 740px; margin: 0 auto 2.5rem auto;">
-            Choose a workspace plan designed for your team's size and messaging volume. All plans include 0% commission on Meta WhatsApp delivery — pay Meta directly at raw base rates with 100% GST ITC eligibility.
+        <span class="spotlight-pill">💰 Simple, Honest Pricing</span>
+        <h2 class="spotlight-title">Pick the Plan That Fits Your Business</h2>
+        <p class="spotlight-desc" style="max-width: 740px; margin: 0 auto 1rem auto;">
+            No hidden charges. No per-message markup. Just a simple monthly fee to run your WhatsApp marketing — and you only pay WhatsApp's official rates for messages sent. Nothing extra from us.
         </p>
+
+        <!-- Trust Badges Row -->
+        <div class="pricing-trust-badges">
+            <div class="trust-badge-item">
+                <span class="trust-badge-icon">🔒</span>
+                <span>Secure Payments</span>
+            </div>
+            <div class="trust-badge-item">
+                <span class="trust-badge-icon">✅</span>
+                <span>Official WhatsApp Partner</span>
+            </div>
+            <div class="trust-badge-item">
+                <span class="trust-badge-icon">💳</span>
+                <span>Cancel Anytime</span>
+            </div>
+            <div class="trust-badge-item">
+                <span class="trust-badge-icon">🛡️</span>
+                <span>7-Day Money Back</span>
+            </div>
+        </div>
 
         <!-- Billing Cycle Selector Tabs -->
         <div class="pricing-cycle-switcher" role="tablist">
@@ -3708,30 +3941,30 @@
                 <span>Monthly</span>
             </button>
             <button type="button" class="pricing-cycle-btn" data-cycle="4months" onclick="setLandingBillingCycle('4months')">
-                <span>4 Months</span>
+                <span>Quarterly</span>
                 <span class="pricing-cycle-discount">Save 10%</span>
             </button>
             <button type="button" class="pricing-cycle-btn" data-cycle="6months" onclick="setLandingBillingCycle('6months')">
-                <span>6 Months</span>
+                <span>Half-Yearly</span>
                 <span class="pricing-cycle-discount">Save 15%</span>
             </button>
             <button type="button" class="pricing-cycle-btn" data-cycle="annual" onclick="setLandingBillingCycle('annual')">
-                <span>Annual</span>
-                <span class="pricing-cycle-discount best-value">Save 20% · Best Value</span>
+                <span>Yearly</span>
+                <span class="pricing-cycle-discount best-value">Save 20% 🎉</span>
             </button>
         </div>
 
         <!-- 3 Subscription Plan Cards Grid -->
         <div class="sub-plans-grid">
             
-            <!-- 1. Starter Tier -->
+            <!-- 1. Starter -->
             <div class="sub-plan-card" id="plan-card-starter">
                 <div class="sub-plan-header">
                     <div class="sub-plan-badge-row">
-                        <span class="sub-plan-tier-badge">ESSENTIAL</span>
+                        <span class="sub-plan-tier-badge">STARTER</span>
                     </div>
-                    <h3 class="sub-plan-title">Starter Tier</h3>
-                    <p class="sub-plan-desc">Perfect for small businesses beginning their automated WhatsApp messaging journey.</p>
+                    <h3 class="sub-plan-title">Starter</h3>
+                    <p class="sub-plan-desc">Perfect if you're just getting started with WhatsApp marketing for your shop or business.</p>
                 </div>
 
                 <div class="sub-plan-pricing-box">
@@ -3744,34 +3977,33 @@
                 </div>
 
                 <ul class="sub-plan-features">
-                    <li><span class="feature-check">✓</span> <span><strong>1</strong> Connected WhatsApp Business Number</span></li>
-                    <li><span class="feature-check">✓</span> <span>Up to <strong>1,500</strong> Active Customer Contacts</span></li>
-                    <li><span class="feature-check">✓</span> <span>Pre-Approved WhatsApp Templates</span></li>
-                    <li><span class="feature-check">✓</span> <span>Basic Direct Broadcast Campaigns</span></li>
-                    <li><span class="feature-check">✓</span> <span>Shared Inbox with Real-Time Chat</span></li>
-                    <li><span class="feature-check">✓</span> <span>Standard Message Delivery Speed</span></li>
-                    <li><span class="feature-check">✓</span> <span>Customer Support (Standard Email)</span></li>
+                    <li><span class="feature-check">✓</span> <span><strong>1</strong> WhatsApp Business Number</span></li>
+                    <li><span class="feature-check">✓</span> <span>Save up to <strong>1,500</strong> customer contacts</span></li>
+                    <li><span class="feature-check">✓</span> <span>Ready-to-use message templates</span></li>
+                    <li><span class="feature-check">✓</span> <span>Send offers to all your customers at once</span></li>
+                    <li><span class="feature-check">✓</span> <span>Reply to customers from one shared inbox</span></li>
+                    <li><span class="feature-check">✓</span> <span>Email support within 24 hours</span></li>
                 </ul>
 
                 <div class="sub-plan-actions">
-                    <button type="button" class="btn-plan-cta" onclick="selectLandingPlan('starter', 'Starter Tier', 999, 'signup')">
-                        Get Started with Starter ➔
+                    <button type="button" class="btn-plan-cta" onclick="selectLandingPlan('starter', 'Starter', 999, 'signup')">
+                        Start Free Trial ➔
                     </button>
-                    <a href="javascript:void(0)" class="sub-plan-login-link" onclick="selectLandingPlan('starter', 'Starter Tier', 999, 'login')">
+                    <a href="javascript:void(0)" class="sub-plan-login-link" onclick="selectLandingPlan('starter', 'Starter', 999, 'login')">
                         Already have an account? Log in ➔
                     </a>
                 </div>
             </div>
 
-            <!-- 2. Growth Pro (Featured / Most Popular) -->
+            <!-- 2. Growth (Featured / Most Popular) -->
             <div class="sub-plan-card featured" id="plan-card-growth">
-                <div class="sub-plan-popular-pill">👑 MOST POPULAR · RECOMMENDED</div>
+                <div class="sub-plan-popular-pill">⭐ MOST POPULAR — BEST FOR GROWING BUSINESSES</div>
                 <div class="sub-plan-header">
                     <div class="sub-plan-badge-row">
-                        <span class="sub-plan-tier-badge pro">SCALE & GROW</span>
+                        <span class="sub-plan-tier-badge pro">GROWTH</span>
                     </div>
-                    <h3 class="sub-plan-title">Growth Pro</h3>
-                    <p class="sub-plan-desc">Built for scaling brands requiring multi-team access, dynamic tags, and intelligent broadcasts.</p>
+                    <h3 class="sub-plan-title">Growth</h3>
+                    <p class="sub-plan-desc">For businesses ready to grow sales, manage a team, and reach more customers on WhatsApp.</p>
                 </div>
 
                 <div class="sub-plan-pricing-box">
@@ -3784,34 +4016,34 @@
                 </div>
 
                 <ul class="sub-plan-features">
-                    <li><span class="feature-check highlight">✓</span> <span>Up to <strong>3</strong> WhatsApp Phone Numbers</span></li>
-                    <li><span class="feature-check highlight">✓</span> <span>Up to <strong>15,000</strong> Active Contacts</span></li>
-                    <li><span class="feature-check highlight">✓</span> <span>Dynamic Broadcast Variables & Tags</span></li>
-                    <li><span class="feature-check highlight">✓</span> <span>Multi-Channel Inbox (Live Chat & WhatsApp)</span></li>
-                    <li><span class="feature-check highlight">✓</span> <span><strong>5 Team Members</strong> / Agent Accounts</span></li>
-                    <li><span class="feature-check highlight">✓</span> <span>Detailed Meta Delivery & Read Analytics</span></li>
-                    <li><span class="feature-check highlight">✓</span> <span>Priority Queue Broadcast Engine</span></li>
-                    <li><span class="feature-check highlight">✓</span> <span>Priority Chat & SLA Support</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Connect up to <strong>3</strong> WhatsApp numbers</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Save up to <strong>15,000</strong> customer contacts</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Personalise messages with customer name, order, etc.</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Your team can reply to customers together</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span><strong>5 team members</strong> can use the dashboard</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>See who opened & clicked your messages</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Messages delivered faster (priority sending)</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span>Priority chat & phone support</span></li>
                 </ul>
 
                 <div class="sub-plan-actions">
-                    <button type="button" class="btn-plan-cta featured-cta" onclick="selectLandingPlan('growth', 'Growth Pro', 2499, 'signup')">
-                        Start with Growth Pro ➔
+                    <button type="button" class="btn-plan-cta featured-cta" onclick="selectLandingPlan('growth', 'Growth', 2499, 'signup')">
+                        Start Free Trial ➔
                     </button>
-                    <a href="javascript:void(0)" class="sub-plan-login-link" onclick="selectLandingPlan('growth', 'Growth Pro', 2499, 'login')">
+                    <a href="javascript:void(0)" class="sub-plan-login-link" onclick="selectLandingPlan('growth', 'Growth', 2499, 'login')">
                         Already have an account? Log in ➔
                     </a>
                 </div>
             </div>
 
-            <!-- 3. Enterprise Elite -->
+            <!-- 3. Business Pro -->
             <div class="sub-plan-card" id="plan-card-enterprise">
                 <div class="sub-plan-header">
                     <div class="sub-plan-badge-row">
-                        <span class="sub-plan-tier-badge enterprise">ENTERPRISE</span>
+                        <span class="sub-plan-tier-badge enterprise">BUSINESS PRO</span>
                     </div>
-                    <h3 class="sub-plan-title">Enterprise Elite</h3>
-                    <p class="sub-plan-desc">Complete multi-tenant ecosystem for corporate agencies and high-volume operations.</p>
+                    <h3 class="sub-plan-title">Business Pro</h3>
+                    <p class="sub-plan-desc">For large businesses, agencies & franchises managing multiple brands or locations.</p>
                 </div>
 
                 <div class="sub-plan-pricing-box">
@@ -3824,21 +4056,21 @@
                 </div>
 
                 <ul class="sub-plan-features">
-                    <li><span class="feature-check">✓</span> <span><strong>Unlimited</strong> WhatsApp Business Accounts</span></li>
-                    <li><span class="feature-check">✓</span> <span><strong>Unlimited</strong> Active Customer Records</span></li>
-                    <li><span class="feature-check">✓</span> <span>Multi-Tenant Company Workspace Switcher</span></li>
-                    <li><span class="feature-check">✓</span> <span>Unlimited Team Members & Role Permissions</span></li>
-                    <li><span class="feature-check">✓</span> <span>Dedicated Webhooks & Custom System Tokens</span></li>
-                    <li><span class="feature-check">✓</span> <span>White-Glove Onboarding & 24/7 SLA Support</span></li>
-                    <li><span class="feature-check">✓</span> <span>Maximum Meta API Throughput (Tier 3/Unlimited)</span></li>
-                    <li><span class="feature-check">✓</span> <span>Custom Add-on Features & Dedicated Manager</span></li>
+                    <li><span class="feature-check">✓</span> <span><strong>Unlimited</strong> WhatsApp business numbers</span></li>
+                    <li><span class="feature-check">✓</span> <span><strong>Unlimited</strong> customer contacts</span></li>
+                    <li><span class="feature-check">✓</span> <span>Manage multiple brands from one dashboard</span></li>
+                    <li><span class="feature-check">✓</span> <span>Unlimited team members with role-based access</span></li>
+                    <li><span class="feature-check">✓</span> <span>Fastest message delivery speed</span></li>
+                    <li><span class="feature-check">✓</span> <span>Personal onboarding & setup assistance</span></li>
+                    <li><span class="feature-check">✓</span> <span>24/7 dedicated support manager</span></li>
+                    <li><span class="feature-check">✓</span> <span>Custom features built for your business</span></li>
                 </ul>
 
                 <div class="sub-plan-actions">
-                    <button type="button" class="btn-plan-cta" onclick="selectLandingPlan('enterprise', 'Enterprise Elite', 5999, 'signup')">
-                        Scale with Enterprise ➔
+                    <button type="button" class="btn-plan-cta" onclick="selectLandingPlan('enterprise', 'Business Pro', 5999, 'signup')">
+                        Start Free Trial ➔
                     </button>
-                    <a href="javascript:void(0)" class="sub-plan-login-link" onclick="selectLandingPlan('enterprise', 'Enterprise Elite', 5999, 'login')">
+                    <a href="javascript:void(0)" class="sub-plan-login-link" onclick="selectLandingPlan('enterprise', 'Business Pro', 5999, 'login')">
                         Already have an account? Log in ➔
                     </a>
                 </div>
@@ -3846,41 +4078,117 @@
 
         </div>
 
-        <!-- Raw Meta Delivery Rates Sub-Section -->
-        <div style="margin-top: 5rem; padding-top: 3.5rem; border-top: 1px solid var(--border);">
-            <span class="spotlight-pill">⚡ Direct Meta Pass-Through Rates</span>
-            <h3 style="font-family:'Outfit',sans-serif; font-size:1.85rem; font-weight:800; margin:0.75rem 0 0.5rem 0; color:var(--text-main);">
-                Transparent & Itemized Pay-As-You-Go Delivery Rates
+        <!-- Money-Back Guarantee Banner -->
+        <div class="pricing-guarantee-banner">
+            <div class="guarantee-icon">🛡️</div>
+            <div class="guarantee-content">
+                <h4>7-Day Money-Back Guarantee</h4>
+                <p>Try any plan risk-free. If you're not happy within the first 7 days, we'll refund your payment — no questions asked.</p>
+            </div>
+        </div>
+
+        <!-- What You Pay for Messages (Simplified Rates Section) -->
+        <div style="margin-top: 4.5rem; padding-top: 3rem; border-top: 1px solid var(--border);">
+            <span class="spotlight-pill">💡 No Hidden Fees — Here's What Messages Cost</span>
+            <h3 style="font-family:'Outfit',sans-serif; font-size:1.65rem; font-weight:800; margin:0.75rem 0 0.5rem 0; color:var(--text-main);">
+                You Only Pay WhatsApp's Official Price Per Message
             </h3>
             <p class="spotlight-desc" style="max-width: 720px; margin: 0 auto 2.5rem auto;">
-                Zero platform markup. Pay Meta directly for delivered messages with full GST tax invoice breakdown and 100% Input Tax Credit (ITC) eligibility.
+                We don't add any extra charge on top. Other platforms charge ₹1.00–₹1.25 per message. With Inspenox, you pay exactly what WhatsApp charges — and save money on every single message.
             </p>
 
             <div class="rates-grid">
                 <div class="rate-card">
-                    <span style="display: inline-block; font-size: 0.65rem; font-weight: 800; background: rgba(0, 168, 132, 0.15); color: #00a884; padding: 2px 8px; border-radius: 20px; margin-bottom: 0.5rem;">0% COMMISSION · DIRECT META PAY</span>
-                    <span class="rate-category">WhatsApp Marketing</span>
-                    <div class="rate-price">₹0.8631</div>
-                    <p class="rate-desc">per delivered message (Raw Meta Cloud API Base Rate)</p>
+                    <span style="display: inline-block; font-size: 0.65rem; font-weight: 800; background: rgba(0, 168, 132, 0.15); color: #00a884; padding: 2px 8px; border-radius: 20px; margin-bottom: 0.5rem;">ZERO EXTRA CHARGE FROM US</span>
+                    <span class="rate-category">Promotional Messages</span>
+                    <div class="rate-price">₹0.86</div>
+                    <p class="rate-desc">per message · for sending offers, discounts & promotions</p>
                 </div>
 
                 <div class="rate-card">
-                    <span style="display: inline-block; font-size: 0.65rem; font-weight: 800; background: rgba(56, 189, 248, 0.15); color: #0284c7; padding: 2px 8px; border-radius: 20px; margin-bottom: 0.5rem;">0% MARKUP · 100% GST ITC</span>
-                    <span class="rate-category">WhatsApp Utility</span>
-                    <div class="rate-price">₹0.1150</div>
-                    <p class="rate-desc">per delivered message (Order updates & OTP verification)</p>
+                    <span style="display: inline-block; font-size: 0.65rem; font-weight: 800; background: rgba(56, 189, 248, 0.15); color: #0284c7; padding: 2px 8px; border-radius: 20px; margin-bottom: 0.5rem;">SAVE UP TO 40% VS OTHER PLATFORMS</span>
+                    <span class="rate-category">Order Updates & OTP</span>
+                    <div class="rate-price">₹0.12</div>
+                    <p class="rate-desc">per message · for order confirmations, delivery updates & OTPs</p>
                 </div>
 
                 <div class="rate-card">
-                    <span class="rate-category">Email Marketing</span>
-                    <div class="rate-price">₹0.0500</div>
-                    <p class="rate-desc">per email sent (AWS SES High Inbox Rate)</p>
+                    <span class="rate-category">Email Campaigns</span>
+                    <div class="rate-price">₹0.05</div>
+                    <p class="rate-desc">per email sent · newsletters, receipts & drip campaigns</p>
                 </div>
 
                 <div class="rate-card">
-                    <span class="rate-category">DLT Bulk SMS</span>
-                    <div class="rate-price">₹0.2500</div>
-                    <p class="rate-desc">per DLT-compliant domestic SMS</p>
+                    <span class="rate-category">SMS Alerts</span>
+                    <div class="rate-price">₹0.25</div>
+                    <p class="rate-desc">per SMS · payment links, OTPs & urgent alerts</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Accordion Section -->
+        <div class="pricing-faq-section">
+            <h3 class="pricing-faq-title">Frequently Asked Questions</h3>
+
+            <div class="faq-accordion">
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <span>Do I need to pay extra for sending messages?</span>
+                        <span class="faq-arrow">▸</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Your plan fee covers the platform — sending offers, managing customers, inbox, analytics, etc. For messages actually delivered via WhatsApp, you only pay WhatsApp's official rate (₹0.86 for promotions, ₹0.12 for order updates). We don't add any extra fee on top. Most other platforms charge ₹1.00–₹1.25 per message.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <span>Can I change or cancel my plan anytime?</span>
+                        <span class="faq-arrow">▸</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes! You can upgrade, downgrade, or cancel your plan at any time from your dashboard. There are no long-term contracts or cancellation fees. If you cancel, you'll keep access until the end of your billing period.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <span>I'm not tech-savvy. Is it hard to set up?</span>
+                        <span class="faq-arrow">▸</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Not at all! We guide you through every step — from connecting your WhatsApp number to sending your first campaign. Most businesses get started in under 15 minutes. And if you get stuck, our support team is here to help you over chat or call.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <span>Will my WhatsApp number get banned?</span>
+                        <span class="faq-arrow">▸</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>No. We use the <strong>Official WhatsApp Business API</strong> (approved by Meta/Facebook). This is completely different from unofficial bulk messaging tools that risk bans. Your messages are sent through the same system that big brands like Flipkart, Swiggy, and Zomato use.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <span>What kind of messages can I send?</span>
+                        <span class="faq-arrow">▸</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>You can send promotional offers & discounts, new product announcements, festival greetings, order confirmations, delivery updates, payment reminders, and much more — all with images, videos, buttons, and links to make them interactive and engaging.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" onclick="toggleFaq(this)">
+                    <div class="faq-question">
+                        <span>Can my team members also use the dashboard?</span>
+                        <span class="faq-arrow">▸</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes! The Growth plan includes 5 team members who can all log in and reply to customers, send campaigns, and manage contacts. The Business Pro plan includes unlimited team members. It's like giving your whole team a shared WhatsApp for business.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3889,17 +4197,17 @@
     <!-- Bottom High-Converting Call to Action Banner -->
     <div class="bottom-cta-banner">
         <h2 style="font-family: 'Outfit', sans-serif; font-size: 2.75rem; font-weight: 900; margin: 0 0 1rem 0; letter-spacing: -0.8px;">
-            Ready to <span style="color: #00a884;">Scale Your Business</span> on WhatsApp?
+            Ready to <span style="color: #00a884;">Grow Your Business</span> with WhatsApp?
         </h2>
         <p style="font-size: 1.15rem; color: var(--text-muted); max-width: 650px; margin: 0 auto 2.5rem auto; line-height: 1.6;">
-            Join thousands of ambitious brands scaling customer acquisition, repeat orders, and collaborative support with Inspenox Business Suite.
+            Join 10,000+ businesses already using Inspenox to send offers, close more sales, and keep customers coming back — all through WhatsApp.
         </p>
         <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
             <a href="#login-section" class="btn-brand-primary" style="padding: 0.95rem 2.25rem; font-size: 1.05rem;">
-                Get Started with Inspenox ➔
+                Start Your Free Trial ➔
             </a>
             <a href="#login-section" class="btn-brand-outline" style="padding: 0.95rem 2rem; font-size: 1.05rem;">
-                Sign In to Workspace ➔
+                Sign In to Your Account ➔
             </a>
         </div>
     </div>
@@ -4415,6 +4723,15 @@
 
         let currentLandingCycle = 'monthly';
 
+        // FAQ Accordion Toggle
+        window.toggleFaq = function toggleFaq(item) {
+            const isOpen = item.classList.contains('open');
+            // Close all FAQ items
+            document.querySelectorAll('.faq-item').forEach(faq => faq.classList.remove('open'));
+            // Open clicked item if it was closed
+            if (!isOpen) item.classList.add('open');
+        };
+
         window.setLandingBillingCycle = function setLandingBillingCycle(cycle) {
             currentLandingCycle = cycle;
             document.querySelectorAll('.pricing-cycle-btn').forEach(b => {
@@ -4504,7 +4821,7 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const planParam = urlParams.get('plan');
                 if (planParam) {
-                    const planNames = { starter: 'Starter Tier', growth: 'Growth Pro', enterprise: 'Enterprise Elite' };
+                    const planNames = { starter: 'Starter', growth: 'Growth', enterprise: 'Business Pro' };
                     const defaultPrices = { starter: 999, growth: 2499, enterprise: 5999 };
                     if (planNames[planParam]) {
                         setTimeout(() => {
