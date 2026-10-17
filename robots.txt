@@ -9,7 +9,8 @@ Allow: /
 Allow: /login.html
 Allow: /app.css
 Allow: /assets/
-Allow: /favicon.png
+Allow: /assets/images/favicon.png
+Allow: /assets/images/favicon.svg
 Allow: /inbox-showcase.png
 Allow: /template-insights-breakdown.png
 Allow: /llms.txt
@@ -39,7 +40,7 @@ User-agent: Googlebot-Image
 Allow: /assets/
 Allow: /inbox-showcase.png
 Allow: /template-insights-breakdown.png
-Allow: /favicon.png
+Allow: /assets/images/favicon.png
 
 # ==========================================
 # AI & LLM Search Crawlers (Full Ingestion Allowed)
