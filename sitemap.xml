@@ -1,36 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd
+        http://www.google.com/schemas/sitemap-image/1.1
+        http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
     <url>
         <loc>https://marketing.inspenox.in/</loc>
-        <lastmod>2026-10-09</lastmod>
+        <lastmod>2026-10-17</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
+        <image:image>
+            <image:loc>https://marketing.inspenox.in/assets/images/hero-marketer.jpg</image:loc>
+            <image:title>Inspenox WhatsApp Marketing Professional &amp; Growth Engine</image:title>
+            <image:caption>Scale conversions with Official Meta WhatsApp Cloud API broadcasts and click-to-WhatsApp ads.</image:caption>
+        </image:image>
+        <image:image>
+            <image:loc>https://marketing.inspenox.in/assets/images/campaign-showcase.png</image:loc>
+            <image:title>Inspenox Campaign Studio Analytics</image:title>
+            <image:caption>Real-time funnel analytics: 97% delivered, 93% read, and 45% click-through rate.</image:caption>
+        </image:image>
+        <image:image>
+            <image:loc>https://marketing.inspenox.in/inbox-showcase.png</image:loc>
+            <image:title>Multi-Agent Shared Team Inbox</image:title>
+            <image:caption>Unified WhatsApp shared inbox with customer tag filtering and 24-hour service window tracker.</image:caption>
+        </image:image>
+        <image:image>
+            <image:loc>https://marketing.inspenox.in/template-insights-breakdown.png</image:loc>
+            <image:title>0% Commission Template Insights Breakdown</image:title>
+            <image:caption>Live itemized template spend breakdown with exact Meta message rates and 100% GST ITC credit.</image:caption>
+        </image:image>
     </url>
     <url>
         <loc>https://marketing.inspenox.in/login.html</loc>
-        <lastmod>2026-10-09</lastmod>
+        <lastmod>2026-10-17</lastmod>
         <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
+        <priority>0.9</priority>
+        <image:image>
+            <image:loc>https://marketing.inspenox.in/assets/images/inspenox-logo.png</image:loc>
+            <image:title>Inspenox Business Suite For Marketing Logo</image:title>
+        </image:image>
+        <image:image>
+            <image:loc>https://marketing.inspenox.in/assets/images/product-showcase.jpg</image:loc>
+            <image:title>Interactive Product Carousels on WhatsApp</image:title>
+            <image:caption>Promote products with 1-click WhatsApp checkout and promotional vouchers.</image:caption>
+        </image:image>
+        <image:image>
+            <image:loc>https://marketing.inspenox.in/assets/images/course-lead-ad.jpg</image:loc>
+            <image:title>Meta Click-to-WhatsApp Ad Lead Capture</image:title>
+            <image:caption>Convert Instagram and Facebook ad traffic directly into qualified WhatsApp leads.</image:caption>
+        </image:image>
     </url>
     <url>
-        <loc>https://marketing.inspenox.in/#features</loc>
-        <lastmod>2026-10-09</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://marketing.inspenox.in/#omnichannel</loc>
-        <lastmod>2026-10-09</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://marketing.inspenox.in/#pricing</loc>
-        <lastmod>2026-10-09</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
+        <loc>https://marketing.inspenox.in/llms.txt</loc>
+        <lastmod>2026-10-17</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
     </url>
 </urlset>

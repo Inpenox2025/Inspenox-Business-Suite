@@ -1,35 +1,117 @@
-# Robots.txt for Inspenox Business Suite — Omnichannel Marketing Platform
+# Robots.txt for Inspenox Business Suite For Marketing — Official Meta WhatsApp Cloud API & Omnichannel Marketing
+# Website: https://marketing.inspenox.in/
+
+# ==========================================
+# General Search Engine Crawlers
+# ==========================================
 User-agent: *
 Allow: /
 Allow: /login.html
 Allow: /app.css
+Allow: /assets/
 Allow: /favicon.png
+Allow: /inbox-showcase.png
+Allow: /template-insights-breakdown.png
 Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /sitemap.xml
 
-# Protect backend endpoints and internal application data
+# Protect internal endpoints, backend functions, and private customer data
 Disallow: /api/
 Disallow: /uploads/
+Disallow: /scratch/
+Disallow: /functions/
+Disallow: /lib/
+Disallow: /_worker.bundle
+Disallow: /*.sql$
+Disallow: /*.toml$
 
-# Allow AI & LLM Search Crawlers
+# ==========================================
+# Googlebot & Image Search Crawlers
+# ==========================================
+User-agent: Googlebot
+Allow: /
+Allow: /login.html
+Allow: /assets/
+Allow: /app.css
+
+User-agent: Googlebot-Image
+Allow: /assets/
+Allow: /inbox-showcase.png
+Allow: /template-insights-breakdown.png
+Allow: /favicon.png
+
+# ==========================================
+# AI & LLM Search Crawlers (Full Ingestion Allowed)
+# ==========================================
 User-agent: GPTBot
 Allow: /
+Allow: /login.html
 Allow: /llms.txt
+Allow: /llms-full.txt
 
 User-agent: ChatGPT-User
 Allow: /
+Allow: /login.html
 Allow: /llms.txt
+Allow: /llms-full.txt
 
 User-agent: ClaudeBot
 Allow: /
+Allow: /login.html
 Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: Claude-Web
+Allow: /
+Allow: /login.html
+Allow: /llms.txt
+Allow: /llms-full.txt
 
 User-agent: PerplexityBot
 Allow: /
+Allow: /login.html
 Allow: /llms.txt
+Allow: /llms-full.txt
 
 User-agent: Google-Extended
 Allow: /
+Allow: /login.html
 Allow: /llms.txt
+Allow: /llms-full.txt
 
-# Sitemap Location
+User-agent: Applebot-Extended
+Allow: /
+Allow: /login.html
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: Amazonbot
+Allow: /
+Allow: /login.html
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: Meta-ExternalAgent
+Allow: /
+Allow: /login.html
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: Cohere-ai
+Allow: /
+Allow: /login.html
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+User-agent: Bytespider
+Allow: /
+Allow: /login.html
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+# ==========================================
+# Host & Sitemap Declarations
+# ==========================================
+Host: marketing.inspenox.in
 Sitemap: https://marketing.inspenox.in/sitemap.xml

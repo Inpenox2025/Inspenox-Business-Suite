@@ -1,25 +1,114 @@
-# Inspenox Business Suite — Omnichannel Marketing Platform
+# Inspenox Business Suite For Marketing — Official Meta WhatsApp Cloud API & Omnichannel Marketing
 
-> Inspenox Business Suite is an enterprise Omnichannel Marketing platform powered by official Meta WhatsApp Cloud API (v20.0), Email Marketing (AWS SES), and DLT Bulk SMS messaging.
+> Inspenox Business Suite For Marketing is an enterprise Omnichannel Marketing and WhatsApp Commerce platform built on the official Meta WhatsApp Cloud API (v20.0), AWS SES High-Deliverability Email, and DLT Bulk SMS gateways. It offers 0% platform commission on WhatsApp messages, direct Meta billing with 100% GST Input Tax Credit (ITC), interactive product carousels, Click-to-WhatsApp Ads lead capture, and a unified multi-agent shared team inbox.
 
-## Platform Capabilities
-- **Meta WhatsApp Cloud API**: Official Meta Graph API v20.0 broadcast engine with dynamic template variables (`{{customer_name}}`), quick reply buttons, action links, sample media sync, and 99.8% open rates.
-- **Shared Customer Inbox & Live Support**: 2-way real-time customer messaging, automated bot auto-replies, Excel customer contact import, consent certification, and agent assignments.
-- **Automated Multi-Touch Drip Campaigns**: Orchestrate cross-channel marketing workflows across WhatsApp, Email, and SMS with real-time delivery logs, read metrics, and customer segment filtering.
-- **Transparent Pay-As-You-Go Billing**: Itemized billing breakdown displaying base usage (Excl. GST) and 18% GST tax invoices with instant UPI, Card, and Netbanking payments.
+## Platform Overview
+- **Product Name**: Inspenox Business Suite For Marketing
+- **Official Website**: https://marketing.inspenox.in/
+- **Parent Organization**: Inspenox (https://inspenox.in)
+- **Primary Audience**: E-commerce brands, retail stores, educational institutes, real estate agencies, healthcare providers, and high-growth businesses running sales and marketing campaigns on WhatsApp.
+- **Key Differentiator**: 0% platform markup on WhatsApp conversations. Businesses pay Meta directly with zero locked prepaid wallets, itemized template analytics, and 100% claimable GST tax invoices.
 
-## Rates & Pricing (Pay-As-You-Go)
-- **WhatsApp Marketing Message**: ₹0.8631 / delivered message
-- **WhatsApp Utility Message**: ₹0.1150 / delivered message
-- **Email Marketing Broadcast**: ₹0.0500 / email sent
-- **SMS Marketing (DLT Compliant)**: ₹0.2500 / SMS sent
+## Core Capabilities & Features
 
-## Key Documentation & Links
-- [Landing Page](https://marketing.inspenox.in/login.html)
-- [Workspace Sign In](https://marketing.inspenox.in/#login-section)
-- [WhatsApp Business Legal Terms](https://www.whatsapp.com/legal/business-terms/)
+### 1. Official Meta WhatsApp Cloud API (v20.0) Limitless Broadcasting
+- **Zero Ban Risk**: Uses official Meta Graph API v20.0 endpoints approved by Meta, eliminating ban risks associated with unofficial automation tools.
+- **Interactive Multimedia Carousels**: Showcase products inside WhatsApp with 10-card horizontal carousels, customizable "Buy Now" CTA buttons, and coupon codes.
+- **Dynamic Template Personalization**: Personalize messages with dynamic variables (`{{customer_name}}`, `{{order_id}}`, `{{custom_field}}`), header media (images, PDFs, videos), and quick-reply action chips.
+- **Live Funnel Analytics**: Real-time tracking of Sent (100%), Delivered (97%+), Read (93%+), and Click-Through Rates (up to 45% CTR).
+- **Automated Scheduling & Segmentation**: Schedule campaigns for festivals, flash sales, and specific audience tags (e.g. VIP Spenders, Repeat Buyers).
 
-## Technical Stack & API Compliance
-- Direct integration with Meta Graph API v20.0
-- DLT compliant SMS gateway dispatch
-- Strict token encryption and privacy standards
+### 2. Conversational Click-to-WhatsApp Ads (Meta Ads Direct Handoff)
+- **Zero Drop-Off Lead Capture**: Direct Facebook and Instagram ad traffic straight into WhatsApp conversations, capturing verified phone numbers with zero landing page form friction.
+- **24/7 Automated Qualification Flows**: Instant greeting auto-responders that qualify buyer budget, timeline, and product preferences before routing to sales agents.
+- **4.8X Higher ROAS**: Significantly higher conversion rates compared to traditional web lead forms.
+
+### 3. Unified Multi-Agent Shared Team Inbox
+- **Single Number Multi-Agent Support**: Connect multiple team members to manage conversations from one verified WhatsApp business number.
+- **WhatsApp-Style Color Tags & Labels**: Categorize leads with customized color tags (`Repeat Buyers`, `High Spenders`, `Hot Lead`, `Payment Pending`, `Order Placed`).
+- **24-Hour Service Window Tracker**: Real-time countdown timer badges (`24h Active Free Tier` vs `24h Window Expired`) to maximize Meta's free customer service window.
+- **Live Verified Read Receipts**: Real-time double blue checkmarks (✓✓) synchronized via official Meta webhooks.
+- **Enterprise Number Masking Shield**: Masks sensitive customer phone numbers (`+91 •••••`) for agent role permissions to prevent database leaks.
+
+### 4. Omnichannel Marketing Suite
+- **WhatsApp Cloud API**: Broadcasts, transactional OTPs, order notifications, and two-way conversations.
+- **Bulk Email Engine**: High-inbox deliverability powered by AWS SES (₹0.05 / email) for newsletters, receipts, and multi-touch drips.
+- **DLT Bulk SMS Gateway**: Regulatory-compliant instant SMS dispatch (₹0.25 / SMS) for critical alerts, payment links, and emergency fallback.
+
+## Pricing & Subscription Plans
+
+Inspenox offers transparent, predictable monthly and discounted annual subscription tiers with a **7-Day Money-Back Guarantee** and **No Cancellation Fees**.
+
+### Subscription Tiers (Platform Access)
+
+| Plan | Monthly Rate | Quarterly (Save 10%) | Half-Yearly (Save 15%) | Annual (Save 20%) | WhatsApp Numbers | Contact Limit | Team Members |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Starter** | ₹999 / mo | ₹899 / mo (₹3,596 billed) | ₹849 / mo (₹5,094 billed) | ₹799 / mo (₹9,588 billed) | 1 Number | Up to 1,500 contacts | 1 User |
+| **Growth** *(Most Popular)* | ₹2,499 / mo | ₹2,249 / mo (₹8,996 billed) | ₹2,124 / mo (₹12,744 billed) | ₹1,999 / mo (₹23,988 billed) | Up to 3 Numbers | Up to 15,000 contacts | 5 Users |
+| **Business Pro** | ₹5,999 / mo | ₹5,399 / mo (₹21,596 billed) | ₹5,099 / mo (₹30,594 billed) | ₹4,799 / mo (₹57,588 billed) | Unlimited | Unlimited | Unlimited |
+
+### Plan Features Breakdown
+- **Starter (₹999/mo)**: 1 WhatsApp Number, 1,500 contacts, ready-to-use message templates, broadcast offers to all contacts, shared team inbox, email support within 24 hours.
+- **Growth (₹2,499/mo)**: Up to 3 WhatsApp Numbers, 15,000 contacts, personalized name/order variables, collaborative team inbox, 5 dashboard seats, full open/read/click analytics, priority sending speed, priority chat & phone support.
+- **Business Pro (₹5,999/mo)**: Unlimited WhatsApp Numbers, unlimited contacts, multi-brand dashboard, unlimited team seats with RBAC, maximum dispatch speed, dedicated 24/7 account manager, custom bespoke integrations.
+
+## Official Pay-As-You-Go Message Rates (0% Platform Markup)
+
+Inspenox adds **₹0.00 platform commission** to your messaging costs. You pay WhatsApp's exact official base prices:
+
+- **WhatsApp Marketing / Promotional Message**: ₹0.8631 / delivered message (vs ₹1.00 – ₹1.25 on marked-up platforms).
+- **WhatsApp Utility / Order Updates / OTP**: ₹0.1150 / delivered message (vs ₹0.18 – ₹0.30 on marked-up platforms).
+- **WhatsApp Service / Inbound Customer Window**: Free 24-hour service conversation window.
+- **Bulk Email Broadcast (AWS SES)**: ₹0.0500 / email sent.
+- **DLT Compliant SMS Broadcast**: ₹0.2500 / SMS sent.
+
+## The Inspenox Advantage vs Other Platforms
+
+| Feature / Billing Model | Inspenox Business Suite For Marketing | Competitors |
+| :--- | :--- | :--- |
+| **WhatsApp Markup** | **0% Commission (₹0.00 Markup)** | 15% – 35% hidden markup per message |
+| **Payment Flexibility** | **Direct Pay to Meta** (Card, UPI, NetBanking) | Mandatory locked prepaid wallet top-ups |
+| **GST Input Tax Credit** | **100% ITC Claimable** with your GSTIN on Meta invoice | Complicated, partial, or ineligible |
+| **Marketing Message Cost** | **₹0.8631** (Official base price) | ₹0.98 – ₹1.25+ per message |
+| **Utility Message Cost** | **₹0.1150** (Official base price) | ₹0.18 – ₹0.30+ per message |
+| **Template Analytics** | **Live itemized spend per template** | Lump-sum deductions without per-template transparency |
+| **Account Ownership** | **100% Owned by Client** inside Meta Business Manager | High risk of vendor lock-in |
+
+## Technical Architecture & Compliance
+- **Direct Meta Integration**: Official Meta WhatsApp Cloud API v20.0 client endpoints.
+- **Data Security & Privacy**: Customer databases and broadcast contact lists are protected with token encryption and phone number masking.
+- **Cloud Infrastructure**: Cloudflare Pages / Workers global edge hosting with enterprise AWS SES email routing.
+- **Regulatory Compliance**: Full DLT compliance for India SMS telecommunications and strict adherence to WhatsApp Business Messaging Policies.
+
+## Frequently Asked Questions (FAQ)
+
+### Do I need to pay extra for sending messages?
+No. Your monthly subscription covers platform access, shared inbox, broadcast tooling, and analytics. For delivered WhatsApp messages, you only pay Meta's official base rate (₹0.8631 marketing, ₹0.1150 utility). Inspenox charges zero commission.
+
+### Can I change or cancel my plan anytime?
+Yes. You can upgrade, downgrade, or cancel anytime from your billing dashboard. There are no lock-in contracts. If you cancel, your account remains active until the end of your billing cycle.
+
+### Is setup difficult for non-technical users?
+Not at all. Inspenox provides an intuitive onboarding wizard to connect your WhatsApp Business number in under 15 minutes. Support is readily available via live chat and call.
+
+### Will my WhatsApp number get banned?
+No. Inspenox operates exclusively through the official Meta WhatsApp Cloud API, the exact infrastructure trusted by enterprise brands like Flipkart and Zomato. Unofficial scrapers and unauthorized bots that cause bans are never used.
+
+### What messages can I send?
+You can send promotional discount offers, festive campaigns, interactive product carousels with buttons, transactional receipts, delivery tracking alerts, authentication OTPs, and customer support replies.
+
+### Can multiple team members use the dashboard?
+Yes. The Growth plan includes 5 team members, and Business Pro provides unlimited team seats with custom role assignments.
+
+## Key Links & Navigation
+- [Landing Page & Feature Tour](https://marketing.inspenox.in/login.html)
+- [Official Website](https://marketing.inspenox.in/)
+- [Workspace Sign In & Registration](https://marketing.inspenox.in/login.html#login-section)
+- [Broadcasts & Campaign Studio](https://marketing.inspenox.in/login.html#broadcasts)
+- [Click-to-WhatsApp Ads Suite](https://marketing.inspenox.in/login.html#click-to-whatsapp)
+- [Multi-Agent Shared Inbox](https://marketing.inspenox.in/login.html#shared-inbox)
+- [Omnichannel Marketing Suite](https://marketing.inspenox.in/login.html#omnichannel)
+- [Why Choose Inspenox & Comparison](https://marketing.inspenox.in/login.html#why-us)
+- [Pricing Plans & Rates](https://marketing.inspenox.in/login.html#pricing)
+- [Meta WhatsApp Business Legal Terms](https://www.whatsapp.com/legal/business-terms/)
+- [Sitemap](https://marketing.inspenox.in/sitemap.xml)
