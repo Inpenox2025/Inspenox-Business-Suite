@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS customers (
   pincode TEXT,                        -- Postal / ZIP Code
   country TEXT DEFAULT 'India',        -- Country
   tags TEXT,                           -- Comma-separated segment tags (e.g. "VIP, Lead, Wholesale")
+  status TEXT DEFAULT 'Open - Not Contacted', -- Open - Not Contacted, Working - Contacted, Closed - Not Converted, Converted
+  description TEXT DEFAULT '',         -- What customer has been contacted and conversation discussion/notes
   notes TEXT,                          -- Custom internal notes
   custom_fields JSONB DEFAULT '{}',    -- Key-Value metadata for Email/SMS campaign variables
   is_saved BOOLEAN DEFAULT true,
@@ -192,3 +194,8 @@ CREATE TABLE IF NOT EXISTS payment_logs (
   status TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Customer Status & Conversation Notes Migrations
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Open - Not Contacted';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_saved BOOLEAN DEFAULT true;

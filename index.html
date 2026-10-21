@@ -104,6 +104,9 @@
     <meta http-equiv="Expires" content="0">
     <!-- SheetJS for Excel parsing -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF & AutoTable for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <!-- Razorpay Checkout Official Script -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
@@ -540,6 +543,23 @@
                         </p>
                     </div>
                     <div class="header-actions">
+                        <button id="btn-export-customers" class="btn secondary" title="Export currently filtered customers to Excel (.xlsx)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span id="btn-export-customers-label">Export Excel</span>
+                        </button>
+                        <button id="btn-export-pdf" class="btn secondary" title="Export currently filtered customers to PDF document (.pdf)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                            <span id="btn-export-pdf-label">Export PDF</span>
+                        </button>
                         <button id="btn-download-template" class="btn secondary">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 style="width:16px;height:16px;">
@@ -645,8 +665,28 @@
                         </div>
                     </div>
 
+                    <div class="customer-form-status-desc-row" style="display: grid; grid-template-columns: minmax(180px, 220px) 1fr; gap: 0.75rem; width: 100%;">
+                        <div class="form-status-wrapper">
+                            <select id="cust-status" class="status-dropdown-input" title="Customer Status" style="width: 100%; height: 40px; padding: 0.45rem 0.75rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.825rem; font-weight: 600; cursor: pointer; outline: none;">
+                                <option value="Open - Not Contacted">🔵 Open - Not Contacted</option>
+                                <option value="Working - Contacted">🟡 Working - Contacted</option>
+                                <option value="Closed - Not Converted">⚪ Closed - Not Converted</option>
+                                <option value="Converted">🟢 Converted</option>
+                            </select>
+                        </div>
+                        <div class="input-with-icon" style="width: 100%;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                            <input type="text" id="cust-description" placeholder="Conversation notes / description (e.g. Spoke on call, interested in bulk offer, callback on Friday)..." style="width: 100%;">
+                        </div>
+                    </div>
+
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                        <input type="text" id="cust-notes" placeholder="Notes / Custom attributes..."
+                        <input type="text" id="cust-notes" placeholder="Additional internal notes / custom attributes..."
                             style="flex: 1; padding:0.5rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.85rem;">
                         <button type="submit" class="btn primary" id="btn-save-cust">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -676,13 +716,28 @@
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                         <input type="text" id="customers-search"
-                            placeholder="Search customer by name, phone, email, company or tags...">
+                            placeholder="Search customer by name, phone, email, notes, company or tags...">
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <select id="customers-status-filter" class="table-filter-select" style="padding: 0.5rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.825rem; cursor: pointer; outline: none;">
+                            <option value="all">All Statuses</option>
+                            <option value="Open - Not Contacted">🔵 Open - Not Contacted</option>
+                            <option value="Working - Contacted">🟡 Working - Contacted</option>
+                            <option value="Closed - Not Converted">⚪ Closed - Not Converted</option>
+                            <option value="Converted">🟢 Converted</option>
+                        </select>
                         <select id="customers-tag-filter" onchange="filterCustomersByTag(this.value)"
                             style="padding: 0.5rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.825rem; cursor: pointer; outline: none;">
                             <option value="">🏷️ All Tags (Filter)</option>
                         </select>
+                        <button id="btn-export-customers-toolbar" class="btn secondary sm toolbar-action-btn" title="Export filtered customers to Excel">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span>Excel</span>
+                        </button>
+                        <button id="btn-export-pdf-toolbar" class="btn secondary sm toolbar-action-btn" title="Export filtered customers to PDF document">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                            <span>PDF</span>
+                        </button>
                     </div>
                     <div class="pagination-area">
                         <span id="customers-pagination-info" class="pagination-info">Showing 0 of 0</span>
@@ -700,6 +755,8 @@
                                 <th style="width: 50px;">S.No</th>
                                 <th>Customer</th>
                                 <th>Phone Number</th>
+                                <th>Status</th>
+                                <th style="min-width: 220px;">Conversation Notes</th>
                                 <th>Email</th>
                                 <th>Company</th>
                                 <th>Tags</th>
@@ -1687,12 +1744,14 @@
                             <div class="inbox-filter-chips" id="inbox-filter-chips">
                                 <button type="button" class="inbox-filter-chip active" data-filter="all">All
                                     Chats</button>
-                                <button type="button" class="inbox-filter-chip" data-filter="free">⚡ 24h Active (Free
-                                    Tier)</button>
+                                <button type="button" class="inbox-filter-chip" data-filter="free">⚡ 24h Active</button>
                                 <button type="button" class="inbox-filter-chip" data-filter="expired">🔒 24h
                                     Expired</button>
-                                <button type="button" class="inbox-filter-chip" data-filter="unsaved">📥 New Leads / Ads
-                                    (Unsaved)</button>
+                                <button type="button" class="inbox-filter-chip" data-filter="unsaved">📥 New Leads</button>
+                                <button type="button" class="inbox-filter-chip chip-status-open" data-filter="status-open" title="Filter: Open - Not Contacted">🔵 Open</button>
+                                <button type="button" class="inbox-filter-chip chip-status-working" data-filter="status-working" title="Filter: Working - Contacted">🟡 Working</button>
+                                <button type="button" class="inbox-filter-chip chip-status-closed" data-filter="status-closed" title="Filter: Closed - Not Converted">⚪ Closed</button>
+                                <button type="button" class="inbox-filter-chip chip-status-converted" data-filter="status-converted" title="Filter: Converted">🟢 Converted</button>
                             </div>
                             <button type="button" id="btn-bulk-save-unsaved" class="btn secondary sm"
                                 style="display:none; width:100%; margin-top:0.5rem; justify-content:center; font-size:0.75rem; background:rgba(234, 179, 8, 0.15); color:#eab308; border-color:rgba(234, 179, 8, 0.35); font-weight:600;">
@@ -1721,9 +1780,22 @@
                                     <h3 id="active-chat-name">Customer Name</h3>
                                     <span class="window-badge" id="active-chat-window-badge">24h Active</span>
                                 </div>
-                                <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin-top:0.2rem;">
+                                <div class="chat-subhead-row">
                                     <p id="active-chat-phone" style="margin:0;">+00000000000</p>
                                     <div id="active-chat-tags-list" style="display:flex; align-items:center; gap:0.3rem; flex-wrap:wrap;"></div>
+                                    <div class="chat-status-action-wrap">
+                                        <label for="chat-header-status-select" class="chat-status-label">Status:</label>
+                                        <select id="chat-header-status-select" class="chat-header-status-select" title="Click to change customer status">
+                                            <option value="Open - Not Contacted">🔵 Open - Not Contacted</option>
+                                            <option value="Working - Contacted">🟡 Working - Contacted</option>
+                                            <option value="Closed - Not Converted">⚪ Closed - Not Converted</option>
+                                            <option value="Converted">🟢 Converted</option>
+                                        </select>
+                                        <button type="button" id="btn-chat-notes" class="btn-chat-notes" title="View or update conversation notes">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            <span>Notes</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="chat-menu-container">
@@ -1755,6 +1827,15 @@
                                     </button>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Conversation Notes Strip -->
+                        <div id="chat-note-strip" class="chat-note-strip" style="display:none;">
+                            <div class="chat-note-content">
+                                <span class="chat-note-tag">📝 Conversation Notes:</span>
+                                <span id="chat-note-text" class="chat-note-text">No conversation notes recorded yet.</span>
+                            </div>
+                            <button type="button" id="btn-edit-chat-strip-note" class="chat-note-edit-btn" title="Edit conversation notes">Edit Note</button>
                         </div>
 
                         <!-- Messages Container -->
@@ -3174,12 +3255,64 @@
 
     <!-- Global Modal System -->
     <div id="app-modal" class="modal-overlay hidden">
-        <div class="modal-content card">
-            <h3 id="modal-title">Title</h3>
-            <div id="modal-message">Message</div>
+        <div class="modal-content modal-app-dialog card">
+            <div id="modal-icon-badge" class="modal-icon-badge">
+                <svg id="modal-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <h3 id="modal-title" class="modal-title">Title</h3>
+            <div id="modal-message" class="modal-message">Message</div>
             <div class="modal-actions">
                 <button id="modal-cancel-btn" class="btn secondary">Cancel</button>
                 <button id="modal-confirm-btn" class="btn primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Conversation Note Modal -->
+    <div id="cust-note-modal" class="modal-overlay hidden">
+        <div class="modal-content modal-app-dialog card" style="max-width: 480px; text-align: left; align-items: stretch;">
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:1rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <div style="width:32px; height:32px; border-radius:8px; background:rgba(0,168,132,0.12); color:var(--primary); display:flex; align-items:center; justify-content:center;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    </div>
+                    <h3 id="note-modal-title" style="margin:0; font-size:1.15rem; font-weight:700;">Conversation Notes</h3>
+                </div>
+                <button type="button" id="note-modal-close" class="icon-btn" style="width:30px; height:30px; font-size:1.2rem; cursor:pointer;" title="Close">&times;</button>
+            </div>
+            
+            <div id="note-modal-customer-info" style="font-size:0.825rem; color:var(--text-muted); margin-bottom:1rem; width:100%; display:flex; justify-content:space-between; align-items:center; background:var(--bg-dark); padding:0.6rem 0.85rem; border-radius:8px; border:1px solid var(--border);">
+                <div>
+                    <span style="font-size:0.75rem; display:block; opacity:0.8;">Customer:</span>
+                    <strong id="note-modal-name" style="color:var(--text-main);">Customer</strong>
+                </div>
+                <div style="text-align:right;">
+                    <span style="font-size:0.75rem; display:block; opacity:0.8;">Phone:</span>
+                    <code id="note-modal-phone" style="color:var(--primary); font-size:0.8rem;">+91 00000 00000</code>
+                </div>
+            </div>
+
+            <div style="width:100%; margin-bottom:1rem;">
+                <label for="note-modal-status-select" style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">Customer Status:</label>
+                <select id="note-modal-status-select" class="status-dropdown-input" style="width:100%; height:40px; padding:0.45rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); font-size:0.825rem; font-weight:600;">
+                    <option value="Open - Not Contacted">🔵 Open - Not Contacted</option>
+                    <option value="Working - Contacted">🟡 Working - Contacted</option>
+                    <option value="Closed - Not Converted">⚪ Closed - Not Converted</option>
+                    <option value="Converted">🟢 Converted</option>
+                </select>
+            </div>
+
+            <div style="width:100%; margin-bottom:1.5rem;">
+                <label for="note-modal-textarea" style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">What was discussed? (Conversation Summary & Follow-up):</label>
+                <textarea id="note-modal-textarea" rows="4" placeholder="E.g. Spoke with client on phone. They were contacted about the festival offer. Client requested wholesale pricing for 200 items. Need to follow up on Friday..." style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--border); background:var(--bg-dark); color:var(--text-main); font-size:0.85rem; font-family:inherit; resize:vertical; outline:none; box-sizing:border-box; line-height:1.5;"></textarea>
+            </div>
+
+            <div class="modal-actions" style="width:100%; justify-content:flex-end; gap:0.6rem;">
+                <button type="button" id="note-modal-cancel" class="btn secondary">Cancel</button>
+                <button type="button" id="note-modal-save" class="btn primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    <span>Save Notes</span>
+                </button>
             </div>
         </div>
     </div>

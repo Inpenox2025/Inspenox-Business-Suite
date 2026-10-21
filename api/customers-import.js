@@ -49,6 +49,8 @@ module.exports = async (req, res) => {
             const email = cust.email || null;
             const companyName = cust.company_name || cust.company || null;
             const city = cust.city || null;
+            const status = cust.status ? String(cust.status).trim() : 'Open - Not Contacted';
+            const description = cust.description || cust.notes || cust.conversation_notes || '';
             
             let finalTags = cust.tags ? String(cust.tags).trim() : null;
             if (default_tags && String(default_tags).trim()) {
@@ -64,14 +66,19 @@ module.exports = async (req, res) => {
             }
             
             await sql`
-                INSERT INTO customers (name, phone, email, company_name, city, tags, company_id, is_saved) 
-                VALUES (${name}, ${cleanPhone}, ${email}, ${companyName}, ${city}, ${finalTags}, ${targetCompanyId}, true) 
+                INSERT INTO customers (name, phone, email, company_name, city, tags, status, description, company_id, is_saved) 
+                VALUES (${name}, ${cleanPhone}, ${email}, ${companyName}, ${city}, ${finalTags}, ${status}, ${description}, ${targetCompanyId}, true) 
                 ON CONFLICT (phone) DO UPDATE SET 
                     name = EXCLUDED.name,
                     email = COALESCE(EXCLUDED.email, customers.email),
                     company_name = COALESCE(EXCLUDED.company_name, customers.company_name),
                     city = COALESCE(EXCLUDED.city, customers.city),
                     tags = COALESCE(EXCLUDED.tags, customers.tags),
+                    status = COALESCE(customers.status, EXCLUDED.status),
+                    description = CASE 
+                        WHEN EXCLUDED.description IS NOT NULL AND EXCLUDED.description != '' THEN EXCLUDED.description 
+                        ELSE customers.description 
+                    END,
                     company_id = EXCLUDED.company_id,
                     is_saved = true
             `;

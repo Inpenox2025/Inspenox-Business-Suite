@@ -5108,5 +5108,383 @@ tr:hover td {
     box-shadow: 0 0 0 3px var(--primary-light) !important;
 }
 
+/* ==========================================================================
+   Customer Lead Statuses & Conversation Notes System
+   Statuses: Open - Not Contacted | Working - Contacted | Closed - Not Converted | Converted
+   ========================================================================== */
+
+/* Status Dropdown in Add Customer Form & Toolbar */
+.status-dropdown-input,
+.table-filter-select {
+    padding: 0.55rem 0.85rem;
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    font-size: 0.825rem;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.status-dropdown-input:focus,
+.table-filter-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Status Badges & Interactive Dropdown Badges */
+.status-select-badge {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.32rem 1.8rem 0.32rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    outline: none;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    background-repeat: no-repeat;
+    background-position: right 0.55rem center;
+    background-size: 10px 10px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238696a0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+.status-select-badge option {
+    background: var(--bg-card);
+    color: var(--text-main);
+    font-weight: 500;
+    padding: 6px 10px;
+}
+
+/* Status: Open - Not Contacted (Blue) */
+.status-open,
+.status-select-badge.status-open {
+    background-color: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.35);
+}
+.status-select-badge.status-open:hover,
+.status-select-badge.status-open:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Status: Working - Contacted (Amber / Yellow) */
+.status-working,
+.status-select-badge.status-working {
+    background-color: rgba(245, 158, 11, 0.14);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.35);
+}
+.status-select-badge.status-working:hover,
+.status-select-badge.status-working:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+/* Status: Closed - Not Converted (Slate / Muted Gray) */
+.status-closed,
+.status-select-badge.status-closed {
+    background-color: rgba(148, 163, 184, 0.14);
+    color: #94a3b8;
+    border-color: rgba(148, 163, 184, 0.35);
+}
+.status-select-badge.status-closed:hover,
+.status-select-badge.status-closed:focus {
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2);
+}
+
+/* Status: Converted (Emerald / Green) */
+.status-converted,
+.status-select-badge.status-converted {
+    background-color: rgba(16, 185, 129, 0.16);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.4);
+}
+.status-select-badge.status-converted:hover,
+.status-select-badge.status-converted:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Static Status Pills */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 12px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+/* Chat Header Status Styling */
+.chat-subhead-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.2rem;
+    flex-wrap: wrap;
+}
+
+.chat-status-action-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.chat-status-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.chat-header-status-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 0.2rem 1.6rem 0.2rem 0.65rem;
+    border-radius: 16px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 9px 9px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238696a0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+.chat-header-status-select option {
+    background: var(--bg-card);
+    color: var(--text-main);
+    padding: 4px 8px;
+}
+
+/* Status Filter Chips in Inbox Sidebar */
+.inbox-filter-chips {
+    scrollbar-width: thin;
+}
+.inbox-filter-chips::-webkit-scrollbar {
+    height: 4px;
+}
+.inbox-filter-chips::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.inbox-filter-chip.chip-status-open.active {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: #ffffff;
+}
+.inbox-filter-chip.chip-status-working.active {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: #ffffff;
+}
+.inbox-filter-chip.chip-status-closed.active {
+    background: #64748b;
+    border-color: #64748b;
+    color: #ffffff;
+}
+.inbox-filter-chip.chip-status-converted.active {
+    background: #10b981;
+    border-color: #10b981;
+    color: #ffffff;
+}
+
+/* Contact Card Preview & Time in Inbox */
+.contact-last-msg {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.contact-last-msg-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 170px;
+}
+
+.contact-last-msg-time {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    opacity: 0.8;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Notes Column in Customers Table */
+.cust-notes-td {
+    max-width: 280px;
+}
+
+.cust-notes-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.35rem 0.55rem;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    border: 1px solid transparent;
+}
+
+.cust-notes-cell:hover {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.04));
+    border-color: var(--border);
+}
+
+.cust-notes-snippet {
+    font-size: 0.775rem;
+    color: var(--text-main);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cust-notes-snippet.is-empty {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.75rem;
+}
+
+.cust-notes-edit-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.cust-notes-cell:hover .cust-notes-edit-icon {
+    opacity: 1;
+    color: var(--primary);
+    background: rgba(0, 168, 132, 0.12);
+}
+
+.cust-notes-edit-icon svg {
+    width: 13px;
+    height: 13px;
+}
+
+/* Chat Header Notes Action Button */
+.btn-chat-notes {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    background: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.btn-chat-notes:hover {
+    background: rgba(0, 168, 132, 0.12);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Active Chat Conversation Note Strip */
+.chat-note-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.45rem 1rem;
+    background: rgba(0, 168, 132, 0.07);
+    border-bottom: 1px solid rgba(0, 168, 132, 0.2);
+    font-size: 0.775rem;
+    transition: all 0.2s ease;
+}
+
+.chat-note-content {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-note-tag {
+    font-weight: 700;
+    color: var(--primary, #00a884);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.chat-note-text {
+    color: var(--text-main);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-note-text.is-empty {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.chat-note-edit-btn {
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    background: transparent;
+    border: 1px solid rgba(0, 168, 132, 0.35);
+    color: var(--primary, #00a884);
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.chat-note-edit-btn:hover {
+    background: var(--primary, #00a884);
+    color: #ffffff;
+}
+
+
 
 

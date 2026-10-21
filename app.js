@@ -3450,36 +3450,136 @@ window.saveQuickTags = async function saveQuickTags() {
     }
 };
 
-window.filterCustomersByTag = function filterCustomersByTag(tagVal) {
-    const query = (document.getElementById('customers-search')?.value || '').toLowerCase().trim();
-    const selectedTag = (tagVal || '').toLowerCase().trim();
+// --- Lead Status Helpers ---
+function getStatusKey(status) {
+    if (!status) return 'open';
+    const s = String(status).toLowerCase();
+    if (s.includes('working')) return 'working';
+    if (s.includes('closed')) return 'closed';
+    if (s.includes('converted')) return 'converted';
+    return 'open';
+}
 
-    filteredCustomers = allCustomers.filter(c => {
-        const matchesQuery = !query || (
+function getStatusShort(status) {
+    if (!status) return 'Open';
+    const s = String(status).toLowerCase();
+    if (s.includes('working')) return 'Working';
+    if (s.includes('closed')) return 'Closed';
+    if (s.includes('converted')) return 'Converted';
+    return 'Open';
+}
+
+window.updateCustomerStatus = async function updateCustomerStatus(id, newStatus, selectEl = null) {
+    if (!id || !newStatus) return;
+
+    const numId = parseInt(id, 10);
+    const key = getStatusKey(newStatus);
+
+    if (selectEl) {
+        selectEl.className = selectEl.classList.contains('chat-header-status-select')
+            ? `chat-header-status-select status-${key}`
+            : `status-select-badge status-${key}`;
+    }
+
+    // Optimistic local state updates
+    const targetCust = (allCustomers || []).find(c => c.id === numId || c.id === id);
+    if (targetCust) targetCust.status = newStatus;
+
+    const targetFiltered = (filteredCustomers || []).find(c => c.id === numId || c.id === id);
+    if (targetFiltered) targetFiltered.status = newStatus;
+
+    const inboxCust = (inboxCustomersList || []).find(c => c.id === numId || c.id === id);
+    if (inboxCust) inboxCust.status = newStatus;
+
+    if (activeCustomerData && (activeCustomerData.id === numId || activeCustomerData.id === id)) {
+        activeCustomerData.status = newStatus;
+        const chatHeaderSelect = document.getElementById('chat-header-status-select');
+        if (chatHeaderSelect && chatHeaderSelect !== selectEl) {
+            chatHeaderSelect.value = newStatus;
+            chatHeaderSelect.className = `chat-header-status-select status-${key}`;
+        }
+    }
+
+    // Refresh inbox contacts list and sidebar cards
+    if (typeof filterAndRenderInboxContacts === 'function') {
+        filterAndRenderInboxContacts();
+    }
+
+    try {
+        const res = await apiFetch('/api/customers', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: numId || id, status: newStatus, company_id: typeof getCompanyId === 'function' ? getCompanyId() : undefined })
+        });
+        const data = await res.json();
+        if (data.error) {
+            throw new Error(data.error);
+        }
+    } catch (err) {
+        console.error('Failed to update status:', err);
+        showModal('Status Update Error', 'Could not update customer status: ' + err.message);
+    }
+};
+
+function applyCustomerFilters() {
+    const query = (document.getElementById('customers-search')?.value || '').toLowerCase().trim();
+    const statusFilter = document.getElementById('customers-status-filter')?.value || 'all';
+    const selectedTag = (document.getElementById('customers-tag-filter')?.value || '').toLowerCase().trim();
+
+    filteredCustomers = (allCustomers || []).filter(c => {
+        const matchesQuery = (!query) || (
             (c.name && c.name.toLowerCase().includes(query)) ||
             (c.phone && c.phone.toLowerCase().includes(query)) ||
             (c.email && c.email.toLowerCase().includes(query)) ||
             (c.company_name && c.company_name.toLowerCase().includes(query)) ||
             (c.tags && c.tags.toLowerCase().includes(query)) ||
+            (c.description && c.description.toLowerCase().includes(query)) ||
+            (c.notes && c.notes.toLowerCase().includes(query)) ||
             (c.city && c.city.toLowerCase().includes(query))
         );
 
-        const matchesTag = !selectedTag || (
-            c.tags && c.tags.split(',').map(s => s.trim().toLowerCase()).includes(selectedTag)
-        );
+        if (!matchesQuery) return false;
 
-        return matchesQuery && matchesTag;
+        if (statusFilter !== 'all') {
+            const custStatus = c.status || 'Open - Not Contacted';
+            if (custStatus !== statusFilter) return false;
+        }
+
+        if (selectedTag) {
+            const custTags = (c.tags || '').split(',').map(s => s.trim().toLowerCase());
+            if (!custTags.includes(selectedTag)) return false;
+        }
+
+        return true;
     });
 
     currentCustomersPage = 1;
     renderCustomersTable();
+
+    // Dynamically update Export button labels with filtered count
+    const exportLabel = document.getElementById('btn-export-customers-label');
+    if (exportLabel) {
+        exportLabel.textContent = filteredCustomers.length > 0 
+            ? `Export (${filteredCustomers.length})` 
+            : 'Export Excel';
+    }
+    const pdfLabel = document.getElementById('btn-export-pdf-label');
+    if (pdfLabel) {
+        pdfLabel.textContent = filteredCustomers.length > 0 
+            ? `PDF (${filteredCustomers.length})` 
+            : 'Export PDF';
+    }
+}
+
+window.filterCustomersByTag = function filterCustomersByTag(tagVal) {
+    applyCustomerFilters();
 };
 
 // --- Customers Logic ---
 async function loadCustomers() {
     const tbody = document.getElementById('customers-table-body');
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="8"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading customer directory...</span></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading customer directory...</span></div></td></tr>`;
     }
     try {
         await loadTags();
@@ -3489,22 +3589,20 @@ async function loadCustomers() {
 
         if (customers.error) {
             console.error('API Error:', customers.error);
-            if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="height:100px;">Failed to load customers.</td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr><td colspan="10" class="empty-state" style="height:100px;">Failed to load customers.</td></tr>`;
             return;
         }
 
         allCustomers = Array.isArray(customers) ? customers : [];
-        filteredCustomers = [...allCustomers];
-        currentCustomersPage = 1;
+        applyCustomerFilters();
 
         const statEl = document.getElementById('dash-stat-customers');
         if (statEl) statEl.textContent = allCustomers.length;
 
-        renderCustomersTable();
         syncTagSelectorDisplay('form');
     } catch (e) {
         console.error('Error loading customers:', e);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="height:100px;">Error loading data.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="10" class="empty-state" style="height:100px;">Error loading data.</td></tr>`;
     }
 }
 
@@ -3531,6 +3629,10 @@ function renderCustomersTable() {
     pageData.forEach((c, idx) => {
         const serialNo = startIndex + idx + 1;
         const tr = document.createElement('tr');
+        const custStatus = c.status || 'Open - Not Contacted';
+        const statusKey = getStatusKey(custStatus);
+        const custDesc = c.description || c.notes || '';
+
         const tagsArr = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
         const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
         const tagsDisplayHtml = `
@@ -3548,16 +3650,34 @@ function renderCustomersTable() {
                 <div class="user-cell">
                     <div class="user-avatar">${getInitial(c.name)}</div>
                     <div>
-                        <strong style="color:var(--text-main);display:block;">${c.name}</strong>
-                        ${c.city ? `<span style="font-size:0.75rem;color:var(--text-muted);">${c.city}${c.state ? ', ' + c.state : ''}</span>` : ''}
+                        <strong style="color:var(--text-main);display:block;">${escapeHtml(c.name || 'Customer')}</strong>
+                        ${c.city ? `<span style="font-size:0.75rem;color:var(--text-muted);">${escapeHtml(c.city)}${c.state ? ', ' + escapeHtml(c.state) : ''}</span>` : ''}
                     </div>
                 </div>
             </td>
             <td><code style="font-size:0.85rem;color:var(--primary);">${c.phone}</code></td>
-            <td><span style="font-size:0.8rem;color:var(--text-muted);">${c.email || '-'}</span></td>
-            <td><span style="font-size:0.8rem;color:var(--text-muted);">${c.company_name || '-'}</span></td>
+            <td>
+                <select class="status-select-badge status-${statusKey}" 
+                        onchange="updateCustomerStatus(${c.id}, this.value, this)" 
+                        title="Click to update status">
+                    <option value="Open - Not Contacted" ${custStatus === 'Open - Not Contacted' ? 'selected' : ''}>🔵 Open - Not Contacted</option>
+                    <option value="Working - Contacted" ${custStatus === 'Working - Contacted' ? 'selected' : ''}>🟡 Working - Contacted</option>
+                    <option value="Closed - Not Converted" ${custStatus === 'Closed - Not Converted' ? 'selected' : ''}>⚪ Closed - Not Converted</option>
+                    <option value="Converted" ${custStatus === 'Converted' ? 'selected' : ''}>🟢 Converted</option>
+                </select>
+            </td>
+            <td class="cust-notes-td">
+                <div class="cust-notes-cell" onclick="openCustomerNoteModal(${c.id})" title="Click to view or update conversation notes">
+                    <span class="cust-notes-snippet ${!custDesc ? 'is-empty' : ''}">${custDesc ? escapeHtml(custDesc) : '<em>+ Add conversation notes...</em>'}</span>
+                    <button type="button" class="cust-notes-edit-icon" title="Edit conversation notes">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                </div>
+            </td>
+            <td><span style="font-size:0.8rem;color:var(--text-muted);">${c.email ? escapeHtml(c.email) : '-'}</span></td>
+            <td><span style="font-size:0.8rem;color:var(--text-muted);">${c.company_name ? escapeHtml(c.company_name) : '-'}</span></td>
             <td>${tagsDisplayHtml}</td>
-            <td><span class="window-badge" style="background:var(--primary-light);color:var(--primary);">${c.message_count || 0} messages</span></td>
+            <td><span class="window-badge" style="background:var(--primary-light);color:var(--primary);">${c.message_count || 0} msgs</span></td>
             <td style="text-align: right;">
                 <button class="btn secondary sm" onclick="editCustomer(${c.id})">Edit</button>
                 <button class="btn danger sm" onclick="deleteCustomer(${c.id})">Delete</button>
@@ -3567,7 +3687,7 @@ function renderCustomersTable() {
     });
 
     if (totalItems === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="height: 100px;">No matching customers found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="empty-state" style="height: 100px;">No matching customers found.</td></tr>`;
     }
 
     if (pageInfo) {
@@ -3578,29 +3698,8 @@ function renderCustomersTable() {
     if (btnNext) btnNext.disabled = currentCustomersPage === totalPages || totalItems === 0;
 }
 
-document.getElementById('customers-search')?.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    const selectedTag = (document.getElementById('customers-tag-filter')?.value || '').toLowerCase().trim();
-
-    filteredCustomers = allCustomers.filter(c => {
-        const matchesQuery = !query || (
-            (c.name && c.name.toLowerCase().includes(query)) ||
-            (c.phone && c.phone.toLowerCase().includes(query)) ||
-            (c.email && c.email.toLowerCase().includes(query)) ||
-            (c.company_name && c.company_name.toLowerCase().includes(query)) ||
-            (c.tags && c.tags.toLowerCase().includes(query)) ||
-            (c.city && c.city.toLowerCase().includes(query))
-        );
-
-        const matchesTag = !selectedTag || (
-            c.tags && c.tags.split(',').map(s => s.trim().toLowerCase()).includes(selectedTag)
-        );
-
-        return matchesQuery && matchesTag;
-    });
-    currentCustomersPage = 1;
-    renderCustomersTable();
-});
+document.getElementById('customers-search')?.addEventListener('input', applyCustomerFilters);
+document.getElementById('customers-status-filter')?.addEventListener('change', applyCustomerFilters);
 
 document.getElementById('btn-prev-page')?.addEventListener('click', () => {
     if (currentCustomersPage > 1) {
@@ -3639,6 +3738,14 @@ window.editCustomer = (id) => {
         document.getElementById('cust-tags').value = cust.tags || '';
         syncTagSelectorDisplay('form');
     }
+    const statusSelect = document.getElementById('cust-status');
+    if (statusSelect) {
+        statusSelect.value = cust.status || 'Open - Not Contacted';
+    }
+    const descInput = document.getElementById('cust-description');
+    if (descInput) {
+        descInput.value = cust.description || cust.notes || '';
+    }
     if (document.getElementById('cust-notes')) document.getElementById('cust-notes').value = cust.notes || '';
     document.getElementById('btn-save-cust').innerHTML = `<span>Update Customer</span>`;
     document.getElementById('btn-cancel-edit').style.display = 'inline-flex';
@@ -3647,6 +3754,10 @@ window.editCustomer = (id) => {
 document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
     document.getElementById('add-customer-form').reset();
     document.getElementById('cust-id').value = '';
+    const statusSelect = document.getElementById('cust-status');
+    if (statusSelect) statusSelect.value = 'Open - Not Contacted';
+    const descInput = document.getElementById('cust-description');
+    if (descInput) descInput.value = '';
     if (document.getElementById('cust-tags')) {
         document.getElementById('cust-tags').value = '';
         syncTagSelectorDisplay('form');
@@ -3666,6 +3777,8 @@ document.getElementById('add-customer-form')?.addEventListener('submit', async (
     const state = document.getElementById('cust-state')?.value || '';
     const pincode = document.getElementById('cust-pincode')?.value || '';
     const tags = document.getElementById('cust-tags')?.value || '';
+    const status = document.getElementById('cust-status')?.value || 'Open - Not Contacted';
+    const description = document.getElementById('cust-description')?.value.trim() || '';
     const notes = document.getElementById('cust-notes')?.value || '';
 
     const performSave = async () => {
@@ -3682,6 +3795,8 @@ document.getElementById('add-customer-form')?.addEventListener('submit', async (
                 state,
                 pincode,
                 tags,
+                status,
+                description,
                 notes,
                 company_id: getCompanyId()
             })
@@ -3695,7 +3810,7 @@ document.getElementById('add-customer-form')?.addEventListener('submit', async (
     } else {
         showModal(
             'Customer Opt-In Consent Confirmation',
-            `By adding ${name} (${phone}), you certify that this customer has agreed: "I agree to receive WhatsApp, Email, and SMS promotional updates & service announcements from Inspenox Business Suite".`,
+            `By adding ${name} (${phone}) with status "${status}", you certify that this customer has agreed: "I agree to receive WhatsApp, Email, and SMS promotional updates & service announcements from Inspenox Business Suite".`,
             'confirm',
             performSave,
             'I Confirm & Agree',
@@ -3703,6 +3818,443 @@ document.getElementById('add-customer-form')?.addEventListener('submit', async (
         );
     }
 });
+
+// --- Quick Customer Conversation Note Modal & Sync Logic ---
+function syncChatNotesUI(customer) {
+    if (!customer) return;
+    const strip = document.getElementById('chat-note-strip');
+    const noteText = document.getElementById('chat-note-text');
+    if (strip && noteText) {
+        strip.style.display = 'flex';
+        const desc = customer.description || customer.notes;
+        if (desc && desc.trim()) {
+            noteText.textContent = desc;
+            noteText.className = 'chat-note-text';
+        } else {
+            noteText.textContent = 'No conversation notes recorded yet. Click "Edit Note" to log discussion.';
+            noteText.className = 'chat-note-text is-empty';
+        }
+    }
+}
+
+window.openCustomerNoteModal = (id) => {
+    const numId = parseInt(id, 10);
+    const customer = (allCustomers || []).find(c => c.id === numId || c.id === id) || 
+                     (inboxCustomersList || []).find(c => c.id === numId || c.id === id) ||
+                     (activeCustomerData && (activeCustomerData.id === numId || activeCustomerData.id === id) ? activeCustomerData : null);
+    if (!customer) return;
+
+    const modal = document.getElementById('cust-note-modal');
+    if (!modal) return;
+
+    const nameEl = document.getElementById('note-modal-name');
+    const phoneEl = document.getElementById('note-modal-phone');
+    if (nameEl) nameEl.textContent = customer.name || 'Customer';
+    if (phoneEl) phoneEl.textContent = formatDisplayPhone(customer.phone);
+
+    const statusSelect = document.getElementById('note-modal-status-select');
+    if (statusSelect) {
+        statusSelect.value = customer.status || 'Open - Not Contacted';
+    }
+
+    const textarea = document.getElementById('note-modal-textarea');
+    if (textarea) {
+        textarea.value = customer.description || customer.notes || '';
+        setTimeout(() => textarea.focus(), 60);
+    }
+
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    };
+
+    const closeBtn = document.getElementById('note-modal-close');
+    const cancelBtn = document.getElementById('note-modal-cancel');
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (cancelBtn) cancelBtn.onclick = closeModal;
+    modal.onclick = (e) => {
+        if (e.target === modal) closeModal();
+    };
+
+    const saveBtn = document.getElementById('note-modal-save');
+    if (saveBtn) {
+        saveBtn.onclick = async () => {
+            const newStatus = statusSelect ? statusSelect.value : customer.status;
+            const newNotes = textarea ? textarea.value.trim() : '';
+
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="spinner"></span> Saving...';
+
+            try {
+                const res = await apiFetch('/api/customers', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: customer.id,
+                        status: newStatus,
+                        description: newNotes,
+                        notes: newNotes,
+                        company_id: typeof getCompanyId === 'function' ? getCompanyId() : undefined
+                    })
+                });
+
+                if (!res.ok) throw new Error('Failed to update notes');
+
+                customer.status = newStatus;
+                customer.description = newNotes;
+                customer.notes = newNotes;
+
+                const matchAll = (allCustomers || []).find(c => c.id === customer.id);
+                if (matchAll) {
+                    matchAll.status = newStatus;
+                    matchAll.description = newNotes;
+                    matchAll.notes = newNotes;
+                }
+                const matchFiltered = (filteredCustomers || []).find(c => c.id === customer.id);
+                if (matchFiltered) {
+                    matchFiltered.status = newStatus;
+                    matchFiltered.description = newNotes;
+                    matchFiltered.notes = newNotes;
+                }
+                const matchInbox = (inboxCustomersList || []).find(c => c.id === customer.id);
+                if (matchInbox) {
+                    matchInbox.status = newStatus;
+                    matchInbox.description = newNotes;
+                    matchInbox.notes = newNotes;
+                }
+
+                renderCustomersTable();
+                if (typeof filterAndRenderInboxContacts === 'function') {
+                    filterAndRenderInboxContacts();
+                }
+
+                const activeCustId = document.getElementById('chat-active-customer')?.value;
+                if (activeCustId && String(activeCustId) === String(customer.id)) {
+                    syncChatNotesUI(customer);
+                    const chatHeaderSelect = document.getElementById('chat-header-status-select');
+                    if (chatHeaderSelect) {
+                        chatHeaderSelect.value = newStatus;
+                        chatHeaderSelect.className = `chat-header-status-select status-${getStatusKey(newStatus)}`;
+                    }
+                }
+
+                closeModal();
+            } catch (err) {
+                console.error(err);
+                showModal('Error', 'Could not save conversation notes: ' + err.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    <span>Save Notes</span>
+                `;
+            }
+        };
+    }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+};
+
+// --- Export Customers Based on Active Filter ---
+function getActiveCompanyName() {
+    if (typeof getStoredCompany === 'function') {
+        const comp = getStoredCompany();
+        if (comp && comp.name) return comp.name;
+    }
+    const navName = document.getElementById('nav-active-company-name')?.textContent;
+    if (navName && navName.trim()) return navName.trim();
+    return 'Inspenox';
+}
+
+function exportFilteredCustomers() {
+    if (!filteredCustomers || filteredCustomers.length === 0) {
+        showModal('No Customers to Export', 'There are no customers matching your current filter criteria to export.');
+        return;
+    }
+
+    const statusFilter = document.getElementById('customers-status-filter')?.value || 'all';
+    const searchQuery = document.getElementById('customers-search')?.value.trim() || '';
+
+    const exportRows = filteredCustomers.map((c, index) => {
+        const cleanPhone = formatIndiaPhone(c.phone);
+        const createdDate = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
+        const lastMsgTime = c.last_message_at ? new Date(c.last_message_at).toLocaleString() : 'No messages';
+
+        return {
+            "Sr No": index + 1,
+            "Customer Name": c.name || "Customer",
+            "Phone Number": cleanPhone,
+            "Display Phone": formatDisplayPhone(c.phone),
+            "Status": c.status || "Open - Not Contacted",
+            "Conversation Notes": c.description || c.notes || "",
+            "Email": c.email || "",
+            "Company": c.company_name || "",
+            "City": c.city || "",
+            "Tags": c.tags || "",
+            "Messages Count": parseInt(c.message_count, 10) || 0,
+            "Unread Messages": parseInt(c.unread_count, 10) || 0,
+            "Date Added": createdDate,
+            "Last Conversation Activity": lastMsgTime
+        };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
+    const workbook = XLSX.utils.book_new();
+
+    let sheetName = "Filtered Customers";
+    if (statusFilter !== 'all') {
+        sheetName = statusFilter.slice(0, 31);
+    }
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+    worksheet['!cols'] = [
+        { wch: 8 },  // Sr No
+        { wch: 24 }, // Customer Name
+        { wch: 16 }, // Phone Number
+        { wch: 18 }, // Display Phone
+        { wch: 22 }, // Status
+        { wch: 35 }, // Conversation Notes
+        { wch: 24 }, // Email
+        { wch: 20 }, // Company
+        { wch: 16 }, // City
+        { wch: 20 }, // Tags
+        { wch: 16 }, // Messages Count
+        { wch: 16 }, // Unread Messages
+        { wch: 14 }, // Date Added
+        { wch: 26 }  // Last Conversation Activity
+    ];
+
+    const companyName = getActiveCompanyName();
+    const prefix = companyName.replace(/[^a-zA-Z0-9]+/g, '_');
+    const nowStr = new Date().toISOString().slice(0, 10);
+    let filterSlug = 'all';
+    if (statusFilter !== 'all') {
+        filterSlug = statusFilter.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    } else if (searchQuery) {
+        filterSlug = 'search_' + searchQuery.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 15);
+    }
+
+    const filename = `${prefix}_Customers_${filterSlug}_${exportRows.length}_contacts_${nowStr}.xlsx`;
+    XLSX.writeFile(workbook, filename);
+
+    const filterDesc = statusFilter !== 'all' ? `status "${statusFilter}"` : (searchQuery ? `search "${searchQuery}"` : 'all contacts');
+    showModal('Export Successful', `Successfully exported ${exportRows.length} customer(s) based on ${filterDesc} to <strong>${filename}</strong>.`);
+}
+
+document.getElementById('btn-export-customers')?.addEventListener('click', exportFilteredCustomers);
+document.getElementById('btn-export-customers-toolbar')?.addEventListener('click', exportFilteredCustomers);
+
+// --- Export Filtered Customers to PDF Document ---
+async function exportFilteredCustomersPdf() {
+    if (!filteredCustomers || filteredCustomers.length === 0) {
+        showModal('No Customers to Export', 'There are no customers matching your current filter criteria to export.');
+        return;
+    }
+
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        showModal('Loading PDF Generator', 'Downloading PDF generator library, please wait a moment...');
+        try {
+            await new Promise((resolve, reject) => {
+                const s1 = document.createElement('script');
+                s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                s1.onload = () => {
+                    const s2 = document.createElement('script');
+                    s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+                    s2.onload = resolve;
+                    s2.onerror = reject;
+                    document.head.appendChild(s2);
+                };
+                s1.onerror = reject;
+                document.head.appendChild(s1);
+            });
+        } catch (err) {
+            showModal('PDF Error', 'Failed to load PDF library. Please check your internet connection.');
+            return;
+        }
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4'
+    });
+
+    const statusFilter = document.getElementById('customers-status-filter')?.value || 'all';
+    const searchQuery = document.getElementById('customers-search')?.value.trim() || '';
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const companyName = getActiveCompanyName();
+
+    // 1. Top Branded Header
+    doc.setFillColor(0, 168, 132);
+    doc.rect(0, 0, pageWidth, 55, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text(`${companyName.toUpperCase()} - CUSTOMERS DIRECTORY`, 30, 32);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.text('Omnichannel Marketing & WhatsApp Business Platform', 30, 46);
+
+    const nowFormatted = new Date().toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+    });
+
+    doc.setFontSize(8);
+    doc.text(`Generated: ${nowFormatted}`, pageWidth - 30, 38, { align: 'right' });
+
+    // 2. Filter Summary Banner
+    doc.setFillColor(245, 247, 248);
+    doc.roundedRect(30, 68, pageWidth - 60, 36, 4, 4, 'F');
+    doc.setDrawColor(218, 222, 226);
+    doc.roundedRect(30, 68, pageWidth - 60, 36, 4, 4, 'S');
+
+    doc.setFontSize(8.5);
+    const bannerY = 89;
+    let currentX = 42;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(60, 70, 80);
+    doc.text('Filter Status:', currentX, bannerY);
+    currentX += doc.getTextWidth('Filter Status:') + 5;
+
+    const filterText = statusFilter !== 'all' ? statusFilter : 'All Statuses';
+    doc.setFont('helvetica', 'bold');
+    if (statusFilter === 'Open - Not Contacted') doc.setTextColor(37, 99, 235);
+    else if (statusFilter === 'Working - Contacted') doc.setTextColor(217, 119, 6);
+    else if (statusFilter === 'Closed - Not Converted') doc.setTextColor(100, 116, 139);
+    else if (statusFilter === 'Converted') doc.setTextColor(5, 150, 105);
+    else doc.setTextColor(0, 168, 132);
+
+    doc.text(filterText, currentX, bannerY);
+    currentX += doc.getTextWidth(filterText) + 16;
+
+    if (searchQuery) {
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 70, 80);
+        doc.text('Search:', currentX, bannerY);
+        currentX += doc.getTextWidth('Search:') + 4;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(30, 40, 50);
+        const displayQuery = searchQuery.length > 20 ? searchQuery.slice(0, 18) + '...' : searchQuery;
+        doc.text(`"${displayQuery}"`, currentX, bannerY);
+    }
+
+    const totalCountText = `${filteredCustomers.length} contact(s)`;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    const countWidth = doc.getTextWidth(totalCountText);
+    const rightEdge = pageWidth - 42;
+
+    doc.setTextColor(60, 70, 80);
+    doc.text('Total Records: ', rightEdge - countWidth, bannerY, { align: 'right' });
+
+    doc.setTextColor(0, 168, 132);
+    doc.text(totalCountText, rightEdge, bannerY, { align: 'right' });
+
+    // 3. Table Rows
+    const tableData = filteredCustomers.map((c, index) => {
+        const phoneFormatted = formatDisplayPhone(c.phone);
+        const msgCount = `${c.message_count || 0} msgs`;
+        const custStatus = c.status || 'Open - Not Contacted';
+        const custDesc = (c.description || c.notes || '').slice(0, 140) || '-';
+
+        return [
+            index + 1,
+            c.name || 'Customer',
+            phoneFormatted,
+            custStatus,
+            custDesc,
+            msgCount
+        ];
+    });
+
+    doc.autoTable({
+        startY: 116,
+        head: [['S.No', 'Customer Name', 'Phone Number', 'Status', 'Conversation Notes', 'Messages']],
+        body: tableData,
+        theme: 'striped',
+        margin: { left: 30, right: 30, bottom: 42 },
+        styles: {
+            fontSize: 8,
+            cellPadding: 4.5,
+            font: 'helvetica',
+            textColor: [33, 37, 41],
+            lineColor: [228, 232, 235],
+            lineWidth: 0.5
+        },
+        headStyles: {
+            fillColor: [0, 92, 75],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 8.5,
+            halign: 'left'
+        },
+        alternateRowStyles: {
+            fillColor: [248, 250, 251]
+        },
+        columnStyles: {
+            0: { cellWidth: 26, halign: 'center' },
+            1: { cellWidth: 105, fontStyle: 'bold' },
+            2: { cellWidth: 90 },
+            3: { cellWidth: 105, fontStyle: 'bold' },
+            4: { cellWidth: 154 },
+            5: { cellWidth: 55, halign: 'center' }
+        },
+        didParseCell: function(data) {
+            if (data.section === 'body' && data.column.index === 3) {
+                const text = String(data.cell.raw || '');
+                if (text.includes('Open')) {
+                    data.cell.styles.textColor = [37, 99, 235];
+                } else if (text.includes('Working')) {
+                    data.cell.styles.textColor = [217, 119, 6];
+                } else if (text.includes('Closed')) {
+                    data.cell.styles.textColor = [100, 116, 139];
+                } else if (text.includes('Converted')) {
+                    data.cell.styles.textColor = [5, 150, 105];
+                }
+            }
+        },
+        didDrawPage: function(data) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(130, 140, 150);
+
+            doc.setDrawColor(220, 224, 228);
+            doc.setLineWidth(0.5);
+            doc.line(30, pageHeight - 26, pageWidth - 30, pageHeight - 26);
+
+            doc.text(`Powering WhatsApp & Omnichannel Marketing for ${companyName}`, 30, pageHeight - 14);
+            const pageStr = `Page ${data.pageNumber}`;
+            doc.text(pageStr, pageWidth - 30, pageHeight - 14, { align: 'right' });
+        }
+    });
+
+    const prefix = companyName.replace(/[^a-zA-Z0-9]+/g, '_');
+    const nowStr = new Date().toISOString().slice(0, 10);
+    let filterSlug = 'all';
+    if (statusFilter !== 'all') {
+        filterSlug = statusFilter.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    } else if (searchQuery) {
+        filterSlug = 'search_' + searchQuery.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 15);
+    }
+    const filename = `${prefix}_Customers_${filterSlug}_${tableData.length}_contacts_${nowStr}.pdf`;
+
+    doc.save(filename);
+
+    const filterDesc = statusFilter !== 'all' ? `status "${statusFilter}"` : (searchQuery ? `search "${searchQuery}"` : 'all contacts');
+    showModal('PDF Export Successful', `Successfully generated PDF report with ${tableData.length} customer(s) based on ${filterDesc} to <strong>${filename}</strong>.`);
+}
+
+document.getElementById('btn-export-pdf')?.addEventListener('click', exportFilteredCustomersPdf);
+document.getElementById('btn-export-pdf-toolbar')?.addEventListener('click', exportFilteredCustomersPdf);
 
 // --- Dashboard Logic ---
 async function loadDashboard() {
@@ -7995,18 +8547,27 @@ function isUnsavedLead(c) {
         (parseInt(c.inbound_count) > 0 && parseInt(c.outbound_count) === 0 && !c.is_saved);
 }
 
+function getCustomerActivityTimestamp(c) {
+    if (!c) return 0;
+    const tMsg = c.last_message_at ? new Date(c.last_message_at).getTime() : 0;
+    const tInbound = c.last_inbound_at ? new Date(c.last_inbound_at).getTime() : 0;
+    const tCreated = c.created_at ? new Date(c.created_at).getTime() : 0;
+    return Math.max(isNaN(tMsg) ? 0 : tMsg, isNaN(tInbound) ? 0 : tInbound, isNaN(tCreated) ? 0 : tCreated);
+}
+
 function filterAndRenderInboxContacts() {
     const query = document.getElementById('inbox-search')?.value.toLowerCase() || '';
     const now = Date.now();
     const twentyFourHoursMs = 24 * 60 * 60 * 1000;
 
-    const filtered = inboxCustomersList.filter(c => {
+    const filtered = (inboxCustomersList || []).filter(c => {
         const matchesQuery = (c.name && c.name.toLowerCase().includes(query)) ||
             (c.phone && c.phone.toLowerCase().includes(query));
         if (!matchesQuery) return false;
 
         const is24hActive = c.last_inbound_at && (now - new Date(c.last_inbound_at).getTime() <= twentyFourHoursMs);
         const isInboundLead = isUnsavedLead(c);
+        const custStatus = c.status || 'Open - Not Contacted';
 
         if (currentInboxFilter === 'free') {
             if (!is24hActive) return false;
@@ -8014,6 +8575,14 @@ function filterAndRenderInboxContacts() {
             if (is24hActive) return false;
         } else if (currentInboxFilter === 'unsaved') {
             if (!isInboundLead) return false;
+        } else if (currentInboxFilter === 'status-open') {
+            if (custStatus !== 'Open - Not Contacted') return false;
+        } else if (currentInboxFilter === 'status-working') {
+            if (custStatus !== 'Working - Contacted') return false;
+        } else if (currentInboxFilter === 'status-closed') {
+            if (custStatus !== 'Closed - Not Converted') return false;
+        } else if (currentInboxFilter === 'status-converted') {
+            if (custStatus !== 'Converted') return false;
         }
 
         // Tag filter check
@@ -8027,8 +8596,11 @@ function filterAndRenderInboxContacts() {
         return true;
     });
 
+    // Ensure recently messaged or reply customer is on top as recent conversations
+    filtered.sort((a, b) => getCustomerActivityTimestamp(b) - getCustomerActivityTimestamp(a));
+
     // Check unsaved leads count to show/hide bulk save button
-    const unsavedLeadsCount = inboxCustomersList.filter(c => isUnsavedLead(c)).length;
+    const unsavedLeadsCount = (inboxCustomersList || []).filter(c => isUnsavedLead(c)).length;
 
     const bulkBtn = document.getElementById('btn-bulk-save-unsaved');
     if (bulkBtn) {
@@ -8054,8 +8626,18 @@ function renderInboxContacts(list) {
             msg = `No chats found with tag "🏷️ ${activeInboxTagFilter}"`;
         } else if (currentInboxFilter === 'free') {
             msg = 'No active 24h free tier chats';
+        } else if (currentInboxFilter === 'expired') {
+            msg = 'No 24h expired chats';
         } else if (currentInboxFilter === 'unsaved') {
             msg = 'No new unsaved / ad leads found';
+        } else if (currentInboxFilter === 'status-open') {
+            msg = 'No chats in "Open - Not Contacted"';
+        } else if (currentInboxFilter === 'status-working') {
+            msg = 'No chats in "Working - Contacted"';
+        } else if (currentInboxFilter === 'status-closed') {
+            msg = 'No chats in "Closed - Not Converted"';
+        } else if (currentInboxFilter === 'status-converted') {
+            msg = 'No chats in "Converted"';
         }
         sidebar.innerHTML = `
             <div class="empty-state" style="padding:2.5rem 1rem; text-align:center;">
@@ -8079,6 +8661,28 @@ function renderInboxContacts(list) {
             ? `<span style="font-size:0.6rem; background:rgba(234, 179, 8, 0.18); color:#eab308; padding:0.1rem 0.35rem; border-radius:4px; margin-left:0.35rem; font-weight:600; display:inline-block;">Ad Lead</span>`
             : '';
 
+        const custStatus = c.status || 'Open - Not Contacted';
+        const statusKey = getStatusKey(custStatus);
+        const statusShort = getStatusShort(custStatus);
+        const statusPillHtml = `<span class="status-pill status-${statusKey}">${statusShort}</span>`;
+
+        let lastMsgHtml = '';
+        if (c.last_message_content || c.last_message_at) {
+            let preview = c.last_message_content || (c.last_message_direction === 'inbound' ? 'Inbound message' : 'Message');
+            if (preview.startsWith('[Template]')) {
+                preview = '📋 ' + preview.replace(/^\[Template\]\s*/i, '');
+            } else if (preview.length > 26) {
+                preview = preview.slice(0, 26) + '...';
+            }
+            const timeStr = formatTime(c.last_message_at || c.last_inbound_at);
+            lastMsgHtml = `
+                <div class="contact-last-msg">
+                    <span class="contact-last-msg-text">${escapeHtml(preview)}</span>
+                    <span class="contact-last-msg-time">${timeStr}</span>
+                </div>
+            `;
+        }
+
         // Render customer tags preview
         let tagsHtml = '';
         if (c.tags && String(c.tags).trim()) {
@@ -8100,8 +8704,15 @@ function renderInboxContacts(list) {
         div.innerHTML = `
             <div class="contact-avatar">${getInitial(c.name)}</div>
             <div class="contact-details">
-                <div class="contact-name" style="display:flex; align-items:center; gap:0.25rem;">${c.name} ${leadTagHtml}</div>
-                <div class="contact-phone">${formatDisplayPhone(c.phone)}</div>
+                <div class="contact-name" style="display:flex; align-items:center; justify-content:space-between; gap:0.25rem;">
+                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(c.name)}</span>
+                    ${leadTagHtml}
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.4rem; margin-top:0.2rem;">
+                    <div class="contact-phone">${formatDisplayPhone(c.phone)}</div>
+                    ${statusPillHtml}
+                </div>
+                ${lastMsgHtml}
                 ${tagsHtml}
             </div>
             ${unreadBadgeHtml}
@@ -8471,6 +9082,17 @@ async function openChat(customer, pushHistory = true) {
         }
     }
 
+    // Initialize Status Dropdown & Notes in Chat Header
+    const headerStatusSelect = document.getElementById('chat-header-status-select');
+    if (headerStatusSelect) {
+        const custStatus = customer.status || 'Open - Not Contacted';
+        headerStatusSelect.value = custStatus;
+        headerStatusSelect.className = `chat-header-status-select status-${getStatusKey(custStatus)}`;
+    }
+
+    // Sync conversation notes strip
+    syncChatNotesUI(customer);
+
     document.getElementById('chat-active-customer').value = customer.id;
     document.getElementById('chat-reply-form').style.display = 'flex';
 
@@ -8486,6 +9108,24 @@ async function openChat(customer, pushHistory = true) {
     inboxPollInterval = setInterval(fetchChatMessages, 4000);
 }
 
+document.getElementById('chat-header-status-select')?.addEventListener('change', async (e) => {
+    if (!activeInboxCustomer) return;
+    const newStatus = e.target.value;
+    await updateCustomerStatus(activeInboxCustomer, newStatus, e.target);
+});
+
+document.getElementById('btn-chat-notes')?.addEventListener('click', () => {
+    if (activeInboxCustomer) {
+        openCustomerNoteModal(activeInboxCustomer);
+    }
+});
+
+document.getElementById('btn-edit-chat-strip-note')?.addEventListener('click', () => {
+    if (activeInboxCustomer) {
+        openCustomerNoteModal(activeInboxCustomer);
+    }
+});
+
 document.getElementById('close-chat-btn')?.addEventListener('click', closeChat);
 
 function closeChat() {
@@ -8495,6 +9135,9 @@ function closeChat() {
 
     const headerBar = document.getElementById('chat-header-bar');
     if (headerBar) headerBar.style.display = 'none';
+
+    const strip = document.getElementById('chat-note-strip');
+    if (strip) strip.style.display = 'none';
 
     document.getElementById('chat-reply-form').style.display = 'none';
     document.getElementById('chat-messages').innerHTML = `
@@ -9339,6 +9982,24 @@ async function fetchChatMessages(isInitial = false) {
         const latestMsgId = latestMsg ? (latestMsg.id || latestMsg.created_at) : null;
         const currentStatusHash = messages.map(m => `${m.id}:${m.status}`).join('|');
 
+        // Keep active customer's latest message activity up to date
+        if (latestMsg && activeCustomerData) {
+            const numId = parseInt(activeCustomerData.id, 10);
+            const inList = (inboxCustomersList || []).find(c => c.id === numId || c.id === activeCustomerData.id);
+            if (inList) {
+                const hadChange = inList.last_message_at !== latestMsg.created_at || inList.last_message_content !== latestMsg.content;
+                inList.last_message_at = latestMsg.created_at;
+                inList.last_message_content = latestMsg.content;
+                inList.last_message_direction = latestMsg.direction;
+                if (latestMsg.direction === 'inbound') {
+                    inList.last_inbound_at = latestMsg.created_at;
+                }
+                if (hadChange && typeof filterAndRenderInboxContacts === 'function') {
+                    filterAndRenderInboxContacts();
+                }
+            }
+        }
+
         // Skip DOM re-render on polling if message count, latest message ID, AND status hash haven't changed
         if (!isInitial && messages.length === lastChatMsgCount && latestMsgId === lastChatLatestMsgId && currentStatusHash === lastChatStatusHash) {
             return;
@@ -9600,6 +10261,16 @@ document.getElementById('chat-reply-form')?.addEventListener('submit', async (e)
         } else {
             inputEl.value = '';
             clearChatAttachment();
+            const numId = parseInt(customerId, 10);
+            const cust = (inboxCustomersList || []).find(c => c.id === numId || c.id === customerId);
+            if (cust) {
+                cust.last_message_at = new Date().toISOString();
+                cust.last_message_content = content || (stagedChatFile ? stagedChatFile.name : 'Message');
+                cust.last_message_direction = 'outbound';
+                if (typeof filterAndRenderInboxContacts === 'function') {
+                    filterAndRenderInboxContacts();
+                }
+            }
         }
 
         fetchChatMessages();
@@ -9759,6 +10430,16 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
             if (result.error) {
                 showModal('Template Send Error', result.error);
             } else {
+                const numId = parseInt(activeInboxCustomer, 10);
+                const cust = (inboxCustomersList || []).find(c => c.id === numId || c.id === activeInboxCustomer);
+                if (cust) {
+                    cust.last_message_at = new Date().toISOString();
+                    cust.last_message_content = `[Template] ${templateName}`;
+                    cust.last_message_direction = 'outbound';
+                    if (typeof filterAndRenderInboxContacts === 'function') {
+                        filterAndRenderInboxContacts();
+                    }
+                }
                 fetchChatMessages();
             }
         }, 'Send Template', 'btn primary');
