@@ -2346,6 +2346,32 @@ function showModal(title, message, type = 'info', onConfirm = null, confirmText 
         }
     }
 
+    // Dynamic icon badge & styling
+    const iconBadge = document.getElementById('modal-icon-badge');
+    const iconSvg = document.getElementById('modal-icon-svg');
+    if (iconBadge && iconSvg) {
+        iconBadge.style.display = type === 'loading' ? 'none' : 'flex';
+        iconBadge.className = 'modal-icon-badge';
+        const titleLower = (title || '').toLowerCase();
+        if (type === 'confirm' || titleLower.includes('delete') || titleLower.includes('warning') || titleLower.includes('remove')) {
+            if (titleLower.includes('delete') || titleLower.includes('remove')) {
+                iconBadge.classList.add('icon-danger');
+                iconSvg.innerHTML = '<path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line>';
+            } else {
+                iconBadge.classList.add('icon-warning');
+                iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>';
+            }
+        } else if (titleLower.includes('error') || titleLower.includes('fail')) {
+            iconBadge.classList.add('icon-danger');
+            iconSvg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+        } else if (titleLower.includes('export') || titleLower.includes('download') || titleLower.includes('pdf') || titleLower.includes('excel')) {
+            iconSvg.innerHTML = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>';
+        } else {
+            // Success / Info default checkmark
+            iconSvg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+        }
+    }
+
     const confirmBtn = document.getElementById('modal-confirm-btn');
     const cancelBtn = document.getElementById('modal-cancel-btn');
 
@@ -2377,14 +2403,16 @@ function showModal(title, message, type = 'info', onConfirm = null, confirmText 
     } else {
         newCancel.style.display = 'none';
         newConfirm.style.display = 'inline-block';
-        newConfirm.textContent = 'OK';
-        newConfirm.className = 'btn primary';
+        newConfirm.textContent = confirmText || 'OK';
+        newConfirm.className = confirmClass || 'btn primary';
     }
 
-    newCancel.addEventListener('click', () => {
+    const closeModal = () => {
         overlay.classList.add('hidden');
         overlay.style.display = 'none';
-    });
+    };
+
+    newCancel.addEventListener('click', closeModal);
     newConfirm.addEventListener('click', async () => {
         if (onConfirm) {
             newConfirm.innerHTML = '<span class="spinner"></span> Processing...';
@@ -2392,8 +2420,7 @@ function showModal(title, message, type = 'info', onConfirm = null, confirmText 
             try { await onConfirm(); } catch (e) { console.error(e); }
             newConfirm.disabled = false;
         }
-        overlay.classList.add('hidden');
-        overlay.style.display = 'none';
+        closeModal();
     });
 
     overlay.style.zIndex = '999999';

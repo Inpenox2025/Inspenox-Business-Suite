@@ -2521,15 +2521,122 @@ tr:hover td {
     background: rgba(255, 255, 255, 0.3);
 }
 
+/* ==========================================================================
+   Global App Modal Dialog System
+   ========================================================================== */
+
+@keyframes modalScaleIn {
+    0% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 .modal-content {
     width: 90%;
-    max-width: 420px;
+    max-width: 440px;
     padding: 2rem;
     text-align: center;
     border-radius: var(--radius);
     background: var(--bg-card);
     border: 1px solid var(--border);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.modal-content.modal-app-dialog {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2.25rem 2rem;
+    max-width: 460px;
+    width: 90%;
+    border-radius: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+    animation: modalScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    box-sizing: border-box;
+}
+
+.modal-icon-badge {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    background: rgba(0, 168, 132, 0.12);
+    color: var(--primary, #00a884);
+    border: 1.5px solid rgba(0, 168, 132, 0.3);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.modal-icon-badge.icon-danger {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+.modal-icon-badge.icon-warning {
+    background: rgba(245, 158, 11, 0.14);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.35);
+}
+
+.modal-icon-badge.icon-info {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.35);
+}
+
+.modal-icon-badge svg {
+    width: 26px;
+    height: 26px;
+    stroke: currentColor;
+    display: block;
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 0.65rem 0;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+}
+
+.modal-message {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.modal-message strong {
+    color: var(--primary, #00a884);
+    font-weight: 600;
+    background: rgba(0, 168, 132, 0.08);
+    border: 1px solid rgba(0, 168, 132, 0.25);
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    display: inline-block;
+    margin: 0.45rem 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.825rem;
+    word-break: break-all;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .modal-actions {
@@ -2537,6 +2644,20 @@ tr:hover td {
     justify-content: center;
     gap: 0.75rem;
     margin-top: 1.5rem;
+    width: 100%;
+}
+
+.modal-content.modal-app-dialog .modal-actions {
+    margin-top: 0;
+}
+
+.modal-content.modal-app-dialog .modal-actions .btn {
+    min-width: 120px;
+    justify-content: center;
+    padding: 0.65rem 1.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 8px;
 }
 
 /* Chat Back Button */
