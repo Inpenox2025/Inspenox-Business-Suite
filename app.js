@@ -3656,7 +3656,7 @@ function renderCustomersTable() {
                 </div>
             </td>
             <td><code style="font-size:0.85rem;color:var(--primary);">${c.phone}</code></td>
-            <td>
+            <td class="cust-status-td">
                 <select class="status-select-badge status-${statusKey}" 
                         onchange="updateCustomerStatus(${c.id}, this.value, this)" 
                         title="Click to update status">
@@ -8735,6 +8735,15 @@ document.querySelectorAll('.inbox-filter-chip').forEach(btn => {
         filterAndRenderInboxContacts();
     });
 });
+
+// Enable smooth horizontal wheel scrolling over filter chips
+const filterChipsContainer = document.getElementById('inbox-filter-chips');
+filterChipsContainer?.addEventListener('wheel', (e) => {
+    if (e.deltaY !== 0) {
+        e.preventDefault();
+        filterChipsContainer.scrollLeft += e.deltaY;
+    }
+}, { passive: false });
 
 // WhatsApp Style Tag Filter Dropdown Functions
 window.toggleInboxTagFilterDropdown = function toggleInboxTagFilterDropdown(e) {

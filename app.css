@@ -69,6 +69,11 @@ svg {
 }
 
 /* Custom Scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -85,6 +90,16 @@ svg {
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
+}
+
+::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
 }
 
 .layout {
@@ -858,17 +873,22 @@ textarea:focus {
 .table-responsive {
     overflow-x: auto;
     width: 100%;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive.card {
+    padding: 0.5rem 0.75rem;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 600px;
+    min-width: 1250px;
 }
 
 th,
 td {
-    padding: 1rem 1.25rem;
+    padding: 0.85rem 1rem;
     text-align: left;
     border-bottom: 1px solid var(--border);
     vertical-align: middle;
@@ -3385,10 +3405,38 @@ tr:hover td {
 .inbox-filter-chips {
     display: flex;
     gap: 0.35rem;
-    padding: 0.5rem 0.85rem;
+    padding: 0.5rem 0.85rem 0.45rem 0.85rem;
     background: var(--bg-sidebar);
     border-bottom: 1px solid var(--border);
     overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 168, 132, 0.45) transparent;
+}
+
+.inbox-filter-chips::-webkit-scrollbar {
+    height: 3px !important;
+}
+
+.inbox-filter-chips::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.inbox-filter-chips::-webkit-scrollbar-thumb {
+    background: rgba(0, 168, 132, 0.45) !important;
+    border-radius: 999px !important;
+}
+
+.inbox-filter-chips::-webkit-scrollbar-thumb:hover {
+    background: var(--primary, #00a884) !important;
+}
+
+.inbox-filter-chips::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 .inbox-filter-chip {
@@ -5134,33 +5182,46 @@ tr:hover td {
     box-shadow: 0 0 0 3px var(--primary-light);
 }
 
+/* Status Column in Table */
+.cust-status-td {
+    width: 200px;
+    min-width: 195px;
+    white-space: nowrap;
+}
+
 /* Status Badges & Interactive Dropdown Badges */
 .status-select-badge {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    display: inline-flex;
-    align-items: center;
-    padding: 0.32rem 1.8rem 0.32rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    line-height: 1.2;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    display: inline-block !important;
+    vertical-align: middle;
+    width: 100% !important;
+    min-width: 190px !important;
+    max-width: 215px !important;
+    height: 32px !important;
+    line-height: 20px !important;
+    padding: 0.32rem 1.85rem 0.32rem 0.8rem !important;
+    border-radius: 20px !important;
+    font-size: 0.775rem !important;
+    font-weight: 600 !important;
     cursor: pointer;
     outline: none;
     border: 1px solid transparent;
     transition: all 0.2s ease;
-    background-repeat: no-repeat;
-    background-position: right 0.55rem center;
-    background-size: 10px 10px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238696a0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat !important;
+    background-position: right 0.65rem center !important;
+    background-size: 10px 10px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238696a0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
 }
 
 .status-select-badge option {
     background: var(--bg-card);
     color: var(--text-main);
     font-weight: 500;
-    padding: 6px 10px;
+    padding: 8px 12px;
 }
 
 /* Status: Open - Not Contacted (Blue) */
@@ -5253,40 +5314,38 @@ tr:hover td {
 }
 
 .chat-header-status-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    padding: 0.2rem 1.6rem 0.2rem 0.65rem;
-    border-radius: 16px;
-    font-size: 0.72rem;
-    font-weight: 600;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    display: inline-block !important;
+    vertical-align: middle;
+    width: auto !important;
+    min-width: 185px !important;
+    height: 30px !important;
+    line-height: 20px !important;
+    padding: 0.25rem 1.7rem 0.25rem 0.75rem !important;
+    border-radius: 16px !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
     cursor: pointer;
     outline: none;
     border: 1px solid transparent;
     transition: all 0.2s ease;
-    background-repeat: no-repeat;
-    background-position: right 0.5rem center;
-    background-size: 9px 9px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238696a0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat !important;
+    background-position: right 0.55rem center !important;
+    background-size: 9px 9px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238696a0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0;
 }
 
 .chat-header-status-select option {
     background: var(--bg-card);
     color: var(--text-main);
-    padding: 4px 8px;
+    padding: 6px 10px;
 }
-
-/* Status Filter Chips in Inbox Sidebar */
-.inbox-filter-chips {
-    scrollbar-width: thin;
-}
-.inbox-filter-chips::-webkit-scrollbar {
-    height: 4px;
-}
-.inbox-filter-chips::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 4px;
-}
+/* Status Filter Chips in Inbox Sidebar Active Colors */
 
 .inbox-filter-chip.chip-status-open.active {
     background: #3b82f6;
