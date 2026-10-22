@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
         let token = null;
         let appId = 'app';
 
-        const companyIdParam = company_id || req.query.company_id || (req.headers && req.headers['x-company-id']);
+        const companyIdParam = company_id || (req.query && req.query.company_id) || (req.headers && req.headers['x-company-id']);
         if (String(companyIdParam) === 'default' || String(companyIdParam) === 'parent' || !companyIdParam) {
             phoneId = env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID;
             token = env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN;
