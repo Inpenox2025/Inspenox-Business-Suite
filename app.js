@@ -1,7 +1,15 @@
 // --- Helper Functions ---
 function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+if (typeof window !== 'undefined') {
+    window.escapeHtml = escapeHtml;
 }
 
 function formatIndiaPhone(phone) {
@@ -10936,15 +10944,6 @@ document.getElementById('media-library-upload-input')?.addEventListener('change'
 });
 
 /* Security & Rate Limits Control Center (Superadmin) */
-function escapeHtml(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
 window.escapeHtml = escapeHtml;
 
 window.allSecurityLogs = [];
