@@ -12,6 +12,7 @@ const messagesHandler = require('../../api/messages');
 const sendMessageHandler = require('../../api/send-message');
 const templatesHandler = require('../../api/templates');
 const uploadMediaHandler = require('../../api/upload-media');
+const uploadSessionHandler = require('../../api/upload-session');
 const webhookHandler = require('../../api/webhook');
 const paymentsHandler = require('../../api/payments');
 const tagsHandler = require('../../api/tags');
@@ -32,6 +33,7 @@ const routes = {
     'send-message': sendMessageHandler,
     'templates': templatesHandler,
     'upload-media': uploadMediaHandler,
+    'upload-session': uploadSessionHandler,
     'webhook': webhookHandler,
     'payments': paymentsHandler,
     'subscriptions': paymentsHandler,

@@ -20,6 +20,7 @@ module.exports = async (req, res) => {
                         meta_token: c.whatsapp_access_token || env.WHATSAPP_ACCESS_TOKEN,
                         waba_id: c.whatsapp_business_account_id || env.WHATSAPP_BUSINESS_ACCOUNT_ID,
                         verify_token: c.whatsapp_verify_token || env.WHATSAPP_VERIFY_TOKEN,
+                        app_id: c.whatsapp_app_id || env.WHATSAPP_APP_ID || 'app',
                         phone_numbers: c.whatsapp_phone_numbers || [],
                         is_paid: true
                     });
@@ -31,6 +32,7 @@ module.exports = async (req, res) => {
                     meta_token: isPaid ? (c.whatsapp_access_token || null) : null,
                     waba_id: isPaid ? (c.whatsapp_business_account_id || null) : null,
                     verify_token: isPaid ? (c.whatsapp_verify_token || null) : null,
+                    app_id: isPaid ? (c.whatsapp_app_id || env.WHATSAPP_APP_ID || 'app') : null,
                     phone_numbers: isPaid ? (c.whatsapp_phone_numbers || []) : [],
                     is_paid: isPaid
                 });
@@ -44,6 +46,7 @@ module.exports = async (req, res) => {
         meta_token: isMasterEnv ? env.WHATSAPP_ACCESS_TOKEN : null,
         waba_id: isMasterEnv ? env.WHATSAPP_BUSINESS_ACCOUNT_ID : null,
         verify_token: isMasterEnv ? env.WHATSAPP_VERIFY_TOKEN : null,
+        app_id: isMasterEnv ? (env.WHATSAPP_APP_ID || 'app') : null,
         is_paid: isMasterEnv
     });
 };

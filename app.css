@@ -4000,6 +4000,33 @@ tr:hover td {
     background: var(--primary-light, rgba(0, 168, 132, 0.05));
 }
 
+.media-size-warning-banner {
+    display: none;
+    margin-top: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    color: #991b1b;
+    font-size: 0.775rem;
+    align-items: center;
+    gap: 0.5rem;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.meta-direct-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
 .emoji-picker-popover {
     position: absolute;
     bottom: 100%;

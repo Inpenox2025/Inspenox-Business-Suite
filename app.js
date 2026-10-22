@@ -1,4 +1,9 @@
 // --- Helper Functions ---
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+}
+
 function formatIndiaPhone(phone) {
     if (!phone) return '';
     const digits = String(phone).replace(/\D/g, '');
@@ -5535,12 +5540,16 @@ function renderStep2Form(category, subtype) {
 
                 <!-- Media Upload Dropzone & File Card -->
                 <div id="tpl-media-dropzone-wrapper" style="display:none; margin-bottom:0.85rem;">
-                    <label style="font-size:0.775rem; color:var(--text-muted); margin-bottom:0.35rem; display:block;">Upload sample media file</label>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                        <label style="font-size:0.775rem; color:var(--text-muted); margin-bottom:0; display:block;">Upload sample media file</label>
+                        <span class="meta-direct-badge" style="font-size:0.68rem;">⚡ Direct Meta Upload (Max 16 MB)</span>
+                    </div>
                     
                     <div id="tpl-media-dropzone" class="file-dropzone">
                         <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                         <div style="font-size:0.85rem; color:var(--text-main); font-weight:600; margin-top:0.4rem;">Drag and drop to upload</div>
                         <div style="font-size:0.75rem; color:var(--primary); font-weight:500;">Or choose files on your device</div>
+                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.35rem;">Meta allows sample videos up to 16 MB · Images up to 5 MB</div>
                         <input type="file" id="tpl-media-file-input" style="display:none;" accept="image/*,video/*,.pdf,.doc,.docx">
                     </div>
 
@@ -5550,9 +5559,16 @@ function renderStep2Form(category, subtype) {
                             <img id="tpl-media-file-thumb" style="width:28px; height:28px; object-fit:cover; border-radius:4px; display:none;" src="">
                             <span id="tpl-media-file-icon" style="font-size:1.1rem; display:inline-block;">📁</span>
                             <span id="tpl-media-file-name-text" style="font-weight:700; color:#1a73e8; font-size:0.825rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">filename.mp4</span>
-                            <span id="tpl-media-file-size-text" style="font-size:0.75rem; color:#5f6368; white-space:nowrap;">(14,463K)</span>
+                            <span id="tpl-media-file-size-text" style="font-size:0.75rem; color:#5f6368; white-space:nowrap;">(14.2 MB)</span>
+                            <span class="meta-direct-badge" style="font-size:0.68rem;">✓ Meta Direct</span>
                         </div>
                         <button type="button" id="btn-remove-media-file" style="background:none; border:none; cursor:pointer; font-size:1.25rem; color:#5f6368; padding:0 0.3rem; line-height:1; font-weight:bold;" title="Remove media file">&times;</button>
+                    </div>
+
+                    <!-- Size Warning Alert Banner -->
+                    <div id="tpl-media-size-warning" class="media-size-warning-banner">
+                        <span style="font-size:1.1rem; flex-shrink:0;">⚠️</span>
+                        <span id="tpl-media-size-warning-text" style="flex:1;"></span>
                     </div>
                 </div>
 
@@ -5856,6 +5872,20 @@ function attachStep2FormListeners() {
     const fileNameTextEl = document.getElementById('tpl-media-file-name-text');
     const fileSizeTextEl = document.getElementById('tpl-media-file-size-text');
 
+    function hideMediaSizeWarning() {
+        const warnEl = document.getElementById('tpl-media-size-warning');
+        if (warnEl) warnEl.style.display = 'none';
+    }
+
+    function showMediaSizeWarning(msg) {
+        const warnEl = document.getElementById('tpl-media-size-warning');
+        const warnTextEl = document.getElementById('tpl-media-size-warning-text');
+        if (warnEl && warnTextEl) {
+            warnTextEl.innerHTML = msg;
+            warnEl.style.display = 'flex';
+        }
+    }
+
     if (dropzone && fileInput) {
         dropzone.addEventListener('click', () => fileInput.click());
 
@@ -5889,6 +5919,40 @@ function attachStep2FormListeners() {
     });
 
     function handleMediaFileSelected(file) {
+        if (!file) return;
+
+        // Immediate validation: Meta limit for sample videos and media files is 16 MB (16,777,216 bytes)
+        const MAX_SAMPLE_BYTES = 16 * 1024 * 1024;
+        if (file.size > MAX_SAMPLE_BYTES) {
+            const sizeInMb = (file.size / (1024 * 1024)).toFixed(1);
+            const isVideo = (file.type && file.type.startsWith('video')) || (file.name && file.name.toLowerCase().endsWith('.mp4'));
+            const typeLabel = isVideo ? 'sample video' : 'sample media file';
+
+            // Clear input immediately so invalid file is discarded
+            if (fileInput) fileInput.value = '';
+
+            // Immediate inline warning banner in template builder
+            showMediaSizeWarning(`<strong>File Size Warning:</strong> "${escapeHtml(file.name)}" is <strong>${sizeInMb} MB</strong>. Meta requires ${typeLabel}s to be <strong>16 MB or less</strong>. Please compress or choose a file under 16 MB.`);
+
+            // Immediate helpful warning modal popup for maximum visibility
+            showModal(
+                'File Size Exceeds 16 MB Limit',
+                `<div style="text-align:left; font-size:0.9rem; line-height:1.6;">
+                    <p style="margin-bottom:0.75rem;">
+                        The selected file <strong style="color:var(--text-main);">${escapeHtml(file.name)}</strong> is <strong style="color:#d93025;">${sizeInMb} MB</strong>.
+                    </p>
+                    <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:0.75rem 1rem; margin-bottom:0.75rem; color:#991b1b;">
+                        <strong>Meta WhatsApp Limit:</strong> Meta allows ${typeLabel}s up to a maximum of <strong>16 MB</strong> for template verification and approval.
+                    </div>
+                    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0;">
+                        💡 <em>Tip:</em> Please compress this ${isVideo ? 'video' : 'file'} or select a file under 16 MB to continue.
+                    </p>
+                </div>`
+            );
+            return;
+        }
+
+        hideMediaSizeWarning();
         currentMediaSampleFile = file;
         currentMediaSampleUrl = URL.createObjectURL(file);
 
@@ -5896,7 +5960,11 @@ function attachStep2FormListeners() {
         const mediaIconEl = document.getElementById('tpl-media-file-icon');
 
         if (fileNameTextEl) fileNameTextEl.textContent = file.name;
-        if (fileSizeTextEl) fileSizeTextEl.textContent = `(${(file.size / 1024).toFixed(0)}K)`;
+        
+        const formattedSize = file.size >= 1024 * 1024
+            ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+            : `${(file.size / 1024).toFixed(0)} KB`;
+        if (fileSizeTextEl) fileSizeTextEl.textContent = `(${formattedSize})`;
 
         if (file.type.startsWith('image/')) {
             if (mediaThumbEl) {
@@ -5904,7 +5972,7 @@ function attachStep2FormListeners() {
                 mediaThumbEl.style.display = 'block';
             }
             if (mediaIconEl) mediaIconEl.style.display = 'none';
-        } else if (file.type.startsWith('video/')) {
+        } else if (file.type.startsWith('video/') || file.name.endsWith('.mp4')) {
             if (mediaThumbEl) mediaThumbEl.style.display = 'none';
             if (mediaIconEl) {
                 mediaIconEl.textContent = '🎥';
@@ -5925,6 +5993,7 @@ function attachStep2FormListeners() {
     }
 
     function removeMediaFile() {
+        hideMediaSizeWarning();
         currentMediaSampleFile = null;
         editingTemplateHeaderHandle = null;
         editingTemplateHeaderUrl = null;
@@ -6401,6 +6470,14 @@ function resetTemplateModal() {
         URL.revokeObjectURL(currentMediaSampleUrl);
         currentMediaSampleUrl = null;
     }
+    const tplFileInput = document.getElementById('tpl-media-file-input');
+    if (tplFileInput) tplFileInput.value = '';
+    const tplFileCard = document.getElementById('tpl-media-file-card');
+    if (tplFileCard) tplFileCard.style.display = 'none';
+    const tplDropzone = document.getElementById('tpl-media-dropzone');
+    if (tplDropzone) tplDropzone.style.display = 'block';
+    const tplSizeWarn = document.getElementById('tpl-media-size-warning');
+    if (tplSizeWarn) tplSizeWarn.style.display = 'none';
     currentSelectedCategory = 'MARKETING';
     currentSelectedSubtype = 'default';
 
@@ -6641,7 +6718,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (currentMediaSampleFile) {
                 try {
-                    handle = await getMetaHeaderHandle(currentMediaSampleFile);
+                    handle = await getMetaHeaderHandle(currentMediaSampleFile, (percent) => {
+                        if (submitBtn) {
+                            submitBtn.innerHTML = `<span class="spinner"></span> Uploading sample ${headerType.toLowerCase()} directly to Meta (${percent}%)...`;
+                        }
+                    });
                 } catch (err) {
                     console.error('Sample media upload error:', err);
                     resetSubmitBtn();
@@ -7551,6 +7632,17 @@ document.getElementById('bc-media')?.addEventListener('change', (e) => {
     const dropzoneText = document.getElementById('dropzone-text');
     const mediaSelect = document.getElementById('bc-media-select');
 
+    if (!file) return;
+
+    if (file.size > 16 * 1024 * 1024) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        showModal('File Size Exceeds 16 MB Limit', `The selected file "${escapeHtml(file.name)}" is ${sizeMb} MB. Meta allows media files up to 16 MB. Please select a file under 16 MB.`);
+        e.target.value = '';
+        const dropzoneText = document.getElementById('dropzone-text');
+        if (dropzoneText) dropzoneText.textContent = 'Drag and drop or browse';
+        return;
+    }
+
     if (mediaSelect) mediaSelect.value = ''; // Clear library dropdown if file chosen
     const previewContainer = document.getElementById('bc-media-preview-container');
     if (previewContainer) previewContainer.style.display = 'none';
@@ -7567,37 +7659,146 @@ const getBase64 = (file) => new Promise((resolve, reject) => {
     reader.onerror = error => reject(error);
 });
 
-// Obtain Meta Resumable Upload handle (header_handle) for Template Header sample media via server API
-async function getMetaHeaderHandle(file) {
-    if (!file) return null;
-    const base64Data = await getBase64(file);
-    const mimeType = file.type || (file.name && file.name.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg');
+// Binary streaming upload directly from browser to Meta Resumable Upload Session
+function uploadSampleBinaryDirectToMeta(sessionId, file, token, mimeType, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `https://graph.facebook.com/v21.0/${sessionId}`);
+        xhr.setRequestHeader('Authorization', `OAuth ${token}`);
+        xhr.setRequestHeader('file_offset', '0');
+        xhr.setRequestHeader('Content-Type', mimeType);
 
-    const res = await apiFetch('/api/upload-media', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            base64Data: base64Data,
-            fileName: file.name,
-            mimeType: mimeType,
-            company_id: getCompanyId()
-        })
+        if (xhr.upload && onProgress) {
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    onProgress(percent);
+                }
+            };
+        }
+
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const res = JSON.parse(xhr.responseText);
+                    if (res && res.h) {
+                        resolve(res.h);
+                    } else if (res && res.error) {
+                        reject(new Error("Meta Upload Error: " + (res.error.message || JSON.stringify(res.error))));
+                    } else {
+                        reject(new Error("No handle returned by Meta in upload response."));
+                    }
+                } catch (e) {
+                    reject(new Error("Invalid response from Meta upload session"));
+                }
+            } else {
+                try {
+                    const res = JSON.parse(xhr.responseText);
+                    const msg = res.error?.message || `Meta Upload Failed with status ${xhr.status}`;
+                    reject(new Error(msg));
+                } catch (e) {
+                    reject(new Error(`Meta Upload Failed with status ${xhr.status}`));
+                }
+            }
+        };
+
+        xhr.onerror = () => reject(new Error("Network error during direct browser upload to Meta. Please check your connection."));
+        xhr.send(file);
     });
+}
 
-    const data = await res.json();
-    if (data.error) {
-        throw new Error(data.error);
+// Upload directly from browser to Meta allowing sample videos up to 16 MB
+// Obtains Meta Resumable Upload handle (header_handle) for Template Header sample media
+async function getMetaHeaderHandle(file, onProgress) {
+    if (!file) return null;
+
+    const MAX_SAMPLE_SIZE = 16 * 1024 * 1024; // 16 MB Meta Limit
+    if (file.size > MAX_SAMPLE_SIZE) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        throw new Error(`File "${file.name}" is ${sizeMb} MB. Meta allows sample videos/media up to 16 MB.`);
     }
-    if (data.handle) return data.handle;
-    if (data.media_id) return data.media_id;
-    return null;
+
+    const mimeType = file.type || (file.name && file.name.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'application/octet-stream');
+
+    // 1. Fetch credentials from /api/config
+    let config = null;
+    try {
+        const configRes = await apiFetch(`/api/config${getCompanyId() ? '?company_id=' + getCompanyId() : ''}`);
+        config = await configRes.json();
+    } catch (e) {
+        console.warn("Could not fetch /api/config:", e);
+    }
+
+    const token = config?.meta_token;
+    const appId = config?.app_id || 'app';
+
+    if (!token) {
+        throw new Error("WhatsApp Access Token is not configured for this company. Please configure Meta Credentials in Settings.");
+    }
+
+    // 2. Obtain Resumable Upload Session ID from Meta
+    let sessionId = null;
+
+    // Strategy A: Direct call from browser to Meta Graph API
+    try {
+        const sessionUrl = `https://graph.facebook.com/v21.0/${appId}/uploads?file_length=${file.size}&file_type=${encodeURIComponent(mimeType)}&access_token=${token}`;
+        const sessionRes = await fetch(sessionUrl, { method: 'POST' });
+        const sessionData = await sessionRes.json();
+        if (sessionData && sessionData.id) {
+            sessionId = sessionData.id;
+        } else if (sessionData && sessionData.error) {
+            console.warn("Direct Meta upload session warning:", sessionData.error);
+        }
+    } catch (e) {
+        console.warn("Direct Meta session network warning, using server session fallback:", e);
+    }
+
+    // Strategy B: Server-assisted session initiation fallback (sends only metadata, zero file bytes!)
+    if (!sessionId) {
+        try {
+            const sRes = await apiFetch('/api/upload-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    file_length: file.size,
+                    file_type: mimeType,
+                    file_name: file.name,
+                    company_id: getCompanyId()
+                })
+            });
+            const sData = await sRes.json();
+            if (sData && sData.upload_session_id) {
+                sessionId = sData.upload_session_id;
+            }
+        } catch (sErr) {
+            console.warn("Upload session fallback failed:", sErr);
+        }
+    }
+
+    // 3. Upload Binary Directly from Browser to Meta via Resumable Upload API
+    if (sessionId) {
+        const handle = await uploadSampleBinaryDirectToMeta(sessionId, file, token, mimeType, onProgress);
+        if (handle) return handle;
+    }
+
+    // Strategy C: Direct Browser Binary Upload to Meta Cloud API (/{phone_id}/media) fallback
+    if (config?.meta_phone_id) {
+        try {
+            const fastRes = await uploadMediaToMetaFast(file, config, onProgress);
+            if (fastRes && fastRes.id) return fastRes.id;
+        } catch (fastErr) {
+            console.warn("uploadMediaToMetaFast fallback failed:", fastErr);
+        }
+    }
+
+    throw new Error("Failed to upload sample media directly to Meta. Please verify your Meta credentials and network connection.");
 }
 
 // Fast Binary Streaming Upload to Meta Cloud API with Live Progress
 function uploadMediaToMetaFast(file, config, onProgress) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', `https://graph.facebook.com/v19.0/${config.meta_phone_id}/media`);
+        xhr.open('POST', `https://graph.facebook.com/v21.0/${config.meta_phone_id}/media`);
         xhr.setRequestHeader('Authorization', `Bearer ${config.meta_token}`);
 
         if (xhr.upload && onProgress) {
@@ -10193,6 +10394,13 @@ document.getElementById('chat-file-input')?.addEventListener('change', (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
+    if (file.size > 16 * 1024 * 1024) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        showModal('File Size Exceeds 16 MB Limit', `The selected file "${escapeHtml(file.name)}" is ${sizeMb} MB. Meta allows media files up to 16 MB. Please select a file under 16 MB.`);
+        e.target.value = '';
+        return;
+    }
+
     stagedChatFile = file;
     const previewChip = document.getElementById('chat-attachment-preview');
     const previewName = document.getElementById('chat-attachment-name');
@@ -10490,6 +10698,16 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
 
             fileInputEl?.addEventListener('change', (e) => {
                 const file = e.target.files[0];
+                if (!file) return;
+
+                if (file.size > 16 * 1024 * 1024) {
+                    const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+                    showModal('File Size Exceeds 16 MB Limit', `The selected file "${escapeHtml(file.name)}" is ${sizeMb} MB. Meta allows media files up to 16 MB. Please select a file under 16 MB.`);
+                    fileInputEl.value = '';
+                    if (dropzoneText) dropzoneText.textContent = 'Click to browse and upload media file';
+                    return;
+                }
+
                 if (mediaSelectEl) mediaSelectEl.value = '';
                 if (file && dropzoneText) {
                     dropzoneText.textContent = `Attached: ${file.name}`;
@@ -10656,6 +10874,13 @@ window.deleteMedia = (id) => {
 document.getElementById('media-library-upload-input')?.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (file.size > 16 * 1024 * 1024) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        showModal('File Size Exceeds 16 MB Limit', `The selected file "${escapeHtml(file.name)}" is ${sizeMb} MB. Meta allows media files up to 16 MB. Please select a file under 16 MB.`);
+        e.target.value = '';
+        return;
+    }
 
     const btn = document.getElementById('btn-upload-media-library');
     const originalBtnHtml = btn ? btn.innerHTML : '';

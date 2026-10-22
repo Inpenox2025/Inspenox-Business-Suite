@@ -3,8 +3,10 @@ module.exports = async (req, res) => {
 
     try {
         const env = req.env || process.env || {};
-        const { base64Data, fileName, mimeType } = req.body || {};
-        if (!base64Data || !fileName || !mimeType) {
+        const { base64Data, fileName, mimeType, action, file_length } = req.body || {};
+        if (action === 'session') {
+            // Handled directly or session initiation
+        } else if (!base64Data || !fileName || !mimeType) {
             return res.status(400).json({ error: 'Missing required fields (base64Data, fileName, mimeType)' });
         }
 
@@ -55,6 +57,17 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'WhatsApp Access Token is not configured for this company.' });
         }
 
+        if (action === 'session') {
+            const length = file_length || 0;
+            const sessionUrl = `https://graph.facebook.com/v21.0/${appId}/uploads?file_length=${length}&file_type=${encodeURIComponent(mimeType || 'video/mp4')}&access_token=${token}`;
+            const sessionRes = await fetch(sessionUrl, { method: 'POST' });
+            const sessionData = await sessionRes.json();
+            if (sessionData && sessionData.id) {
+                return res.status(200).json({ success: true, upload_session_id: sessionData.id, token: token });
+            }
+            return res.status(400).json({ error: sessionData?.error?.message || 'Failed to create upload session' });
+        }
+
         const cleanBase64 = base64Data.replace(/^data:.*?;base64,/, "");
         const buffer = Buffer.from(cleanBase64, 'base64');
 
@@ -64,12 +77,12 @@ module.exports = async (req, res) => {
 
         // Step A: Attempt Resumable Upload Session API to get handle 'h' for template headers
         try {
-            const sessionUrl = `https://graph.facebook.com/v19.0/${appId}/uploads?file_length=${buffer.length}&file_type=${encodeURIComponent(mimeType)}&access_token=${token}`;
+            const sessionUrl = `https://graph.facebook.com/v21.0/${appId}/uploads?file_length=${buffer.length}&file_type=${encodeURIComponent(mimeType)}&access_token=${token}`;
             const sessionRes = await fetch(sessionUrl, { method: 'POST' });
             const sessionData = await sessionRes.json();
 
             if (sessionData && sessionData.id) {
-                const uploadRes = await fetch(`https://graph.facebook.com/v19.0/${sessionData.id}`, {
+                const uploadRes = await fetch(`https://graph.facebook.com/v21.0/${sessionData.id}`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `OAuth ${token}`,
@@ -98,7 +111,7 @@ module.exports = async (req, res) => {
                 formData.append('messaging_product', 'whatsapp');
                 formData.append('file', new Blob([buffer], { type: mimeType }), fileName);
 
-                const metaRes = await fetch(`https://graph.facebook.com/v19.0/${phoneId}/media`, {
+                const metaRes = await fetch(`https://graph.facebook.com/v21.0/${phoneId}/media`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
