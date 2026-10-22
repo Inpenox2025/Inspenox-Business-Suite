@@ -6674,7 +6674,7 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.style.opacity = '0.6';
             submitBtn.style.pointerEvents = 'none';
             if (['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerType) && currentMediaSampleFile) {
-                submitBtn.innerHTML = '<span class="spinner"></span> Uploading sample media to Meta...';
+                submitBtn.innerHTML = `<span class="spinner"></span> Uploading sample ${headerType.toLowerCase()} (0%)...`;
             } else {
                 submitBtn.innerHTML = '<span class="spinner"></span> Submitting to Meta...';
             }
@@ -6728,9 +6728,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     handle = await getMetaHeaderHandle(currentMediaSampleFile, (percent) => {
                         if (submitBtn) {
-                            submitBtn.innerHTML = `<span class="spinner"></span> Uploading sample ${headerType.toLowerCase()} directly to Meta (${percent}%)...`;
+                            submitBtn.innerHTML = `<span class="spinner"></span> Uploading sample ${headerType.toLowerCase()} (${percent}%)...`;
                         }
                     });
+                    if (submitBtn) {
+                        submitBtn.innerHTML = '<span class="spinner"></span> Submitting to Meta...';
+                    }
                 } catch (err) {
                     console.error('Sample media upload error:', err);
                     resetSubmitBtn();
@@ -7667,19 +7670,38 @@ const getBase64 = (file) => new Promise((resolve, reject) => {
     reader.onerror = error => reject(error);
 });
 
-// Binary streaming upload directly from browser to Meta Resumable Upload Session
-function uploadSampleBinaryDirectToMeta(sessionId, file, token, mimeType, onProgress) {
+// Upload sample media with live percentage streaming, allowing videos up to 16 MB
+// Obtains Meta Resumable Upload handle (header_handle) for Template Header sample media
+function getMetaHeaderHandle(file, onProgress) {
+    if (!file) return Promise.resolve(null);
+
+    const MAX_SAMPLE_SIZE = 16 * 1024 * 1024; // 16 MB Meta Limit
+    if (file.size > MAX_SAMPLE_SIZE) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        return Promise.reject(new Error(`File "${file.name}" is ${sizeMb} MB. Meta allows sample videos/media up to 16 MB.`));
+    }
+
+    const mimeType = file.type || (file.name && file.name.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'application/octet-stream');
+
     return new Promise((resolve, reject) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('fileName', file.name);
+        formData.append('mimeType', mimeType);
+        const compId = (typeof getCompanyId === 'function' ? getCompanyId() : null) || '';
+        if (compId) {
+            formData.append('company_id', compId);
+        }
+
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', `https://graph.facebook.com/v21.0/${sessionId}`);
-        xhr.setRequestHeader('Authorization', `OAuth ${token}`);
-        xhr.setRequestHeader('file_offset', '0');
-        xhr.setRequestHeader('Content-Type', mimeType);
+        const url = `/api/upload-media${compId ? '?company_id=' + encodeURIComponent(compId) : ''}`;
+        xhr.open('POST', url);
 
         if (xhr.upload && onProgress) {
+            onProgress(0);
             xhr.upload.onprogress = (e) => {
                 if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
+                    const percent = Math.min(99, Math.round((e.loaded / e.total) * 100));
                     onProgress(percent);
                 }
             };
@@ -7689,117 +7711,30 @@ function uploadSampleBinaryDirectToMeta(sessionId, file, token, mimeType, onProg
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
                     const res = JSON.parse(xhr.responseText);
-                    if (res && res.h) {
-                        resolve(res.h);
-                    } else if (res && res.error) {
-                        reject(new Error("Meta Upload Error: " + (res.error.message || JSON.stringify(res.error))));
+                    if (res && res.error) {
+                        reject(new Error(res.error));
+                    } else if (res && (res.handle || res.media_id)) {
+                        if (onProgress) onProgress(100);
+                        resolve(res.handle || res.media_id);
                     } else {
-                        reject(new Error("No handle returned by Meta in upload response."));
+                        reject(new Error("No handle returned by upload server."));
                     }
                 } catch (e) {
-                    reject(new Error("Invalid response from Meta upload session"));
+                    reject(new Error("Invalid response from upload server"));
                 }
             } else {
                 try {
                     const res = JSON.parse(xhr.responseText);
-                    const msg = res.error?.message || `Meta Upload Failed with status ${xhr.status}`;
-                    reject(new Error(msg));
+                    reject(new Error(res.error || `Upload failed with status ${xhr.status}`));
                 } catch (e) {
-                    reject(new Error(`Meta Upload Failed with status ${xhr.status}`));
+                    reject(new Error(`Upload failed with status ${xhr.status}`));
                 }
             }
         };
 
-        xhr.onerror = () => reject(new Error("Network error during direct browser upload to Meta. Please check your connection."));
-        xhr.send(file);
+        xhr.onerror = () => reject(new Error("Network error during media upload. Please check your connection."));
+        xhr.send(formData);
     });
-}
-
-// Upload directly from browser to Meta allowing sample videos up to 16 MB
-// Obtains Meta Resumable Upload handle (header_handle) for Template Header sample media
-async function getMetaHeaderHandle(file, onProgress) {
-    if (!file) return null;
-
-    const MAX_SAMPLE_SIZE = 16 * 1024 * 1024; // 16 MB Meta Limit
-    if (file.size > MAX_SAMPLE_SIZE) {
-        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
-        throw new Error(`File "${file.name}" is ${sizeMb} MB. Meta allows sample videos/media up to 16 MB.`);
-    }
-
-    const mimeType = file.type || (file.name && file.name.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'application/octet-stream');
-
-    // 1. Fetch credentials from /api/config
-    let config = null;
-    try {
-        const configRes = await apiFetch(`/api/config${getCompanyId() ? '?company_id=' + getCompanyId() : ''}`);
-        config = await configRes.json();
-    } catch (e) {
-        console.warn("Could not fetch /api/config:", e);
-    }
-
-    const token = config?.meta_token;
-    const appId = config?.app_id || 'app';
-
-    if (!token) {
-        throw new Error("WhatsApp Access Token is not configured for this company. Please configure Meta Credentials in Settings.");
-    }
-
-    // 2. Obtain Resumable Upload Session ID from Meta
-    let sessionId = null;
-
-    // Strategy A: Direct call from browser to Meta Graph API
-    try {
-        const sessionUrl = `https://graph.facebook.com/v21.0/${appId}/uploads?file_length=${file.size}&file_type=${encodeURIComponent(mimeType)}&access_token=${token}`;
-        const sessionRes = await fetch(sessionUrl, { method: 'POST' });
-        const sessionData = await sessionRes.json();
-        if (sessionData && sessionData.id) {
-            sessionId = sessionData.id;
-        } else if (sessionData && sessionData.error) {
-            console.warn("Direct Meta upload session warning:", sessionData.error);
-        }
-    } catch (e) {
-        console.warn("Direct Meta session network warning, using server session fallback:", e);
-    }
-
-    // Strategy B: Server-assisted session initiation fallback (sends only metadata, zero file bytes!)
-    if (!sessionId) {
-        try {
-            const sRes = await apiFetch('/api/upload-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    file_length: file.size,
-                    file_type: mimeType,
-                    file_name: file.name,
-                    company_id: getCompanyId()
-                })
-            });
-            const sData = await sRes.json();
-            if (sData && sData.upload_session_id) {
-                sessionId = sData.upload_session_id;
-            }
-        } catch (sErr) {
-            console.warn("Upload session fallback failed:", sErr);
-        }
-    }
-
-    // 3. Upload Binary Directly from Browser to Meta via Resumable Upload API
-    if (sessionId) {
-        const handle = await uploadSampleBinaryDirectToMeta(sessionId, file, token, mimeType, onProgress);
-        if (handle) return handle;
-    }
-
-    // Strategy C: Direct Browser Binary Upload to Meta Cloud API (/{phone_id}/media) fallback
-    if (config?.meta_phone_id) {
-        try {
-            const fastRes = await uploadMediaToMetaFast(file, config, onProgress);
-            if (fastRes && fastRes.id) return fastRes.id;
-        } catch (fastErr) {
-            console.warn("uploadMediaToMetaFast fallback failed:", fastErr);
-        }
-    }
-
-    throw new Error("Failed to upload sample media directly to Meta. Please verify your Meta credentials and network connection.");
 }
 
 // Fast Binary Streaming Upload to Meta Cloud API with Live Progress

@@ -3,11 +3,32 @@ module.exports = async (req, res) => {
 
     try {
         const env = req.env || process.env || {};
-        const { base64Data, fileName, mimeType, action, file_length } = req.body || {};
-        if (action === 'session') {
-            // Handled directly or session initiation
-        } else if (!base64Data || !fileName || !mimeType) {
-            return res.status(400).json({ error: 'Missing required fields (base64Data, fileName, mimeType)' });
+        let { base64Data, fileName, mimeType, action, file_length, file } = req.body || {};
+
+        let buffer = null;
+        if (file) {
+            if (typeof file.arrayBuffer === 'function') {
+                buffer = Buffer.from(await file.arrayBuffer());
+            } else if (Buffer.isBuffer(file)) {
+                buffer = file;
+            }
+            if (!fileName && file.name) fileName = file.name;
+            if (!mimeType && file.type) mimeType = file.type;
+        } else if (base64Data) {
+            const cleanBase64 = base64Data.replace(/^data:.*?;base64,/, "");
+            buffer = Buffer.from(cleanBase64, 'base64');
+        }
+
+        if (action !== 'session' && (!buffer || buffer.length === 0)) {
+            return res.status(400).json({ error: 'Missing required file data (file or base64Data)' });
+        }
+
+        if (!fileName) fileName = 'sample_media.mp4';
+        if (!mimeType) mimeType = 'video/mp4';
+
+        if (buffer && buffer.length > 16 * 1024 * 1024) {
+            const sizeMb = (buffer.length / (1024 * 1024)).toFixed(1);
+            return res.status(400).json({ error: `File size (${sizeMb} MB) exceeds Meta's maximum limit of 16 MB.` });
         }
 
         let phoneId = null;
@@ -67,9 +88,6 @@ module.exports = async (req, res) => {
             }
             return res.status(400).json({ error: sessionData?.error?.message || 'Failed to create upload session' });
         }
-
-        const cleanBase64 = base64Data.replace(/^data:.*?;base64,/, "");
-        const buffer = Buffer.from(cleanBase64, 'base64');
 
         let handle = null;
         let mediaId = null;
