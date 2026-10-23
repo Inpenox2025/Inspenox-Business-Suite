@@ -3320,22 +3320,16 @@
     <!-- Razorpay Checkout & Subscription Modal -->
     <div id="checkout-modal" class="modal-overlay hidden"
         style="z-index: 10000; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px);">
-        <div class="modal-content card"
-            style="max-width: 500px; width: 92%; padding: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left;">
-            <div
-                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border);">
+        <div class="modal-content card checkout-modal-card">
+            <div class="checkout-modal-header">
                 <div>
-                    <h3 id="checkout-modal-title" style="margin:0; font-size:1.15rem; color:var(--text-main);">💳
-                        Complete Subscription</h3>
-                    <p id="checkout-modal-subtitle"
-                        style="margin:0.2rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">Powered by Razorpay
-                        Secure Payments</p>
+                    <h3 id="checkout-modal-title">💳 Complete Subscription</h3>
+                    <p id="checkout-modal-subtitle">Powered by Razorpay Secure Payments</p>
                 </div>
-                <button type="button" onclick="closeCheckoutModal()"
-                    style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem;">✕</button>
+                <button type="button" class="checkout-modal-close" onclick="closeCheckoutModal()" aria-label="Close modal">✕</button>
             </div>
 
-            <form id="checkout-form" onsubmit="proceedToRazorpayPayment(event)">
+            <form id="checkout-form" class="checkout-form" onsubmit="proceedToRazorpayPayment(event)">
                 <input type="hidden" id="checkout-plan-id">
                 <input type="hidden" id="checkout-plan-name">
                 <input type="hidden" id="checkout-plan-price">
@@ -3344,19 +3338,14 @@
                 <input type="hidden" id="checkout-applied-convenience-fee" value="0">
                 <input type="hidden" id="checkout-applied-final-amount" value="0">
 
-                <div
-                    style="background:var(--bg-dark); padding:1rem; border-radius:10px; border:1px solid var(--border); margin-bottom:1rem;">
-                    <div
-                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-                        <span style="font-size:0.85rem; color:var(--text-muted);">Selected Package</span>
-                        <strong id="checkout-display-plan" style="color:var(--primary); font-size:1rem;">Growth
-                            Pro</strong>
+                <div class="checkout-plan-box">
+                    <div class="checkout-plan-row">
+                        <span>Selected Package</span>
+                        <strong id="checkout-display-plan">Growth Pro</strong>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <label for="checkout-cycle-select"
-                            style="font-size:0.85rem; color:var(--text-muted); cursor:pointer;">Billing Interval</label>
-                        <select id="checkout-cycle-select" onchange="onCheckoutCycleChange(this.value)"
-                            style="padding: 0.4rem 0.75rem; border-radius: 8px; background: var(--bg-card); border: 1.5px solid #00a884; color: #10b981; font-size: 0.85rem; font-weight: 700; cursor: pointer; outline: none;">
+                    <div class="checkout-cycle-row">
+                        <label for="checkout-cycle-select">Billing Interval</label>
+                        <select id="checkout-cycle-select" onchange="onCheckoutCycleChange(this.value)">
                             <option value="monthly">Monthly (1 Month)</option>
                             <option value="4_months">4 Months (Save 10% 🌟)</option>
                             <option value="6_months">6 Months (Save 15% 🔥)</option>
@@ -3366,71 +3355,54 @@
                     </div>
                 </div>
 
-                <div style="margin-bottom:0.85rem;">
-                    <label
-                        style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">SUBSCRIBER
-                        EMAIL *</label>
-                    <input type="email" id="checkout-email" placeholder="e.g. director@company.com" required
-                        style="width:100%; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                <div class="checkout-field-group">
+                    <label for="checkout-email">SUBSCRIBER EMAIL *</label>
+                    <input type="email" id="checkout-email" placeholder="e.g. director@company.com" required>
                 </div>
 
-                <div style="margin-bottom:0.85rem;">
-                    <label
-                        style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">PHONE
-                        NUMBER (FOR PAYMENT RECEIPT) *</label>
-                    <input type="tel" id="checkout-phone" placeholder="e.g. +91 9876543210" required
-                        style="width:100%; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main);">
+                <div class="checkout-field-group">
+                    <label for="checkout-phone">PHONE NUMBER (FOR PAYMENT RECEIPT) *</label>
+                    <input type="tel" id="checkout-phone" placeholder="e.g. +91 9876543210" required>
                 </div>
 
                 <!-- Coupon Section -->
-                <div style="margin-bottom:1rem;">
-                    <label
-                        style="display:block; font-size:0.775rem; font-weight:600; color:var(--text-muted); margin-bottom:0.35rem;">HAVE
-                        A COUPON CODE?</label>
-                    <div style="display:flex; gap:0.5rem;">
-                        <input type="text" id="checkout-coupon-code" placeholder="Enter coupon (e.g. SAVE20)"
-                            style="flex:1; padding:0.55rem 0.75rem; border-radius:8px; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-main); text-transform:uppercase;">
-                        <button type="button" id="btn-apply-coupon" onclick="applyCheckoutCoupon()"
-                            class="btn secondary" style="white-space:nowrap; padding:0.55rem 1rem;">
+                <div class="checkout-field-group checkout-coupon-group">
+                    <label for="checkout-coupon-code">HAVE A COUPON CODE?</label>
+                    <div class="checkout-coupon-row">
+                        <input type="text" id="checkout-coupon-code" placeholder="ENTER COUPON (E.G. SAVE20)">
+                        <button type="button" id="btn-apply-coupon" onclick="applyCheckoutCoupon()" class="btn secondary">
                             Apply
                         </button>
                     </div>
-                    <div id="checkout-coupon-feedback" style="margin-top:0.35rem; font-size:0.775rem; display:none;">
-                    </div>
+                    <div id="checkout-coupon-feedback" style="display:none;"></div>
                 </div>
 
                 <!-- Price Breakdown Summary -->
-                <div
-                    style="background:var(--bg-dark); padding:1rem; border-radius:10px; border:1px solid var(--border); margin-bottom:1.25rem;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem; font-size:0.85rem;">
-                        <span style="color:var(--text-muted);">Base Package Price</span>
-                        <span id="checkout-display-base-price" style="color:var(--text-main);">₹0.00</span>
+                <div class="checkout-summary-box">
+                    <div class="checkout-summary-row">
+                        <span class="label">Base Package Price</span>
+                        <span id="checkout-display-base-price" class="val">₹0.00</span>
                     </div>
-                    <div id="checkout-row-discount"
-                        style="display:none; justify-content:space-between; margin-bottom:0.35rem; font-size:0.85rem; color:#10b981;">
-                        <span>Coupon Discount</span>
-                        <span id="checkout-display-discount">- ₹0.00</span>
+                    <div id="checkout-row-discount" class="checkout-summary-row checkout-discount-row" style="display:none;">
+                        <span class="label">Coupon Discount</span>
+                        <span id="checkout-display-discount" class="val">- ₹0.00</span>
                     </div>
-                    <div id="checkout-row-fee"
-                        style="display:flex; justify-content:space-between; margin-bottom:0.35rem; font-size:0.85rem; color:var(--text-muted);">
-                        <span style="display:inline-flex; align-items:center; gap:6px;">
+                    <div id="checkout-row-fee" class="checkout-summary-row checkout-fee-row">
+                        <span class="fee-label-wrap">
                             <span>Gateway Convenience Fee</span>
-                            <span style="font-size:0.7rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); padding:1px 6px; border-radius:4px; color:var(--text-muted);">2% + 18% GST (2.36%)</span>
+                            <span class="fee-badge">2% + 18% GST (2.36%)</span>
                         </span>
-                        <span id="checkout-display-fee" style="color:var(--text-main); font-weight:600;">+ ₹0.00</span>
+                        <span id="checkout-display-fee" class="val fee-val">+ ₹0.00</span>
                     </div>
-                    <div
-                        style="display:flex; justify-content:space-between; border-top:1px solid var(--border); padding-top:0.5rem; margin-top:0.35rem; font-weight:700;">
-                        <span style="color:var(--text-main); font-size:1rem;">Final Payable Amount</span>
-                        <span id="checkout-display-final-price"
-                            style="color:var(--primary); font-size:1.25rem;">₹0.00</span>
+                    <div class="checkout-summary-row checkout-total-row">
+                        <span class="label-total">Final Payable Amount</span>
+                        <span id="checkout-display-final-price" class="val-total">₹0.00</span>
                     </div>
                 </div>
 
-                <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
-                    <button type="button" onclick="closeCheckoutModal()" class="btn secondary">Cancel</button>
-                    <button type="submit" id="btn-proceed-payment" class="btn primary"
-                        style="background:#00a884; font-weight:700; gap:0.5rem;">
+                <div class="checkout-actions">
+                    <button type="button" onclick="closeCheckoutModal()" class="btn secondary btn-checkout-cancel">Cancel</button>
+                    <button type="submit" id="btn-proceed-payment" class="btn primary btn-checkout-submit">
                         <span>Proceed to Pay</span> 💳
                     </button>
                 </div>
