@@ -454,6 +454,8 @@ document.getElementById('company-switcher')?.addEventListener('change', (e) => {
         updateBroadcastSenderPhoneSelect();
     }
 
+    ensureTemplatesCacheLoaded();
+
     const activeView = localStorage.getItem('activeView') || 'dashboard';
     switchView(activeView, false);
 });
@@ -2216,6 +2218,51 @@ window.deleteCompany = function deleteCompany(id) {
 
 // --- Globals ---
 let templatesCache = [];
+let isFetchingTemplatesCache = false;
+
+async function ensureTemplatesCacheLoaded() {
+    if ((templatesCache && Array.isArray(templatesCache) && templatesCache.length > 0) || isFetchingTemplatesCache) {
+        return;
+    }
+
+    try {
+        const coId = (typeof currentCompanyId !== 'undefined' && currentCompanyId) ? currentCompanyId : 'default';
+        const stored = sessionStorage.getItem(`templates_cache_${coId}`);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                templatesCache = parsed;
+            }
+        }
+    } catch (e) {}
+
+    isFetchingTemplatesCache = true;
+    try {
+        const res = await apiFetch('/api/templates');
+        const json = await res.json();
+        const rawTemplates = Array.isArray(json) ? json : (json.data || json.templates || []);
+        if (Array.isArray(rawTemplates) && rawTemplates.length > 0) {
+            templatesCache = rawTemplates;
+            try {
+                const coId = (typeof currentCompanyId !== 'undefined' && currentCompanyId) ? currentCompanyId : 'default';
+                sessionStorage.setItem(`templates_cache_${coId}`, JSON.stringify(rawTemplates));
+            } catch (e) {}
+
+            // Re-render chat if active so templates switch from fallback to real rich cards
+            if (activeInboxCustomer) {
+                lastChatStatusHash = '';
+                if (typeof fetchChatMessages === 'function') {
+                    fetchChatMessages(false);
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Failed to pre-load templates cache:', e);
+    } finally {
+        isFetchingTemplatesCache = false;
+    }
+}
+
 let selectedCustomerIds = [];
 let activeInboxCustomer = null;
 
@@ -3036,7 +3083,10 @@ window.switchView = function switchView(target, pushHistory = true) {
         if (typeof updateBroadcastSenderPhoneSelect === 'function') updateBroadcastSenderPhoneSelect();
         if (typeof initVarPickers === 'function') initVarPickers();
     }
-    if (target === 'inbox') loadInboxSidebar();
+    if (target === 'inbox') {
+        loadInboxSidebar();
+        ensureTemplatesCacheLoaded();
+    }
     if (target === 'media') loadMedia();
     if (target === 'settings') loadCompaniesSettings();
     if (target === 'subscriptions') {
@@ -9728,8 +9778,26 @@ function formatTemplateDisplayName(slug) {
         .replace(/\b\w/g, l => l.toUpperCase());
 }
 
-function resolveTemplateCard(templateSlug, customerData) {
+function formatWhatsAppMarkdown(text) {
+    if (!text) return '';
+    return escapeHtml(text)
+        .replace(/\*([^*\n]+)\*/g, '<strong>$1</strong>')
+        .replace(/_([^_]+)_/g, '<em>$1</em>')
+        .replace(/~([^~]+)~/g, '<del>$1</del>')
+        .replace(/```([^`]+)```/g, '<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:4px;font-family:monospace;">$1</code>')
+        .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#00a884;text-decoration:underline;word-break:break-all;">$1</a>')
+        .replace(/\n/g, '<br>');
+}
+
+function resolveTemplateCard(templateSlug, customerData, messageData) {
     const cleanSlug = String(templateSlug || '').trim().toLowerCase();
+
+    // Trigger background cache load if cache is empty
+    if (!templatesCache || !Array.isArray(templatesCache) || templatesCache.length === 0) {
+        if (typeof ensureTemplatesCacheLoaded === 'function') {
+            ensureTemplatesCacheLoaded();
+        }
+    }
 
     // Determine customer display name for variable replacement
     let custName = '';
@@ -9756,7 +9824,7 @@ function resolveTemplateCard(templateSlug, customerData) {
             .replace(/{{(?:1|customer_name|cust_name|name|user_name|client_name)}}/gi, custName)
             .replace(/{{2}}/g, 'Special Festive Privilege')
             .replace(/{{3}}/g, 'Inspenox')
-            .replace(/{{[^{}]+}}/g, custName); // Catch-all for any other unreplaced raw variable
+            .replace(/{{[^{}]+}}/g, custName);
     }
 
     // 1. Check if template exists in templatesCache (Meta API cache)
@@ -9764,16 +9832,22 @@ function resolveTemplateCard(templateSlug, customerData) {
         const found = templatesCache.find(t => (t.name || '').toLowerCase() === cleanSlug);
         if (found && Array.isArray(found.components)) {
             let headerText = '';
-            let headerImage = '';
+            let headerImage = (messageData && messageData.media_url) ? messageData.media_url : '';
             let bodyText = '';
             let footerText = '';
             let buttons = [];
 
             found.components.forEach(c => {
                 if (c.type === 'HEADER') {
-                    if (c.format === 'IMAGE') {
-                        headerImage = c.example?.header_handle?.[0] || (cleanSlug.includes('vinayaka') ? '/vinayaka_chavithi_header.png' : '');
-                        headerText = ''; // Do NOT display raw string 'IMAGE Header'
+                    if (c.format === 'IMAGE' || c.format === 'VIDEO') {
+                        if (!headerImage) {
+                            headerImage = (Array.isArray(c.example?.header_handle) ? c.example.header_handle[0] : c.example?.header_handle) ||
+                                          (Array.isArray(c.example?.header_url) ? c.example.header_url[0] : c.example?.header_url) ||
+                                          found.header_media?.url ||
+                                          found.header_media?.media_id ||
+                                          (cleanSlug.includes('vinayaka') ? '/vinayaka_chavithi_header.png' : '');
+                        }
+                        headerText = '';
                     } else if (c.text) {
                         headerText = c.text;
                     }
@@ -9785,10 +9859,16 @@ function resolveTemplateCard(templateSlug, customerData) {
                     buttons = c.buttons.map(b => ({
                         text: b.text || 'Action',
                         icon: b.type === 'PHONE_NUMBER' ? '📞' : b.type === 'URL' ? '↗️' : '💬',
-                        type: b.type
+                        type: b.type,
+                        url: b.url || null,
+                        phone_number: b.phone_number || null
                     }));
                 }
             });
+
+            if (!headerImage && messageData && messageData.media_url) {
+                headerImage = messageData.media_url;
+            }
 
             if (cleanSlug.includes('vinayaka') && !headerImage) {
                 headerImage = '/vinayaka_chavithi_header.png';
@@ -9813,6 +9893,7 @@ function resolveTemplateCard(templateSlug, customerData) {
         const def = BUILTIN_TEMPLATE_DEFINITIONS[cleanSlug];
         return {
             ...def,
+            headerImage: (messageData && messageData.media_url) || def.headerImage || '',
             body: replaceVariables(def.body)
         };
     }
@@ -9820,9 +9901,9 @@ function resolveTemplateCard(templateSlug, customerData) {
     // 3. Fallback for any other template name (e.g. order_update, welcome_flow)
     const displayName = formatTemplateDisplayName(cleanSlug);
     let sampleBody = `Hello ${custName}! This is an official verified WhatsApp template message for ${displayName}. All details and updates have been synchronized to your conversation.`;
-    let fallbackHeaderImg = '';
+    let fallbackHeaderImg = (messageData && messageData.media_url) ? messageData.media_url : '';
     if (cleanSlug.includes('vinayaka')) {
-        fallbackHeaderImg = '/vinayaka_chavithi_header.png';
+        fallbackHeaderImg = fallbackHeaderImg || '/vinayaka_chavithi_header.png';
         sampleBody = `Wishing you and your family a joyous and blessed Vinayaka Chavithi! May Lord Ganesha bestow good health, boundless happiness, and prosperous milestones upon your home.`;
     }
 
@@ -10230,7 +10311,7 @@ async function fetchChatMessages(isInitial = false) {
 
             if (isTemplate) {
                 const templateSlug = contentHtml.replace(/^\[Template\]\s*/i, '').trim();
-                const templateCard = resolveTemplateCard(templateSlug, activeCustomerData);
+                const templateCard = resolveTemplateCard(templateSlug, activeCustomerData, m);
 
                 contentHtml = `
                     <div class="template-card-rendered">
@@ -10244,33 +10325,51 @@ async function fetchChatMessages(isInitial = false) {
 
                         ${templateCard.headerImage ? `
                             <div class="tpl-card-media-wrap">
-                                <img src="${templateCard.headerImage}" alt="${templateCard.title || 'Template Banner'}" class="tpl-card-header-img" onerror="this.style.display='none'" />
+                                <img src="${escapeHtml(templateCard.headerImage)}" alt="${escapeHtml(templateCard.title || 'Template Banner')}" class="tpl-card-header-img" onerror="this.style.display='none'" />
                             </div>
                         ` : ''}
 
                         ${templateCard.title ? `
                             <div class="tpl-card-title">
                                 <span class="tpl-icon">${templateCard.headerIcon || '📋'}</span>
-                                <strong>${templateCard.title}</strong>
+                                <strong>${escapeHtml(templateCard.title)}</strong>
                             </div>
                         ` : ''}
 
                         <div class="tpl-card-body">
-                            ${templateCard.body.replace(/\n/g, '<br>')}
+                            ${formatWhatsAppMarkdown(templateCard.body)}
                         </div>
 
                         ${templateCard.footer ? `
-                            <div class="tpl-card-footer">${templateCard.footer}</div>
+                            <div class="tpl-card-footer">${escapeHtml(templateCard.footer)}</div>
                         ` : ''}
 
                         ${templateCard.buttons && templateCard.buttons.length > 0 ? `
                             <div class="tpl-card-buttons-container">
-                                ${templateCard.buttons.map(b => `
-                                    <div class="tpl-card-action-btn" title="Template Action: ${b.text}">
-                                        <span>${b.icon || '↗️'}</span>
-                                        <span>${b.text}</span>
-                                    </div>
-                                `).join('')}
+                                ${templateCard.buttons.map(b => {
+                                    if (b.url) {
+                                        return `
+                                            <a href="${escapeHtml(b.url)}" target="_blank" rel="noopener noreferrer" class="tpl-card-action-btn" title="Template Action: ${escapeHtml(b.text)}" style="text-decoration:none;">
+                                                <span>${b.icon || '↗️'}</span>
+                                                <span>${escapeHtml(b.text)}</span>
+                                            </a>
+                                        `;
+                                    }
+                                    if (b.phone_number) {
+                                        return `
+                                            <a href="tel:${escapeHtml(b.phone_number)}" class="tpl-card-action-btn" title="Call: ${escapeHtml(b.phone_number)}" style="text-decoration:none;">
+                                                <span>${b.icon || '📞'}</span>
+                                                <span>${escapeHtml(b.text)}</span>
+                                            </a>
+                                        `;
+                                    }
+                                    return `
+                                        <div class="tpl-card-action-btn" title="Template Action: ${escapeHtml(b.text)}">
+                                            <span>${b.icon || '💬'}</span>
+                                            <span>${escapeHtml(b.text)}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
                             </div>
                         ` : ''}
                     </div>
@@ -10503,6 +10602,11 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
         const res = await apiFetch('/api/templates');
         const json = await res.json();
         const rawTemplates = Array.isArray(json) ? json : (json.data || json.templates || []);
+        templatesCache = rawTemplates;
+        try {
+            const coId = (typeof currentCompanyId !== 'undefined' && currentCompanyId) ? currentCompanyId : 'default';
+            sessionStorage.setItem(`templates_cache_${coId}`, JSON.stringify(rawTemplates));
+        } catch (e) {}
         // Strictly show ONLY approved templates (exclude PENDING, REJECTED, PAUSED)
         const templates = Array.isArray(rawTemplates)
             ? rawTemplates.filter(t => (t.status || '').toUpperCase() === 'APPROVED')
