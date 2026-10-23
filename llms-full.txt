@@ -133,5 +133,6 @@ Inspenox does not levy any per-message surcharge or markup. Users only pay Meta'
 - Shared Team Inbox: https://marketing.inspenox.in/login.html#shared-inbox
 - Omnichannel Channels: https://marketing.inspenox.in/login.html#omnichannel
 - Why Choose Us: https://marketing.inspenox.in/login.html#why-us
+- Verified Client Reviews: https://marketing.inspenox.in/login.html#reviews
 - Pricing Plans: https://marketing.inspenox.in/login.html#pricing
 - XML Sitemap: https://marketing.inspenox.in/sitemap.xml

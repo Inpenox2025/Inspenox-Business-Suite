@@ -111,6 +111,38 @@
             "reviewCount": "10420",
             "bestRating": "5"
           },
+          "review": [
+            {
+              "@type": "Review",
+              "reviewRating": {
+                "@type": "Rating",
+                "ratingValue": "5",
+                "bestRating": "5"
+              },
+              "author": {
+                "@type": "Organization",
+                "name": "Manaswini Enterprises",
+                "url": "https://www.manageetha.in/"
+              },
+              "headline": "Transforming Farmer Outreach & Dealer Orders with Zero Commission WhatsApp Broadcasts",
+              "reviewBody": "With Inspenox's official Meta WhatsApp Cloud API broadcasts, our catalog messages with interactive video demos and one-tap WhatsApp inquiries achieve an incredible 98%+ read rate. Zero platform markup and direct Meta GST invoices make claiming full 18% Input Tax Credit completely frictionless."
+            },
+            {
+              "@type": "Review",
+              "reviewRating": {
+                "@type": "Rating",
+                "ratingValue": "5",
+                "bestRating": "5"
+              },
+              "author": {
+                "@type": "Organization",
+                "name": "Kuberayogam",
+                "url": "https://kuberayogam.com/"
+              },
+              "headline": "Seamless Devotee Consultations & 4.9X ROAS on Click-to-WhatsApp Ads",
+              "reviewBody": "Connecting seekers with Vedic astrologers and managing sacred homam registrations requires instant, trustworthy communication. By connecting our Ads directly to WhatsApp, devotees seamlessly start conversations with zero landing page drop-off. Inspenox is an indispensable pillar of our digital growth."
+            }
+          ],
           "featureList": [
             "Official Meta WhatsApp Cloud API v20.0 Broadcast Engine",
             "0% Platform Commission on WhatsApp Messages",
@@ -1105,6 +1137,86 @@
             margin-top: 3px;
         }
 
+        /* Verified Client Card in Marquee */
+        .brand-logo-card.brand-logo-card-client {
+            border-color: rgba(0, 168, 132, 0.45);
+            background: rgba(0, 168, 132, 0.08);
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0, 168, 132, 0.15);
+        }
+
+        .brand-logo-card.brand-logo-card-client.gold {
+            border-color: rgba(245, 158, 11, 0.45);
+            background: rgba(245, 158, 11, 0.08);
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+        }
+
+        [data-theme="light"] .brand-logo-card.brand-logo-card-client {
+            background: #f0fdf4;
+            border-color: rgba(0, 168, 132, 0.4);
+        }
+
+        [data-theme="light"] .brand-logo-card.brand-logo-card-client.gold {
+            background: #fffbeb;
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+
+        .brand-logo-card.brand-logo-card-client:hover {
+            border-color: #00a884;
+            box-shadow: 0 10px 28px rgba(0, 168, 132, 0.35);
+            transform: translateY(-4px) scale(1.03);
+        }
+
+        .brand-logo-card.brand-logo-card-client.gold:hover {
+            border-color: #f59e0b;
+            box-shadow: 0 10px 28px rgba(245, 158, 11, 0.35);
+            transform: translateY(-4px) scale(1.03);
+        }
+
+        .brand-client-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            padding: 2px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .brand-client-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .brand-client-badge {
+            font-size: 0.62rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: rgba(0, 168, 132, 0.2);
+            color: #00a884;
+            border: 1px solid rgba(0, 168, 132, 0.4);
+            letter-spacing: 0.5px;
+            margin-left: 0.4rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .brand-client-badge.gold {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+
         /* Feature Spotlight 2-Column Sections */
         .spotlight-section {
             padding: 5.5rem 1.5rem;
@@ -1755,6 +1867,495 @@
             height: auto;
             display: block;
             border-radius: 0 0 16px 16px;
+        }
+
+        /* ==========================================================================
+           Client Reviews & Success Stories Section
+           ========================================================================== */
+        .client-reviews-section {
+            padding: 5.5rem 1.5rem 4.5rem 1.5rem;
+            max-width: 1250px;
+            margin: 0 auto;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .client-reviews-header {
+            text-align: center;
+            max-width: 860px;
+            margin: 0 auto 3.25rem auto;
+        }
+
+        /* Top Trust Badges Strip */
+        .reviews-trust-strip {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2.75rem;
+            padding: 1rem 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        [data-theme="light"] .reviews-trust-strip {
+            background: #ffffff;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+        }
+
+        .trust-strip-item {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .trust-strip-item strong {
+            color: var(--text-main);
+            font-weight: 800;
+        }
+
+        .trust-strip-stars {
+            color: #f59e0b;
+            letter-spacing: 2px;
+            font-size: 0.95rem;
+        }
+
+        .trust-strip-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        /* 2-Column Client Testimonials Grid */
+        .client-reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            align-items: stretch;
+        }
+
+        .client-review-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2.5rem 2.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+        }
+
+        [data-theme="light"] .client-review-card {
+            background: #ffffff;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .client-review-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(0, 168, 132, 0.5);
+            box-shadow: 0 16px 40px rgba(0, 168, 132, 0.16);
+        }
+
+        .client-review-card.gold-theme:hover {
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 16px 40px rgba(245, 158, 11, 0.16);
+        }
+
+        /* Glow background orb */
+        .client-card-glow {
+            position: absolute;
+            top: -40px;
+            right: -40px;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 168, 132, 0.16) 0%, transparent 70%);
+            pointer-events: none;
+            filter: blur(25px);
+        }
+
+        .client-review-card.gold-theme .client-card-glow {
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.16) 0%, transparent 70%);
+        }
+
+        /* Card Top Header */
+        .client-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .client-brand-identity {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 0;
+        }
+
+        .client-avatar-frame {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            padding: 3px;
+            background: linear-gradient(135deg, #00a884, #10b981, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(0, 168, 132, 0.25);
+        }
+
+        .client-review-card.gold-theme .client-avatar-frame {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24, #d97706);
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+        }
+
+        .client-avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: contain;
+            background: #ffffff;
+            display: block;
+        }
+
+        .client-name-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .client-company-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 0.2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            line-height: 1.25;
+        }
+
+        .client-verified-tick {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00a884;
+            color: #ffffff;
+            font-size: 0.65rem;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        .client-review-card.gold-theme .client-verified-tick {
+            background: #f59e0b;
+            color: #000000;
+        }
+
+        .client-category-tag {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .client-website-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.55rem 1.1rem;
+            font-size: 0.825rem;
+            font-weight: 700;
+            color: #00a884;
+            background: rgba(0, 168, 132, 0.12);
+            border: 1px solid rgba(0, 168, 132, 0.3);
+            border-radius: 50px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .client-review-card.gold-theme .client-website-link {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.12);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .client-website-link:hover {
+            background: #00a884;
+            color: #ffffff;
+            border-color: #00a884;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 168, 132, 0.35);
+        }
+
+        .client-review-card.gold-theme .client-website-link:hover {
+            background: #f59e0b;
+            color: #000000;
+            border-color: #f59e0b;
+            box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
+        }
+
+        /* Rating Row */
+        .client-rating-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.15rem;
+        }
+
+        .client-stars {
+            color: #f59e0b;
+            font-size: 1.15rem;
+            letter-spacing: 2px;
+        }
+
+        .client-rating-badge {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.08);
+            padding: 3px 9px;
+            border-radius: 6px;
+        }
+
+        [data-theme="light"] .client-rating-badge {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        /* Review Headline & Body */
+        .client-review-headline {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.22rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 0.85rem 0;
+            line-height: 1.35;
+        }
+
+        .client-review-quote {
+            font-size: 0.935rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin: 0 0 1.75rem 0;
+            flex-grow: 1;
+            font-style: normal;
+        }
+
+        .client-review-quote strong {
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        /* Card Metrics Box */
+        .client-metrics-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.85rem;
+            padding: 1.25rem;
+            background: rgba(0, 0, 0, 0.22);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 1.75rem;
+        }
+
+        [data-theme="light"] .client-metrics-strip {
+            background: #f8fafc;
+            border-color: rgba(0, 0, 0, 0.06);
+        }
+
+        .client-metric-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            text-align: center;
+        }
+
+        .client-metric-val {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #00a884;
+            line-height: 1.1;
+        }
+
+        .client-review-card.gold-theme .client-metric-val {
+            color: #f59e0b;
+        }
+
+        .client-metric-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        /* Review Author Footer */
+        .client-author-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding-top: 1.35rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .client-author-info {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .client-author-initial {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(0, 168, 132, 0.15);
+            color: #00a884;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .client-review-card.gold-theme .client-author-initial {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+
+        .client-author-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .client-author-name {
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .client-author-role {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+
+        .client-verified-use-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #00a884;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(0, 168, 132, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 168, 132, 0.25);
+        }
+
+        .client-review-card.gold-theme .client-verified-use-badge {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.25);
+        }
+
+        /* Bottom Verified Banner */
+        .reviews-cta-ribbon {
+            margin-top: 3.5rem;
+            padding: 2.25rem 2.5rem;
+            background: linear-gradient(135deg, rgba(0, 168, 132, 0.12), rgba(6, 182, 212, 0.08));
+            border: 1px solid rgba(0, 168, 132, 0.3);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        [data-theme="light"] .reviews-cta-ribbon {
+            background: linear-gradient(135deg, rgba(0, 168, 132, 0.08), rgba(6, 182, 212, 0.05));
+        }
+
+        .reviews-cta-text h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 0.35rem 0;
+        }
+
+        .reviews-cta-text p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* Responsive styling for reviews */
+        @media (max-width: 992px) {
+            .client-reviews-grid {
+                grid-template-columns: 1fr;
+                gap: 1.75rem;
+            }
+            .reviews-cta-ribbon {
+                flex-direction: column;
+                text-align: center;
+                gap: 1.25rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .client-reviews-section {
+                padding: 4rem 1rem 3rem 1rem;
+            }
+            .client-review-card {
+                padding: 1.75rem 1.25rem;
+                border-radius: 18px;
+            }
+            .client-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .client-website-link {
+                width: 100%;
+                justify-content: center;
+            }
+            .client-metrics-strip {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+                text-align: left;
+            }
+            .client-metric-item {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .reviews-trust-strip {
+                border-radius: 20px;
+                gap: 1rem;
+                padding: 1rem;
+            }
         }
 
         /* Pricing Section */
@@ -3797,6 +4398,7 @@
             <a href="#shared-inbox" class="landing-nav-link">Shared Inbox</a>
             <a href="#omnichannel" class="landing-nav-link">Omnichannel</a>
             <a href="#why-us" class="landing-nav-link">Why Choose Us</a>
+            <a href="#reviews" class="landing-nav-link">Client Reviews</a>
             <a href="#pricing" class="landing-nav-link">Plans & Pricing</a>
         </nav>
 
@@ -4026,6 +4628,30 @@
             <!-- Row 1: Leftward Scrolling Track -->
             <div class="marquee-row" title="Hover to pause animation">
                 <div class="marquee-track track-left">
+                    <!-- Client 1: Manaswini Enterprises -->
+                    <a href="https://www.manageetha.in/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client" title="Manaswini Enterprises · Visit Website">
+                        <div class="brand-client-avatar">
+                            <img src="assets/clients/manaswini.png" alt="Manaswini Enterprises Logo">
+                        </div>
+                        <div class="brand-logo-info">
+                            <span class="brand-logo-name" style="color: #22c55e;">MANASWINI</span>
+                            <span class="brand-logo-tag">Agri Machinery ↗</span>
+                        </div>
+                        <span class="brand-client-badge">CLIENT</span>
+                    </a>
+
+                    <!-- Client 2: Kuberayogam -->
+                    <a href="https://kuberayogam.com/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client gold" title="Kuberayogam · Visit Website">
+                        <div class="brand-client-avatar">
+                            <img src="assets/clients/kuberayogam.png" alt="Kuberayogam Logo">
+                        </div>
+                        <div class="brand-logo-info">
+                            <span class="brand-logo-name" style="color: #fbbf24;">KUBERAYOGAM</span>
+                            <span class="brand-logo-tag">Vedic Astrology ↗</span>
+                        </div>
+                        <span class="brand-client-badge gold">CLIENT</span>
+                    </a>
+
                     <!-- Brand 1: AJIO -->
                     <div class="brand-logo-card">
                         <div class="brand-logo-icon" style="background: linear-gradient(135deg, #2b1117, #4c0519); border-color: rgba(244, 63, 94, 0.4);">
@@ -4115,6 +4741,30 @@
                     </div>
 
                     <!-- Duplicate for Seamless Continuous Loop -->
+                    <!-- Client 1: Manaswini Enterprises -->
+                    <a href="https://www.manageetha.in/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client" title="Manaswini Enterprises · Visit Website">
+                        <div class="brand-client-avatar">
+                            <img src="assets/clients/manaswini.png" alt="Manaswini Enterprises Logo">
+                        </div>
+                        <div class="brand-logo-info">
+                            <span class="brand-logo-name" style="color: #22c55e;">MANASWINI</span>
+                            <span class="brand-logo-tag">Agri Machinery ↗</span>
+                        </div>
+                        <span class="brand-client-badge">CLIENT</span>
+                    </a>
+
+                    <!-- Client 2: Kuberayogam -->
+                    <a href="https://kuberayogam.com/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client gold" title="Kuberayogam · Visit Website">
+                        <div class="brand-client-avatar">
+                            <img src="assets/clients/kuberayogam.png" alt="Kuberayogam Logo">
+                        </div>
+                        <div class="brand-logo-info">
+                            <span class="brand-logo-name" style="color: #fbbf24;">KUBERAYOGAM</span>
+                            <span class="brand-logo-tag">Vedic Astrology ↗</span>
+                        </div>
+                        <span class="brand-client-badge gold">CLIENT</span>
+                    </a>
+
                     <div class="brand-logo-card">
                         <div class="brand-logo-icon" style="background: linear-gradient(135deg, #2b1117, #4c0519); border-color: rgba(244, 63, 94, 0.4);">
                             <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6z" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 6h18" stroke="#f43f5e" stroke-width="2"/><path d="M16 10a4 4 0 0 1-8 0" stroke="#f43f5e" stroke-width="2" stroke-linecap="round"/></svg>
@@ -4193,6 +4843,30 @@
             <!-- Row 2: Rightward Scrolling Track -->
             <div class="marquee-row" title="Hover to pause animation">
                 <div class="marquee-track track-right">
+                    <!-- Client 1: Kuberayogam -->
+                    <a href="https://kuberayogam.com/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client gold" title="Kuberayogam · Visit Website">
+                        <div class="brand-client-avatar">
+                            <img src="assets/clients/kuberayogam.png" alt="Kuberayogam Logo">
+                        </div>
+                        <div class="brand-logo-info">
+                            <span class="brand-logo-name" style="color: #fbbf24;">KUBERAYOGAM</span>
+                            <span class="brand-logo-tag">Vedic Astrology ↗</span>
+                        </div>
+                        <span class="brand-client-badge gold">CLIENT</span>
+                    </a>
+
+                    <!-- Client 2: Manaswini Enterprises -->
+                    <a href="https://www.manageetha.in/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client" title="Manaswini Enterprises · Visit Website">
+                        <div class="brand-client-avatar">
+                            <img src="assets/clients/manaswini.png" alt="Manaswini Enterprises Logo">
+                        </div>
+                        <div class="brand-logo-info">
+                            <span class="brand-logo-name" style="color: #22c55e;">MANASWINI</span>
+                            <span class="brand-logo-tag">Agri Machinery ↗</span>
+                        </div>
+                        <span class="brand-client-badge">CLIENT</span>
+                    </a>
+
                     <!-- Brand 9: FLIPKART -->
                     <div class="brand-logo-card">
                         <div class="brand-logo-icon" style="background: linear-gradient(135deg, #172554, #1d4ed8); border-color: rgba(59, 130, 246, 0.4);">
@@ -4282,6 +4956,30 @@
                     </div>
 
                     <!-- Duplicate for Seamless Continuous Loop -->
+                    <!-- Client 1: Kuberayogam -->
+                    <a href="https://kuberayogam.com/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client gold" title="Kuberayogam · Visit Website">
+                        <div class="brand-client-avatar">
+                            <img src="assets/clients/kuberayogam.png" alt="Kuberayogam Logo">
+                        </div>
+                        <div class="brand-logo-info">
+                            <span class="brand-logo-name" style="color: #fbbf24;">KUBERAYOGAM</span>
+                            <span class="brand-logo-tag">Vedic Astrology ↗</span>
+                        </div>
+                        <span class="brand-client-badge gold">CLIENT</span>
+                    </a>
+
+                    <!-- Client 2: Manaswini Enterprises -->
+                    <a href="https://www.manageetha.in/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client" title="Manaswini Enterprises · Visit Website">
+                        <div class="brand-client-avatar">
+                            <img src="assets/clients/manaswini.png" alt="Manaswini Enterprises Logo">
+                        </div>
+                        <div class="brand-logo-info">
+                            <span class="brand-logo-name" style="color: #22c55e;">MANASWINI</span>
+                            <span class="brand-logo-tag">Agri Machinery ↗</span>
+                        </div>
+                        <span class="brand-client-badge">CLIENT</span>
+                    </a>
+
                     <div class="brand-logo-card">
                         <div class="brand-logo-icon" style="background: linear-gradient(135deg, #172554, #1d4ed8); border-color: rgba(59, 130, 246, 0.4);">
                             <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><rect x="4" y="6" width="16" height="15" rx="3" fill="#2563eb"/><path d="M8 6V4a4 4 0 0 1 8 0v2" stroke="#facc15" stroke-width="2"/><path d="M9 11h6M9 14h4" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>
@@ -4872,6 +5570,200 @@
                     <img src="/template-insights-breakdown.png" alt="Inspenox Template Insights Breakdown with 0% Commission and Exact Meta Rates" loading="lazy">
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Verified Client Reviews & Success Stories Section -->
+    <section id="reviews" class="client-reviews-section">
+        <div class="client-reviews-header">
+            <span class="spotlight-pill">⭐ Verified Client Stories</span>
+            <h2 class="spotlight-title">Real Businesses. Real Growth. <span class="hero-highlight-green">Zero Commission.</span></h2>
+            <p class="spotlight-desc">Discover how industry leaders use Inspenox's official Meta WhatsApp Cloud API platform to achieve record-breaking response rates, automate customer funnels, and eliminate platform markups.</p>
+        </div>
+
+        <!-- Trust Badges Strip -->
+        <div class="reviews-trust-strip">
+            <div class="trust-strip-item">
+                <span class="trust-strip-stars">★★★★★</span>
+                <span><strong>4.9 / 5.0</strong> Client Satisfaction</span>
+            </div>
+            <div class="trust-strip-dot"></div>
+            <div class="trust-strip-item">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="#00a884"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span><strong>0% Commission</strong> · ₹0.00 Message Markup</span>
+            </div>
+            <div class="trust-strip-dot"></div>
+            <div class="trust-strip-item">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="#38bdf8"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke="currentColor" fill="none" stroke-width="2"/><line x1="1" y1="10" x2="23" y2="10" stroke="currentColor" stroke-width="2"/></svg>
+                <span><strong>Direct Meta Billing</strong> · 100% GST ITC</span>
+            </div>
+            <div class="trust-strip-dot"></div>
+            <div class="trust-strip-item">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="#10b981"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <span><strong>Official Meta Cloud API</strong> (v20.0)</span>
+            </div>
+        </div>
+
+        <!-- 2-Column Client Testimonials Grid -->
+        <div class="client-reviews-grid">
+
+            <!-- Client Review 1: Manaswini Enterprises -->
+            <div class="client-review-card">
+                <div class="client-card-glow"></div>
+
+                <!-- Card Header -->
+                <div class="client-card-header">
+                    <div class="client-brand-identity">
+                        <div class="client-avatar-frame">
+                            <img src="assets/clients/manaswini.png" alt="Manaswini Enterprises Logo" class="client-avatar-img">
+                        </div>
+                        <div class="client-name-group">
+                            <h3 class="client-company-title">
+                                Manaswini Enterprises
+                                <span class="client-verified-tick" title="Verified Inspenox Client">✓</span>
+                            </h3>
+                            <span class="client-category-tag">Agricultural Machinery, Power Weeders & Tillers Wholesale</span>
+                        </div>
+                    </div>
+                    <a href="https://www.manageetha.in/" target="_blank" rel="noopener noreferrer" class="client-website-link" title="Visit official website: manageetha.in">
+                        <span>Visit Website</span>
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                    </a>
+                </div>
+
+                <!-- Star Rating -->
+                <div class="client-rating-row">
+                    <span class="client-stars">★★★★★</span>
+                    <span class="client-rating-badge">5.0 / 5.0 Rating</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">· Ramachandrapuram & Rajahmundry, AP</span>
+                </div>
+
+                <!-- Review Headline -->
+                <h4 class="client-review-headline">
+                    "Seasonal farmer broadcast campaigns now reach 10,000+ growers with 98% open rates and zero message markup."
+                </h4>
+
+                <!-- Testimonial Body -->
+                <p class="client-review-quote">
+                    "Before Inspenox, keeping farmers and regional dealers updated on stock availability for Shrachi power weeders and Sonalika rotavators during peak sowing season meant tedious SMS blasts with low engagement. <strong>Inspenox changed everything.</strong> With official Meta Cloud API broadcasts, our catalog messages with interactive video demos and one-tap WhatsApp inquiries achieve an incredible <strong>98%+ read rate</strong>. Most importantly, Inspenox charges ₹0.00 platform commission, and our direct Meta billing gives us 100% GST tax invoices to claim full 18% Input Tax Credit. It is by far the most reliable, cost-effective marketing software we have ever deployed."
+                </p>
+
+                <!-- Key Impact Metrics -->
+                <div class="client-metrics-strip">
+                    <div class="client-metric-item">
+                        <span class="client-metric-val">98.4%</span>
+                        <span class="client-metric-label">Message Open Rate</span>
+                    </div>
+                    <div class="client-metric-item">
+                        <span class="client-metric-val">3.6X</span>
+                        <span class="client-metric-label">Farmer Leads Surge</span>
+                    </div>
+                    <div class="client-metric-item">
+                        <span class="client-metric-val">₹0.00</span>
+                        <span class="client-metric-label">Platform Message Markup</span>
+                    </div>
+                </div>
+
+                <!-- Reviewer Sign-off -->
+                <div class="client-author-footer">
+                    <div class="client-author-info">
+                        <div class="client-author-initial">GS</div>
+                        <div class="client-author-details">
+                            <span class="client-author-name">G. Satyanarayana</span>
+                            <span class="client-author-role">Managing Partner · Manaswini & Geetha Enterprises</span>
+                        </div>
+                    </div>
+                    <span class="client-verified-use-badge">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="#00a884"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        Verified Enterprise User
+                    </span>
+                </div>
+            </div>
+
+            <!-- Client Review 2: Kuberayogam -->
+            <div class="client-review-card gold-theme">
+                <div class="client-card-glow"></div>
+
+                <!-- Card Header -->
+                <div class="client-card-header">
+                    <div class="client-brand-identity">
+                        <div class="client-avatar-frame">
+                            <img src="assets/clients/kuberayogam.png" alt="Kuberayogam Logo" class="client-avatar-img">
+                        </div>
+                        <div class="client-name-group">
+                            <h3 class="client-company-title">
+                                Kuberayogam
+                                <span class="client-verified-tick" title="Verified Inspenox Client">✓</span>
+                            </h3>
+                            <span class="client-category-tag">Sacred Vedic Rituals, Homams & Astrology Platform</span>
+                        </div>
+                    </div>
+                    <a href="https://kuberayogam.com/" target="_blank" rel="noopener noreferrer" class="client-website-link" title="Visit official website: kuberayogam.com">
+                        <span>Visit Website</span>
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                    </a>
+                </div>
+
+                <!-- Star Rating -->
+                <div class="client-rating-row">
+                    <span class="client-stars">★★★★★</span>
+                    <span class="client-rating-badge">5.0 / 5.0 Rating</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">· Wealth · Wisdom · Wellness</span>
+                </div>
+
+                <!-- Review Headline -->
+                <h4 class="client-review-headline">
+                    "Our Meta Click-to-WhatsApp ads achieve 4.9X ROAS, and the shared team inbox handles devotee inquiries in under 2 minutes."
+                </h4>
+
+                <!-- Testimonial Body -->
+                <p class="client-review-quote">
+                    "Helping seekers connect with divine Vedic blessings, personalized astrological consultations, and auspicious homams demands immediate, compassionate, and trustworthy communication. <strong>Inspenox has been a game-changer for Kuberayogam.</strong> By connecting our Instagram and Facebook Ads directly to WhatsApp, devotees seamlessly start conversations with zero landing page drop-off. Our sevak team manages all inquiries in the shared team inbox, assigning tags for specific rituals and sending automated reminders for pooja timings. With zero risk of number bans and direct Meta billing, Inspenox is an indispensable pillar of our digital expansion."
+                </p>
+
+                <!-- Key Impact Metrics -->
+                <div class="client-metrics-strip">
+                    <div class="client-metric-item">
+                        <span class="client-metric-val">4.9X</span>
+                        <span class="client-metric-label">Click-to-WA ROAS</span>
+                    </div>
+                    <div class="client-metric-item">
+                        <span class="client-metric-val">&lt; 2 min</span>
+                        <span class="client-metric-label">Avg. Response Time</span>
+                    </div>
+                    <div class="client-metric-item">
+                        <span class="client-metric-val">99.9%</span>
+                        <span class="client-metric-label">Meta Cloud API Reliability</span>
+                    </div>
+                </div>
+
+                <!-- Reviewer Sign-off -->
+                <div class="client-author-footer">
+                    <div class="client-author-info">
+                        <div class="client-author-initial">KY</div>
+                        <div class="client-author-details">
+                            <span class="client-author-name">Kuberayogam Operations & Devotee Seva</span>
+                            <span class="client-author-role">Lead Coordinator · Kuberayogam Spiritual Foundation</span>
+                        </div>
+                    </div>
+                    <span class="client-verified-use-badge">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="#f59e0b"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        Verified Enterprise User
+                    </span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Verification Banner -->
+        <div class="reviews-cta-ribbon">
+            <div class="reviews-cta-text">
+                <h3>Ready to Transform Your Customer Communication on WhatsApp?</h3>
+                <p>Join high-growth enterprises leveraging official Meta Cloud API with 0% platform markup, full GST ITC invoicing, and zero ban risk.</p>
+            </div>
+            <a href="#login-section" class="btn-brand-primary" style="white-space: nowrap; padding: 0.85rem 1.85rem; font-size: 0.95rem;">
+                Get Started with Inspenox ➔
+            </a>
         </div>
     </section>
 
