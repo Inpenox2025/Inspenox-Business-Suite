@@ -1015,6 +1015,321 @@
             background: var(--border);
         }
 
+        /* ==========================================================================
+           Our Trusted Clients (Top Showcase: Static if <=6, Scroll if >6)
+           ========================================================================== */
+        .trusted-clients-section {
+            max-width: 1100px;
+            margin: 0 auto 2.5rem auto;
+            padding: 0 1.5rem;
+            position: relative;
+        }
+
+        .trusted-clients-header {
+            margin-bottom: 1.75rem;
+            text-align: center;
+        }
+
+        .clients-badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: rgba(0, 168, 132, 0.12);
+            border: 1px solid rgba(0, 168, 132, 0.3);
+            color: #00a884;
+            padding: 0.3rem 0.95rem;
+            border-radius: 50px;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .trusted-clients-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.95rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 0.35rem 0;
+            letter-spacing: -0.3px;
+        }
+
+        .trusted-clients-sub {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin: 0;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Wrapper states: is-static vs has-scroll */
+        .trusted-clients-wrapper {
+            width: 100%;
+            position: relative;
+        }
+
+        /* Static view for <= 6 clients: Centered clean card layout */
+        .trusted-clients-wrapper.is-static .trusted-clients-track {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Scroll view for > 6 clients: Horizontal scrolling / marquee */
+        .trusted-clients-wrapper.has-scroll {
+            overflow: hidden;
+            mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+        }
+
+        .trusted-clients-wrapper.has-scroll .trusted-clients-track {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            width: max-content;
+            animation: scrollClientsMarquee 35s linear infinite;
+        }
+
+        .trusted-clients-wrapper.has-scroll:hover .trusted-clients-track {
+            animation-play-state: paused;
+        }
+
+        @keyframes scrollClientsMarquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Trusted Client Item Card */
+        .trusted-client-item {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 168, 132, 0.4);
+            border-radius: 18px;
+            padding: 1.15rem 1.45rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 1.15rem;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.18);
+            max-width: 480px;
+            min-width: 320px;
+            flex: 1 1 360px;
+            text-align: left;
+            position: relative;
+        }
+
+        .trusted-client-item.gold {
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+
+        [data-theme="light"] .trusted-client-item {
+            background: #ffffff;
+            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.06);
+            border-color: rgba(0, 168, 132, 0.35);
+        }
+
+        [data-theme="light"] .trusted-client-item.gold {
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        .trusted-client-item:hover {
+            transform: translateY(-4px);
+            border-color: #00a884;
+            box-shadow: 0 12px 32px rgba(0, 168, 132, 0.25);
+            background: rgba(0, 168, 132, 0.04);
+        }
+
+        .trusted-client-item.gold:hover {
+            border-color: #f59e0b;
+            box-shadow: 0 12px 32px rgba(245, 158, 11, 0.25);
+            background: rgba(245, 158, 11, 0.04);
+        }
+
+        .t-client-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            padding: 4px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(0, 168, 132, 0.3);
+        }
+
+        .trusted-client-item.gold .t-client-avatar {
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .t-client-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+            display: block;
+        }
+
+        .t-client-info {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            flex-grow: 1;
+        }
+
+        .t-client-title-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+            flex-wrap: wrap;
+        }
+
+        .t-client-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.12rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: 0.2px;
+        }
+
+        .t-client-badge {
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .t-client-badge.green {
+            background: rgba(0, 168, 132, 0.18);
+            color: #00a884;
+            border: 1px solid rgba(0, 168, 132, 0.35);
+        }
+
+        .t-client-badge.gold {
+            background: rgba(245, 158, 11, 0.18);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+
+        .t-client-cat {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .t-client-visit-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border-radius: 50px;
+            color: #00a884;
+            background: rgba(0, 168, 132, 0.12);
+            border: 1px solid rgba(0, 168, 132, 0.3);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .trusted-client-item.gold .t-client-visit-btn {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.12);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .t-client-visit-btn:hover {
+            background: #00a884;
+            color: #ffffff;
+            border-color: #00a884;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 168, 132, 0.35);
+        }
+
+        .trusted-client-item.gold .t-client-visit-btn:hover {
+            background: #f59e0b;
+            color: #000000;
+            border-color: #f59e0b;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+        }
+
+        /* Divider between Clients and Mentions */
+        .brand-mentions-divider {
+            margin: 2.75rem auto 1.5rem auto;
+            text-align: center;
+            position: relative;
+            max-width: 960px;
+            padding: 0 1.5rem;
+        }
+
+        .brand-mentions-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 1.5rem;
+            right: 1.5rem;
+            height: 1px;
+            background: var(--border);
+            z-index: 1;
+        }
+
+        .brand-mentions-tag {
+            position: relative;
+            z-index: 2;
+            background: var(--bg-sidebar);
+            padding: 0.25rem 1.25rem;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            border-radius: 50px;
+            display: inline-block;
+        }
+
+        [data-theme="light"] .brand-mentions-tag {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        @media (max-width: 768px) {
+            .trusted-client-item {
+                flex: 1 1 100%;
+                min-width: 0;
+                width: 100%;
+                padding: 0.9rem 1.1rem;
+                gap: 0.75rem;
+            }
+            .t-client-avatar {
+                width: 44px;
+                height: 44px;
+            }
+            .t-client-name {
+                font-size: 1rem;
+            }
+            .t-client-cat {
+                font-size: 0.72rem;
+            }
+            .t-client-visit-btn {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.74rem;
+            }
+            .trusted-clients-title {
+                font-size: 1.55rem;
+            }
+        }
+
         /* Moving Carousel / Marquee Container */
         .marquee-wrapper {
             display: flex;
@@ -4623,35 +4938,69 @@
             </div>
         </div>
 
+        <!-- Dedicated Top Section: Our Trusted Clients -->
+        <div class="trusted-clients-section">
+            <div class="trusted-clients-header">
+                <span class="clients-badge-pill">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="#00a884"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    Official Verified Businesses
+                </span>
+                <h3 class="trusted-clients-title">Our Trusted Clients</h3>
+                <p class="trusted-clients-sub">High-growth businesses scaling customer outreach and zero-commission broadcasts with Inspenox</p>
+            </div>
+
+            <!-- Clients Container: Static view if <= 6 clients; auto-scroll if > 6 clients -->
+            <div class="trusted-clients-wrapper is-static" id="trusted-clients-wrapper">
+                <div class="trusted-clients-track" id="trusted-clients-track">
+                    
+                    <!-- Client 1: Manaswini Enterprises -->
+                    <div class="trusted-client-item">
+                        <div class="t-client-avatar">
+                            <img src="assets/clients/manaswini.png" alt="Manaswini Enterprises Logo">
+                        </div>
+                        <div class="t-client-info">
+                            <div class="t-client-title-row">
+                                <span class="t-client-name">Manaswini Enterprises</span>
+                                <span class="t-client-badge green">✔ Client</span>
+                            </div>
+                            <span class="t-client-cat">Agricultural Machinery, Weeders &amp; Tillers Wholesale</span>
+                        </div>
+                        <a href="https://www.manageetha.in/" target="_blank" rel="noopener noreferrer" class="t-client-visit-btn" title="Visit official website: manageetha.in">
+                            Visit Website ↗
+                        </a>
+                    </div>
+
+                    <!-- Client 2: Kuberayogam -->
+                    <div class="trusted-client-item gold">
+                        <div class="t-client-avatar">
+                            <img src="assets/clients/kuberayogam.png" alt="Kuberayogam Logo">
+                        </div>
+                        <div class="t-client-info">
+                            <div class="t-client-title-row">
+                                <span class="t-client-name">Kuberayogam</span>
+                                <span class="t-client-badge gold">✔ Client</span>
+                            </div>
+                            <span class="t-client-cat">Sacred Vedic Rituals, Homams &amp; Astrology Platform</span>
+                        </div>
+                        <a href="https://kuberayogam.com/" target="_blank" rel="noopener noreferrer" class="t-client-visit-btn gold" title="Visit official website: kuberayogam.com">
+                            Visit Website ↗
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Mentions & Industry Benchmarks Marquee Divider -->
+        <div class="brand-mentions-divider">
+            <span class="brand-mentions-tag">Enterprise Strategies &amp; Modern Brand Benchmarks</span>
+        </div>
+
         <!-- Moving Brand Logo Marquee Carousel -->
         <div class="marquee-wrapper">
             <!-- Row 1: Leftward Scrolling Track -->
             <div class="marquee-row" title="Hover to pause animation">
                 <div class="marquee-track track-left">
-                    <!-- Client 1: Manaswini Enterprises -->
-                    <a href="https://www.manageetha.in/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client" title="Manaswini Enterprises · Visit Website">
-                        <div class="brand-client-avatar">
-                            <img src="assets/clients/manaswini.png" alt="Manaswini Enterprises Logo">
-                        </div>
-                        <div class="brand-logo-info">
-                            <span class="brand-logo-name" style="color: #22c55e;">MANASWINI</span>
-                            <span class="brand-logo-tag">Agri Machinery ↗</span>
-                        </div>
-                        <span class="brand-client-badge">CLIENT</span>
-                    </a>
-
-                    <!-- Client 2: Kuberayogam -->
-                    <a href="https://kuberayogam.com/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client gold" title="Kuberayogam · Visit Website">
-                        <div class="brand-client-avatar">
-                            <img src="assets/clients/kuberayogam.png" alt="Kuberayogam Logo">
-                        </div>
-                        <div class="brand-logo-info">
-                            <span class="brand-logo-name" style="color: #fbbf24;">KUBERAYOGAM</span>
-                            <span class="brand-logo-tag">Vedic Astrology ↗</span>
-                        </div>
-                        <span class="brand-client-badge gold">CLIENT</span>
-                    </a>
-
                     <!-- Brand 1: AJIO -->
                     <div class="brand-logo-card">
                         <div class="brand-logo-icon" style="background: linear-gradient(135deg, #2b1117, #4c0519); border-color: rgba(244, 63, 94, 0.4);">
@@ -4741,30 +5090,6 @@
                     </div>
 
                     <!-- Duplicate for Seamless Continuous Loop -->
-                    <!-- Client 1: Manaswini Enterprises -->
-                    <a href="https://www.manageetha.in/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client" title="Manaswini Enterprises · Visit Website">
-                        <div class="brand-client-avatar">
-                            <img src="assets/clients/manaswini.png" alt="Manaswini Enterprises Logo">
-                        </div>
-                        <div class="brand-logo-info">
-                            <span class="brand-logo-name" style="color: #22c55e;">MANASWINI</span>
-                            <span class="brand-logo-tag">Agri Machinery ↗</span>
-                        </div>
-                        <span class="brand-client-badge">CLIENT</span>
-                    </a>
-
-                    <!-- Client 2: Kuberayogam -->
-                    <a href="https://kuberayogam.com/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client gold" title="Kuberayogam · Visit Website">
-                        <div class="brand-client-avatar">
-                            <img src="assets/clients/kuberayogam.png" alt="Kuberayogam Logo">
-                        </div>
-                        <div class="brand-logo-info">
-                            <span class="brand-logo-name" style="color: #fbbf24;">KUBERAYOGAM</span>
-                            <span class="brand-logo-tag">Vedic Astrology ↗</span>
-                        </div>
-                        <span class="brand-client-badge gold">CLIENT</span>
-                    </a>
-
                     <div class="brand-logo-card">
                         <div class="brand-logo-icon" style="background: linear-gradient(135deg, #2b1117, #4c0519); border-color: rgba(244, 63, 94, 0.4);">
                             <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6z" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 6h18" stroke="#f43f5e" stroke-width="2"/><path d="M16 10a4 4 0 0 1-8 0" stroke="#f43f5e" stroke-width="2" stroke-linecap="round"/></svg>
@@ -4843,30 +5168,6 @@
             <!-- Row 2: Rightward Scrolling Track -->
             <div class="marquee-row" title="Hover to pause animation">
                 <div class="marquee-track track-right">
-                    <!-- Client 1: Kuberayogam -->
-                    <a href="https://kuberayogam.com/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client gold" title="Kuberayogam · Visit Website">
-                        <div class="brand-client-avatar">
-                            <img src="assets/clients/kuberayogam.png" alt="Kuberayogam Logo">
-                        </div>
-                        <div class="brand-logo-info">
-                            <span class="brand-logo-name" style="color: #fbbf24;">KUBERAYOGAM</span>
-                            <span class="brand-logo-tag">Vedic Astrology ↗</span>
-                        </div>
-                        <span class="brand-client-badge gold">CLIENT</span>
-                    </a>
-
-                    <!-- Client 2: Manaswini Enterprises -->
-                    <a href="https://www.manageetha.in/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client" title="Manaswini Enterprises · Visit Website">
-                        <div class="brand-client-avatar">
-                            <img src="assets/clients/manaswini.png" alt="Manaswini Enterprises Logo">
-                        </div>
-                        <div class="brand-logo-info">
-                            <span class="brand-logo-name" style="color: #22c55e;">MANASWINI</span>
-                            <span class="brand-logo-tag">Agri Machinery ↗</span>
-                        </div>
-                        <span class="brand-client-badge">CLIENT</span>
-                    </a>
-
                     <!-- Brand 9: FLIPKART -->
                     <div class="brand-logo-card">
                         <div class="brand-logo-icon" style="background: linear-gradient(135deg, #172554, #1d4ed8); border-color: rgba(59, 130, 246, 0.4);">
@@ -4956,30 +5257,6 @@
                     </div>
 
                     <!-- Duplicate for Seamless Continuous Loop -->
-                    <!-- Client 1: Kuberayogam -->
-                    <a href="https://kuberayogam.com/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client gold" title="Kuberayogam · Visit Website">
-                        <div class="brand-client-avatar">
-                            <img src="assets/clients/kuberayogam.png" alt="Kuberayogam Logo">
-                        </div>
-                        <div class="brand-logo-info">
-                            <span class="brand-logo-name" style="color: #fbbf24;">KUBERAYOGAM</span>
-                            <span class="brand-logo-tag">Vedic Astrology ↗</span>
-                        </div>
-                        <span class="brand-client-badge gold">CLIENT</span>
-                    </a>
-
-                    <!-- Client 2: Manaswini Enterprises -->
-                    <a href="https://www.manageetha.in/" target="_blank" rel="noopener noreferrer" class="brand-logo-card brand-logo-card-client" title="Manaswini Enterprises · Visit Website">
-                        <div class="brand-client-avatar">
-                            <img src="assets/clients/manaswini.png" alt="Manaswini Enterprises Logo">
-                        </div>
-                        <div class="brand-logo-info">
-                            <span class="brand-logo-name" style="color: #22c55e;">MANASWINI</span>
-                            <span class="brand-logo-tag">Agri Machinery ↗</span>
-                        </div>
-                        <span class="brand-client-badge">CLIENT</span>
-                    </a>
-
                     <div class="brand-logo-card">
                         <div class="brand-logo-icon" style="background: linear-gradient(135deg, #172554, #1d4ed8); border-color: rgba(59, 130, 246, 0.4);">
                             <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><rect x="4" y="6" width="16" height="15" rx="3" fill="#2563eb"/><path d="M8 6V4a4 4 0 0 1 8 0v2" stroke="#facc15" stroke-width="2"/><path d="M9 11h6M9 14h4" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>
@@ -6457,6 +6734,27 @@
     </div>
 
     <script>
+        // Trusted Clients Layout Mode: Static if <= 6 clients (better UX, no distracting scroll); Scroll if > 6 clients
+        (function initTrustedClients() {
+            const wrapper = document.getElementById('trusted-clients-wrapper');
+            const track = document.getElementById('trusted-clients-track');
+            if (!wrapper || !track) return;
+
+            const clientItems = track.querySelectorAll('.trusted-client-item');
+            if (clientItems.length > 6) {
+                wrapper.classList.remove('is-static');
+                wrapper.classList.add('has-scroll');
+                // Duplicate items once for continuous infinite marquee if > 6
+                if (!track.dataset.duplicated) {
+                    track.innerHTML += track.innerHTML;
+                    track.dataset.duplicated = 'true';
+                }
+            } else {
+                wrapper.classList.remove('has-scroll');
+                wrapper.classList.add('is-static');
+            }
+        })();
+
         // Dismiss promo top bar
         const closePromoBtn = document.getElementById('btn-close-promo');
         if (closePromoBtn) {

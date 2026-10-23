@@ -154,6 +154,12 @@ module.exports = async (req, res) => {
                 } catch (e) {
                     console.error('Failed to fetch template metadata:', e);
                 }
+
+                if (templateMeta && templateMeta.status && templateMeta.status.toUpperCase() !== 'APPROVED') {
+                    return res.status(400).json({
+                        error: `Template "${template_name}" is currently "${templateMeta.status}". Only approved Meta message templates can be sent.`
+                    });
+                }
             }
             
 

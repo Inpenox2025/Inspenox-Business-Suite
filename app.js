@@ -5007,7 +5007,7 @@ async function loadTemplatesForSelect() {
     const select = document.getElementById('bc-template');
     if (select) {
         select.innerHTML = '';
-        const approvedOnly = Array.isArray(templatesCache) ? templatesCache.filter(t => t.status === 'APPROVED' || !t.status) : [];
+        const approvedOnly = Array.isArray(templatesCache) ? templatesCache.filter(t => (t.status || '').toUpperCase() === 'APPROVED') : [];
         if (approvedOnly.length === 0) {
             select.innerHTML = '<option value="">No approved templates available</option>';
         } else {
@@ -10502,10 +10502,14 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
     try {
         const res = await apiFetch('/api/templates');
         const json = await res.json();
-        const templates = Array.isArray(json) ? json : (json.data || json.templates || []);
+        const rawTemplates = Array.isArray(json) ? json : (json.data || json.templates || []);
+        // Strictly show ONLY approved templates (exclude PENDING, REJECTED, PAUSED)
+        const templates = Array.isArray(rawTemplates)
+            ? rawTemplates.filter(t => (t.status || '').toUpperCase() === 'APPROVED')
+            : [];
 
-        if (!Array.isArray(templates) || templates.length === 0) {
-            showModal('No Templates Found', 'No approved Meta message templates found in your WhatsApp Business Account.');
+        if (templates.length === 0) {
+            showModal('No Approved Templates Found', 'No approved Meta message templates found in your WhatsApp Business Account. Pending or rejected templates cannot be sent.');
             return;
         }
 
