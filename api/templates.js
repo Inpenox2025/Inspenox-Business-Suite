@@ -92,10 +92,37 @@ module.exports = async (req, res) => {
             }
 
             let libraryMedia = [];
+            let cachedMediaMap = new Map();
             try {
                 const sql = getDb(env);
                 libraryMedia = await sql`SELECT id, name, type, meta_media_id, file_url FROM media_library ORDER BY id DESC LIMIT 20`;
-            } catch (e) {}
+                
+                await sql`
+                    CREATE TABLE IF NOT EXISTS template_media_cache (
+                        id SERIAL PRIMARY KEY,
+                        company_id INT,
+                        phone_number_id TEXT,
+                        template_name TEXT,
+                        source_url TEXT,
+                        meta_media_id TEXT,
+                        media_type TEXT DEFAULT 'image',
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ DEFAULT NOW()
+                    );
+                `;
+
+                const cachedRows = await sql`
+                    SELECT template_name, meta_media_id, source_url 
+                    FROM template_media_cache 
+                    WHERE (phone_number_id = ${phoneId || ''} OR company_id = ${company ? company.id : 0})
+                `;
+                cachedRows.forEach(row => {
+                    if (row.template_name) cachedMediaMap.set(row.template_name.toLowerCase(), row.meta_media_id);
+                    if (row.source_url) cachedMediaMap.set(row.source_url, row.meta_media_id);
+                });
+            } catch (e) {
+                console.error('Error fetching template_media_cache:', e);
+            }
 
             const templates = (data.data || []).map(t => {
                 const headerComp = (t.components || []).find(c => c.type === 'HEADER');
@@ -127,17 +154,31 @@ module.exports = async (req, res) => {
                         }
                     }
 
+                    const tNameLower = (t.name || '').toLowerCase();
+                    const cachedMediaId = cachedMediaMap.get(tNameLower) || (url ? cachedMediaMap.get(url) : null);
+
                     const formatLower = headerComp.format.toLowerCase();
-                    const fallbackLib = (!url && !handle) ? libraryMedia.find(m => m.type === formatLower) : null;
+                    const fallbackLib = (!url && !handle && !cachedMediaId) ? libraryMedia.find(m => m.type === formatLower) : null;
                     const fallbackMediaId = fallbackLib ? (fallbackLib.meta_media_id || fallbackLib.file_url) : null;
+
+                    // Prefer verified native Meta Media ID over temporary scontent.whatsapp.net CDN URLs
+                    let effectiveMediaId = cachedMediaId || handle;
+                    if (!effectiveMediaId) {
+                        if (url && !url.includes('scontent.whatsapp.net') && !url.includes('lookaside.fbsbx.com') && !url.includes('fbcdn.net')) {
+                            effectiveMediaId = url;
+                        } else {
+                            effectiveMediaId = fallbackMediaId || url || null;
+                        }
+                    }
 
                     headerMedia = {
                         format: formatLower,
                         formatUpper: headerComp.format,
                         url: url,
                         handle: handle,
-                        media_id: handle || url || fallbackMediaId || null,
-                        has_meta_media: !!(url || handle),
+                        media_id: effectiveMediaId,
+                        cached_meta_media_id: cachedMediaId || null,
+                        has_meta_media: !!(url || handle || cachedMediaId),
                         has_fallback_media: !!fallbackMediaId,
                         fallback_name: fallbackLib ? fallbackLib.name : null
                     };

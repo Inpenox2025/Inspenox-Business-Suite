@@ -34,28 +34,66 @@ function formatMetaMediaObject(media_id, req) {
 // In-memory cache for resolved native Meta Media IDs: key -> { id, time }
 const metaMediaIdCache = new Map();
 
-async function resolveNativeMetaMediaId(source, phoneId, token, format = 'image') {
-    if (!source || !phoneId || !token) return null;
-    const str = String(source).trim();
-    if (!str) return null;
+async function resolveNativeMetaMediaId(source, phoneId, token, format = 'image', sql = null, templateName = null, companyId = null) {
+    if (!source && !templateName) return null;
+    const str = source ? String(source).trim() : '';
 
     // 1. Numeric Meta Media ID or Meta Resumable Upload handle
-    if (/^\d+$/.test(str)) {
-        const num = parseInt(str, 10);
-        return (!isNaN(num) && num < Number.MAX_SAFE_INTEGER) ? { id: num } : { id: str };
-    }
-    if (str.startsWith('4::') || str.includes('::') || (!str.includes('/') && !str.includes('.'))) {
-        return { id: str };
+    if (str) {
+        if (/^\d+$/.test(str)) {
+            const num = parseInt(str, 10);
+            return (!isNaN(num) && num < Number.MAX_SAFE_INTEGER) ? { id: num } : { id: str };
+        }
+        if (str.startsWith('4::') || str.includes('::') || (!str.includes('/') && !str.includes('.'))) {
+            return { id: str };
+        }
     }
 
-    // 2. URL (scontent.whatsapp.net, fbcdn.net, or external URL)
-    if (str.startsWith('http://') || str.startsWith('https://')) {
+    // 2. Query persistent DB cache (template_media_cache)
+    if (sql) {
+        try {
+            if (templateName) {
+                const rows = await sql`
+                    SELECT meta_media_id FROM template_media_cache 
+                    WHERE (phone_number_id = ${phoneId || ''} OR company_id = ${companyId || 0}) 
+                      AND LOWER(template_name) = LOWER(${templateName}) 
+                    ORDER BY id DESC LIMIT 1
+                `;
+                if (rows && rows.length > 0 && rows[0].meta_media_id) {
+                    const mid = rows[0].meta_media_id;
+                    const num = parseInt(mid, 10);
+                    return (!isNaN(num) && num < Number.MAX_SAFE_INTEGER) ? { id: num } : { id: mid };
+                }
+            }
+            if (str) {
+                const urlRows = await sql`
+                    SELECT meta_media_id FROM template_media_cache 
+                    WHERE (phone_number_id = ${phoneId || ''} OR company_id = ${companyId || 0}) 
+                      AND source_url = ${str} 
+                    ORDER BY id DESC LIMIT 1
+                `;
+                if (urlRows && urlRows.length > 0 && urlRows[0].meta_media_id) {
+                    const mid = urlRows[0].meta_media_id;
+                    const num = parseInt(mid, 10);
+                    return (!isNaN(num) && num < Number.MAX_SAFE_INTEGER) ? { id: num } : { id: mid };
+                }
+            }
+        } catch (e) {
+            console.error('Error querying template_media_cache in broadcast:', e);
+        }
+    }
+
+    // 3. In-memory fallback cache
+    if (str) {
         const cacheKey = `${phoneId}:${str}`;
         const cached = metaMediaIdCache.get(cacheKey);
         if (cached && (Date.now() - cached.time < 24 * 60 * 60 * 1000)) {
             return { id: cached.id };
         }
+    }
 
+    // 4. Download external URL and upload to Meta
+    if (str && (str.startsWith('http://') || str.startsWith('https://'))) {
         try {
             const resp = await fetch(str);
             if (resp.ok) {
@@ -76,12 +114,35 @@ async function resolveNativeMetaMediaId(source, phoneId, token, format = 'image'
                 });
                 const uploadJson = await uploadResp.json();
                 if (uploadJson && uploadJson.id) {
-                    metaMediaIdCache.set(cacheKey, { id: uploadJson.id, time: Date.now() });
-                    return { id: uploadJson.id };
+                    metaMediaIdCache.set(`${phoneId}:${str}`, { id: uploadJson.id, time: Date.now() });
+                    if (sql) {
+                        try {
+                            await sql`
+                                INSERT INTO template_media_cache (company_id, phone_number_id, template_name, source_url, meta_media_id, media_type)
+                                VALUES (${companyId || null}, ${phoneId}, ${templateName || null}, ${str}, ${uploadJson.id}, ${format})
+                            `;
+                        } catch (e) {}
+                    }
+                    const num = parseInt(uploadJson.id, 10);
+                    return (!isNaN(num) && num < Number.MAX_SAFE_INTEGER) ? { id: num } : { id: uploadJson.id };
                 }
             }
         } catch (e) {
             console.error('Error auto-uploading media URL to Meta Media API for broadcast:', e);
+        }
+
+        // CRITICAL: NEVER pass scontent.whatsapp.net / lookaside as a link parameter!
+        const isInternalMetaUrl = str.includes('scontent.whatsapp.net') || str.includes('lookaside.fbsbx.com') || str.includes('fbcdn.net');
+        if (isInternalMetaUrl) {
+            if (sql) {
+                try {
+                    const fallbackMedia = await sql`SELECT meta_media_id FROM media_library WHERE type = ${format} ORDER BY id DESC LIMIT 1`;
+                    if (fallbackMedia && fallbackMedia.length > 0 && fallbackMedia[0].meta_media_id) {
+                        return { id: fallbackMedia[0].meta_media_id };
+                    }
+                } catch (e) {}
+            }
+            return null;
         }
 
         return { link: str };
@@ -343,10 +404,11 @@ module.exports = async (req, res) => {
 
         // Pre-resolve default media for templates if header requires media and media_id not explicitly given
         let templateDefaultMediaObj = null;
+        let templateHeaderFormat = 'image';
         if (type === 'template' && templateMeta) {
             const headerComp = (templateMeta.components || []).find(c => c.type === 'HEADER');
             if (headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
-                const format = headerComp.format.toLowerCase();
+                templateHeaderFormat = headerComp.format.toLowerCase();
                 let defaultSource = media_id;
                 if (!defaultSource && headerComp.example) {
                     const handle = Array.isArray(headerComp.example.header_handle) ? headerComp.example.header_handle[0] : headerComp.example.header_handle;
@@ -355,16 +417,16 @@ module.exports = async (req, res) => {
                 }
                 if (!defaultSource) {
                     try {
-                        const fallbackMedia = await sql`SELECT meta_media_id, file_url FROM media_library WHERE type = ${format} ORDER BY id DESC LIMIT 1`;
+                        const fallbackMedia = await sql`SELECT meta_media_id, file_url FROM media_library WHERE type = ${templateHeaderFormat} ORDER BY id DESC LIMIT 1`;
                         if (fallbackMedia && fallbackMedia.length > 0) {
                             defaultSource = fallbackMedia[0].meta_media_id || fallbackMedia[0].file_url;
                         }
                     } catch (e) {}
                 }
-                if (defaultSource) {
-                    templateDefaultMediaObj = await resolveNativeMetaMediaId(defaultSource, phoneId, token, format) || formatMetaMediaObject(defaultSource, req);
-                }
+                templateDefaultMediaObj = await resolveNativeMetaMediaId(defaultSource, phoneId, token, templateHeaderFormat, sql, template_name, companyId) || (defaultSource ? formatMetaMediaObject(defaultSource, req) : null);
             }
+        } else if (type === 'template' && (media_id || template_name)) {
+            templateDefaultMediaObj = await resolveNativeMetaMediaId(media_id, phoneId, token, req.body.media_type || 'image', sql, template_name, companyId);
         }
 
         let sent = 0;

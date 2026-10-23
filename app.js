@@ -2220,21 +2220,29 @@ window.deleteCompany = function deleteCompany(id) {
 let templatesCache = [];
 let isFetchingTemplatesCache = false;
 
-async function ensureTemplatesCacheLoaded() {
-    if ((templatesCache && Array.isArray(templatesCache) && templatesCache.length > 0) || isFetchingTemplatesCache) {
+async function ensureTemplatesCacheLoaded(force = false) {
+    if (!force && ((templatesCache && Array.isArray(templatesCache) && templatesCache.length > 0) || isFetchingTemplatesCache)) {
         return;
     }
 
-    try {
-        const coId = (typeof currentCompanyId !== 'undefined' && currentCompanyId) ? currentCompanyId : 'default';
-        const stored = sessionStorage.getItem(`templates_cache_${coId}`);
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-                templatesCache = parsed;
+    if (!force) {
+        try {
+            const coId = (typeof currentCompanyId !== 'undefined' && currentCompanyId) ? currentCompanyId : 'default';
+            const stored = sessionStorage.getItem(`templates_cache_${coId}`);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                // Invalidate stale cache if it contains un-resolved scontent.whatsapp.net media_id
+                const hasStaleMedia = Array.isArray(parsed) && parsed.some(t => {
+                    const mid = t.header_media && t.header_media.media_id;
+                    return typeof mid === 'string' && mid.includes('scontent.whatsapp.net') && !t.header_media.cached_meta_media_id;
+                });
+                if (!hasStaleMedia && Array.isArray(parsed) && parsed.length > 0) {
+                    templatesCache = parsed;
+                    return;
+                }
             }
-        }
-    } catch (e) {}
+        } catch (e) {}
+    }
 
     isFetchingTemplatesCache = true;
     try {
@@ -2262,6 +2270,16 @@ async function ensureTemplatesCacheLoaded() {
         isFetchingTemplatesCache = false;
     }
 }
+
+// Global cache clear helper
+window.clearTemplatesCache = () => {
+    try {
+        const coId = (typeof currentCompanyId !== 'undefined' && currentCompanyId) ? currentCompanyId : 'default';
+        sessionStorage.removeItem(`templates_cache_${coId}`);
+        templatesCache = [];
+        ensureTemplatesCacheLoaded(true);
+    } catch (e) {}
+};
 
 let selectedCustomerIds = [];
 let activeInboxCustomer = null;
@@ -10705,7 +10723,7 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
                     }
                 } else {
                     // Auto-attach from template metadata directly (No re-upload required!)
-                    media_id = tmpl && tmpl.header_media ? tmpl.header_media.media_id : null;
+                    media_id = tmpl && tmpl.header_media ? (tmpl.header_media.cached_meta_media_id || tmpl.header_media.media_id) : null;
                 }
             }
 
