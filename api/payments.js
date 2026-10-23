@@ -7,6 +7,18 @@ const RAZORPAY_FEE_PERCENT = 2.0;
 const GST_ON_FEE_PERCENT = 18.0;
 const RAZORPAY_CONVENIENCE_FEE_PCT = 2.36; // 2% + 18% GST
 
+function calculateConvenienceFeeAndTotal(subtotal) {
+    if (!subtotal || subtotal <= 0) {
+        return { convenienceFee: 0, finalAmount: 0 };
+    }
+    // Gross-up formula so merchant receives exact subtotal after 2.36% (2% fee + 18% GST) deduction:
+    // finalAmount * (1 - 0.0236) = subtotal => finalAmount = subtotal / (1 - 0.0236)
+    const rate = RAZORPAY_CONVENIENCE_FEE_PCT / 100;
+    const finalAmount = Math.round((subtotal / (1 - rate)) * 100) / 100;
+    const convenienceFee = Math.round((finalAmount - subtotal) * 100) / 100;
+    return { convenienceFee, finalAmount };
+}
+
 async function ensurePaymentTables(sql) {
     try {
         await sql`
@@ -338,8 +350,7 @@ module.exports = async (req, res) => {
                 const discountPercent = parseFloat(coupon.discount_percent) || 0;
                 const discountAmount = Math.round((numAmount * discountPercent) / 100 * 100) / 100;
                 const subtotal = Math.max(0, Math.round((numAmount - discountAmount) * 100) / 100);
-                const convenienceFee = Math.round(subtotal * (RAZORPAY_CONVENIENCE_FEE_PCT / 100) * 100) / 100;
-                const finalAmount = Math.round((subtotal + convenienceFee) * 100) / 100;
+                const { convenienceFee, finalAmount } = calculateConvenienceFeeAndTotal(subtotal);
 
                 const commissionPercent = parseFloat(coupon.commission_percent) || 0;
                 const commissionAmount = Math.round((subtotal * commissionPercent) / 100 * 100) / 100;
@@ -398,9 +409,8 @@ module.exports = async (req, res) => {
 
                 // Subtotal after coupon discount
                 const subtotal = Math.max(0, Math.round((numOriginal - discountAmount) * 100) / 100);
-                // Gateway convenience fee: 2% Razorpay fee + 18% GST on the fee = 2.36%
-                const convenienceFee = Math.round(subtotal * (RAZORPAY_CONVENIENCE_FEE_PCT / 100) * 100) / 100;
-                const finalAmount = Math.round((subtotal + convenienceFee) * 100) / 100;
+                // Gateway convenience fee: Gross-up formula so merchant gets exact subtotal after 2.36% (2% fee + 18% GST)
+                const { convenienceFee, finalAmount } = calculateConvenienceFeeAndTotal(subtotal);
 
                 // If Razorpay Keys configured, call official Razorpay Orders API
                 if (razorpayKeyId && razorpayKeySecret) {
@@ -524,10 +534,11 @@ module.exports = async (req, res) => {
                 const numOrig = parseFloat(original_amount) || 0;
                 const numDisc = parseFloat(discount_amount) || 0;
                 const subtotal = Math.max(0, numOrig - numDisc);
+                const calculated = calculateConvenienceFeeAndTotal(subtotal);
                 const numFee = (convenience_fee !== undefined && convenience_fee !== null)
                     ? parseFloat(convenience_fee)
-                    : (Math.round(subtotal * (RAZORPAY_CONVENIENCE_FEE_PCT / 100) * 100) / 100);
-                const numFinal = parseFloat(final_amount) || Math.round((subtotal + numFee) * 100) / 100;
+                    : calculated.convenienceFee;
+                const numFinal = parseFloat(final_amount) || calculated.finalAmount;
                 const numComm = parseFloat(commission_amount) || 0;
                 const validCouponId = coupon_id ? parseInt(coupon_id) : null;
                 const validInfluencerId = influencer_id ? parseInt(influencer_id) : null;

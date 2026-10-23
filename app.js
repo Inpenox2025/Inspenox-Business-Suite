@@ -11175,12 +11175,23 @@ window.purgeOldSecurityLogs = async function purgeOldSecurityLogs(days = 30) {
    ======================================================== */
 const RAZORPAY_CONVENIENCE_FEE_PCT = 2.36; // 2% Razorpay transaction fee + 18% GST on Gateway fee
 
+function calculateConvenienceFeeAndTotal(subtotal) {
+    if (!subtotal || subtotal <= 0) {
+        return { convenienceFee: 0, finalAmount: 0 };
+    }
+    // Gross-up formula: ensures merchant gets exact subtotal after 2.36% Razorpay deduction
+    // finalAmount * (1 - 0.0236) = subtotal => finalAmount = subtotal / (1 - 0.0236)
+    const rate = RAZORPAY_CONVENIENCE_FEE_PCT / 100;
+    const finalAmount = Math.round((subtotal / (1 - rate)) * 100) / 100;
+    const convenienceFee = Math.round((finalAmount - subtotal) * 100) / 100;
+    return { convenienceFee, finalAmount };
+}
+
 function recalculateCheckoutSummary(basePrice, discountAmount = 0) {
     const numBase = parseFloat(basePrice) || 0;
     const numDisc = Math.min(numBase, parseFloat(discountAmount) || 0);
     const subtotal = Math.max(0, numBase - numDisc);
-    const convenienceFee = Math.round(subtotal * (RAZORPAY_CONVENIENCE_FEE_PCT / 100) * 100) / 100;
-    const finalAmount = Math.round((subtotal + convenienceFee) * 100) / 100;
+    const { convenienceFee, finalAmount } = calculateConvenienceFeeAndTotal(subtotal);
 
     const elBase = document.getElementById('checkout-display-base-price');
     const elDiscRow = document.getElementById('checkout-row-discount');
