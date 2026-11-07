@@ -12425,12 +12425,19 @@ async function loadAutomationBoard() {
                 toggleText.style.color = isActive ? '#10b981' : '#ef4444';
             }
             if (statusEl) {
-                statusEl.textContent = isActive ? 'Active & Ready' : 'Paused';
+                statusEl.textContent = isActive ? 'Active' : 'Paused';
                 statusEl.style.color = isActive ? 'var(--text-main)' : '#ef4444';
             }
             if (indEl) {
-                indEl.textContent = isActive ? '● Online' : '○ Paused';
+                indEl.textContent = isActive ? '● Online (Listening)' : '○ Paused';
                 indEl.style.color = isActive ? '#10b981' : '#ef4444';
+            }
+
+            // Update Preview Business Name
+            const bizEl = document.getElementById('preview-auto-biz-name');
+            if (bizEl) {
+                const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
+                bizEl.textContent = (activeComp && activeComp.name) ? activeComp.name : 'Your Business';
             }
 
             // Update Form Fields
@@ -12758,11 +12765,11 @@ document.getElementById('auto-rule-active-toggle')?.addEventListener('change', a
         txt.style.color = isChecked ? '#10b981' : '#ef4444';
     }
     if (statusEl) {
-        statusEl.textContent = isChecked ? 'Active & Ready' : 'Paused';
+        statusEl.textContent = isChecked ? 'Active' : 'Paused';
         statusEl.style.color = isChecked ? 'var(--text-main)' : '#ef4444';
     }
     if (indEl) {
-        indEl.textContent = isChecked ? '● Online' : '○ Paused';
+        indEl.textContent = isChecked ? '● Online (Listening)' : '○ Paused';
         indEl.style.color = isChecked ? '#10b981' : '#ef4444';
     }
 
