@@ -11,8 +11,8 @@ function formatIndiaPhone(phone) {
   return digits;
 }
 
-// 24/7 Cloudflare Serverless Auto-Reply for Enterprise Plans
-async function triggerEnterpriseAutoReply({ sql, env, targetCompanyId, customerId, customerName, phone }) {
+// 24/7 Cloudflare Serverless Auto-Reply for Enterprise Plans (Supports Multi-Trigger & Button/Keyword Replies)
+async function triggerEnterpriseAutoReply({ sql, env, targetCompanyId, customerId, customerName, phone, incomingContent, messageType, isFirstContact }) {
   try {
     // 1. Fetch company and verify Enterprise subscription
     const cos = await sql`SELECT * FROM companies WHERE id = ${targetCompanyId} LIMIT 1`;
@@ -31,32 +31,58 @@ async function triggerEnterpriseAutoReply({ sql, env, targetCompanyId, customerI
       return;
     }
 
-    // 2. Fetch active automation rule for new customer
+    // 2. Fetch all active automation rules for this company
     const automations = await sql`
       SELECT * FROM automations 
       WHERE company_id = ${targetCompanyId} 
-        AND trigger_type = 'new_customer' 
         AND is_active = true 
-      ORDER BY id DESC LIMIT 1
+      ORDER BY id ASC
     `;
     if (automations.length === 0) return;
-    const rule = automations[0];
-    const cooldownHours = parseInt(rule.cooldown_hours, 10) || 24;
 
-    // 3. Cooldown check: Has an automated reply already been sent to this customer within cooldown hours?
-    const cooldownCutoff = new Date(Date.now() - (cooldownHours * 60 * 60 * 1000)).toISOString();
-    const recentSent = await sql`
-      SELECT id FROM messages 
-      WHERE customer_id = ${customerId} 
-        AND company_id = ${targetCompanyId} 
-        AND direction = 'outbound' 
-        AND (template_name = ${rule.template_name} OR content ILIKE '%[Auto-Reply]%')
-        AND created_at > ${cooldownCutoff}::timestamptz
-      LIMIT 1
-    `;
-    if (recentSent.length > 0) {
-      console.log(`Auto-reply skipped: Cooldown (${cooldownHours}h) active for customer ${customerId}`);
-      return;
+    const cleanIncoming = (incomingContent || '').trim().toLowerCase();
+    let matchedRule = null;
+
+    // Priority 1: Button click, quick reply, interactive list, or keyword match
+    if (cleanIncoming) {
+      matchedRule = automations.find(r => {
+        if (r.trigger_type === 'button_reply' || r.trigger_type === 'keyword') {
+          const vals = (r.trigger_value || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+          return vals.some(v => v === cleanIncoming || cleanIncoming.includes(v));
+        }
+        return false;
+      });
+    }
+
+    // Priority 2: New Customer first-time contact welcome rule
+    if (!matchedRule && isFirstContact) {
+      matchedRule = automations.find(r => r.trigger_type === 'new_customer');
+    }
+
+    if (!matchedRule) return;
+
+    const rule = matchedRule;
+    const cooldownHours = parseInt(rule.cooldown_hours, 10) || 0;
+
+    // 3. Cooldown check (if configured)
+    if (cooldownHours > 0) {
+      const cooldownCutoff = new Date(Date.now() - (cooldownHours * 60 * 60 * 1000)).toISOString();
+      const recentSent = await sql`
+        SELECT id FROM messages 
+        WHERE customer_id = ${customerId} 
+          AND company_id = ${targetCompanyId} 
+          AND direction = 'outbound' 
+          AND (
+            template_name = ${rule.template_name || ''} 
+            OR content ILIKE ${`%[Auto-Reply: ${rule.name}]%`}
+          )
+          AND created_at > ${cooldownCutoff}::timestamptz
+        LIMIT 1
+      `;
+      if (recentSent.length > 0) {
+        console.log(`Auto-reply skipped: Cooldown (${cooldownHours}h) active for rule "${rule.name}" customer ${customerId}`);
+        return;
+      }
     }
 
     // 4. Resolve Meta API credentials
@@ -68,48 +94,65 @@ async function triggerEnterpriseAutoReply({ sql, env, targetCompanyId, customerI
       return;
     }
 
-    // 5. Build template message payload
-    const lang = rule.template_language || 'en_US';
     const cleanPhone = String(phone).replace(/\D/g, '');
     const custDisplayName = (customerName && !customerName.startsWith('Lead ')) ? customerName : 'there';
+    let payload = null;
+    let outMsgType = 'template';
 
-    const components = [];
-    if (rule.template_components && Array.isArray(rule.template_components) && rule.template_components.length > 0) {
-      components.push(...rule.template_components);
+    if (rule.response_type === 'text' || (!rule.template_name && rule.response_text)) {
+      outMsgType = 'text';
+      let textBody = (rule.response_text || 'Thank you for reaching out!')
+        .replace(/\{\{1\}\}/g, custDisplayName)
+        .replace(/\{\{name\}\}/gi, custDisplayName);
+
+      payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: cleanPhone,
+        type: "text",
+        text: { body: textBody }
+      };
     } else {
-      components.push({
-        type: "body",
-        parameters: [
-          { type: "text", text: custDisplayName }
-        ]
-      });
-    }
-
-    if (rule.header_media_url) {
-      components.unshift({
-        type: "header",
-        parameters: [
-          {
-            type: "image",
-            image: { link: rule.header_media_url }
-          }
-        ]
-      });
-    }
-
-    const payload = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: cleanPhone,
-      type: "template",
-      template: {
-        name: rule.template_name,
-        language: { code: lang },
-        components: components
+      outMsgType = 'template';
+      const lang = rule.template_language || 'en_US';
+      const components = [];
+      if (rule.template_components && Array.isArray(rule.template_components) && rule.template_components.length > 0) {
+        components.push(...rule.template_components);
+      } else {
+        components.push({
+          type: "body",
+          parameters: [
+            { type: "text", text: custDisplayName }
+          ]
+        });
       }
-    };
 
-    console.log(`[Cloudflare 24/7 Automation] Dispatching template "${rule.template_name}" to ${cleanPhone}...`);
+      if (rule.header_media_url) {
+        components.unshift({
+          type: "header",
+          parameters: [
+            {
+              type: "image",
+              image: { link: rule.header_media_url }
+            }
+          ]
+        });
+      }
+
+      payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: cleanPhone,
+        type: "template",
+        template: {
+          name: rule.template_name,
+          language: { code: lang },
+          components: components
+        }
+      };
+    }
+
+    console.log(`[Inspenox Business Suite For Marketing 24/7 Automation] Rule "${rule.name}" triggered by "${incomingContent}". Sending ${outMsgType} to ${cleanPhone}...`);
 
     const metaRes = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
       method: "POST",
@@ -125,7 +168,8 @@ async function triggerEnterpriseAutoReply({ sql, env, targetCompanyId, customerI
 
     const waMsgId = (resJson.messages && resJson.messages[0]) ? resJson.messages[0].id : null;
     const msgStatus = waMsgId ? 'sent' : 'failed';
-    const logContent = `[Auto-Reply] Template: ${rule.template_name}` + (resJson.error ? ` (Error: ${resJson.error.message || 'Meta error'})` : '');
+    const logDetails = (outMsgType === 'template') ? `Template: ${rule.template_name}` : `Text: ${rule.response_text}`;
+    const logContent = `[Auto-Reply: ${rule.name}] ${logDetails}` + (resJson.error ? ` (Error: ${resJson.error.message || 'Meta error'})` : '');
 
     // 6. Log outbound message into messages table
     await sql`
@@ -133,7 +177,7 @@ async function triggerEnterpriseAutoReply({ sql, env, targetCompanyId, customerI
         company_id, customer_id, direction, type, template_name, 
         content, wa_message_id, status
       ) VALUES (
-        ${targetCompanyId}, ${customerId}, 'outbound', 'template', ${rule.template_name},
+        ${targetCompanyId}, ${customerId}, 'outbound', ${outMsgType}, ${rule.template_name || null},
         ${logContent}, ${waMsgId}, ${msgStatus}
       )
     `;
@@ -365,17 +409,18 @@ module.exports = async (req, res) => {
                   VALUES (${targetCompanyId}, ${customerId}, 'inbound', ${dbMsgType}, ${content}, ${mediaUrl}, ${messageId}, 'delivered')
                 `;
 
-                // Trigger 24/7 Enterprise Auto-Reply in Cloudflare
-                if (isFirstContact) {
-                  await triggerEnterpriseAutoReply({
-                    sql,
-                    env,
-                    targetCompanyId,
-                    customerId,
-                    customerName: name,
-                    phone: phone
-                  });
-                }
+                // Trigger 24/7 Enterprise Auto-Reply in Inspenox Business Suite For Marketing (Supports First Contact, Button Clicks & Keywords)
+                await triggerEnterpriseAutoReply({
+                  sql,
+                  env,
+                  targetCompanyId,
+                  customerId,
+                  customerName: name,
+                  phone: phone,
+                  incomingContent: content,
+                  messageType: messageType,
+                  isFirstContact: isFirstContact
+                });
               }
             }
           }

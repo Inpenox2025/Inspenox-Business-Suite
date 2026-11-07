@@ -2105,114 +2105,47 @@
                         </div>
                     </div>
 
-                    <!-- Main Two-Column Layout (Config + Live Preview) -->
+                    <!-- Main Two-Column Layout (Configured Rules List + Interactive WhatsApp Flow Preview) -->
                     <div class="automation-grid">
-                        <!-- Configuration Card -->
+                        <!-- Rules Management Card -->
                         <div class="card" style="padding: 1.5rem; border-radius: 12px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
                                 <div>
-                                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-main);">Auto-Reply Configuration</h3>
-                                    <p style="margin: 0.2rem 0 0; font-size: 0.8rem; color: var(--text-muted);">Configure the template to send automatically when a new lead initiates contact.</p>
+                                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-main);">Automation Rules</h3>
+                                    <p style="margin: 0.2rem 0 0; font-size: 0.8rem; color: var(--text-muted);">Configure multi-step chatbot workflows, first-message greetings, and button-reply triggers.</p>
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span id="auto-rule-active-text" style="font-size: 0.82rem; font-weight: 700; color: #10b981;">ON</span>
-                                    <label class="auto-switch" title="Toggle Auto-Reply">
-                                        <input type="checkbox" id="auto-rule-active-toggle" checked>
-                                        <span class="auto-slider"></span>
-                                    </label>
-                                </div>
+                                <button type="button" class="btn primary" onclick="openAutoRuleModal()" style="font-weight: 700; padding: 0.55rem 1.2rem; border-radius: 8px; gap: 6px;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    Add Rule
+                                </button>
                             </div>
 
-                            <form id="automation-config-form" onsubmit="event.preventDefault(); saveAutomationConfig();">
-                                <div style="margin-bottom: 1.1rem;">
-                                    <label for="auto-template-select" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
-                                        Pre-Approved WhatsApp Template <span style="color: #ef4444;">*</span>
-                                    </label>
-                                    <select id="auto-template-select" onchange="onAutoTemplateChanged()" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none;">
-                                        <option value="">Loading approved Meta templates...</option>
-                                    </select>
-                                    <small style="display: block; margin-top: 0.35rem; font-size: 0.75rem; color: var(--text-muted);">
-                                        Only templates with status <strong>APPROVED</strong> by Meta can be used for auto-replies.
-                                    </small>
+                            <!-- Rules List Container -->
+                            <div id="auto-rules-list" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                                <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+                                    <div class="spinner-icon" style="width:24px;height:24px;border-width:2px;margin: 0 auto 0.75rem;"></div>
+                                    Loading automation rules...
                                 </div>
-
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.1rem;">
-                                    <div>
-                                        <label for="auto-template-lang" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
-                                            Template Language
-                                        </label>
-                                        <select id="auto-template-lang" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem; outline: none;">
-                                            <option value="en_US">English (US) [en_US]</option>
-                                            <option value="en">English [en]</option>
-                                            <option value="hi">Hindi [hi]</option>
-                                            <option value="te">Telugu [te]</option>
-                                            <option value="ta">Tamil [ta]</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label for="auto-cooldown-hours" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
-                                            Anti-Spam Cooldown (Hours)
-                                        </label>
-                                        <input type="number" id="auto-cooldown-hours" value="24" min="1" max="720" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem; outline: none;">
-                                        <small style="display: block; margin-top: 0.25rem; font-size: 0.72rem; color: var(--text-muted);">
-                                            Does not repeat to the same lead within this timeframe.
-                                        </small>
-                                    </div>
-                                </div>
-
-                                <div id="auto-header-media-group" style="margin-bottom: 1.1rem; display: none;">
-                                    <label for="auto-header-media-url" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
-                                        Header Media Asset URL (Image/Video)
-                                    </label>
-                                    <input type="url" id="auto-header-media-url" placeholder="https://... or Media Library ID" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem; outline: none;" oninput="updateAutoPreview()">
-                                </div>
-
-                                <div style="padding: 0.75rem 0.85rem; background: rgba(0, 168, 132, 0.08); border: 1px solid rgba(0, 168, 132, 0.2); border-radius: 8px; margin-bottom: 1.25rem;">
-                                    <div style="font-size: 0.8rem; font-weight: 600; color: #00a884; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 6px;">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
-                                            <circle cx="12" cy="12" r="10"></circle>
-                                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                        </svg>
-                                        Dynamic Lead Personalization
-                                    </div>
-                                    <p style="margin: 0; font-size: 0.76rem; color: var(--text-muted); line-height: 1.45;">
-                                        Variable <code>{{1}}</code> in your template body automatically resolves to the customer's WhatsApp profile name.
-                                    </p>
-                                </div>
-
-                                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                                    <button type="submit" id="btn-save-automation" class="btn primary" style="font-weight: 700; padding: 0.65rem 1.4rem; border-radius: 8px; gap: 6px;">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
-                                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                                            <polyline points="7 3 7 8 15 8"></polyline>
-                                        </svg>
-                                        Save Automation Rule
-                                    </button>
-                                    <button type="button" class="btn secondary" onclick="testSendAutoReply()" style="gap: 6px;">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
-                                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                        </svg>
-                                        Send Test to My Number
-                                    </button>
-                                </div>
-                            </form>
+                            </div>
                         </div>
 
-                        <!-- Live WhatsApp Phone Preview -->
+                        <!-- Live Interactive WhatsApp Chat Flow Preview -->
                         <div class="card" style="padding: 1.25rem 1.5rem; border-radius: 12px; position: sticky; top: 1rem;">
                             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem;">
-                                <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main);">Live WhatsApp Preview</h3>
-                                <span style="font-size: 0.72rem; color: var(--text-muted); background: var(--bg-sidebar); padding: 3px 8px; border-radius: 4px;">
-                                    Recipient View
+                                <div>
+                                    <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main);">Interactive Chatbot Preview</h3>
+                                    <p style="margin: 0.15rem 0 0; font-size: 0.72rem; color: var(--text-muted);">Template buttons &amp; multi-event reply progression</p>
+                                </div>
+                                <span style="font-size: 0.7rem; color: #00a884; background: rgba(0,168,132,0.12); padding: 3px 8px; border-radius: 4px; font-weight: 600;">
+                                    Live Flow
                                 </span>
                             </div>
 
                             <!-- WhatsApp Mock Device Screen -->
-                            <div style="background: #0b141a; border-radius: 14px; padding: 0.85rem; border: 3px solid #202c33; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 10px 25px rgba(0,0,0,0.25); min-height: 360px;">
+                            <div style="background: #0b141a; border-radius: 14px; padding: 0.85rem; border: 3px solid #202c33; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 10px 25px rgba(0,0,0,0.25); min-height: 480px;">
                                 <!-- Phone Header -->
                                 <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 0.65rem; border-bottom: 1px solid #202c33;">
                                     <div style="width: 32px; height: 32px; border-radius: 50%; background: #00a884; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 0.8rem; flex-shrink: 0;">
@@ -2220,7 +2153,7 @@
                                     </div>
                                     <div style="flex: 1; min-width: 0;">
                                         <div id="preview-auto-biz-name" style="font-size: 0.85rem; font-weight: 700; color: #e9edef; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                            Inspenox
+                                            Inspenox Business
                                         </div>
                                         <div style="font-size: 0.68rem; color: #8696a0; display: flex; align-items: center; gap: 3px;">
                                             <span>Official Business Account</span>
@@ -2229,37 +2162,63 @@
                                     </div>
                                 </div>
 
-                                <!-- Chat Bubble Area -->
-                                <div style="padding: 1rem 0; display: flex; flex-direction: column; gap: 0.75rem;">
-                                    <!-- Inbound user message -->
-                                    <div style="align-self: flex-start; max-width: 82%; background: #202c33; color: #e9edef; padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.82rem; line-height: 1.4;">
-                                        Hi! I would like to know more about your services.
-                                        <div style="font-size: 0.62rem; color: #8696a0; text-align: right; margin-top: 2px;">10:00 AM</div>
+                                <!-- Chat Bubble Area (Multi-Step Demo Matching Malabar Gold & Diamonds) -->
+                                <div id="preview-chat-flow-container" style="padding: 0.75rem 0; display: flex; flex-direction: column; gap: 0.65rem; max-height: 400px; overflow-y: auto;">
+                                    <!-- 1. Customer initiates -->
+                                    <div style="align-self: flex-start; max-width: 75%; background: #202c33; color: #e9edef; padding: 0.45rem 0.65rem; border-radius: 8px; font-size: 0.8rem;">
+                                        Hii
+                                        <div style="font-size: 0.6rem; color: #8696a0; text-align: right; margin-top: 1px;">4:51 pm</div>
                                     </div>
 
-                                    <!-- Outbound Automated Template reply -->
-                                    <div style="align-self: flex-end; max-width: 88%; background: #005c4b; color: #e9edef; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-                                        <div id="preview-auto-header-media" style="display: none; width: 100%; max-height: 140px; overflow: hidden; background: #000;">
-                                            <img id="preview-auto-img" src="" alt="Header" style="width: 100%; height: auto; object-fit: cover;">
+                                    <!-- 2. Bot sends Welcome Location Selection Template -->
+                                    <div style="align-self: flex-end; max-width: 86%; background: #005c4b; color: #e9edef; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+                                        <div style="padding: 0.55rem 0.65rem;">
+                                            <div style="font-size: 0.8rem; font-weight: 700; margin-bottom: 0.2rem;">Welcome to Inspenox!</div>
+                                            <div style="font-size: 0.78rem; line-height: 1.4;">🧕 Kindly select your location:</div>
+                                            <div style="font-size: 0.6rem; color: #8696a0; text-align: right; margin-top: 2px;">4:51 pm ✓✓</div>
                                         </div>
-                                        <div style="padding: 0.65rem 0.75rem;">
-                                            <div id="preview-auto-header-text" style="font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem; display: none;"></div>
-                                            <div id="preview-auto-body-text" style="font-size: 0.82rem; line-height: 1.45; color: #e9edef; white-space: pre-wrap;">
-                                                Hi Alex! Thank you for contacting us. We will assist you shortly.
-                                            </div>
-                                            <div id="preview-auto-footer-text" style="font-size: 0.68rem; color: #8696a0; margin-top: 0.35rem; display: none;"></div>
-                                            <div style="font-size: 0.62rem; color: #8696a0; text-align: right; margin-top: 4px; display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
-                                                <span>10:00 AM</span>
-                                                <span style="color: #53bdeb;">✓✓</span>
-                                            </div>
+                                        <div style="border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column;">
+                                            <div style="text-align: center; padding: 0.4rem; color: #53bdeb; font-size: 0.75rem; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer;">↩ India</div>
+                                            <div style="text-align: center; padding: 0.4rem; color: #53bdeb; font-size: 0.75rem; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer;">↩ USA</div>
+                                            <div style="text-align: center; padding: 0.4rem; color: #53bdeb; font-size: 0.75rem; font-weight: 600; cursor: pointer;">↩ UAE &amp; Others</div>
                                         </div>
-                                        <div id="preview-auto-buttons" style="border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column;"></div>
+                                    </div>
+
+                                    <!-- 3. Customer Clicks Button 'India' -->
+                                    <div style="align-self: flex-start; max-width: 75%; background: #202c33; color: #e9edef; padding: 0.45rem 0.65rem; border-radius: 8px; font-size: 0.8rem;">
+                                        <div style="border-left: 2px solid #8b5cf6; padding-left: 4px; margin-bottom: 3px; font-size: 0.68rem; color: #8696a0;">🧕 Kindly select your location</div>
+                                        India
+                                        <div style="font-size: 0.6rem; color: #8696a0; text-align: right; margin-top: 1px;">4:52 pm</div>
+                                    </div>
+
+                                    <!-- 4. Bot Auto-Replies with Menu Options Template based on 'India' click -->
+                                    <div style="align-self: flex-end; max-width: 86%; background: #005c4b; color: #e9edef; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+                                        <div style="padding: 0.55rem 0.65rem;">
+                                            <div style="font-size: 0.8rem; font-weight: 700; margin-bottom: 0.2rem;">Welcome! ✨</div>
+                                            <div style="font-size: 0.78rem; line-height: 1.4;">Please select your desired option from the menu below:</div>
+                                            <div style="font-size: 0.6rem; color: #8696a0; text-align: right; margin-top: 2px;">4:52 pm ✓✓</div>
+                                        </div>
+                                        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding: 0.4rem; text-align: center; color: #53bdeb; font-size: 0.75rem; font-weight: 700;">
+                                            ☰ Please select ➔ Place an Order
+                                        </div>
+                                    </div>
+
+                                    <!-- 5. Customer Selects 'Place an Order' -->
+                                    <div style="align-self: flex-start; max-width: 75%; background: #202c33; color: #e9edef; padding: 0.45rem 0.65rem; border-radius: 8px; font-size: 0.8rem;">
+                                        Place an Order
+                                        <div style="font-size: 0.6rem; color: #8696a0; text-align: right; margin-top: 1px;">4:52 pm</div>
+                                    </div>
+
+                                    <!-- 6. Bot Auto-Replies connecting to live agent -->
+                                    <div style="align-self: flex-end; max-width: 86%; background: #005c4b; color: #e9edef; padding: 0.55rem 0.65rem; border-radius: 8px; font-size: 0.8rem;">
+                                        ⏳ Please wait we are connecting you to a Live Agent
+                                        <div style="font-size: 0.6rem; color: #8696a0; text-align: right; margin-top: 2px;">4:52 pm ✓✓</div>
                                     </div>
                                 </div>
 
                                 <!-- Mock Footer status -->
-                                <div style="text-align: center; font-size: 0.65rem; color: #8696a0; padding-top: 0.5rem; border-top: 1px solid #202c33;">
-                                    ⚡ Dispatched via Inspenox Business Suite For Marketing Edge Worker (&lt;1.5s)
+                                <div style="text-align: center; font-size: 0.65rem; color: #8696a0; padding-top: 0.4rem; border-top: 1px solid #202c33;">
+                                    ⚡ 24/7 Cloudflare Edge Webhook Automation
                                 </div>
                             </div>
                         </div>
@@ -3618,6 +3577,158 @@
                 <button id="modal-cancel-btn" class="btn secondary">Cancel</button>
                 <button id="modal-confirm-btn" class="btn primary">OK</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 1. Send Test Auto-Reply Modal (Replaces browser prompt popup) -->
+    <div id="modal-auto-test" class="modal-overlay hidden" style="z-index: 10001; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(8px);">
+        <div class="modal-content card modal-card" style="max-width: 460px; width: 92%; padding: 1.75rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); color: var(--text-main);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border); padding-bottom:0.85rem; margin-bottom: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(0, 168, 132, 0.12); color: #00a884; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                        🧪
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:1.15rem; font-weight:700; color:var(--text-main);">Send Test Message</h3>
+                        <p style="margin:0.2rem 0 0; font-size:0.8rem; color:var(--text-muted);">Simulate an automated WhatsApp reply to your number.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAutoTestModal()" style="background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text-muted); padding:0.25rem; line-height:1;" title="Close">&times;</button>
+            </div>
+            
+            <form id="auto-test-form" onsubmit="event.preventDefault(); submitAutoTestModal();">
+                <input type="hidden" id="modal-auto-test-rule-id">
+                <div style="margin-bottom: 1.15rem;">
+                    <label for="auto-test-phone-input" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                        WhatsApp Phone Number (with Country Code) <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="tel" id="auto-test-phone-input" placeholder="e.g. 919876543210" required style="width: 100%; padding: 0.75rem 1rem; border-radius: 10px; background: var(--bg-dark, #111827); border: 1.5px solid var(--border); color: var(--text-main); font-size: 0.95rem; font-weight: 600; outline: none; box-sizing: border-box;">
+                    <small style="display: block; margin-top: 0.35rem; font-size: 0.75rem; color: var(--text-muted);">
+                        Country code without '+' (e.g. 91 for India + 10 digits).
+                    </small>
+                </div>
+
+                <div style="padding: 0.75rem 0.85rem; background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1.25rem;">
+                    <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Trigger &amp; Payload to Dispatch:</div>
+                    <div id="modal-auto-test-target-label" style="font-size: 0.88rem; font-weight: 700; color: #00a884; margin-top: 3px;">
+                        Template: -
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button type="button" class="btn secondary" onclick="closeAutoTestModal()">Cancel</button>
+                    <button type="submit" id="btn-submit-auto-test" class="btn primary" style="font-weight: 700; padding: 0.65rem 1.4rem; border-radius: 8px; gap: 6px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                        Send Test Now
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Configure / Edit Automation Rule Modal (Supports Multi-Trigger & Button Replies) -->
+    <div id="modal-auto-rule" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(8px);">
+        <div class="modal-content card modal-card" style="max-width: 540px; width: 92%; padding: 1.75rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); color: var(--text-main); max-height: 90vh; overflow-y: auto;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border); padding-bottom:0.85rem; margin-bottom: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(99, 102, 241, 0.12); color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                        ⚡
+                    </div>
+                    <div>
+                        <h3 id="modal-auto-rule-title" style="margin:0; font-size:1.15rem; font-weight:700; color:var(--text-main);">Configure Automation Rule</h3>
+                        <p style="margin:0.2rem 0 0; font-size:0.8rem; color:var(--text-muted);">Set trigger event (welcome, button click, keyword) and automatic response.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAutoRuleModal()" style="background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text-muted); padding:0.25rem; line-height:1;" title="Close">&times;</button>
+            </div>
+            
+            <form id="auto-rule-form" onsubmit="event.preventDefault(); submitAutoRuleModal();">
+                <input type="hidden" id="modal-rule-id" value="">
+
+                <!-- Rule Name -->
+                <div style="margin-bottom: 1.1rem;">
+                    <label for="modal-rule-name" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                        Rule Name <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" id="modal-rule-name" placeholder="e.g. Location Select: India or Order Enquiry" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                </div>
+
+                <!-- Trigger Type -->
+                <div style="margin-bottom: 1.1rem;">
+                    <label for="modal-rule-trigger-type" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                        Trigger Event <span style="color: #ef4444;">*</span>
+                    </label>
+                    <select id="modal-rule-trigger-type" onchange="onModalTriggerTypeChanged()" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none;">
+                        <option value="new_customer">🆕 First Contact / Welcome (Lead initiates chat for the first time)</option>
+                        <option value="button_reply">🔘 Template Button Click (Customer clicks a Quick Reply or List option)</option>
+                        <option value="keyword">💬 Keyword Match (Customer types specific word/phrase)</option>
+                    </select>
+                </div>
+
+                <!-- Trigger Value (Button Text / Keyword) -->
+                <div id="modal-rule-trigger-val-group" style="margin-bottom: 1.1rem; display: none;">
+                    <label for="modal-rule-trigger-value" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                        Button Label or Keyword to Match <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" id="modal-rule-trigger-value" placeholder="e.g. India or Place an Order" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                    <small style="display: block; margin-top: 0.3rem; font-size: 0.72rem; color: var(--text-muted);">
+                        Exact text on the template button (e.g. "India") or comma-separated keywords (e.g. "India, IN").
+                    </small>
+                </div>
+
+                <!-- Response Type -->
+                <div style="margin-bottom: 1.1rem;">
+                    <label for="modal-rule-response-type" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                        Action / Response Type <span style="color: #ef4444;">*</span>
+                    </label>
+                    <select id="modal-rule-response-type" onchange="onModalResponseTypeChanged()" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none;">
+                        <option value="template">📄 Send Pre-Approved WhatsApp Template</option>
+                        <option value="text">💬 Send Direct Custom Text Reply</option>
+                    </select>
+                </div>
+
+                <!-- Template Selector (If template response) -->
+                <div id="modal-rule-template-group" style="margin-bottom: 1.1rem;">
+                    <label for="modal-rule-template-select" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                        Select Pre-Approved WhatsApp Template <span style="color: #ef4444;">*</span>
+                    </label>
+                    <select id="modal-rule-template-select" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none;">
+                        <option value="">Loading approved Meta templates...</option>
+                    </select>
+                </div>
+
+                <!-- Custom Text Area (If text response) -->
+                <div id="modal-rule-text-group" style="margin-bottom: 1.1rem; display: none;">
+                    <label for="modal-rule-response-text" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                        Response Message Text <span style="color: #ef4444;">*</span>
+                    </label>
+                    <textarea id="modal-rule-response-text" rows="3" placeholder="e.g. ⏳ Please wait we are connecting you to a Live Agent" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box; resize: vertical;"></textarea>
+                    <small style="display: block; margin-top: 0.3rem; font-size: 0.72rem; color: var(--text-muted);">
+                        Use <code>{{1}}</code> to automatically insert the customer's name.
+                    </small>
+                </div>
+
+                <!-- Cooldown (Hours) -->
+                <div style="margin-bottom: 1.25rem;">
+                    <label for="modal-rule-cooldown" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                        Cooldown (Hours)
+                    </label>
+                    <input type="number" id="modal-rule-cooldown" value="0" min="0" max="720" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                    <small style="display: block; margin-top: 0.25rem; font-size: 0.72rem; color: var(--text-muted);">
+                        Set to 0 for instant button responses (recommended for interactive flows). Set to 24 for welcome greetings.
+                    </small>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 1rem;">
+                    <button type="button" class="btn secondary" onclick="closeAutoRuleModal()">Cancel</button>
+                    <button type="submit" id="btn-save-rule-modal" class="btn primary" style="font-weight: 700; padding: 0.65rem 1.4rem; border-radius: 8px; gap: 6px;">
+                        Save Rule
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

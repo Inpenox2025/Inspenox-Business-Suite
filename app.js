@@ -12345,7 +12345,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // =========================================================================
-// ENTERPRISE AUTOMATION BOARD CONTROLLER (24/7 Cloudflare Edge Auto-Replies)
+// ENTERPRISE AUTOMATION BOARD CONTROLLER (Multi-Event & Button Replies)
 // =========================================================================
 
 function isEnterpriseActive() {
@@ -12368,8 +12368,9 @@ function updateAutomationNavVisibility() {
 }
 window.updateAutomationNavVisibility = updateAutomationNavVisibility;
 
-let cachedAutomationRule = null;
+let allAutomationRules = [];
 let cachedAutomationTemplates = [];
+let activeTestRule = null;
 
 async function loadAutomationBoard() {
     const isEnt = isEnterpriseActive();
@@ -12387,14 +12388,20 @@ async function loadAutomationBoard() {
 
     const coId = getCompanyId();
 
+    // Set Preview Business Name
+    const bizEl = document.getElementById('preview-auto-biz-name');
+    if (bizEl) {
+        const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
+        bizEl.textContent = (activeComp && activeComp.name) ? activeComp.name : 'Your Business';
+    }
+
     // 1. Fetch Meta Templates for this company
     try {
         const tRes = await apiFetch(`/api/templates?company_id=${encodeURIComponent(coId)}`);
         const tData = await tRes.json();
         const templates = Array.isArray(tData.data) ? tData.data : (Array.isArray(tData) ? tData : []);
-        // Filter approved templates
         cachedAutomationTemplates = templates.filter(t => (t.status || '').toUpperCase() === 'APPROVED');
-        populateAutomationTemplatesSelect(cachedAutomationTemplates);
+        populateModalTemplatesSelect(cachedAutomationTemplates);
     } catch (e) {
         console.error('Error fetching templates for automation board:', e);
     }
@@ -12405,60 +12412,29 @@ async function loadAutomationBoard() {
         const aData = await aRes.json();
 
         if (aData.success) {
-            const rules = aData.automations || [];
-            const rule = rules.find(r => r.trigger_type === 'new_customer') || rules[0] || null;
-            cachedAutomationRule = rule;
+            allAutomationRules = aData.automations || [];
 
             // Update stats
+            const totalDispatches = allAutomationRules.reduce((sum, r) => sum + (parseInt(r.trigger_count, 10) || 0), 0);
+            const activeRulesCount = allAutomationRules.filter(r => r.is_active).length;
+
             const sentEl = document.getElementById('stat-auto-sent-count');
-            if (sentEl) sentEl.textContent = rule ? (rule.trigger_count || 0) : 0;
+            if (sentEl) sentEl.textContent = totalDispatches;
 
             const statusEl = document.getElementById('stat-auto-status');
             const indEl = document.getElementById('auto-status-indicator');
-            const toggleEl = document.getElementById('auto-rule-active-toggle');
-            const toggleText = document.getElementById('auto-rule-active-text');
 
-            const isActive = rule ? Boolean(rule.is_active) : true;
-            if (toggleEl) toggleEl.checked = isActive;
-            if (toggleText) {
-                toggleText.textContent = isActive ? 'ON' : 'OFF';
-                toggleText.style.color = isActive ? '#10b981' : '#ef4444';
-            }
             if (statusEl) {
-                statusEl.textContent = isActive ? 'Active' : 'Paused';
-                statusEl.style.color = isActive ? 'var(--text-main)' : '#ef4444';
+                statusEl.textContent = activeRulesCount > 0 ? 'Active' : 'Paused';
+                statusEl.style.color = activeRulesCount > 0 ? 'var(--text-main)' : '#ef4444';
             }
             if (indEl) {
-                indEl.textContent = isActive ? '● Online (Listening)' : '○ Paused';
-                indEl.style.color = isActive ? '#10b981' : '#ef4444';
+                indEl.textContent = activeRulesCount > 0 ? `● Online (${activeRulesCount} active rules)` : '○ Paused';
+                indEl.style.color = activeRulesCount > 0 ? '#10b981' : '#ef4444';
             }
 
-            // Update Preview Business Name
-            const bizEl = document.getElementById('preview-auto-biz-name');
-            if (bizEl) {
-                const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
-                bizEl.textContent = (activeComp && activeComp.name) ? activeComp.name : 'Your Business';
-            }
-
-            // Update Form Fields
-            if (rule) {
-                const selectEl = document.getElementById('auto-template-select');
-                if (selectEl && rule.template_name) {
-                    selectEl.value = rule.template_name;
-                }
-                const langEl = document.getElementById('auto-template-lang');
-                if (langEl && rule.template_language) {
-                    langEl.value = rule.template_language;
-                }
-                const cdEl = document.getElementById('auto-cooldown-hours');
-                if (cdEl && rule.cooldown_hours) {
-                    cdEl.value = rule.cooldown_hours;
-                }
-                const mediaEl = document.getElementById('auto-header-media-url');
-                if (mediaEl && rule.header_media_url) {
-                    mediaEl.value = rule.header_media_url;
-                }
-            }
+            // Render Rules List
+            renderAutomationRulesList(allAutomationRules);
 
             // Render Recent Logs
             renderAutomationLogs(aData.recent_logs || []);
@@ -12466,13 +12442,152 @@ async function loadAutomationBoard() {
     } catch (e) {
         console.error('Error fetching automation rule:', e);
     }
-
-    onAutoTemplateChanged();
 }
 window.loadAutomationBoard = loadAutomationBoard;
 
-function populateAutomationTemplatesSelect(templates) {
-    const sel = document.getElementById('auto-template-select');
+function renderAutomationRulesList(rules) {
+    const listEl = document.getElementById('auto-rules-list');
+    if (!listEl) return;
+
+    if (!rules || rules.length === 0) {
+        listEl.innerHTML = `
+            <div style="text-align: center; padding: 2.5rem 1.5rem; background: var(--bg-sidebar); border: 1.5px dashed var(--border); border-radius: 12px;">
+                <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🤖</div>
+                <h4 style="margin: 0 0 0.35rem 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">No Automation Rules Configured</h4>
+                <p style="margin: 0 0 1.25rem 0; font-size: 0.85rem; color: var(--text-muted); max-width: 440px; margin-inline: auto;">
+                    Create your first rule to send a welcome template on new customer contact, or set up interactive button-reply automations.
+                </p>
+                <button type="button" class="btn primary" onclick="openAutoRuleModal()" style="font-weight: 700; padding: 0.6rem 1.4rem; border-radius: 8px;">
+                    + Add First Rule
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    listEl.innerHTML = rules.map(rule => {
+        const isChecked = rule.is_active ? 'checked' : '';
+        const statusText = rule.is_active ? 'Active' : 'Paused';
+        const statusColor = rule.is_active ? '#10b981' : '#ef4444';
+
+        let triggerBadge = '';
+        if (rule.trigger_type === 'new_customer') {
+            triggerBadge = `<span style="font-size: 0.72rem; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 3px 8px; border-radius: 4px;">🆕 Welcome / First Message</span>`;
+        } else if (rule.trigger_type === 'button_reply') {
+            triggerBadge = `<span style="font-size: 0.72rem; font-weight: 700; color: #6366f1; background: rgba(99, 102, 241, 0.12); padding: 3px 8px; border-radius: 4px;">🔘 Button: "${escapeHtml(rule.trigger_value || '')}"</span>`;
+        } else {
+            triggerBadge = `<span style="font-size: 0.72rem; font-weight: 700; color: #ec4899; background: rgba(236, 72, 153, 0.12); padding: 3px 8px; border-radius: 4px;">💬 Keyword: "${escapeHtml(rule.trigger_value || '')}"</span>`;
+        }
+
+        let responseBadge = '';
+        if (rule.response_type === 'text') {
+            responseBadge = `<span style="font-size: 0.72rem; font-weight: 600; color: #3b82f6; background: rgba(59, 130, 246, 0.12); padding: 3px 8px; border-radius: 4px;">💬 Text: "${escapeHtml((rule.response_text || '').slice(0, 32))}..."</span>`;
+        } else {
+            responseBadge = `<span style="font-size: 0.72rem; font-weight: 600; color: #00a884; background: rgba(0, 168, 132, 0.12); padding: 3px 8px; border-radius: 4px;">📄 Template: ${escapeHtml(rule.template_name || '')}</span>`;
+        }
+
+        return `
+            <div style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.15rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; transition: border-color 0.2s ease;">
+                <div style="flex: 1; min-width: 240px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.4rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">${escapeHtml(rule.name || 'Untitled Rule')}</span>
+                        ${triggerBadge}
+                        ${responseBadge}
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 14px; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap;">
+                        <span>⚡ Dispatches: <strong>${rule.trigger_count || 0}</strong></span>
+                        <span>⏱️ Cooldown: <strong>${rule.cooldown_hours || 0}h</strong></span>
+                        <span style="color: ${statusColor}; font-weight: 600;">● ${statusText}</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+                    <!-- Active Toggle -->
+                    <label class="auto-switch" title="Toggle Active">
+                        <input type="checkbox" ${isChecked} onchange="toggleAutoRule(${rule.id}, this.checked)">
+                        <span class="auto-slider"></span>
+                    </label>
+
+                    <!-- Test Button -->
+                    <button type="button" class="btn secondary sm" onclick="openAutoTestModal(${rule.id})" title="Send Test to WhatsApp" style="padding: 0.4rem 0.75rem; gap: 4px; font-size: 0.78rem;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                        Test
+                    </button>
+
+                    <!-- Edit Button -->
+                    <button type="button" class="btn secondary sm" onclick="openAutoRuleModal(${rule.id})" title="Edit Rule" style="padding: 0.4rem 0.65rem;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+
+                    <!-- Delete Button -->
+                    <button type="button" class="btn secondary sm" onclick="deleteAutoRule(${rule.id})" title="Delete Rule" style="padding: 0.4rem 0.65rem; color: #ef4444;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function toggleAutoRule(ruleId, isChecked) {
+    try {
+        await apiFetch('/api/automation', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: ruleId,
+                company_id: getCompanyId(),
+                is_active: isChecked
+            })
+        });
+        const r = allAutomationRules.find(x => x.id === ruleId);
+        if (r) r.is_active = isChecked;
+
+        const activeCount = allAutomationRules.filter(x => x.is_active).length;
+        const statusEl = document.getElementById('stat-auto-status');
+        const indEl = document.getElementById('auto-status-indicator');
+        if (statusEl) statusEl.textContent = activeCount > 0 ? 'Active' : 'Paused';
+        if (indEl) indEl.textContent = activeCount > 0 ? `● Online (${activeCount} active rules)` : '○ Paused';
+    } catch (e) {
+        console.error('Error toggling rule:', e);
+    }
+}
+window.toggleAutoRule = toggleAutoRule;
+
+async function deleteAutoRule(ruleId) {
+    if (!confirm('Are you sure you want to delete this automation rule?')) return;
+
+    try {
+        const res = await apiFetch(`/api/automation?id=${ruleId}&company_id=${encodeURIComponent(getCompanyId())}`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+            allAutomationRules = allAutomationRules.filter(x => x.id !== ruleId);
+            renderAutomationRulesList(allAutomationRules);
+            loadAutomationBoard();
+        } else {
+            showModal('Error', data.error || 'Failed to delete rule.');
+        }
+    } catch (e) {
+        showModal('Error', e.message);
+    }
+}
+window.deleteAutoRule = deleteAutoRule;
+
+// --- MODAL CONTROLLER: CONFIGURE / EDIT RULE ---
+
+function populateModalTemplatesSelect(templates) {
+    const sel = document.getElementById('modal-rule-template-select');
     if (!sel) return;
 
     if (!templates || templates.length === 0) {
@@ -12485,148 +12600,124 @@ function populateAutomationTemplatesSelect(templates) {
             const cat = t.category ? ` [${t.category}]` : '';
             return `<option value="${t.name}">${t.name} (${t.language || 'en'})${cat}</option>`;
         }).join('');
-
-    if (cachedAutomationRule && cachedAutomationRule.template_name) {
-        sel.value = cachedAutomationRule.template_name;
-    } else if (templates.length > 0) {
-        sel.value = templates[0].name;
-    }
 }
 
-function onAutoTemplateChanged() {
-    const sel = document.getElementById('auto-template-select');
-    const selectedName = sel ? sel.value : '';
-    const tmpl = cachedAutomationTemplates.find(t => t.name === selectedName);
+function openAutoRuleModal(ruleId = null) {
+    const modal = document.getElementById('modal-auto-rule');
+    if (!modal) return;
 
-    const mediaGroup = document.getElementById('auto-header-media-group');
-    if (tmpl) {
-        const headerComp = (tmpl.components || []).find(c => c.type === 'HEADER');
-        if (headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
-            if (mediaGroup) mediaGroup.style.display = 'block';
-        } else {
-            if (mediaGroup) mediaGroup.style.display = 'none';
-        }
-        if (tmpl.language) {
-            const langSel = document.getElementById('auto-template-lang');
-            if (langSel) langSel.value = tmpl.language;
+    populateModalTemplatesSelect(cachedAutomationTemplates);
+
+    const titleEl = document.getElementById('modal-auto-rule-title');
+    const idEl = document.getElementById('modal-rule-id');
+    const nameEl = document.getElementById('modal-rule-name');
+    const trigTypeEl = document.getElementById('modal-rule-trigger-type');
+    const trigValEl = document.getElementById('modal-rule-trigger-value');
+    const respTypeEl = document.getElementById('modal-rule-response-type');
+    const tmplSelect = document.getElementById('modal-rule-template-select');
+    const respTextEl = document.getElementById('modal-rule-response-text');
+    const cdEl = document.getElementById('modal-rule-cooldown');
+
+    if (ruleId) {
+        const rule = allAutomationRules.find(x => x.id === ruleId);
+        if (rule) {
+            if (titleEl) titleEl.textContent = 'Edit Automation Rule';
+            if (idEl) idEl.value = rule.id;
+            if (nameEl) nameEl.value = rule.name || '';
+            if (trigTypeEl) trigTypeEl.value = rule.trigger_type || 'new_customer';
+            if (trigValEl) trigValEl.value = rule.trigger_value || '';
+            if (respTypeEl) respTypeEl.value = rule.response_type || 'template';
+            if (tmplSelect && rule.template_name) tmplSelect.value = rule.template_name;
+            if (respTextEl) respTextEl.value = rule.response_text || '';
+            if (cdEl) cdEl.value = rule.cooldown_hours ?? 0;
         }
     } else {
-        if (mediaGroup) mediaGroup.style.display = 'none';
+        if (titleEl) titleEl.textContent = 'Configure New Automation Rule';
+        if (idEl) idEl.value = '';
+        if (nameEl) nameEl.value = '';
+        if (trigTypeEl) trigTypeEl.value = 'new_customer';
+        if (trigValEl) trigValEl.value = '';
+        if (respTypeEl) respTypeEl.value = 'template';
+        if (tmplSelect && cachedAutomationTemplates.length > 0) tmplSelect.value = cachedAutomationTemplates[0].name;
+        if (respTextEl) respTextEl.value = '';
+        if (cdEl) cdEl.value = 0;
     }
 
-    updateAutoPreview();
+    onModalTriggerTypeChanged();
+    onModalResponseTypeChanged();
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
 }
-window.onAutoTemplateChanged = onAutoTemplateChanged;
+window.openAutoRuleModal = openAutoRuleModal;
 
-function updateAutoPreview() {
-    const sel = document.getElementById('auto-template-select');
-    const selectedName = sel ? sel.value : '';
-    const tmpl = cachedAutomationTemplates.find(t => t.name === selectedName);
+function closeAutoRuleModal() {
+    const modal = document.getElementById('modal-auto-rule');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+}
+window.closeAutoRuleModal = closeAutoRuleModal;
 
-    const prevMedia = document.getElementById('preview-auto-header-media');
-    const prevImg = document.getElementById('preview-auto-img');
-    const prevHeader = document.getElementById('preview-auto-header-text');
-    const prevBody = document.getElementById('preview-auto-body-text');
-    const prevFooter = document.getElementById('preview-auto-footer-text');
-    const prevBtns = document.getElementById('preview-auto-buttons');
+function onModalTriggerTypeChanged() {
+    const trigType = document.getElementById('modal-rule-trigger-type')?.value;
+    const valGroup = document.getElementById('modal-rule-trigger-val-group');
+    const cdEl = document.getElementById('modal-rule-cooldown');
 
-    if (!tmpl) {
-        if (prevMedia) prevMedia.style.display = 'none';
-        if (prevHeader) prevHeader.style.display = 'none';
-        if (prevBody) prevBody.textContent = "Select an approved Meta template from the dropdown to see live WhatsApp preview.";
-        if (prevFooter) prevFooter.style.display = 'none';
-        if (prevBtns) prevBtns.innerHTML = '';
+    if (trigType === 'button_reply' || trigType === 'keyword') {
+        if (valGroup) valGroup.style.display = 'block';
+        if (cdEl && !document.getElementById('modal-rule-id')?.value) cdEl.value = 0;
+    } else {
+        if (valGroup) valGroup.style.display = 'none';
+        if (cdEl && !document.getElementById('modal-rule-id')?.value) cdEl.value = 24;
+    }
+}
+window.onModalTriggerTypeChanged = onModalTriggerTypeChanged;
+
+function onModalResponseTypeChanged() {
+    const respType = document.getElementById('modal-rule-response-type')?.value;
+    const tmplGroup = document.getElementById('modal-rule-template-group');
+    const textGroup = document.getElementById('modal-rule-text-group');
+
+    if (respType === 'text') {
+        if (tmplGroup) tmplGroup.style.display = 'none';
+        if (textGroup) textGroup.style.display = 'block';
+    } else {
+        if (tmplGroup) tmplGroup.style.display = 'block';
+        if (textGroup) textGroup.style.display = 'none';
+    }
+}
+window.onModalResponseTypeChanged = onModalResponseTypeChanged;
+
+async function submitAutoRuleModal() {
+    const id = document.getElementById('modal-rule-id')?.value || null;
+    const name = document.getElementById('modal-rule-name')?.value?.trim();
+    const triggerType = document.getElementById('modal-rule-trigger-type')?.value;
+    const triggerValue = document.getElementById('modal-rule-trigger-value')?.value?.trim() || '';
+    const responseType = document.getElementById('modal-rule-response-type')?.value;
+    const templateName = document.getElementById('modal-rule-template-select')?.value || null;
+    const responseText = document.getElementById('modal-rule-response-text')?.value?.trim() || '';
+    const cooldown = parseInt(document.getElementById('modal-rule-cooldown')?.value, 10) || 0;
+
+    if (!name) {
+        showModal('Name Required', 'Please enter a name for this automation rule.');
+        return;
+    }
+    if ((triggerType === 'button_reply' || triggerType === 'keyword') && !triggerValue) {
+        showModal('Trigger Value Required', 'Please enter the button label or keyword to match.');
+        return;
+    }
+    if (responseType === 'template' && !templateName) {
+        showModal('Template Required', 'Please select an approved WhatsApp template.');
+        return;
+    }
+    if (responseType === 'text' && !responseText) {
+        showModal('Message Required', 'Please enter the text reply to send.');
         return;
     }
 
-    const headerComp = (tmpl.components || []).find(c => c.type === 'HEADER');
-    const bodyComp = (tmpl.components || []).find(c => c.type === 'BODY');
-    const footerComp = (tmpl.components || []).find(c => c.type === 'FOOTER');
-    const buttonsComp = (tmpl.components || []).find(c => c.type === 'BUTTONS');
-
-    // Header Preview
-    if (headerComp) {
-        if (headerComp.format === 'TEXT' && headerComp.text) {
-            if (prevHeader) {
-                prevHeader.textContent = headerComp.text.replace(/\{\{1\}\}/g, 'Alex');
-                prevHeader.style.display = 'block';
-            }
-            if (prevMedia) prevMedia.style.display = 'none';
-        } else if (['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
-            const customUrl = document.getElementById('auto-header-media-url')?.value?.trim();
-            let mediaSrc = customUrl;
-            if (!mediaSrc && headerComp.example) {
-                const exUrl = Array.isArray(headerComp.example.header_url) ? headerComp.example.header_url[0] : headerComp.example.header_url;
-                if (exUrl) mediaSrc = exUrl;
-            }
-            if (prevMedia && prevImg) {
-                if (mediaSrc) {
-                    prevImg.src = mediaSrc;
-                    prevMedia.style.display = 'block';
-                } else {
-                    prevImg.src = 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600';
-                    prevMedia.style.display = 'block';
-                }
-            }
-            if (prevHeader) prevHeader.style.display = 'none';
-        } else {
-            if (prevMedia) prevMedia.style.display = 'none';
-            if (prevHeader) prevHeader.style.display = 'none';
-        }
-    } else {
-        if (prevMedia) prevMedia.style.display = 'none';
-        if (prevHeader) prevHeader.style.display = 'none';
-    }
-
-    // Body Text Preview (dynamic parameter {{1}} replaced with sample customer name)
-    if (bodyComp && bodyComp.text) {
-        let bText = bodyComp.text.replace(/\{\{1\}\}/g, 'Alex');
-        bText = bText.replace(/\{\{2\}\}/g, 'Inspenox');
-        bText = bText.replace(/\{\{\d+\}\}/g, 'Special');
-        if (prevBody) prevBody.textContent = bText;
-    } else {
-        if (prevBody) prevBody.textContent = 'Welcome! Thanks for reaching out.';
-    }
-
-    // Footer Text Preview
-    if (footerComp && footerComp.text) {
-        if (prevFooter) {
-            prevFooter.textContent = footerComp.text;
-            prevFooter.style.display = 'block';
-        }
-    } else {
-        if (prevFooter) prevFooter.style.display = 'none';
-    }
-
-    // Buttons Preview
-    if (prevBtns) {
-        if (buttonsComp && Array.isArray(buttonsComp.buttons) && buttonsComp.buttons.length > 0) {
-            prevBtns.innerHTML = buttonsComp.buttons.map(btn => {
-                const text = btn.text || 'Action Button';
-                return `<div style="text-align: center; padding: 0.5rem; color: #53bdeb; font-size: 0.8rem; font-weight: 600; border-top: 1px solid rgba(255,255,255,0.08);">${text}</div>`;
-            }).join('');
-        } else {
-            prevBtns.innerHTML = '';
-        }
-    }
-}
-window.updateAutoPreview = updateAutoPreview;
-
-async function saveAutomationConfig() {
-    const sel = document.getElementById('auto-template-select');
-    const templateName = sel ? sel.value : '';
-    if (!templateName) {
-        showModal('Template Required', 'Please select a pre-approved WhatsApp template to enable auto-replies.');
-        return;
-    }
-
-    const coId = getCompanyId();
-    const lang = document.getElementById('auto-template-lang')?.value || 'en_US';
-    const cooldown = parseInt(document.getElementById('auto-cooldown-hours')?.value, 10) || 24;
-    const mediaUrl = document.getElementById('auto-header-media-url')?.value?.trim() || null;
-    const isActive = document.getElementById('auto-rule-active-toggle')?.checked ?? true;
-
-    const btn = document.getElementById('btn-save-automation');
+    const btn = document.getElementById('btn-save-rule-modal');
     const origHtml = btn ? btn.innerHTML : '';
     if (btn) {
         btn.disabled = true;
@@ -12638,26 +12729,28 @@ async function saveAutomationConfig() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                company_id: coId,
-                trigger_type: 'new_customer',
-                name: 'New Customer Welcome Auto-Reply',
+                id: id ? parseInt(id, 10) : null,
+                company_id: getCompanyId(),
+                name: name,
+                trigger_type: triggerType,
+                trigger_value: triggerValue,
+                response_type: responseType,
                 template_name: templateName,
-                template_language: lang,
+                response_text: responseText,
                 cooldown_hours: cooldown,
-                header_media_url: mediaUrl,
-                is_active: isActive
+                is_active: true
             })
         });
 
         const data = await res.json();
         if (data.success) {
-            showModal('Automation Saved ⚡', '24/7 Cloudflare Edge Auto-Reply is active! When a new customer messages, Meta will dispatch your pre-approved template immediately.');
+            closeAutoRuleModal();
             loadAutomationBoard();
+            showModal('Rule Saved ⚡', `Automation rule "${name}" is active and running 24/7 on Cloudflare Edge!`);
         } else {
             showModal('Save Failed', data.error || 'Could not save automation rule.');
         }
     } catch (err) {
-        console.error('Error saving automation:', err);
         showModal('Error', err.message);
     } finally {
         if (btn) {
@@ -12666,49 +12759,112 @@ async function saveAutomationConfig() {
         }
     }
 }
-window.saveAutomationConfig = saveAutomationConfig;
+window.submitAutoRuleModal = submitAutoRuleModal;
 
-async function testSendAutoReply() {
-    const sel = document.getElementById('auto-template-select');
-    const templateName = sel ? sel.value : '';
-    if (!templateName) {
-        showModal('Template Required', 'Please select an approved template first.');
+// --- MODAL CONTROLLER: SEND TEST (No browser prompt) ---
+
+function openAutoTestModal(ruleId = null) {
+    const modal = document.getElementById('modal-auto-test');
+    if (!modal) return;
+
+    activeTestRule = allAutomationRules.find(r => r.id === ruleId) || allAutomationRules[0] || null;
+
+    const targetLabel = document.getElementById('modal-auto-test-target-label');
+    const phoneInput = document.getElementById('auto-test-phone-input');
+
+    if (activeTestRule) {
+        const desc = activeTestRule.response_type === 'text' 
+            ? `Text: "${(activeTestRule.response_text || '').slice(0, 35)}..."` 
+            : `Template: "${activeTestRule.template_name}"`;
+        if (targetLabel) targetLabel.textContent = `Rule "${activeTestRule.name}" ➔ ${desc}`;
+    } else {
+        const defaultTmpl = cachedAutomationTemplates[0]?.name || 'welcome';
+        if (targetLabel) targetLabel.textContent = `Default Template: "${defaultTmpl}"`;
+    }
+
+    // Pre-fill phone if available in session
+    if (phoneInput && !phoneInput.value) {
+        let user = {};
+        try { user = JSON.parse(localStorage.getItem('inspenox_user') || '{}'); } catch(e) {}
+        phoneInput.value = user.phone ? String(user.phone).replace(/\D/g, '') : '91';
+    }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+}
+window.openAutoTestModal = openAutoTestModal;
+
+function closeAutoTestModal() {
+    const modal = document.getElementById('modal-auto-test');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+}
+window.closeAutoTestModal = closeAutoTestModal;
+
+async function submitAutoTestModal() {
+    const phoneInput = document.getElementById('auto-test-phone-input');
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+
+    if (!phone || phone.length < 10) {
+        showModal('Valid Phone Required', 'Please enter a valid WhatsApp phone number with country code (e.g. 919876543210).');
         return;
     }
 
-    const phoneInput = prompt('Enter your WhatsApp phone number with country code (e.g. 919876543210):');
-    if (!phoneInput) return;
+    const btn = document.getElementById('btn-submit-auto-test');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-icon" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Sending...';
+    }
 
     const coId = getCompanyId();
-    const lang = document.getElementById('auto-template-lang')?.value || 'en_US';
-    const mediaUrl = document.getElementById('auto-header-media-url')?.value?.trim() || null;
+    const isText = activeTestRule && activeTestRule.response_type === 'text';
+    const tmplName = activeTestRule ? activeTestRule.template_name : (cachedAutomationTemplates[0]?.name || '');
 
     try {
+        let payload = {
+            company_id: coId,
+            to: phone,
+            phone: phone
+        };
+
+        if (isText) {
+            payload.type = 'text';
+            payload.content = activeTestRule.response_text || 'Test automated response from Inspenox!';
+        } else {
+            payload.type = 'template';
+            payload.template_name = tmplName;
+            payload.template_language = activeTestRule?.template_language || 'en_US';
+        }
+
         const res = await apiFetch('/api/send-message', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                company_id: coId,
-                to: phoneInput.trim(),
-                phone: phoneInput.trim(),
-                type: 'template',
-                template_name: templateName,
-                template_language: lang,
-                media_id: mediaUrl
-            })
+            body: JSON.stringify(payload)
         });
 
         const data = await res.json();
+        closeAutoTestModal();
+
         if (data.success || data.wa_message_id) {
-            showModal('Test Dispatched! 🚀', `Template "${templateName}" was sent successfully to ${phoneInput}. Check your WhatsApp!`);
+            showModal('Test Dispatched! 🚀', `Automated reply was sent successfully to ${phone}. Check your WhatsApp!`);
+            loadAutomationBoard();
         } else {
-            showModal('Test Delivery Failed', data.error || JSON.stringify(data));
+            showModal('Delivery Failed', data.error || JSON.stringify(data));
         }
     } catch (err) {
+        closeAutoTestModal();
         showModal('Error', err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
     }
 }
-window.testSendAutoReply = testSendAutoReply;
+window.submitAutoTestModal = submitAutoTestModal;
 
 function renderAutomationLogs(logs) {
     const tbody = document.getElementById('auto-reply-logs-tbody');
@@ -12719,7 +12875,7 @@ function renderAutomationLogs(logs) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                    No automated replies dispatched yet. When a new customer sends an inbound message, the event will appear here.
+                    No automated replies dispatched yet. When a customer messages on WhatsApp, the events will appear here in real time.
                 </td>
             </tr>
         `;
@@ -12734,14 +12890,14 @@ function renderAutomationLogs(logs) {
             day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
         }) : '-';
         const statusColor = (log.status === 'delivered' || log.status === 'read' || log.status === 'sent') ? '#10b981' : '#ef4444';
-        const name = log.customer_name || 'New Lead';
+        const name = log.customer_name || 'Customer';
         const phone = log.customer_phone || '-';
 
         return `
             <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 0.65rem 0.75rem; font-weight: 600; color: var(--text-main);">${name}</td>
-                <td style="padding: 0.65rem 0.75rem; color: var(--text-muted);">${phone}</td>
-                <td style="padding: 0.65rem 0.75rem; color: #8b5cf6; font-weight: 600;">${log.template_name || 'Auto-Reply'}</td>
+                <td style="padding: 0.65rem 0.75rem; font-weight: 600; color: var(--text-main);">${escapeHtml(name)}</td>
+                <td style="padding: 0.65rem 0.75rem; color: var(--text-muted);">${escapeHtml(phone)}</td>
+                <td style="padding: 0.65rem 0.75rem; color: #8b5cf6; font-weight: 600;">${escapeHtml(log.template_name || log.content?.slice(0, 25) || 'Auto-Reply')}</td>
                 <td style="padding: 0.65rem 0.75rem;">
                     <span style="font-size: 0.72rem; font-weight: 700; color: ${statusColor}; background: rgba(16,185,129,0.1); padding: 2px 8px; border-radius: 4px;">
                         ${log.status || 'sent'}
@@ -12752,45 +12908,3 @@ function renderAutomationLogs(logs) {
         `;
     }).join('');
 }
-
-// Toggle switch listener (real-time UI update + instant auto-save)
-document.getElementById('auto-rule-active-toggle')?.addEventListener('change', async (e) => {
-    const isChecked = e.target.checked;
-    const txt = document.getElementById('auto-rule-active-text');
-    const statusEl = document.getElementById('stat-auto-status');
-    const indEl = document.getElementById('auto-status-indicator');
-
-    if (txt) {
-        txt.textContent = isChecked ? 'ON' : 'OFF';
-        txt.style.color = isChecked ? '#10b981' : '#ef4444';
-    }
-    if (statusEl) {
-        statusEl.textContent = isChecked ? 'Active' : 'Paused';
-        statusEl.style.color = isChecked ? 'var(--text-main)' : '#ef4444';
-    }
-    if (indEl) {
-        indEl.textContent = isChecked ? '● Online (Listening)' : '○ Paused';
-        indEl.style.color = isChecked ? '#10b981' : '#ef4444';
-    }
-
-    // Instantly persist toggle state to Cloudflare/DB if rule exists
-    if (cachedAutomationRule && cachedAutomationRule.id) {
-        try {
-            const res = await apiFetch('/api/automation', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: cachedAutomationRule.id,
-                    company_id: getCompanyId(),
-                    is_active: isChecked
-                })
-            });
-            const data = await res.json();
-            if (data.success) {
-                cachedAutomationRule.is_active = isChecked;
-            }
-        } catch (err) {
-            console.error('Failed to toggle automation state:', err);
-        }
-    }
-});

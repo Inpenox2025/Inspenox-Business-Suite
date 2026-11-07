@@ -6,13 +6,16 @@ async function ensureAutomationTable(sql) {
             CREATE TABLE IF NOT EXISTS automations (
                 id SERIAL PRIMARY KEY,
                 company_id INT,
-                name TEXT DEFAULT 'New Customer Welcome Auto-Reply',
+                name TEXT DEFAULT 'Auto-Reply Rule',
                 trigger_type TEXT DEFAULT 'new_customer',
-                template_name TEXT NOT NULL,
+                trigger_value TEXT DEFAULT '',
+                response_type TEXT DEFAULT 'template',
+                template_name TEXT,
                 template_language TEXT DEFAULT 'en_US',
                 template_components JSONB DEFAULT '[]',
+                response_text TEXT DEFAULT '',
                 header_media_url TEXT DEFAULT NULL,
-                cooldown_hours INT DEFAULT 24,
+                cooldown_hours INT DEFAULT 0,
                 is_active BOOLEAN DEFAULT true,
                 trigger_count INT DEFAULT 0,
                 last_triggered_at TIMESTAMPTZ,
@@ -20,6 +23,10 @@ async function ensureAutomationTable(sql) {
                 updated_at TIMESTAMPTZ DEFAULT NOW()
             );
         `;
+        // Safe schema migrations for existing tables
+        await sql`ALTER TABLE automations ADD COLUMN IF NOT EXISTS trigger_value TEXT DEFAULT '';`;
+        await sql`ALTER TABLE automations ADD COLUMN IF NOT EXISTS response_type TEXT DEFAULT 'template';`;
+        await sql`ALTER TABLE automations ADD COLUMN IF NOT EXISTS response_text TEXT DEFAULT '';`;
     } catch (e) {
         console.error('Error ensuring automations table exists:', e);
     }
@@ -61,7 +68,6 @@ async function verifyEnterpriseTier(sql, companyId) {
 }
 
 module.exports = async (req, res) => {
-    // Security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
 
@@ -97,15 +103,14 @@ module.exports = async (req, res) => {
 
             // Recent automated reply logs from messages
             const recentLogs = await sql`
-                SELECT m.id, m.customer_id, m.template_name, m.status, m.created_at, c.name as customer_name, c.phone as customer_phone
+                SELECT m.id, m.customer_id, m.template_name, m.content, m.status, m.created_at, c.name as customer_name, c.phone as customer_phone
                 FROM messages m
                 LEFT JOIN customers c ON m.customer_id = c.id
                 WHERE m.company_id = ${targetCompanyId} 
                   AND m.direction = 'outbound' 
-                  AND m.type = 'template'
-                  AND m.content ILIKE '%[Auto-Reply]%'
+                  AND m.content ILIKE '%[Auto-Reply%'
                 ORDER BY m.id DESC 
-                LIMIT 15
+                LIMIT 20
             `;
 
             return res.status(200).json({
@@ -120,55 +125,65 @@ module.exports = async (req, res) => {
         }
     }
 
-    // POST /api/automation (Create or Update Automation Rule)
+    // POST /api/automation (Create or Update Rule)
     if (req.method === 'POST') {
         const {
-            trigger_type = 'new_customer',
-            name = 'New Customer Welcome Auto-Reply',
-            template_name,
+            id,
+            name = 'New Auto-Reply Rule',
+            trigger_type = 'new_customer', // 'new_customer', 'button_reply', 'keyword'
+            trigger_value = '',            // Button label or keyword (e.g. 'India', 'Place an Order')
+            response_type = 'template',    // 'template' or 'text'
+            template_name = null,
             template_language = 'en_US',
             template_components = [],
+            response_text = '',
             header_media_url = null,
-            cooldown_hours = 24,
+            cooldown_hours = 0,
             is_active = true
         } = body;
 
-        if (!template_name) {
-            return res.status(400).json({ success: false, error: 'template_name is required' });
+        if (response_type === 'template' && !template_name) {
+            return res.status(400).json({ success: false, error: 'template_name is required when response_type is template' });
+        }
+        if (response_type === 'text' && !response_text?.trim()) {
+            return res.status(400).json({ success: false, error: 'response_text is required when response_type is text' });
+        }
+        if ((trigger_type === 'button_reply' || trigger_type === 'keyword') && !trigger_value?.trim()) {
+            return res.status(400).json({ success: false, error: 'trigger_value (button text or keyword) is required' });
         }
 
         try {
-            const existing = await sql`
-                SELECT id FROM automations 
-                WHERE company_id = ${targetCompanyId} AND trigger_type = ${trigger_type}
-                LIMIT 1
-            `;
-
             let saved;
-            if (existing.length > 0) {
+            if (id) {
+                // Update specific rule by ID
                 saved = await sql`
                     UPDATE automations 
                     SET name = ${name},
+                        trigger_type = ${trigger_type},
+                        trigger_value = ${trigger_value.trim()},
+                        response_type = ${response_type},
                         template_name = ${template_name},
                         template_language = ${template_language},
                         template_components = ${JSON.stringify(template_components)}::jsonb,
+                        response_text = ${response_text},
                         header_media_url = ${header_media_url},
-                        cooldown_hours = ${parseInt(cooldown_hours, 10) || 24},
+                        cooldown_hours = ${parseInt(cooldown_hours, 10) || 0},
                         is_active = ${Boolean(is_active)},
                         updated_at = NOW()
-                    WHERE id = ${existing[0].id}
+                    WHERE id = ${id} AND company_id = ${targetCompanyId}
                     RETURNING *
                 `;
             } else {
+                // Insert new automation rule
                 saved = await sql`
                     INSERT INTO automations (
-                        company_id, name, trigger_type, template_name, 
-                        template_language, template_components, header_media_url, 
-                        cooldown_hours, is_active, trigger_count
+                        company_id, name, trigger_type, trigger_value, response_type,
+                        template_name, template_language, template_components, response_text,
+                        header_media_url, cooldown_hours, is_active, trigger_count
                     ) VALUES (
-                        ${targetCompanyId}, ${name}, ${trigger_type}, ${template_name},
-                        ${template_language}, ${JSON.stringify(template_components)}::jsonb, ${header_media_url},
-                        ${parseInt(cooldown_hours, 10) || 24}, ${Boolean(is_active)}, 0
+                        ${targetCompanyId}, ${name}, ${trigger_type}, ${trigger_value.trim()}, ${response_type},
+                        ${template_name}, ${template_language}, ${JSON.stringify(template_components)}::jsonb, ${response_text},
+                        ${header_media_url}, ${parseInt(cooldown_hours, 10) || 0}, ${Boolean(is_active)}, 0
                     )
                     RETURNING *
                 `;
@@ -206,6 +221,23 @@ module.exports = async (req, res) => {
         }
     }
 
+    // DELETE /api/automation (Delete Rule)
+    if (req.method === 'DELETE') {
+        const ruleId = req.query.id || body.id;
+        if (!ruleId) {
+            return res.status(400).json({ success: false, error: 'Rule ID is required' });
+        }
+        try {
+            await sql`
+                DELETE FROM automations 
+                WHERE id = ${ruleId} AND company_id = ${targetCompanyId}
+            `;
+            return res.status(200).json({ success: true, message: 'Automation rule deleted.' });
+        } catch (e) {
+            console.error('Error deleting automation:', e);
+            return res.status(500).json({ success: false, error: e.message });
+        }
+    }
+
     return res.status(405).json({ error: 'Method Not Allowed' });
 };
-
