@@ -17,10 +17,12 @@ const webhookHandler = require('../../api/webhook');
 const paymentsHandler = require('../../api/payments');
 const tagsHandler = require('../../api/tags');
 const mediaProxyHandler = require('../../api/media-proxy');
+const automationHandler = require('../../api/automation');
 
 const routes = {
     'analytics': analyticsHandler,
     'auth': authHandler,
+    'automation': automationHandler,
     'broadcast': broadcastHandler,
     'campaigns': broadcastHandler,
     'companies': companiesHandler,

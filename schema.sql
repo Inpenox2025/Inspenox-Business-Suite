@@ -199,3 +199,21 @@ CREATE TABLE IF NOT EXISTS payment_logs (
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Open - Not Contacted';
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_saved BOOLEAN DEFAULT true;
+
+-- 8. Enterprise Automation Board (Auto-Replies & Triggers)
+CREATE TABLE IF NOT EXISTS automations (
+  id SERIAL PRIMARY KEY,
+  company_id INT REFERENCES companies(id) ON DELETE CASCADE,
+  name TEXT DEFAULT 'New Customer Welcome Auto-Reply',
+  trigger_type TEXT DEFAULT 'new_customer',
+  template_name TEXT NOT NULL,
+  template_language TEXT DEFAULT 'en_US',
+  template_components JSONB DEFAULT '[]',
+  header_media_url TEXT DEFAULT NULL,
+  cooldown_hours INT DEFAULT 24,
+  is_active BOOLEAN DEFAULT true,
+  trigger_count INT DEFAULT 0,
+  last_triggered_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);

@@ -132,6 +132,7 @@ const SUBSCRIPTION_PLANS = [
         popular: false,
         badge: 'Enterprise',
         features: [
+            '24/7 Cloudflare Edge Automation Board (Instant Lead Auto-Replies)',
             'Unlimited WhatsApp Business Accounts',
             'Unlimited Active Customer Records',
             'Multi-Tenant Company Workspace Switcher',

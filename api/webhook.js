@@ -11,6 +11,147 @@ function formatIndiaPhone(phone) {
   return digits;
 }
 
+// 24/7 Cloudflare Serverless Auto-Reply for Enterprise Plans
+async function triggerEnterpriseAutoReply({ sql, env, targetCompanyId, customerId, customerName, phone }) {
+  try {
+    // 1. Fetch company and verify Enterprise subscription
+    const cos = await sql`SELECT * FROM companies WHERE id = ${targetCompanyId} LIMIT 1`;
+    if (cos.length === 0) return;
+    const company = cos[0];
+    const isMaster = (company.slug || '').toLowerCase() === 'inspenox' || 
+                     (company.name || '').toLowerCase() === 'inspenox' || 
+                     company.is_parent === true || company.is_master === true;
+    const isEnterprise = isMaster || (
+      company.subscription_status === 'active' && 
+      (company.subscription_plan || '').toLowerCase().includes('enterprise')
+    );
+
+    if (!isEnterprise) {
+      console.log(`Auto-reply skipped: Workspace ${targetCompanyId} is not on Enterprise plan.`);
+      return;
+    }
+
+    // 2. Fetch active automation rule for new customer
+    const automations = await sql`
+      SELECT * FROM automations 
+      WHERE company_id = ${targetCompanyId} 
+        AND trigger_type = 'new_customer' 
+        AND is_active = true 
+      ORDER BY id DESC LIMIT 1
+    `;
+    if (automations.length === 0) return;
+    const rule = automations[0];
+    const cooldownHours = parseInt(rule.cooldown_hours, 10) || 24;
+
+    // 3. Cooldown check: Has an automated reply already been sent to this customer within cooldown hours?
+    const cooldownCutoff = new Date(Date.now() - (cooldownHours * 60 * 60 * 1000)).toISOString();
+    const recentSent = await sql`
+      SELECT id FROM messages 
+      WHERE customer_id = ${customerId} 
+        AND company_id = ${targetCompanyId} 
+        AND direction = 'outbound' 
+        AND (template_name = ${rule.template_name} OR content ILIKE '%[Auto-Reply]%')
+        AND created_at > ${cooldownCutoff}::timestamptz
+      LIMIT 1
+    `;
+    if (recentSent.length > 0) {
+      console.log(`Auto-reply skipped: Cooldown (${cooldownHours}h) active for customer ${customerId}`);
+      return;
+    }
+
+    // 4. Resolve Meta API credentials
+    let phoneId = isMaster ? env.WHATSAPP_PHONE_NUMBER_ID : (company.whatsapp_phone_number_id || env.WHATSAPP_PHONE_NUMBER_ID);
+    let token = isMaster ? env.WHATSAPP_ACCESS_TOKEN : (company.whatsapp_access_token || env.WHATSAPP_ACCESS_TOKEN);
+
+    if (!phoneId || !token) {
+      console.log(`Auto-reply failed: Missing Meta credentials for workspace ${targetCompanyId}`);
+      return;
+    }
+
+    // 5. Build template message payload
+    const lang = rule.template_language || 'en_US';
+    const cleanPhone = String(phone).replace(/\D/g, '');
+    const custDisplayName = (customerName && !customerName.startsWith('Lead ')) ? customerName : 'there';
+
+    const components = [];
+    if (rule.template_components && Array.isArray(rule.template_components) && rule.template_components.length > 0) {
+      components.push(...rule.template_components);
+    } else {
+      components.push({
+        type: "body",
+        parameters: [
+          { type: "text", text: custDisplayName }
+        ]
+      });
+    }
+
+    if (rule.header_media_url) {
+      components.unshift({
+        type: "header",
+        parameters: [
+          {
+            type: "image",
+            image: { link: rule.header_media_url }
+          }
+        ]
+      });
+    }
+
+    const payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: cleanPhone,
+      type: "template",
+      template: {
+        name: rule.template_name,
+        language: { code: lang },
+        components: components
+      }
+    };
+
+    console.log(`[Cloudflare 24/7 Automation] Dispatching template "${rule.template_name}" to ${cleanPhone}...`);
+
+    const metaRes = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const resJson = await metaRes.json();
+    console.log("Meta Auto-Reply Response:", JSON.stringify(resJson));
+
+    const waMsgId = (resJson.messages && resJson.messages[0]) ? resJson.messages[0].id : null;
+    const msgStatus = waMsgId ? 'sent' : 'failed';
+    const logContent = `[Auto-Reply] Template: ${rule.template_name}` + (resJson.error ? ` (Error: ${resJson.error.message || 'Meta error'})` : '');
+
+    // 6. Log outbound message into messages table
+    await sql`
+      INSERT INTO messages (
+        company_id, customer_id, direction, type, template_name, 
+        content, wa_message_id, status
+      ) VALUES (
+        ${targetCompanyId}, ${customerId}, 'outbound', 'template', ${rule.template_name},
+        ${logContent}, ${waMsgId}, ${msgStatus}
+      )
+    `;
+
+    // 7. Increment automation rule trigger count
+    if (waMsgId) {
+      await sql`
+        UPDATE automations 
+        SET trigger_count = trigger_count + 1, 
+            last_triggered_at = NOW() 
+        WHERE id = ${rule.id}
+      `;
+    }
+  } catch (err) {
+    console.error("Enterprise auto-reply trigger error:", err);
+  }
+}
+
 module.exports = async (req, res) => {
   const env = req.env || process.env || {};
   const sql = getDb(env);
@@ -188,8 +329,10 @@ module.exports = async (req, res) => {
                   LIMIT 1
                 `;
                 let customerId;
+                let isBrandNewLead = false;
 
                 if (customer.length === 0) {
+                  isBrandNewLead = true;
                   const newCust = await sql`
                     INSERT INTO customers (name, phone, company_id, is_saved) 
                     VALUES (${name}, ${phone}, ${targetCompanyId}, false) 
@@ -200,12 +343,39 @@ module.exports = async (req, res) => {
                   customerId = customer[0].id;
                 }
 
+                // Determine if this is customer's first inbound contact
+                let isFirstContact = isBrandNewLead;
+                if (!isFirstContact) {
+                  try {
+                    const priorInbound = await sql`
+                      SELECT id FROM messages 
+                      WHERE customer_id = ${customerId} AND company_id = ${targetCompanyId} AND direction = 'inbound'
+                      LIMIT 1
+                    `;
+                    if (priorInbound.length === 0) {
+                      isFirstContact = true;
+                    }
+                  } catch(e) {}
+                }
+
                 const validTypes = ["text", "image", "video", "document", "audio", "sticker", "template", "button", "interactive"];
                 const dbMsgType = validTypes.includes(messageType) ? messageType : "text";
                 await sql`
                   INSERT INTO messages (company_id, customer_id, direction, type, content, media_url, wa_message_id, status) 
                   VALUES (${targetCompanyId}, ${customerId}, 'inbound', ${dbMsgType}, ${content}, ${mediaUrl}, ${messageId}, 'delivered')
                 `;
+
+                // Trigger 24/7 Enterprise Auto-Reply in Cloudflare
+                if (isFirstContact) {
+                  await triggerEnterpriseAutoReply({
+                    sql,
+                    env,
+                    targetCompanyId,
+                    customerId,
+                    customerName: name,
+                    phone: phone
+                  });
+                }
               }
             }
           }

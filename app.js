@@ -217,6 +217,7 @@ window.updateSuperAdminNavVisibility = function updateSuperAdminNavVisibility() 
     const subNav = document.getElementById('nav-item-subscriptions');
     if (secNav) secNav.style.display = isSuper ? 'flex' : 'none';
     if (subNav) subNav.style.display = 'flex';
+    if (typeof updateAutomationNavVisibility === 'function') updateAutomationNavVisibility();
 };
 
 window.isParentAdmin = function isParentAdmin() {
@@ -449,6 +450,7 @@ document.getElementById('company-switcher')?.addEventListener('change', (e) => {
     const subNav = document.getElementById('nav-item-subscriptions');
     if (secNav) secNav.style.display = isSuper ? 'flex' : 'none';
     if (subNav) subNav.style.display = 'flex';
+    if (typeof updateAutomationNavVisibility === 'function') updateAutomationNavVisibility();
 
     if (typeof updateBroadcastSenderPhoneSelect === 'function') {
         updateBroadcastSenderPhoneSelect();
@@ -2597,6 +2599,7 @@ const DEFAULT_SUBSCRIPTION_PLANS = [
         popular: false,
         badge: 'Enterprise',
         features: [
+            '24/7 Cloudflare Edge Automation Board (Instant Lead Auto-Replies)',
             'Unlimited WhatsApp Business Accounts',
             'Unlimited Active Customer Records',
             'Multi-Tenant Company Workspace Switcher',
@@ -2780,6 +2783,10 @@ function updateCompanySubscriptionStatusUI() {
             elStatBadge.style.color = '#ef4444';
         }
         if (elStatCycle) elStatCycle.textContent = 'Select a package below to subscribe';
+    }
+
+    if (typeof updateAutomationNavVisibility === 'function') {
+        updateAutomationNavVisibility();
     }
 }
 window.updateCompanySubscriptionStatusUI = updateCompanySubscriptionStatusUI;
@@ -3119,6 +3126,13 @@ window.switchView = function switchView(target, pushHistory = true) {
             loadSecurityLogs();
         } else if (typeof window.loadSecurityLogs === 'function') {
             window.loadSecurityLogs();
+        }
+    }
+    if (target === 'automation') {
+        if (typeof loadAutomationBoard === 'function') {
+            loadAutomationBoard();
+        } else if (typeof window.loadAutomationBoard === 'function') {
+            window.loadAutomationBoard();
         }
     }
 
@@ -12326,6 +12340,450 @@ document.addEventListener('keydown', (e) => {
         if (checkoutModal && !checkoutModal.classList.contains('hidden') && checkoutModal.style.display !== 'none') {
             closeCheckoutModal();
             return;
+        }
+    }
+});
+
+// =========================================================================
+// ENTERPRISE AUTOMATION BOARD CONTROLLER (24/7 Cloudflare Edge Auto-Replies)
+// =========================================================================
+
+function isEnterpriseActive() {
+    const coId = getCompanyId();
+    const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
+    const isMaster = isSuperAdmin() || isParentAdmin() || !!(activeComp && ((activeComp.slug && activeComp.slug.toLowerCase() === 'inspenox') || (activeComp.name && activeComp.name.toLowerCase() === 'inspenox') || activeComp.is_parent === true || activeComp.is_master === true));
+    if (isMaster) return true;
+    const isExpired = !!(activeComp && activeComp.subscription_expires_at && (new Date(activeComp.subscription_expires_at) < new Date()));
+    const plan = (activeComp?.subscription_plan || '').toLowerCase();
+    const isActive = activeComp?.subscription_status === 'active';
+    return !isExpired && isActive && plan.includes('enterprise');
+}
+window.isEnterpriseActive = isEnterpriseActive;
+
+function updateAutomationNavVisibility() {
+    const autoNav = document.getElementById('nav-item-automation');
+    if (!autoNav) return;
+    const isEnt = isEnterpriseActive();
+    autoNav.style.display = isEnt ? 'flex' : 'none';
+}
+window.updateAutomationNavVisibility = updateAutomationNavVisibility;
+
+let cachedAutomationRule = null;
+let cachedAutomationTemplates = [];
+
+async function loadAutomationBoard() {
+    const isEnt = isEnterpriseActive();
+    const lockedEl = document.getElementById('automation-locked-state');
+    const unlockedEl = document.getElementById('automation-unlocked-state');
+
+    if (!isEnt) {
+        if (lockedEl) lockedEl.style.display = 'block';
+        if (unlockedEl) unlockedEl.style.display = 'none';
+        return;
+    }
+
+    if (lockedEl) lockedEl.style.display = 'none';
+    if (unlockedEl) unlockedEl.style.display = 'block';
+
+    const coId = getCompanyId();
+
+    // 1. Fetch Meta Templates for this company
+    try {
+        const tRes = await apiFetch(`/api/templates?company_id=${encodeURIComponent(coId)}`);
+        const tData = await tRes.json();
+        const templates = Array.isArray(tData.data) ? tData.data : (Array.isArray(tData) ? tData : []);
+        // Filter approved templates
+        cachedAutomationTemplates = templates.filter(t => (t.status || '').toUpperCase() === 'APPROVED');
+        populateAutomationTemplatesSelect(cachedAutomationTemplates);
+    } catch (e) {
+        console.error('Error fetching templates for automation board:', e);
+    }
+
+    // 2. Fetch current automation configuration & logs
+    try {
+        const aRes = await apiFetch(`/api/automation?company_id=${encodeURIComponent(coId)}`);
+        const aData = await aRes.json();
+
+        if (aData.success) {
+            const rules = aData.automations || [];
+            const rule = rules.find(r => r.trigger_type === 'new_customer') || rules[0] || null;
+            cachedAutomationRule = rule;
+
+            // Update stats
+            const sentEl = document.getElementById('stat-auto-sent-count');
+            if (sentEl) sentEl.textContent = rule ? (rule.trigger_count || 0) : 0;
+
+            const statusEl = document.getElementById('stat-auto-status');
+            const indEl = document.getElementById('auto-status-indicator');
+            const toggleEl = document.getElementById('auto-rule-active-toggle');
+            const toggleText = document.getElementById('auto-rule-active-text');
+
+            const isActive = rule ? Boolean(rule.is_active) : true;
+            if (toggleEl) toggleEl.checked = isActive;
+            if (toggleText) {
+                toggleText.textContent = isActive ? 'ON' : 'OFF';
+                toggleText.style.color = isActive ? '#10b981' : '#ef4444';
+            }
+            if (statusEl) {
+                statusEl.textContent = isActive ? 'Active & Ready' : 'Paused';
+                statusEl.style.color = isActive ? 'var(--text-main)' : '#ef4444';
+            }
+            if (indEl) {
+                indEl.textContent = isActive ? '● Online' : '○ Paused';
+                indEl.style.color = isActive ? '#10b981' : '#ef4444';
+            }
+
+            // Update Form Fields
+            if (rule) {
+                const selectEl = document.getElementById('auto-template-select');
+                if (selectEl && rule.template_name) {
+                    selectEl.value = rule.template_name;
+                }
+                const langEl = document.getElementById('auto-template-lang');
+                if (langEl && rule.template_language) {
+                    langEl.value = rule.template_language;
+                }
+                const cdEl = document.getElementById('auto-cooldown-hours');
+                if (cdEl && rule.cooldown_hours) {
+                    cdEl.value = rule.cooldown_hours;
+                }
+                const mediaEl = document.getElementById('auto-header-media-url');
+                if (mediaEl && rule.header_media_url) {
+                    mediaEl.value = rule.header_media_url;
+                }
+            }
+
+            // Render Recent Logs
+            renderAutomationLogs(aData.recent_logs || []);
+        }
+    } catch (e) {
+        console.error('Error fetching automation rule:', e);
+    }
+
+    onAutoTemplateChanged();
+}
+window.loadAutomationBoard = loadAutomationBoard;
+
+function populateAutomationTemplatesSelect(templates) {
+    const sel = document.getElementById('auto-template-select');
+    if (!sel) return;
+
+    if (!templates || templates.length === 0) {
+        sel.innerHTML = '<option value="">No approved Meta templates found. Create templates in Templates tab first.</option>';
+        return;
+    }
+
+    sel.innerHTML = '<option value="">-- Choose an Approved Meta Template --</option>' +
+        templates.map(t => {
+            const cat = t.category ? ` [${t.category}]` : '';
+            return `<option value="${t.name}">${t.name} (${t.language || 'en'})${cat}</option>`;
+        }).join('');
+
+    if (cachedAutomationRule && cachedAutomationRule.template_name) {
+        sel.value = cachedAutomationRule.template_name;
+    } else if (templates.length > 0) {
+        sel.value = templates[0].name;
+    }
+}
+
+function onAutoTemplateChanged() {
+    const sel = document.getElementById('auto-template-select');
+    const selectedName = sel ? sel.value : '';
+    const tmpl = cachedAutomationTemplates.find(t => t.name === selectedName);
+
+    const mediaGroup = document.getElementById('auto-header-media-group');
+    if (tmpl) {
+        const headerComp = (tmpl.components || []).find(c => c.type === 'HEADER');
+        if (headerComp && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
+            if (mediaGroup) mediaGroup.style.display = 'block';
+        } else {
+            if (mediaGroup) mediaGroup.style.display = 'none';
+        }
+        if (tmpl.language) {
+            const langSel = document.getElementById('auto-template-lang');
+            if (langSel) langSel.value = tmpl.language;
+        }
+    } else {
+        if (mediaGroup) mediaGroup.style.display = 'none';
+    }
+
+    updateAutoPreview();
+}
+window.onAutoTemplateChanged = onAutoTemplateChanged;
+
+function updateAutoPreview() {
+    const sel = document.getElementById('auto-template-select');
+    const selectedName = sel ? sel.value : '';
+    const tmpl = cachedAutomationTemplates.find(t => t.name === selectedName);
+
+    const prevMedia = document.getElementById('preview-auto-header-media');
+    const prevImg = document.getElementById('preview-auto-img');
+    const prevHeader = document.getElementById('preview-auto-header-text');
+    const prevBody = document.getElementById('preview-auto-body-text');
+    const prevFooter = document.getElementById('preview-auto-footer-text');
+    const prevBtns = document.getElementById('preview-auto-buttons');
+
+    if (!tmpl) {
+        if (prevMedia) prevMedia.style.display = 'none';
+        if (prevHeader) prevHeader.style.display = 'none';
+        if (prevBody) prevBody.textContent = "Select an approved Meta template from the dropdown to see live WhatsApp preview.";
+        if (prevFooter) prevFooter.style.display = 'none';
+        if (prevBtns) prevBtns.innerHTML = '';
+        return;
+    }
+
+    const headerComp = (tmpl.components || []).find(c => c.type === 'HEADER');
+    const bodyComp = (tmpl.components || []).find(c => c.type === 'BODY');
+    const footerComp = (tmpl.components || []).find(c => c.type === 'FOOTER');
+    const buttonsComp = (tmpl.components || []).find(c => c.type === 'BUTTONS');
+
+    // Header Preview
+    if (headerComp) {
+        if (headerComp.format === 'TEXT' && headerComp.text) {
+            if (prevHeader) {
+                prevHeader.textContent = headerComp.text.replace(/\{\{1\}\}/g, 'Alex');
+                prevHeader.style.display = 'block';
+            }
+            if (prevMedia) prevMedia.style.display = 'none';
+        } else if (['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format)) {
+            const customUrl = document.getElementById('auto-header-media-url')?.value?.trim();
+            let mediaSrc = customUrl;
+            if (!mediaSrc && headerComp.example) {
+                const exUrl = Array.isArray(headerComp.example.header_url) ? headerComp.example.header_url[0] : headerComp.example.header_url;
+                if (exUrl) mediaSrc = exUrl;
+            }
+            if (prevMedia && prevImg) {
+                if (mediaSrc) {
+                    prevImg.src = mediaSrc;
+                    prevMedia.style.display = 'block';
+                } else {
+                    prevImg.src = 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600';
+                    prevMedia.style.display = 'block';
+                }
+            }
+            if (prevHeader) prevHeader.style.display = 'none';
+        } else {
+            if (prevMedia) prevMedia.style.display = 'none';
+            if (prevHeader) prevHeader.style.display = 'none';
+        }
+    } else {
+        if (prevMedia) prevMedia.style.display = 'none';
+        if (prevHeader) prevHeader.style.display = 'none';
+    }
+
+    // Body Text Preview (dynamic parameter {{1}} replaced with sample customer name)
+    if (bodyComp && bodyComp.text) {
+        let bText = bodyComp.text.replace(/\{\{1\}\}/g, 'Alex');
+        bText = bText.replace(/\{\{2\}\}/g, 'Inspenox');
+        bText = bText.replace(/\{\{\d+\}\}/g, 'Special');
+        if (prevBody) prevBody.textContent = bText;
+    } else {
+        if (prevBody) prevBody.textContent = 'Welcome! Thanks for reaching out.';
+    }
+
+    // Footer Text Preview
+    if (footerComp && footerComp.text) {
+        if (prevFooter) {
+            prevFooter.textContent = footerComp.text;
+            prevFooter.style.display = 'block';
+        }
+    } else {
+        if (prevFooter) prevFooter.style.display = 'none';
+    }
+
+    // Buttons Preview
+    if (prevBtns) {
+        if (buttonsComp && Array.isArray(buttonsComp.buttons) && buttonsComp.buttons.length > 0) {
+            prevBtns.innerHTML = buttonsComp.buttons.map(btn => {
+                const text = btn.text || 'Action Button';
+                return `<div style="text-align: center; padding: 0.5rem; color: #53bdeb; font-size: 0.8rem; font-weight: 600; border-top: 1px solid rgba(255,255,255,0.08);">${text}</div>`;
+            }).join('');
+        } else {
+            prevBtns.innerHTML = '';
+        }
+    }
+}
+window.updateAutoPreview = updateAutoPreview;
+
+async function saveAutomationConfig() {
+    const sel = document.getElementById('auto-template-select');
+    const templateName = sel ? sel.value : '';
+    if (!templateName) {
+        showModal('Template Required', 'Please select a pre-approved WhatsApp template to enable auto-replies.');
+        return;
+    }
+
+    const coId = getCompanyId();
+    const lang = document.getElementById('auto-template-lang')?.value || 'en_US';
+    const cooldown = parseInt(document.getElementById('auto-cooldown-hours')?.value, 10) || 24;
+    const mediaUrl = document.getElementById('auto-header-media-url')?.value?.trim() || null;
+    const isActive = document.getElementById('auto-rule-active-toggle')?.checked ?? true;
+
+    const btn = document.getElementById('btn-save-automation');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-icon" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Saving...';
+    }
+
+    try {
+        const res = await apiFetch('/api/automation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                company_id: coId,
+                trigger_type: 'new_customer',
+                name: 'New Customer Welcome Auto-Reply',
+                template_name: templateName,
+                template_language: lang,
+                cooldown_hours: cooldown,
+                header_media_url: mediaUrl,
+                is_active: isActive
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            showModal('Automation Saved ⚡', '24/7 Cloudflare Edge Auto-Reply is active! When a new customer messages, Meta will dispatch your pre-approved template immediately.');
+            loadAutomationBoard();
+        } else {
+            showModal('Save Failed', data.error || 'Could not save automation rule.');
+        }
+    } catch (err) {
+        console.error('Error saving automation:', err);
+        showModal('Error', err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
+}
+window.saveAutomationConfig = saveAutomationConfig;
+
+async function testSendAutoReply() {
+    const sel = document.getElementById('auto-template-select');
+    const templateName = sel ? sel.value : '';
+    if (!templateName) {
+        showModal('Template Required', 'Please select an approved template first.');
+        return;
+    }
+
+    const phoneInput = prompt('Enter your WhatsApp phone number with country code (e.g. 919876543210):');
+    if (!phoneInput) return;
+
+    const coId = getCompanyId();
+    const lang = document.getElementById('auto-template-lang')?.value || 'en_US';
+    const mediaUrl = document.getElementById('auto-header-media-url')?.value?.trim() || null;
+
+    try {
+        const res = await apiFetch('/api/send-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                company_id: coId,
+                to: phoneInput.trim(),
+                phone: phoneInput.trim(),
+                type: 'template',
+                template_name: templateName,
+                template_language: lang,
+                media_id: mediaUrl
+            })
+        });
+
+        const data = await res.json();
+        if (data.success || data.wa_message_id) {
+            showModal('Test Dispatched! 🚀', `Template "${templateName}" was sent successfully to ${phoneInput}. Check your WhatsApp!`);
+        } else {
+            showModal('Test Delivery Failed', data.error || JSON.stringify(data));
+        }
+    } catch (err) {
+        showModal('Error', err.message);
+    }
+}
+window.testSendAutoReply = testSendAutoReply;
+
+function renderAutomationLogs(logs) {
+    const tbody = document.getElementById('auto-reply-logs-tbody');
+    const countEl = document.getElementById('auto-logs-count');
+    if (!tbody) return;
+
+    if (!logs || logs.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                    No automated replies dispatched yet. When a new customer sends an inbound message, the event will appear here.
+                </td>
+            </tr>
+        `;
+        if (countEl) countEl.textContent = '0 events';
+        return;
+    }
+
+    if (countEl) countEl.textContent = `${logs.length} events`;
+
+    tbody.innerHTML = logs.map(log => {
+        const dateStr = log.created_at ? new Date(log.created_at).toLocaleString('en-IN', {
+            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+        }) : '-';
+        const statusColor = (log.status === 'delivered' || log.status === 'read' || log.status === 'sent') ? '#10b981' : '#ef4444';
+        const name = log.customer_name || 'New Lead';
+        const phone = log.customer_phone || '-';
+
+        return `
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.65rem 0.75rem; font-weight: 600; color: var(--text-main);">${name}</td>
+                <td style="padding: 0.65rem 0.75rem; color: var(--text-muted);">${phone}</td>
+                <td style="padding: 0.65rem 0.75rem; color: #8b5cf6; font-weight: 600;">${log.template_name || 'Auto-Reply'}</td>
+                <td style="padding: 0.65rem 0.75rem;">
+                    <span style="font-size: 0.72rem; font-weight: 700; color: ${statusColor}; background: rgba(16,185,129,0.1); padding: 2px 8px; border-radius: 4px;">
+                        ${log.status || 'sent'}
+                    </span>
+                </td>
+                <td style="padding: 0.65rem 0.75rem; color: var(--text-muted); font-size: 0.78rem;">${dateStr}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Toggle switch listener (real-time UI update + instant auto-save)
+document.getElementById('auto-rule-active-toggle')?.addEventListener('change', async (e) => {
+    const isChecked = e.target.checked;
+    const txt = document.getElementById('auto-rule-active-text');
+    const statusEl = document.getElementById('stat-auto-status');
+    const indEl = document.getElementById('auto-status-indicator');
+
+    if (txt) {
+        txt.textContent = isChecked ? 'ON' : 'OFF';
+        txt.style.color = isChecked ? '#10b981' : '#ef4444';
+    }
+    if (statusEl) {
+        statusEl.textContent = isChecked ? 'Active & Ready' : 'Paused';
+        statusEl.style.color = isChecked ? 'var(--text-main)' : '#ef4444';
+    }
+    if (indEl) {
+        indEl.textContent = isChecked ? '● Online' : '○ Paused';
+        indEl.style.color = isChecked ? '#10b981' : '#ef4444';
+    }
+
+    // Instantly persist toggle state to Cloudflare/DB if rule exists
+    if (cachedAutomationRule && cachedAutomationRule.id) {
+        try {
+            const res = await apiFetch('/api/automation', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: cachedAutomationRule.id,
+                    company_id: getCompanyId(),
+                    is_active: isChecked
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                cachedAutomationRule.is_active = isChecked;
+            }
+        } catch (err) {
+            console.error('Failed to toggle automation state:', err);
         }
     }
 });
