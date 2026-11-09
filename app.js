@@ -2599,17 +2599,16 @@ const DEFAULT_SUBSCRIPTION_PLANS = [
         popular: false,
         badge: 'Enterprise',
         features: [
-            '24/7 Cloudflare Edge Automation Board (Instant Lead Auto-Replies)',
+            '24/7 Inspenox Edge Automation Board (Instant Lead Auto-Replies)',
             'Smart Campaign Auto-Scheduling & Automated Recurring Broadcasts',
             'Interactive Multi-Step Chatbot Flows (Quick-Reply & List Menu Triggers)',
             'Sleep-Proof Edge Execution (Operates 24/7 without app logged in)',
-            'Unlimited WhatsApp Business Accounts',
-            'Unlimited Active Customer Records & Segmentation Tags',
-            'Multi-Tenant Company Workspace Switcher',
-            'Unlimited Team Members & Role Permissions',
+            'Custom limit charges applicable for WhatsApp Business numbers',
+            'Custom limit charges applicable for customer contacts & segmentation tags',
+            'Custom limit charges applicable for team members & role permissions',
             'Dedicated Webhooks & Custom Meta System Tokens',
             'White-Glove Onboarding & 24/7 SLA Support',
-            'Maximum Meta API Throughput (Tier 3/Unlimited)',
+            'Maximum Meta API Throughput (Tier 3 Capacity)',
             'Plan pricing for existing features (Extra Addon Features Billed Separately)'
         ]
     }
@@ -12422,7 +12421,7 @@ async function loadAutomationBoard() {
 
             // Update stats
             const totalDispatches = allAutomationRules.reduce((sum, r) => sum + (parseInt(r.trigger_count, 10) || 0), 0);
-            const activeRulesCount = allAutomationRules.filter(r => r.is_active).length;
+            const activeRulesCount = allAutomationRules.filter(r => Boolean(r.is_active) && r.is_active !== '0' && r.is_active !== 0).length;
 
             const sentEl = document.getElementById('stat-auto-sent-count');
             if (sentEl) sentEl.textContent = totalDispatches;
@@ -12477,9 +12476,10 @@ function renderAutomationRulesList(rules) {
     }
 
     listEl.innerHTML = rules.map(rule => {
-        const isChecked = rule.is_active ? 'checked' : '';
-        const statusText = rule.is_active ? 'Active' : 'Paused';
-        const statusColor = rule.is_active ? '#10b981' : '#ef4444';
+        const isActive = Boolean(rule.is_active) && rule.is_active !== '0' && rule.is_active !== 0;
+        const isChecked = isActive ? 'checked' : '';
+        const statusText = isActive ? 'Active' : 'Paused';
+        const statusColor = isActive ? '#10b981' : '#ef4444';
 
         let triggerBadge = '';
         if (rule.trigger_type === 'new_customer') {
@@ -12508,7 +12508,7 @@ function renderAutomationRulesList(rules) {
                     <div style="display: flex; align-items: center; gap: 14px; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap;">
                         <span>⚡ Dispatches: <strong>${rule.trigger_count || 0}</strong></span>
                         <span>⏱️ Cooldown: <strong>${rule.cooldown_hours || 0}h</strong></span>
-                        <span style="color: ${statusColor}; font-weight: 600;">● ${statusText}</span>
+                        <span id="rule-status-${rule.id}" style="color: ${statusColor}; font-weight: 600;">● ${statusText}</span>
                     </div>
                 </div>
 
@@ -12550,6 +12550,27 @@ function renderAutomationRulesList(rules) {
 }
 
 async function toggleAutoRule(ruleId, isChecked) {
+    const r = allAutomationRules.find(x => String(x.id) === String(ruleId));
+    if (r) r.is_active = isChecked;
+
+    const ruleStatusPill = document.getElementById(`rule-status-${ruleId}`);
+    if (ruleStatusPill) {
+        ruleStatusPill.textContent = isChecked ? '● Active' : '● Paused';
+        ruleStatusPill.style.color = isChecked ? '#10b981' : '#ef4444';
+    }
+
+    const activeCount = allAutomationRules.filter(x => Boolean(x.is_active) && x.is_active !== '0' && x.is_active !== 0).length;
+    const statusEl = document.getElementById('stat-auto-status');
+    const indEl = document.getElementById('auto-status-indicator');
+    if (statusEl) {
+        statusEl.textContent = activeCount > 0 ? 'Active' : 'Paused';
+        statusEl.style.color = activeCount > 0 ? '#10b981' : '#ef4444';
+    }
+    if (indEl) {
+        indEl.textContent = activeCount > 0 ? `● Online (${activeCount} active rules)` : '○ Paused';
+        indEl.style.color = activeCount > 0 ? '#10b981' : '#ef4444';
+    }
+
     try {
         await apiFetch('/api/automation', {
             method: 'PUT',
@@ -12560,16 +12581,22 @@ async function toggleAutoRule(ruleId, isChecked) {
                 is_active: isChecked
             })
         });
-        const r = allAutomationRules.find(x => x.id === ruleId);
-        if (r) r.is_active = isChecked;
-
-        const activeCount = allAutomationRules.filter(x => x.is_active).length;
-        const statusEl = document.getElementById('stat-auto-status');
-        const indEl = document.getElementById('auto-status-indicator');
-        if (statusEl) statusEl.textContent = activeCount > 0 ? 'Active' : 'Paused';
-        if (indEl) indEl.textContent = activeCount > 0 ? `● Online (${activeCount} active rules)` : '○ Paused';
     } catch (e) {
         console.error('Error toggling rule:', e);
+        if (r) r.is_active = !isChecked;
+        if (ruleStatusPill) {
+            ruleStatusPill.textContent = !isChecked ? '● Active' : '● Paused';
+            ruleStatusPill.style.color = !isChecked ? '#10b981' : '#ef4444';
+        }
+        const rollbackCount = allAutomationRules.filter(x => Boolean(x.is_active) && x.is_active !== '0' && x.is_active !== 0).length;
+        if (statusEl) {
+            statusEl.textContent = rollbackCount > 0 ? 'Active' : 'Paused';
+            statusEl.style.color = rollbackCount > 0 ? '#10b981' : '#ef4444';
+        }
+        if (indEl) {
+            indEl.textContent = rollbackCount > 0 ? `● Online (${rollbackCount} active rules)` : '○ Paused';
+            indEl.style.color = rollbackCount > 0 ? '#10b981' : '#ef4444';
+        }
     }
 }
 window.toggleAutoRule = toggleAutoRule;
