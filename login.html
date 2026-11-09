@@ -4312,6 +4312,42 @@
             .rates-grid {
                 grid-template-columns: 1fr;
             }
+
+            /* Spotlight Responsive Order & Widths (Visual FIRST, Text SECOND) */
+            .spotlight-grid, .spotlight-grid.reverse {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 2rem !important;
+                direction: ltr !important;
+            }
+            .spotlight-grid .spotlight-visual-col {
+                order: 1 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                justify-content: center !important;
+            }
+            .spotlight-grid .spotlight-text-col {
+                order: 2 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            #automation-flow .showcase-window {
+                padding: 0.95rem 0.65rem !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            .landing-sim-header-row {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 0.65rem !important;
+            }
+            .landing-sim-header-actions {
+                width: 100% !important;
+                justify-content: space-between !important;
+            }
         }
 
         @media (max-width: 480px) {
@@ -4414,6 +4450,10 @@
             }
             .showcase-window {
                 border-radius: 14px;
+            }
+            #automation-flow .showcase-window {
+                padding: 0.75rem 0.45rem !important;
+                border-radius: 14px !important;
             }
             .showcase-window-header {
                 padding: 0.5rem 0.65rem;
@@ -5819,16 +5859,16 @@
             <!-- Right: Interactive WhatsApp Smartphone Simulation Window -->
             <div class="spotlight-visual-col" style="display: flex; justify-content: center; width: 100%; box-sizing: border-box;">
                 <div class="showcase-window" style="max-width: 440px; width: 100%; padding: 1.25rem; box-sizing: border-box; background: var(--bg-sidebar); border-radius: 16px; border: 1.5px solid var(--border);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.4rem;">
+                    <div class="landing-sim-header-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
                         <div>
                             <div style="font-size: 0.92rem; font-weight: 700; color: var(--text-main);">Live Chatbot Automation</div>
                             <div style="font-size: 0.72rem; color: var(--text-muted);">Real WhatsApp simulation of multi-step bot flow</div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <button type="button" class="btn-brand-outline" onclick="replayLandingSim()" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; border-radius: 6px; gap: 4px; cursor: pointer;">
+                        <div class="landing-sim-header-actions" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                            <button type="button" class="btn-brand-outline" onclick="replayLandingSim()" style="padding: 0.28rem 0.65rem; font-size: 0.72rem; border-radius: 6px; gap: 4px; cursor: pointer; white-space: nowrap;">
                                 🔄 Replay
                             </button>
-                            <span style="font-size: 0.68rem; color: #00a884; background: rgba(0,168,132,0.14); padding: 3px 8px; border-radius: 4px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                            <span style="font-size: 0.68rem; color: #00a884; background: rgba(0,168,132,0.14); padding: 4px 8px; border-radius: 4px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
                                 <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#00a884; animation: pulse 1.5s infinite;"></span> Auto-Play Flow
                             </span>
                         </div>

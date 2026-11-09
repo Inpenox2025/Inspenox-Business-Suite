@@ -6599,7 +6599,18 @@ td.empty-state .empty-state-desc,
 
 @media (max-width: 1080px) {
     .automation-grid {
-        grid-template-columns: minmax(0, 1fr);
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1.25rem !important;
+    }
+    .automation-grid .wa-sim-card {
+        order: 1 !important;
+        width: 100% !important;
+        position: static !important;
+    }
+    .automation-grid > div:not(.wa-sim-card) {
+        order: 2 !important;
+        width: 100% !important;
     }
 }
 
