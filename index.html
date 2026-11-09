@@ -592,6 +592,15 @@
                 <form id="add-customer-form" class="card" style="display: flex; flex-direction: column; gap: 0.85rem;">
                     <input type="hidden" id="cust-id">
 
+                    <!-- Editing Customer Notification Banner -->
+                    <div id="cust-edit-indicator-bar" style="display: none; align-items: center; justify-content: space-between; background: rgba(0, 168, 132, 0.12); border: 1px solid rgba(0, 168, 132, 0.35); border-radius: 8px; padding: 0.55rem 0.85rem; font-size: 0.82rem; color: var(--primary); font-weight: 600;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span>✏️</span>
+                            <span>Editing Customer: <strong id="cust-edit-target-name" style="color: var(--text-main);"></strong></span>
+                        </div>
+                        <button type="button" class="btn secondary sm" onclick="document.getElementById('btn-cancel-edit').click()" style="padding: 2px 8px; font-size: 0.75rem; border-radius: 6px;">✕ Cancel Edit</button>
+                    </div>
+
                     <div
                         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.75rem;">
                         <div class="input-with-icon">

@@ -4181,6 +4181,39 @@ window.editCustomer = (id) => {
     if (document.getElementById('cust-notes')) document.getElementById('cust-notes').value = cust.notes || '';
     document.getElementById('btn-save-cust').innerHTML = `<span>Update Customer</span>`;
     document.getElementById('btn-cancel-edit').style.display = 'inline-flex';
+
+    // Show editing notification banner inside the form
+    const editBar = document.getElementById('cust-edit-indicator-bar');
+    const editTargetName = document.getElementById('cust-edit-target-name');
+    if (editBar && editTargetName) {
+        editTargetName.textContent = cust.name ? `${cust.name} (${cust.phone})` : cust.phone;
+        editBar.style.display = 'flex';
+    }
+
+    // Smoothly scroll to the customer form for instant visual feedback
+    const formEl = document.getElementById('add-customer-form');
+    if (formEl) {
+        formEl.classList.remove('form-edit-active');
+        void formEl.offsetWidth; // Force CSS reflow to re-trigger pulse
+        formEl.classList.add('form-edit-active');
+
+        formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        const contentContainer = document.querySelector('.content');
+        if (contentContainer) {
+            const formTop = Math.max(0, formEl.offsetTop - 24);
+            contentContainer.scrollTo({ top: formTop, behavior: 'smooth' });
+        }
+    }
+
+    // Auto-focus on customer name field
+    setTimeout(() => {
+        const nameInput = document.getElementById('cust-name');
+        if (nameInput) {
+            nameInput.focus();
+            nameInput.select();
+        }
+    }, 280);
 };
 
 document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
@@ -4196,6 +4229,12 @@ document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
     }
     document.getElementById('btn-save-cust').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>Add Customer</span>`;
     document.getElementById('btn-cancel-edit').style.display = 'none';
+
+    // Hide editing banner and clear active highlight
+    const editBar = document.getElementById('cust-edit-indicator-bar');
+    if (editBar) editBar.style.display = 'none';
+    const formEl = document.getElementById('add-customer-form');
+    if (formEl) formEl.classList.remove('form-edit-active');
 });
 
 document.getElementById('add-customer-form')?.addEventListener('submit', async (e) => {
