@@ -12388,12 +12388,16 @@ async function loadAutomationBoard() {
 
     const coId = getCompanyId();
 
-    // Set Preview Business Name
+    // Set Preview Business Name & Brand in Simulator
     const bizEl = document.getElementById('preview-auto-biz-name');
-    if (bizEl) {
-        const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
-        bizEl.textContent = (activeComp && activeComp.name) ? activeComp.name : 'Your Business';
-    }
+    const avatarEl = document.getElementById('preview-sim-avatar');
+    const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
+    const bizName = (activeComp && activeComp.name && !activeComp.name.toLowerCase().includes('your business')) ? activeComp.name : 'Malabar Gold & Diamonds';
+    if (bizEl) bizEl.textContent = bizName;
+    if (avatarEl) avatarEl.textContent = bizName.trim().charAt(0).toUpperCase() || 'M';
+    document.querySelectorAll('.preview-sim-brand').forEach(el => {
+        el.textContent = bizName;
+    });
 
     // 1. Fetch Meta Templates for this company
     try {
@@ -12908,3 +12912,180 @@ function renderAutomationLogs(logs) {
         `;
     }).join('');
 }
+
+// ==========================================================================
+// INTERACTIVE WHATSAPP SIMULATOR CONTROLLER (MALABAR FLOW)
+// ==========================================================================
+
+let simReplayTimer = null;
+
+function focusSimStep(stepIndex) {
+    const el = document.getElementById(`sim-bubble-${stepIndex}`);
+    const container = document.getElementById('preview-chat-flow-container');
+    if (el && container) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        el.style.transition = 'box-shadow 0.3s ease, transform 0.2s ease';
+        el.style.boxShadow = '0 0 0 2px #00a884';
+        el.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            el.style.boxShadow = '';
+            el.style.transform = '';
+        }, 800);
+    }
+
+    // Update stepper pills
+    document.querySelectorAll('.wa-sim-step-pill').forEach(p => p.classList.remove('active'));
+    let pillId = 'pill-step-1';
+    if (stepIndex >= 6) pillId = 'pill-step-4';
+    else if (stepIndex >= 4) pillId = 'pill-step-3';
+    else if (stepIndex >= 3) pillId = 'pill-step-2';
+    const activePill = document.getElementById(pillId);
+    if (activePill) activePill.classList.add('active');
+}
+window.focusSimStep = focusSimStep;
+
+function triggerSimClick(action) {
+    const bubble3 = document.getElementById('sim-bubble-3');
+    if (!bubble3) return;
+
+    // Capitalize action
+    let label = 'India';
+    if (action === 'usa') label = 'USA';
+    if (action === 'uae') label = 'UAE & Others';
+
+    const textSpan = bubble3.querySelector('span[style*="font-weight: 500"]');
+    if (textSpan) textSpan.textContent = label;
+
+    focusSimStep(3);
+
+    // Also reveal subsequent steps if replaying
+    bubble3.style.display = 'block';
+    const bubble4 = document.getElementById('sim-bubble-4');
+    if (bubble4) {
+        bubble4.style.display = 'block';
+        setTimeout(() => focusSimStep(4), 400);
+    }
+}
+window.triggerSimClick = triggerSimClick;
+
+function openSimListSheet() {
+    const sheet = document.getElementById('wa-sim-sheet');
+    if (sheet) {
+        sheet.style.display = 'block';
+    }
+}
+window.openSimListSheet = openSimListSheet;
+
+function closeSimListSheet() {
+    const sheet = document.getElementById('wa-sim-sheet');
+    if (sheet) {
+        sheet.style.display = 'none';
+    }
+}
+window.closeSimListSheet = closeSimListSheet;
+
+function selectSimListOption(optionName) {
+    closeSimListSheet();
+
+    const bubble5 = document.getElementById('sim-bubble-5');
+    if (bubble5) {
+        const textSpan = bubble5.querySelector('span[style*="font-weight: 500"]');
+        if (textSpan) textSpan.textContent = optionName;
+        bubble5.style.display = 'block';
+    }
+
+    const bubble6 = document.getElementById('sim-bubble-6');
+    if (bubble6) {
+        bubble6.style.display = 'block';
+    }
+
+    setTimeout(() => {
+        focusSimStep(5);
+        setTimeout(() => scrollSimToBottom(), 350);
+    }, 200);
+}
+window.selectSimListOption = selectSimListOption;
+
+function scrollSimToBottom() {
+    const container = document.getElementById('preview-chat-flow-container');
+    if (container) {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }
+}
+window.scrollSimToBottom = scrollSimToBottom;
+
+function triggerSimMic() {
+    if (typeof showModal === 'function') {
+        showModal('Voice & Media Automation', 'Meta Cloud API also supports incoming voice note transcription and automated template responses 24/7 on Cloudflare Workers!');
+    }
+}
+window.triggerSimMic = triggerSimMic;
+
+function replayChatSimulation() {
+    if (simReplayTimer) {
+        clearTimeout(simReplayTimer);
+        simReplayTimer = null;
+    }
+
+    const bubbles = [
+        document.getElementById('sim-bubble-1'),
+        document.getElementById('sim-bubble-2'),
+        document.getElementById('sim-bubble-3'),
+        document.getElementById('sim-bubble-4'),
+        document.getElementById('sim-bubble-5'),
+        document.getElementById('sim-bubble-6')
+    ];
+
+    const statusEl = document.getElementById('preview-sim-status');
+    const container = document.getElementById('preview-chat-flow-container');
+
+    // Hide all bubbles
+    bubbles.forEach(b => {
+        if (b) {
+            b.style.display = 'none';
+            b.style.opacity = '0';
+        }
+    });
+
+    if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
+
+    function showBubble(index, delay, isBotTyping = false) {
+        return new Promise(resolve => {
+            simReplayTimer = setTimeout(() => {
+                if (isBotTyping && statusEl) {
+                    statusEl.textContent = 'typing...';
+                    statusEl.classList.add('is-typing');
+                }
+
+                setTimeout(() => {
+                    if (statusEl) {
+                        statusEl.textContent = 'Official Business Account';
+                        statusEl.classList.remove('is-typing');
+                    }
+
+                    const b = bubbles[index];
+                    if (b) {
+                        b.style.display = 'block';
+                        b.style.opacity = '1';
+                        b.style.animation = 'waBubbleFadeIn 0.3s ease-out';
+                        focusSimStep(index + 1);
+                    }
+                    resolve();
+                }, isBotTyping ? 700 : 0);
+            }, delay);
+        });
+    }
+
+    // Sequence execution
+    (async () => {
+        await showBubble(0, 300, false);       // Customer: Hii
+        await showBubble(1, 1000, true);       // Bot: Welcome & Location Template
+        await showBubble(2, 1200, false);      // Customer: Quoted "India"
+        await showBubble(3, 1000, true);       // Bot: Menu List
+        await showBubble(4, 1200, false);      // Customer: Quoted "Place an Order"
+        await showBubble(5, 1000, true);       // Bot: Connecting Live Agent
+        setTimeout(() => scrollSimToBottom(), 400);
+    })();
+}
+window.replayChatSimulation = replayChatSimulation;
+
