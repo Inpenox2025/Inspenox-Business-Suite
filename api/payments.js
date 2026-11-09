@@ -133,14 +133,17 @@ const SUBSCRIPTION_PLANS = [
         badge: 'Enterprise',
         features: [
             '24/7 Cloudflare Edge Automation Board (Instant Lead Auto-Replies)',
+            'Smart Campaign Auto-Scheduling & Automated Recurring Broadcasts',
+            'Interactive Multi-Step Chatbot Flows (Quick-Reply & List Menu Triggers)',
+            'Sleep-Proof Edge Execution (Operates 24/7 without app logged in)',
             'Unlimited WhatsApp Business Accounts',
-            'Unlimited Active Customer Records',
+            'Unlimited Active Customer Records & Segmentation Tags',
             'Multi-Tenant Company Workspace Switcher',
             'Unlimited Team Members & Role Permissions',
             'Dedicated Webhooks & Custom Meta System Tokens',
             'White-Glove Onboarding & 24/7 SLA Support',
             'Maximum Meta API Throughput (Tier 3/Unlimited)',
-            'This Plan pricing only for exisiting features for Extra Addon Features Billed Separately'
+            'Plan pricing for existing features (Extra Addon Features Billed Separately)'
         ]
     }
 ];

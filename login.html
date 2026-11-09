@@ -4709,7 +4709,8 @@
 
         <nav class="landing-nav-links">
             <a href="#broadcasts" class="landing-nav-link">Broadcasts</a>
-            <a href="#click-to-whatsapp" class="landing-nav-link has-badge">Meta Ads to WhatsApp</a>
+            <a href="#click-to-whatsapp" class="landing-nav-link">Meta Ads to WhatsApp</a>
+            <a href="#automation-flow" class="landing-nav-link has-badge">Automation Board</a>
             <a href="#shared-inbox" class="landing-nav-link">Shared Inbox</a>
             <a href="#omnichannel" class="landing-nav-link">Omnichannel</a>
             <a href="#why-us" class="landing-nav-link">Why Choose Us</a>
@@ -5523,6 +5524,206 @@
         </div>
     </section>
 
+    <!-- Feature Spotlight: 24/7 Cloudflare Automation Board & Interactive Chatbot Flows -->
+    <section id="automation-flow" class="spotlight-section" style="border-top: 1px solid var(--border); background: var(--bg-card);">
+        <div class="spotlight-grid">
+            <!-- Left: High-Impact Feature Points -->
+            <div>
+                <span class="spotlight-pill">⚡ 24/7 Serverless Edge Automation · Enterprise Tier</span>
+                <h2 class="spotlight-title">24/7 Automation Board &amp; Interactive Chatbot Flows</h2>
+                <p class="spotlight-desc">Convert newly messaged prospects into sales around the clock. Powered by Cloudflare Workers and Meta Cloud API, your WhatsApp business responds instantly with pre-approved templates, interactive quick-reply buttons, and multi-step list menus — even when you sleep or log out.</p>
+
+                <div class="spotlight-points-list">
+                    <div class="spotlight-point">
+                        <div class="point-icon-box">🌙</div>
+                        <div>
+                            <h3 class="point-title">Sleep-Proof 24/7 Serverless Edge Engine</h3>
+                            <p class="point-desc">Runs entirely serverless on Cloudflare's global edge network. No phone or computer needs to stay awake — dispatches approved Meta template responses within 200ms of any new inbound lead.</p>
+                        </div>
+                    </div>
+
+                    <div class="spotlight-point">
+                        <div class="point-icon-box">🤖</div>
+                        <div>
+                            <h3 class="point-title">Interactive Quick-Reply Buttons &amp; Menu Progression</h3>
+                            <p class="point-desc">Guide customers effortlessly: Inbound Greeting ➔ Location Selection ➔ Dynamic Catalog List ➔ Order Placement ➔ Seamless Live Agent handoff.</p>
+                        </div>
+                    </div>
+
+                    <div class="spotlight-point">
+                        <div class="point-icon-box">📅</div>
+                        <div>
+                            <h3 class="point-title">Smart Auto-Scheduling &amp; Anti-Spam Frequency Controls</h3>
+                            <p class="point-desc">Schedule campaigns for festivals and flash sales with anti-spam cooldown intervals (24h/48h) to protect customer trust and prevent duplicate dispatches.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap; margin-top: 1.75rem;">
+                    <a href="#pricing" class="btn-brand-primary">
+                        Get Enterprise Automation ➔
+                    </a>
+                    <button type="button" class="btn-brand-outline" onclick="replayLandingSim()" style="gap: 6px; font-weight: 700; cursor: pointer;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        Replay Live Simulation
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Interactive WhatsApp Smartphone Simulation Window -->
+            <div style="display: flex; justify-content: center; width: 100%; box-sizing: border-box;">
+                <div class="showcase-window" style="max-width: 440px; width: 100%; padding: 1.25rem; box-sizing: border-box; background: var(--bg-sidebar); border-radius: 16px; border: 1.5px solid var(--border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.4rem;">
+                        <div>
+                            <div style="font-size: 0.92rem; font-weight: 700; color: var(--text-main);">Live Chatbot Automation</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">Real WhatsApp simulation of multi-step bot flow</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <button type="button" class="btn-brand-outline" onclick="replayLandingSim()" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; border-radius: 6px; gap: 4px; cursor: pointer;">
+                                🔄 Replay
+                            </button>
+                            <span style="font-size: 0.68rem; color: #00a884; background: rgba(0,168,132,0.14); padding: 3px 8px; border-radius: 4px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#00a884; animation: pulse 1.5s infinite;"></span> Auto-Play Flow
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Progression Stepper Pills -->
+                    <div style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 0.65rem; margin-bottom: 0.5rem; scrollbar-width: none; -webkit-overflow-scrolling: touch; width: 100%; box-sizing: border-box;">
+                        <div id="lnd-pill-1" class="wa-sim-step-pill active" onclick="focusLandingSimStep(1)">1. Inbound Welcome</div>
+                        <div id="lnd-pill-2" class="wa-sim-step-pill" onclick="focusLandingSimStep(3)">2. Button: India</div>
+                        <div id="lnd-pill-3" class="wa-sim-step-pill" onclick="focusLandingSimStep(4)">3. List Menu</div>
+                        <div id="lnd-pill-4" class="wa-sim-step-pill" onclick="focusLandingSimStep(6)">4. Agent Handoff</div>
+                    </div>
+
+                    <!-- WhatsApp Mock Smartphone Device Screen -->
+                    <div class="wa-sim-device" id="lnd-wa-sim-device">
+                        <!-- Phone Header -->
+                        <div class="wa-sim-header">
+                            <div class="wa-sim-back-btn" title="Back">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </div>
+                            <div class="wa-sim-avatar">I</div>
+                            <div class="wa-sim-contact-info">
+                                <div class="wa-sim-contact-title">
+                                    <span>Inspenox</span>
+                                    <span class="wa-sim-verified-badge" title="Official WhatsApp Business Verified Account">✓</span>
+                                </div>
+                                <div id="lnd-sim-status" class="wa-sim-contact-sub">Official Business Account</div>
+                            </div>
+                            <div class="wa-sim-header-menu">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                            </div>
+                        </div>
+
+                        <!-- Chat Body -->
+                        <div id="lnd-chat-body" class="wa-sim-chat-body">
+                            <div class="wa-sim-date-pill">Today</div>
+                            <div class="wa-sim-security-banner">
+                                🔒 This business uses a secure service from Meta to manage this chat. Tap to learn more.
+                            </div>
+
+                            <!-- 1. Customer Hii -->
+                            <div id="lnd-bubble-1" class="wa-sim-bubble-out" style="padding: 6px 10px;">
+                                <div style="font-size: 0.82rem; color: #e9edef;">Hii</div>
+                                <div class="wa-sim-meta-time">4:51 pm <span class="wa-sim-check-read">✓✓</span></div>
+                            </div>
+
+                            <!-- 2. Bot Welcome & 3 Location Buttons -->
+                            <div id="lnd-bubble-2" class="wa-sim-bubble-in">
+                                <div style="padding: 7px 10px 4px;">
+                                    <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 2px; color: #e9edef; word-break: break-word;">Welcome to Inspenox!</div>
+                                    <div style="font-size: 0.78rem; line-height: 1.35; color: #e9edef; word-break: break-word;">👋 Kindly select your location:</div>
+                                    <div class="wa-sim-meta-time" style="margin-top: 3px;">4:51 pm</div>
+                                </div>
+                                <div class="wa-sim-btn-row">
+                                    <div id="lnd-btn-india" class="wa-sim-action-btn" onclick="triggerLandingSimClick('India')">
+                                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
+                                        India
+                                    </div>
+                                    <div id="lnd-btn-usa" class="wa-sim-action-btn" onclick="triggerLandingSimClick('USA')">
+                                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
+                                        USA
+                                    </div>
+                                    <div id="lnd-btn-uae" class="wa-sim-action-btn" onclick="triggerLandingSimClick('UAE & Others')">
+                                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
+                                        UAE &amp; Others
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Customer Quoted Reply: India -->
+                            <div id="lnd-bubble-3" class="wa-sim-bubble-out" style="padding: 4px 6px;">
+                                <div class="wa-sim-quote-card" style="border-left: 3.5px solid #a855f7;">
+                                    <div class="wa-sim-quote-header" style="color: #c084fc;">
+                                        <span>Inspenox</span>
+                                        <span class="wa-sim-verified-badge" style="width:11px;height:11px;font-size:7px;">✓</span>
+                                    </div>
+                                    <div style="color: #cbd5e1; line-height: 1.3; font-size: 0.68rem; word-break: break-word;">Welcome to Inspenox!<br>👋 Kindly select your location:</div>
+                                </div>
+                                <div style="padding: 2px 4px 2px; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px;">
+                                    <span id="lnd-chosen-loc" style="font-size: 0.82rem; font-weight: 500; color: #e9edef;">India</span>
+                                    <div class="wa-sim-meta-time">4:52 pm <span class="wa-sim-check-read">✓✓</span></div>
+                                </div>
+                            </div>
+
+                            <!-- 4. Bot Menu Template -->
+                            <div id="lnd-bubble-4" class="wa-sim-bubble-in">
+                                <div style="padding: 7px 10px 4px;">
+                                    <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 2px; color: #e9edef; word-break: break-word;">Welcome to Inspenox! ✨</div>
+                                    <div style="font-size: 0.77rem; line-height: 1.35; color: #e9edef; word-break: break-word;">Please select your desired option from the menu below:</div>
+                                    <div class="wa-sim-meta-time" style="margin-top: 3px;">4:52 pm</div>
+                                </div>
+                                <div id="lnd-btn-list" class="wa-sim-list-btn" onclick="triggerLandingSimList()">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                                    Please select
+                                </div>
+                            </div>
+
+                            <!-- 5. Customer Quoted Reply: Place an Order -->
+                            <div id="lnd-bubble-5" class="wa-sim-bubble-out" style="padding: 4px 6px;">
+                                <div class="wa-sim-quote-card" style="border-left: 3.5px solid #22c55e;">
+                                    <div class="wa-sim-quote-header" style="color: #4ade80;">
+                                        <span>Inspenox</span>
+                                        <span class="wa-sim-verified-badge" style="width:11px;height:11px;font-size:7px;">✓</span>
+                                    </div>
+                                    <div style="color: #cbd5e1; line-height: 1.3; font-size: 0.68rem; word-break: break-word;">Welcome to Inspenox! ✨<br>Please select your desired option:</div>
+                                </div>
+                                <div style="padding: 2px 4px 2px; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px;">
+                                    <span id="lnd-chosen-opt" style="font-size: 0.82rem; font-weight: 500; color: #e9edef;">Place an Order</span>
+                                    <div class="wa-sim-meta-time">4:52 pm <span class="wa-sim-check-read">✓✓</span></div>
+                                </div>
+                            </div>
+
+                            <!-- 6. Bot Connecting Live Agent -->
+                            <div id="lnd-bubble-6" class="wa-sim-bubble-in" style="padding: 7px 10px;">
+                                <div style="font-size: 0.79rem; color: #e9edef; line-height: 1.35; word-break: break-word;">⏳ Please wait, connecting you to an Inspenox Live Agent...</div>
+                                <div class="wa-sim-meta-time" style="margin-top: 3px;">4:52 pm</div>
+                            </div>
+                        </div>
+
+                        <!-- Phone Footer -->
+                        <div class="wa-sim-footer">
+                            <div class="wa-sim-input-pill">
+                                <span style="font-size: 1rem; opacity: 0.85;">😊</span>
+                                <span style="flex: 1; font-size: 0.8rem; color: #8696a0;">Message</span>
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#8696a0" stroke-width="2" style="transform: rotate(45deg);"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                            </div>
+                            <div class="wa-sim-mic-btn">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ffffff" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                            </div>
+                        </div>
+
+                        <!-- Edge Status Note -->
+                        <div style="text-align: center; font-size: 0.65rem; color: #8696a0; padding: 4px; background: #0b141a; border-top: 1px solid #1f2c34;">
+                            ⚡ 24/7 Cloudflare Edge Webhook Automation · Meta Cloud API
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Feature Spotlight 3: Multi-Agent Shared Team Inbox (with Tag Filtering & Privacy Number Masking!) -->
     <section id="shared-inbox" class="spotlight-section">
         <div class="spotlight-grid">
@@ -6198,15 +6399,16 @@
                 </div>
 
                 <ul class="sub-plan-features">
-                    <li><span class="feature-check">✓</span> <span><strong>24/7 Cloudflare Edge Automation Board</strong> (Instant Auto-Replies for New Leads)</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span><strong>24/7 Automation Board</strong> (Instant Webhook Auto-Replies &amp; Smart Multi-Trigger Rules)</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span><strong>Smart Campaign Auto-Scheduling</strong> &amp; Automated Recurring Broadcasts</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span><strong>Interactive Multi-Step Chatbot Flows</strong> (Quick-Reply &amp; List Menu Triggers)</span></li>
+                    <li><span class="feature-check highlight">✓</span> <span><strong>Sleep-Proof Cloudflare Edge Execution</strong> (Runs 24/7 without app logged in)</span></li>
                     <li><span class="feature-check">✓</span> <span><strong>Unlimited</strong> WhatsApp business numbers</span></li>
-                    <li><span class="feature-check">✓</span> <span><strong>Unlimited</strong> customer contacts</span></li>
-                    <li><span class="feature-check">✓</span> <span>Manage multiple brands from one dashboard</span></li>
+                    <li><span class="feature-check">✓</span> <span><strong>Unlimited</strong> customer contacts &amp; dynamic tags</span></li>
+                    <li><span class="feature-check">✓</span> <span>Multi-tenant company workspace switcher</span></li>
                     <li><span class="feature-check">✓</span> <span>Unlimited team members with role-based access</span></li>
-                    <li><span class="feature-check">✓</span> <span>Fastest message delivery speed</span></li>
-                    <li><span class="feature-check">✓</span> <span>Personal onboarding & setup assistance</span></li>
-                    <li><span class="feature-check">✓</span> <span>24/7 dedicated support manager</span></li>
-                    <li><span class="feature-check">✓</span> <span>Custom features built for your business</span></li>
+                    <li><span class="feature-check">✓</span> <span>Fastest Tier-3 Meta API delivery speed</span></li>
+                    <li><span class="feature-check">✓</span> <span>Personal onboarding &amp; 24/7 priority SLA manager</span></li>
                 </ul>
 
                 <div class="sub-plan-actions">
@@ -7739,6 +7941,304 @@
                 submitBtn.innerHTML = 'Create Your Account ➔';
             }
         });
+
+        // ==========================================================================
+        // LANDING PAGE INTERACTIVE WHATSAPP SIMULATOR ENGINE (AUTO-PLAY)
+        // ==========================================================================
+        let lndSimTimeouts = [];
+        let isLndSimHovered = false;
+        let lndSimListenersAttached = false;
+
+        function clearLndSimTimers() {
+            lndSimTimeouts.forEach(t => clearTimeout(t));
+            lndSimTimeouts = [];
+        }
+
+        function queueLndSimAction(fn, delayMs) {
+            const t = setTimeout(fn, delayMs);
+            lndSimTimeouts.push(t);
+            return t;
+        }
+
+        function scrollLndSimToElement(el) {
+            const container = document.getElementById('lnd-chat-body');
+            if (!container || !el) return;
+            const targetScroll = Math.max(0, el.offsetTop - 15);
+            container.scrollTo({ top: targetScroll, behavior: 'smooth' });
+        }
+
+        function scrollLndSimToBottom() {
+            const container = document.getElementById('lnd-chat-body');
+            if (container) {
+                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            }
+        }
+
+        function updateLndSimStepperPill(stepNum) {
+            document.querySelectorAll('#automation-flow .wa-sim-step-pill').forEach(p => p.classList.remove('active'));
+            const pill = document.getElementById(`lnd-pill-${stepNum}`);
+            if (pill) pill.classList.add('active');
+        }
+
+        window.focusLandingSimStep = function focusLandingSimStep(stepIndex) {
+            clearLndSimTimers();
+            for (let i = 1; i <= stepIndex; i++) {
+                const b = document.getElementById(`lnd-bubble-${i}`);
+                if (b) {
+                    b.style.display = 'block';
+                    b.style.opacity = '1';
+                }
+            }
+
+            const el = document.getElementById(`lnd-bubble-${stepIndex}`);
+            if (el) {
+                scrollLndSimToElement(el);
+                el.style.transition = 'box-shadow 0.3s ease';
+                el.style.boxShadow = '0 0 0 2px #00a884';
+                setTimeout(() => { el.style.boxShadow = ''; }, 800);
+            }
+
+            let pillNum = 1;
+            if (stepIndex >= 6) pillNum = 4;
+            else if (stepIndex >= 4) pillNum = 3;
+            else if (stepIndex >= 3) pillNum = 2;
+            updateLndSimStepperPill(pillNum);
+
+            queueLndSimAction(() => {
+                if (!isLndSimHovered) startLandingAutoPlay(false);
+            }, 8000);
+        };
+
+        window.triggerLandingSimClick = function triggerLandingSimClick(label) {
+            clearLndSimTimers();
+            const locEl = document.getElementById('lnd-chosen-loc');
+            if (locEl) locEl.textContent = label;
+
+            [1, 2, 3, 4].forEach(i => {
+                const b = document.getElementById(`lnd-bubble-${i}`);
+                if (b) {
+                    b.style.display = 'block';
+                    b.style.opacity = '1';
+                }
+            });
+
+            const b3 = document.getElementById('lnd-bubble-3');
+            if (b3) scrollLndSimToElement(b3);
+            updateLndSimStepperPill(2);
+
+            queueLndSimAction(() => {
+                if (!isLndSimHovered) startLandingAutoPlay(false);
+            }, 8000);
+        };
+
+        window.triggerLandingSimList = function triggerLandingSimList() {
+            clearLndSimTimers();
+            [1, 2, 3, 4, 5, 6].forEach(i => {
+                const b = document.getElementById(`lnd-bubble-${i}`);
+                if (b) {
+                    b.style.display = 'block';
+                    b.style.opacity = '1';
+                }
+            });
+
+            updateLndSimStepperPill(4);
+            setTimeout(() => scrollLndSimToBottom(), 200);
+
+            queueLndSimAction(() => {
+                if (!isLndSimHovered) startLandingAutoPlay(false);
+            }, 8000);
+        };
+
+        window.startLandingAutoPlay = function startLandingAutoPlay(isManual = false) {
+            clearLndSimTimers();
+
+            const container = document.getElementById('lnd-chat-body');
+            if (!container) return;
+
+            const deviceEl = document.getElementById('lnd-wa-sim-device');
+            if (deviceEl && !lndSimListenersAttached) {
+                lndSimListenersAttached = true;
+                deviceEl.addEventListener('mouseenter', () => { isLndSimHovered = true; });
+                deviceEl.addEventListener('mouseleave', () => { isLndSimHovered = false; });
+            }
+
+            const bubbles = [
+                document.getElementById('lnd-bubble-1'),
+                document.getElementById('lnd-bubble-2'),
+                document.getElementById('lnd-bubble-3'),
+                document.getElementById('lnd-bubble-4'),
+                document.getElementById('lnd-bubble-5'),
+                document.getElementById('lnd-bubble-6')
+            ];
+
+            const statusEl = document.getElementById('lnd-sim-status');
+            const indiaBtn = document.getElementById('lnd-btn-india');
+            const listBtn = document.getElementById('lnd-btn-list');
+
+            bubbles.forEach(b => {
+                if (b) {
+                    b.style.display = 'none';
+                    b.style.opacity = '0';
+                }
+            });
+
+            if (indiaBtn) indiaBtn.classList.remove('sim-clicked');
+            if (listBtn) listBtn.classList.remove('sim-clicked');
+
+            if (statusEl) {
+                statusEl.textContent = 'Official Business Account';
+                statusEl.classList.remove('is-typing');
+            }
+            updateLndSimStepperPill(1);
+            container.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Step 1: Customer sends "Hii" (at 300ms)
+            queueLndSimAction(() => {
+                if (bubbles[0]) {
+                    bubbles[0].style.display = 'block';
+                    bubbles[0].style.opacity = '1';
+                    bubbles[0].style.animation = 'waBubbleFadeIn 0.3s ease-out';
+                    container.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }, 300);
+
+            // Step 2a: Bot typing indicator (at 1200ms)
+            queueLndSimAction(() => {
+                if (statusEl) {
+                    statusEl.textContent = 'typing...';
+                    statusEl.classList.add('is-typing');
+                }
+            }, 1200);
+
+            // Step 2b: Bot Welcome & 3 Location Buttons appears (at 2100ms)
+            queueLndSimAction(() => {
+                if (statusEl) {
+                    statusEl.textContent = 'Official Business Account';
+                    statusEl.classList.remove('is-typing');
+                }
+                if (bubbles[1]) {
+                    bubbles[1].style.display = 'block';
+                    bubbles[1].style.opacity = '1';
+                    bubbles[1].style.animation = 'waBubbleFadeIn 0.3s ease-out';
+                    scrollLndSimToElement(bubbles[1]);
+                }
+            }, 2100);
+
+            // Step 3a: Simulate clicking "India" button with pulse animation (at 3600ms)
+            queueLndSimAction(() => {
+                if (indiaBtn) indiaBtn.classList.add('sim-clicked');
+            }, 3600);
+
+            // Step 3b: Customer Quoted reply "India" appears (at 4100ms)
+            queueLndSimAction(() => {
+                if (indiaBtn) indiaBtn.classList.remove('sim-clicked');
+                if (bubbles[2]) {
+                    bubbles[2].style.display = 'block';
+                    bubbles[2].style.opacity = '1';
+                    bubbles[2].style.animation = 'waBubbleFadeIn 0.3s ease-out';
+                    updateLndSimStepperPill(2);
+                    scrollLndSimToElement(bubbles[2]);
+                }
+            }, 4100);
+
+            // Step 4a: Bot typing indicator (at 5200ms)
+            queueLndSimAction(() => {
+                if (statusEl) {
+                    statusEl.textContent = 'typing...';
+                    statusEl.classList.add('is-typing');
+                }
+            }, 5200);
+
+            // Step 4b: Bot Menu List template appears (at 6200ms)
+            queueLndSimAction(() => {
+                if (statusEl) {
+                    statusEl.textContent = 'Official Business Account';
+                    statusEl.classList.remove('is-typing');
+                }
+                if (bubbles[3]) {
+                    bubbles[3].style.display = 'block';
+                    bubbles[3].style.opacity = '1';
+                    bubbles[3].style.animation = 'waBubbleFadeIn 0.3s ease-out';
+                    updateLndSimStepperPill(3);
+                    scrollLndSimToElement(bubbles[3]);
+                }
+            }, 6200);
+
+            // Step 5a: Simulate clicking list menu button "Please select" (at 7600ms)
+            queueLndSimAction(() => {
+                if (listBtn) listBtn.classList.add('sim-clicked');
+            }, 7600);
+
+            // Step 5b: Customer Quoted reply "Place an Order" appears (at 8100ms)
+            queueLndSimAction(() => {
+                if (listBtn) listBtn.classList.remove('sim-clicked');
+                if (bubbles[4]) {
+                    bubbles[4].style.display = 'block';
+                    bubbles[4].style.opacity = '1';
+                    bubbles[4].style.animation = 'waBubbleFadeIn 0.3s ease-out';
+                    scrollLndSimToElement(bubbles[4]);
+                }
+            }, 8100);
+
+            // Step 6a: Bot typing indicator (at 9100ms)
+            queueLndSimAction(() => {
+                if (statusEl) {
+                    statusEl.textContent = 'typing...';
+                    statusEl.classList.add('is-typing');
+                }
+            }, 9100);
+
+            // Step 6b: Bot Live Agent Handoff appears (at 10100ms)
+            queueLndSimAction(() => {
+                if (statusEl) {
+                    statusEl.textContent = 'Official Business Account';
+                    statusEl.classList.remove('is-typing');
+                }
+                if (bubbles[5]) {
+                    bubbles[5].style.display = 'block';
+                    bubbles[5].style.opacity = '1';
+                    bubbles[5].style.animation = 'waBubbleFadeIn 0.3s ease-out';
+                    updateLndSimStepperPill(4);
+                    scrollLndSimToBottom();
+                }
+            }, 10100);
+
+            // Loop: After 8-second pause, check hover and restart auto-play loop!
+            queueLndSimAction(() => {
+                function checkAndLoop() {
+                    if (isLndSimHovered) {
+                        queueLndSimAction(checkAndLoop, 3000);
+                        return;
+                    }
+                    startLandingAutoPlay(false);
+                }
+                checkAndLoop();
+            }, 18000);
+        };
+
+        window.replayLandingSim = function replayLandingSim() {
+            startLandingAutoPlay(true);
+        };
+
+        // Start auto-play when user scrolls into view or on DOMContentLoaded
+        if (typeof IntersectionObserver !== 'undefined') {
+            const obsEl = document.getElementById('automation-flow');
+            if (obsEl) {
+                const simObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            startLandingAutoPlay();
+                            simObserver.disconnect();
+                        }
+                    });
+                }, { threshold: 0.2 });
+                simObserver.observe(obsEl);
+            } else {
+                startLandingAutoPlay();
+            }
+        } else {
+            setTimeout(startLandingAutoPlay, 1000);
+        }
     </script>
 </body>
 </html>

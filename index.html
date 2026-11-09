@@ -1991,14 +1991,17 @@
                     <style>
                         .automation-grid {
                             display: grid;
-                            grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
-                            gap: 1.5rem;
+                            grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+                            gap: 1.25rem;
                             margin-bottom: 1.5rem;
                             align-items: start;
+                            width: 100%;
+                            max-width: 100%;
+                            box-sizing: border-box;
                         }
                         @media (max-width: 1024px) {
                             .automation-grid {
-                                grid-template-columns: 1fr;
+                                grid-template-columns: minmax(0, 1fr);
                             }
                         }
                         .auto-switch {
@@ -2133,8 +2136,8 @@
                         </div>
 
                         <!-- Live Interactive WhatsApp Chat Flow Preview (Inspenox Multi-Step Progression) -->
-                        <div class="card" style="padding: 1.25rem 1.5rem; border-radius: 12px; position: sticky; top: 1rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div class="card wa-sim-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.4rem;">
                                 <div>
                                     <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main);">Interactive Chatbot Preview</h3>
                                     <p style="margin: 0.15rem 0 0; font-size: 0.72rem; color: var(--text-muted);">Real WhatsApp simulation of multi-step button &amp; list automation</p>
@@ -2154,7 +2157,7 @@
                             </div>
 
                             <!-- Progression Event Stepper Pills -->
-                            <div style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 0.65rem; margin-bottom: 0.5rem; scrollbar-width: none;">
+                            <div style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 0.65rem; margin-bottom: 0.5rem; scrollbar-width: none; -webkit-overflow-scrolling: touch; width: 100%; box-sizing: border-box;">
                                 <div id="pill-step-1" class="wa-sim-step-pill active" onclick="focusSimStep(1)">1. Inbound Welcome</div>
                                 <div id="pill-step-2" class="wa-sim-step-pill" onclick="focusSimStep(3)">2. Button: India</div>
                                 <div id="pill-step-3" class="wa-sim-step-pill" onclick="focusSimStep(4)">3. List Menu</div>
@@ -2166,7 +2169,7 @@
                                 <!-- Phone Header (Matching WhatsApp Business verified bar) -->
                                 <div class="wa-sim-header">
                                     <div class="wa-sim-back-btn" title="Back">
-                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                                     </div>
                                     <div class="wa-sim-avatar" id="preview-sim-avatar">
                                         I
@@ -2181,7 +2184,7 @@
                                         </div>
                                     </div>
                                     <div class="wa-sim-header-menu">
-                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                                     </div>
                                 </div>
 
@@ -2204,8 +2207,8 @@
                                     <!-- 2. Bot sends Welcome Location Selection Template (Left side, Dark bubble with Quick Reply Buttons) -->
                                     <div id="sim-bubble-2" class="wa-sim-bubble-in">
                                         <div style="padding: 7px 10px 4px;">
-                                            <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 2px; color: #e9edef;">Welcome to <span class="preview-sim-brand">Inspenox</span>!</div>
-                                            <div style="font-size: 0.79rem; line-height: 1.4; color: #e9edef;">👋 Kindly select your location:</div>
+                                            <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 2px; color: #e9edef; word-break: break-word;">Welcome to <span class="preview-sim-brand">Inspenox</span>!</div>
+                                            <div style="font-size: 0.78rem; line-height: 1.35; color: #e9edef; word-break: break-word;">👋 Kindly select your location:</div>
                                             <div class="wa-sim-meta-time" style="margin-top: 3px;">4:51 pm</div>
                                         </div>
                                         <div class="wa-sim-btn-row">
@@ -2225,16 +2228,16 @@
                                     </div>
 
                                     <!-- 3. Customer Clicks Button 'India' (Right side, Green bubble with Authentic WhatsApp Quoted Preview) -->
-                                    <div id="sim-bubble-3" class="wa-sim-bubble-out" style="padding: 4px;">
+                                    <div id="sim-bubble-3" class="wa-sim-bubble-out" style="padding: 4px 6px;">
                                         <div class="wa-sim-quote-card" style="border-left: 3.5px solid #a855f7;">
                                             <div class="wa-sim-quote-header" style="color: #c084fc;">
                                                 <span class="preview-sim-brand">Inspenox</span>
                                                 <span class="wa-sim-verified-badge" style="width:11px;height:11px;font-size:7px;">✓</span>
                                             </div>
-                                            <div style="color: #cbd5e1; line-height: 1.3; font-size: 0.7rem;">Welcome to <span class="preview-sim-brand">Inspenox</span>!<br>👋 Kindly select your location:</div>
+                                            <div style="color: #cbd5e1; line-height: 1.3; font-size: 0.68rem; word-break: break-word;">Welcome to <span class="preview-sim-brand">Inspenox</span>!<br>👋 Kindly select your location:</div>
                                         </div>
-                                        <div style="padding: 2px 6px 3px; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px;">
-                                            <span style="font-size: 0.82rem; font-weight: 500; color: #e9edef;">India</span>
+                                        <div style="padding: 2px 4px 2px; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px;">
+                                            <span id="sim-chosen-loc" style="font-size: 0.82rem; font-weight: 500; color: #e9edef;">India</span>
                                             <div class="wa-sim-meta-time">4:52 pm <span class="wa-sim-check-read">✓✓</span></div>
                                         </div>
                                     </div>
@@ -2242,37 +2245,35 @@
                                     <!-- 4. Bot Auto-Replies with Menu Options Template (Left side, Dark bubble with Interactive List Button) -->
                                     <div id="sim-bubble-4" class="wa-sim-bubble-in">
                                         <div style="padding: 7px 10px 4px;">
-                                            <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 2px; color: #e9edef;">Welcome to <span class="preview-sim-brand">Inspenox</span>! ✨</div>
-                                            <div style="font-size: 0.79rem; line-height: 1.4; color: #e9edef;">Please select your desired option from the menu below:</div>
+                                            <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 2px; color: #e9edef; word-break: break-word;">Welcome to <span class="preview-sim-brand">Inspenox</span>! ✨</div>
+                                            <div style="font-size: 0.77rem; line-height: 1.35; color: #e9edef; word-break: break-word;">Please select your desired option from the menu below:</div>
                                             <div class="wa-sim-meta-time" style="margin-top: 3px;">4:52 pm</div>
                                         </div>
                                         <div id="sim-btn-list" class="wa-sim-list-btn" onclick="openSimListSheet()">
-                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
                                             Please select
                                         </div>
                                     </div>
 
                                     <!-- 5. Customer Selects 'Place an Order' (Right side, Green bubble with Quoted List Preview) -->
-                                    <div id="sim-bubble-5" class="wa-sim-bubble-out" style="padding: 4px;">
+                                    <div id="sim-bubble-5" class="wa-sim-bubble-out" style="padding: 4px 6px;">
                                         <div class="wa-sim-quote-card" style="border-left: 3.5px solid #22c55e;">
                                             <div class="wa-sim-quote-header" style="color: #4ade80;">
                                                 <span class="preview-sim-brand">Inspenox</span>
                                                 <span class="wa-sim-verified-badge" style="width:11px;height:11px;font-size:7px;">✓</span>
                                             </div>
-                                            <div style="color: #cbd5e1; line-height: 1.3; font-size: 0.7rem;">Welcome to <span class="preview-sim-brand">Inspenox</span>! ✨<br>Please select your desired option from the menu below:</div>
+                                            <div style="color: #cbd5e1; line-height: 1.3; font-size: 0.68rem; word-break: break-word;">Welcome to <span class="preview-sim-brand">Inspenox</span>! ✨<br>Please select your desired option:</div>
                                         </div>
-                                        <div style="padding: 2px 6px 3px; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px;">
-                                            <span style="font-size: 0.82rem; font-weight: 500; color: #e9edef;">Place an Order</span>
+                                        <div style="padding: 2px 4px 2px; display: flex; justify-content: space-between; align-items: flex-end; gap: 8px;">
+                                            <span id="sim-chosen-opt" style="font-size: 0.82rem; font-weight: 500; color: #e9edef;">Place an Order</span>
                                             <div class="wa-sim-meta-time">4:52 pm <span class="wa-sim-check-read">✓✓</span></div>
                                         </div>
                                     </div>
 
                                     <!-- 6. Bot Auto-Replies connecting to live agent (Left side, Dark bubble) -->
-                                    <div id="sim-bubble-6" class="wa-sim-bubble-in">
-                                        <div style="padding: 7px 10px; display: flex; justify-content: space-between; align-items: flex-end; gap: 10px;">
-                                            <div style="font-size: 0.8rem; color: #e9edef; line-height: 1.4;">⏳ Please wait, connecting you to an Inspenox Live Agent...</div>
-                                            <div class="wa-sim-meta-time">4:52 pm</div>
-                                        </div>
+                                    <div id="sim-bubble-6" class="wa-sim-bubble-in" style="padding: 7px 10px;">
+                                        <div style="font-size: 0.79rem; color: #e9edef; line-height: 1.35; word-break: break-word;">⏳ Please wait, connecting you to an Inspenox Live Agent...</div>
+                                        <div class="wa-sim-meta-time" style="margin-top: 3px;">4:52 pm</div>
                                     </div>
                                 </div>
 
