@@ -2572,6 +2572,7 @@ window.clearTemplatesCache = () => {
 
 let selectedCustomerIds = [];
 let activeInboxCustomer = null;
+var stagedChatFile = null;
 
 window.openChangePass = function openChangePass() {
     const modal = document.getElementById('change-password-modal');
@@ -10925,7 +10926,7 @@ async function fetchChatMessages(isInitial = false) {
 }
 
 // Staged file attachment handling for chat input
-let stagedChatFile = null;
+var stagedChatFile = null;
 
 document.getElementById('chat-attach-btn')?.addEventListener('click', () => {
     document.getElementById('chat-file-input')?.click();
