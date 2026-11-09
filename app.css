@@ -2406,6 +2406,85 @@ tr:hover td {
     padding: 2rem;
 }
 
+/* 🎯 Table Empty State Fix: Ensure td elements render as table-cells spanning 100% full width */
+td.empty-state,
+th.empty-state {
+    display: table-cell !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 3.25rem 1.5rem !important;
+    color: var(--text-muted) !important;
+    width: 100% !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+}
+
+td.empty-state .empty-state-content,
+.table-empty-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+    max-width: 480px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+td.empty-state .empty-state-icon,
+.table-empty-icon {
+    font-size: 2.25rem;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+    display: inline-block;
+}
+
+td.empty-state .empty-state-title,
+.table-empty-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.2px;
+}
+
+td.empty-state .empty-state-desc,
+.table-empty-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    max-width: 440px;
+    line-height: 1.45;
+}
+
+/* ⏳ Meta WhatsApp 6-Hour Contact Maturation & Audience Protection */
+.bc-cust-maturing {
+    opacity: 0.75 !important;
+    background: rgba(245, 158, 11, 0.04) !important;
+    border-left: 3px solid #f59e0b !important;
+    cursor: not-allowed !important;
+}
+
+.bc-cust-maturing input[type="checkbox"] {
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+}
+
+.bc-maturing-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #d97706;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.28);
+    border-radius: 4px;
+    padding: 2px 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
 .empty-inbox-icon svg {
     width: 64px !important;
     height: 64px !important;

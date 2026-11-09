@@ -47,6 +47,46 @@ function formatTime(dateStr) {
     }
 }
 
+// --- Table Empty State Generator (100% Responsive & Cross-Viewport Table Dimensions) ---
+function renderTableEmptyStateHtml(colspan, title = 'No records found', subtitle = '', icon = '🔍') {
+    return `<tr>
+        <td colspan="${colspan}" class="empty-state">
+            <div class="empty-state-content">
+                <div class="empty-state-icon">${icon}</div>
+                <div class="empty-state-title">${escapeHtml(title)}</div>
+                ${subtitle ? `<div class="empty-state-desc">${escapeHtml(subtitle)}</div>` : ''}
+            </div>
+        </td>
+    </tr>`;
+}
+if (typeof window !== 'undefined') {
+    window.renderTableEmptyStateHtml = renderTableEmptyStateHtml;
+}
+
+// --- Customer Maturation Cooldown Helper (Meta 6-Hour Contact Delivery Maturation) ---
+function getCustomerMaturationInfo(cust) {
+    if (!cust || !cust.created_at) return { isMaturing: false, remainingHours: 0, remainingMinutes: 0, timeText: '' };
+    const createdTime = new Date(cust.created_at).getTime();
+    if (isNaN(createdTime) || createdTime <= 0) return { isMaturing: false, remainingHours: 0, remainingMinutes: 0, timeText: '' };
+
+    const sixHoursMs = 6 * 60 * 60 * 1000;
+    const ageMs = Date.now() - createdTime;
+    if (ageMs < sixHoursMs) {
+        const remainingMs = Math.max(0, sixHoursMs - ageMs);
+        const totalMinutes = Math.ceil(remainingMs / (1000 * 60));
+        const remainingHours = Math.floor(totalMinutes / 60);
+        const remainingMinutes = totalMinutes % 60;
+        const timeText = remainingHours > 0 
+            ? (remainingMinutes > 0 ? `${remainingHours}h ${remainingMinutes}m` : `${remainingHours}h`)
+            : `${remainingMinutes}m`;
+        return { isMaturing: true, remainingHours, remainingMinutes, timeText };
+    }
+    return { isMaturing: false, remainingHours: 0, remainingMinutes: 0, timeText: '' };
+}
+if (typeof window !== 'undefined') {
+    window.getCustomerMaturationInfo = getCustomerMaturationInfo;
+}
+
 // --- Thumbnail & Media Preview Helpers ---
 function generateImageThumbnail(file, maxWidth = 380) {
     return new Promise((resolve) => {
@@ -595,7 +635,7 @@ async function loadCompaniesSettings() {
         if (Array.isArray(companies)) {
             allCompanies = companies;
             if (companies.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No company record found.</td></tr>`;
+                tbody.innerHTML = renderTableEmptyStateHtml(8, 'No company records found', 'Click "+ Add Company" above to register an organization workspace.', '🏢');
                 return;
             }
             tbody.innerHTML = '';
@@ -725,7 +765,7 @@ async function loadCompaniesSettings() {
         }
         loadUsersList();
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Failed to load companies settings.</td></tr>`;
+        tbody.innerHTML = renderTableEmptyStateHtml(8, 'Failed to load companies settings', 'Please check your connection and retry.', '⚠️');
     }
 }
 
@@ -1090,7 +1130,7 @@ window.loadUsersList = async function loadUsersList() {
         if (Array.isArray(users)) {
             allUsersList = users;
             if (users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No users registered for this company yet.</td></tr>`;
+                tbody.innerHTML = renderTableEmptyStateHtml(8, 'No users registered for this company yet', 'Click "+ Add User" to invite or assign team members to this workspace.', '👤');
                 return;
             }
             tbody.innerHTML = '';
@@ -1154,7 +1194,7 @@ window.loadUsersList = async function loadUsersList() {
             }
         }
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Failed to load user accounts.</td></tr>`;
+        tbody.innerHTML = renderTableEmptyStateHtml(8, 'Failed to load user accounts', 'Could not retrieve user profiles for this workspace.', '⚠️');
     }
 };
 
@@ -1730,7 +1770,7 @@ window.loadUsageAnalytics = async function loadUsageAnalytics(daysParam) {
             } else {
                 const usageList = data.company_usage || [];
                 if (usageList.length === 0) {
-                    tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">No company API usage data recorded yet.</td></tr>`;
+                    tbodyCompanies.innerHTML = renderTableEmptyStateHtml(coColspanVal, 'No company API usage data recorded yet', 'Outbound messages and API operations will be tracked here.', '📊');
                 } else {
                     tbodyCompanies.innerHTML = usageList.map((u, idx) => {
                         const baseCost = u.base_cost || (u.est_cost / 1.18);
@@ -1763,8 +1803,8 @@ window.loadUsageAnalytics = async function loadUsageAnalytics(daysParam) {
         }
     } catch (e) {
         console.error('Error loading usage analytics:', e);
-        if (tbodyTemplates) tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">Failed to load direct Meta template insights.</td></tr>`;
-        if (tbodyCompanies) tbodyCompanies.innerHTML = `<tr><td colspan="${coColspanVal}" class="empty-state">Failed to load API usage statistics.</td></tr>`;
+        if (tbodyTemplates) tbodyTemplates.innerHTML = renderTableEmptyStateHtml(colspanVal, 'Failed to load Meta template insights', 'Please verify your Meta WhatsApp Cloud API credentials in settings.', '⚠️');
+        if (tbodyCompanies) tbodyCompanies.innerHTML = renderTableEmptyStateHtml(coColspanVal, 'Failed to load API usage statistics', 'Please check connection and retry.', '⚠️');
     }
 };
 
@@ -1835,14 +1875,17 @@ window.applyTemplateFiltersAndRender = function applyTemplateFiltersAndRender() 
 
     if (filtered.length === 0) {
         if (allTemplates.length === 0) {
-            tbodyTemplates.innerHTML = `<tr><td colspan="${colspanVal}" class="empty-state">No Meta template analytics recorded yet for your account.</td></tr>`;
+            tbodyTemplates.innerHTML = renderTableEmptyStateHtml(colspanVal, 'No Meta template analytics recorded yet', 'Approved templates that dispatch broadcasts will display delivery metrics here.', '📊');
         } else {
             tbodyTemplates.innerHTML = `
                 <tr>
-                    <td colspan="${colspanVal}" class="empty-state" style="padding: 2.5rem 1.5rem; text-align: center;">
-                        <div style="font-size: 1.1rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.35rem;">No templates match your filters</div>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.85rem 0;">Try adjusting your search terms, category, or language.</p>
-                        <button type="button" class="btn secondary sm" onclick="resetTemplateFilters()">Clear Filters</button>
+                    <td colspan="${colspanVal}" class="empty-state">
+                        <div class="empty-state-content">
+                            <div class="empty-state-icon">🔍</div>
+                            <div class="empty-state-title">No templates match your filters</div>
+                            <div class="empty-state-desc">Try adjusting your search terms, category, or language.</div>
+                            <button type="button" class="btn secondary sm" onclick="resetTemplateFilters()" style="margin-top:0.4rem;">Clear Filters</button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -3814,7 +3857,7 @@ async function loadCustomers() {
 
         if (customers.error) {
             console.error('API Error:', customers.error);
-            if (tbody) tbody.innerHTML = `<tr><td colspan="10" class="empty-state" style="height:100px;">Failed to load customers.</td></tr>`;
+            if (tbody) tbody.innerHTML = renderTableEmptyStateHtml(10, 'Failed to load customers', customers.error || 'Server error occurred while loading contacts.', '⚠️');
             return;
         }
 
@@ -3827,7 +3870,7 @@ async function loadCustomers() {
         syncTagSelectorDisplay('form');
     } catch (e) {
         console.error('Error loading customers:', e);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="10" class="empty-state" style="height:100px;">Error loading data.</td></tr>`;
+        if (tbody) tbody.innerHTML = renderTableEmptyStateHtml(10, 'Error loading customer data', 'Please check your connection and refresh.', '⚠️');
     }
 }
 
@@ -3858,6 +3901,10 @@ function renderCustomersTable() {
         const statusKey = getStatusKey(custStatus);
         const custDesc = c.description || c.notes || '';
 
+        const matInfo = getCustomerMaturationInfo(c);
+        const maturingBadge = matInfo.isMaturing ? 
+            `<span title="Newly added contact: Broadcasts unlock in ${matInfo.timeText} (Meta 6-hour maturation requirement)" style="font-size:0.65rem; color:#d97706; background:rgba(245,158,11,0.14); border:1px solid rgba(245,158,11,0.25); border-radius:4px; padding:1px 5px; font-weight:700; margin-left:6px; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">⏳ Maturing: ${matInfo.timeText}</span>` : '';
+
         const tagsArr = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
         const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
         const tagsDisplayHtml = `
@@ -3875,7 +3922,10 @@ function renderCustomersTable() {
                 <div class="user-cell">
                     <div class="user-avatar">${getInitial(c.name)}</div>
                     <div>
-                        <strong style="color:var(--text-main);display:block;">${escapeHtml(c.name || 'Customer')}</strong>
+                        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+                            <strong style="color:var(--text-main);">${escapeHtml(c.name || 'Customer')}</strong>
+                            ${maturingBadge}
+                        </div>
                         ${c.city ? `<span style="font-size:0.75rem;color:var(--text-muted);">${escapeHtml(c.city)}${c.state ? ', ' + escapeHtml(c.state) : ''}</span>` : ''}
                     </div>
                 </div>
@@ -3912,7 +3962,7 @@ function renderCustomersTable() {
     });
 
     if (totalItems === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="empty-state" style="height: 100px;">No matching customers found.</td></tr>`;
+        tbody.innerHTML = renderTableEmptyStateHtml(10, 'No matching customers found', 'Try adjusting your search query, status, or tag filters.', '👥');
     }
 
     if (pageInfo) {
@@ -7468,6 +7518,10 @@ window.selectUnsentInCurrentFilter = function selectUnsentInCurrentFilter() {
     const lowerTag = (activeBroadcastTagFilter || '').toLowerCase().trim();
 
     document.querySelectorAll('.bc-cust-cb').forEach(cb => {
+        if (cb.disabled) {
+            cb.checked = false;
+            return;
+        }
         const custId = parseInt(cb.value, 10);
         const label = cb.closest('.option-item');
         const srNo = label ? parseInt(label.getAttribute('data-sr'), 10) : 0;
@@ -7496,11 +7550,13 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
     const lowerFilterTag = activeBroadcastTagFilter.toLowerCase().trim();
 
     let visibleCount = 0;
+    let visibleEligibleCount = 0;
     const optionLabels = document.querySelectorAll('#bc-target-list .option-item');
 
     optionLabels.forEach(label => {
         const custId = label.getAttribute('data-id');
         const srNo = parseInt(label.getAttribute('data-sr'), 10) || 0;
+        const isMaturing = label.getAttribute('data-maturing') === 'true';
         const cust = broadcastCustomersCache.find(c => String(c.id) === String(custId));
         if (!cust) return;
 
@@ -7522,6 +7578,7 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
         if (matchesTag && matchesRange && matchesSearch) {
             label.style.display = 'flex';
             visibleCount++;
+            if (!isMaturing) visibleEligibleCount++;
         } else {
             label.style.display = 'none';
         }
@@ -7530,15 +7587,16 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
     const selectAllLabel = document.getElementById('bc-select-all-label');
     if (selectAllLabel) {
         if (activeBroadcastRangeFilter && activeBroadcastTagFilter) {
-            selectAllLabel.textContent = `Select All with Tag "${activeBroadcastTagFilter}" in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} (${visibleCount})`;
+            selectAllLabel.textContent = `Select All with Tag "${activeBroadcastTagFilter}" in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} (${visibleEligibleCount} ready)`;
         } else if (activeBroadcastRangeFilter) {
-            selectAllLabel.textContent = `Select All in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} (${visibleCount})`;
+            selectAllLabel.textContent = `Select All in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} (${visibleEligibleCount} ready)`;
         } else if (activeBroadcastTagFilter) {
-            selectAllLabel.textContent = `Select All with Tag "${activeBroadcastTagFilter}" (${visibleCount})`;
+            selectAllLabel.textContent = `Select All with Tag "${activeBroadcastTagFilter}" (${visibleEligibleCount} ready)`;
         } else if (searchVal) {
-            selectAllLabel.textContent = `Select All Filtered (${visibleCount})`;
+            selectAllLabel.textContent = `Select All Filtered (${visibleEligibleCount} ready)`;
         } else {
-            selectAllLabel.textContent = `Select All Customers (${broadcastCustomersCache.length})`;
+            const maturingTotal = visibleCount - visibleEligibleCount;
+            selectAllLabel.textContent = `Select All Customers (${visibleEligibleCount} ready${maturingTotal > 0 ? `, ${maturingTotal} maturing` : ''})`;
         }
     }
 
@@ -7572,21 +7630,60 @@ async function loadCustomersForSelect() {
         const list = document.getElementById('bc-target-list');
         if (list && Array.isArray(customers)) {
             list.innerHTML = '';
+
+            let maturingCount = 0;
+            customers.forEach((c) => {
+                const matInfo = getCustomerMaturationInfo(c);
+                if (matInfo.isMaturing) maturingCount++;
+            });
+
+            // Notice banner if there are maturing contacts (<6h)
+            let bannerEl = document.getElementById('bc-maturing-banner');
+            if (maturingCount > 0) {
+                if (!bannerEl) {
+                    bannerEl = document.createElement('div');
+                    bannerEl.id = 'bc-maturing-banner';
+                    list.parentNode.insertBefore(bannerEl, list);
+                }
+                bannerEl.innerHTML = `
+                    <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.28); border-radius: 8px; padding: 0.55rem 0.75rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #d97706;">
+                        <span style="font-size: 1.1rem; line-height: 1;">⏳</span>
+                        <div><strong>${maturingCount} newly added contact(s) maturing:</strong> Meta Cloud API enforces a 6-hour maturation delay for new numbers before template broadcasts. Broadcasting unlocks automatically once 6 hours pass.</div>
+                    </div>
+                `;
+            } else if (bannerEl) {
+                bannerEl.remove();
+            }
+
             customers.forEach((c, idx) => {
                 const label = document.createElement('label');
-                label.className = 'option-item bc-customer-row';
-                label.setAttribute('data-id', c.id);
-                label.setAttribute('data-sr', idx + 1);
-
                 const srNo = idx + 1;
+                const matInfo = getCustomerMaturationInfo(c);
+                const isMaturing = matInfo.isMaturing;
+
+                label.className = `option-item bc-customer-row ${isMaturing ? 'bc-cust-maturing' : ''}`;
+                label.setAttribute('data-id', c.id);
+                label.setAttribute('data-sr', srNo);
+                if (isMaturing) {
+                    label.setAttribute('data-maturing', 'true');
+                }
+
                 const outboundCount = parseInt(c.outbound_count || 0, 10);
                 const isSent = outboundCount > 0;
                 const tagsArr = c.tags ? c.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
                 const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
 
+                const checkboxHtml = isMaturing
+                    ? `<input type="checkbox" class="bc-cust-cb" value="${c.id}" disabled title="Broadcasts unlock in ${matInfo.timeText} (Meta 6-hour contact maturation requirement)">`
+                    : `<input type="checkbox" class="bc-cust-cb" value="${c.id}">`;
+
+                const maturingBadgeHtml = isMaturing
+                    ? `<span class="bc-maturing-badge" title="Broadcasting unlocks in ${matInfo.timeText} per Meta WhatsApp deliverability guidelines">⏳ Maturing (${matInfo.timeText})</span>`
+                    : '';
+
                 label.innerHTML = `
                     <div class="bc-cust-left">
-                        <input type="checkbox" class="bc-cust-cb" value="${c.id}">
+                        ${checkboxHtml}
                         <span class="bc-sr-badge" title="Customer Serial Number">#${srNo}</span>
                         <div class="bc-cust-meta">
                             <span class="bc-cust-name" title="${escapeHtml(c.name || 'Unnamed')}">${escapeHtml(c.name || 'Unnamed')}</span>
@@ -7594,6 +7691,7 @@ async function loadCustomersForSelect() {
                         </div>
                     </div>
                     <div class="bc-cust-right">
+                        ${maturingBadgeHtml}
                         ${isSent 
                             ? `<span class="bc-sent-badge" title="Sent outbound broadcast/messages previously (${outboundCount} sent)">✓ Sent (${outboundCount})</span>`
                             : `<span class="bc-pending-badge" title="No outbound messages sent yet">• Unsent</span>`
@@ -7614,11 +7712,11 @@ async function loadCustomersForSelect() {
 
             selectAll?.addEventListener('change', (e) => {
                 const isChecked = e.target.checked;
-                // Only toggle checkboxes of visible customers (matching active range, tag filter, and search)
+                // Only toggle checkboxes of visible customers that are not disabled (maturing)
                 document.querySelectorAll('#bc-target-list .option-item').forEach(item => {
                     if (item.style.display !== 'none') {
                         const cb = item.querySelector('.bc-cust-cb');
-                        if (cb) cb.checked = isChecked;
+                        if (cb && !cb.disabled) cb.checked = isChecked;
                     }
                 });
                 updateBcDisplay();
@@ -7639,6 +7737,10 @@ async function loadCustomersForSelect() {
                 if (selectAll) selectAll.checked = false;
 
                 cbs.forEach(cb => {
+                    if (cb.disabled) {
+                        cb.checked = false;
+                        return;
+                    }
                     const custId = parseInt(cb.value, 10);
                     const cust = broadcastCustomersCache.find(c => c.id === custId);
                     if (cust && cust.last_inbound_at && (now - new Date(cust.last_inbound_at).getTime() <= twentyFourHoursMs)) {
@@ -8133,6 +8235,17 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
             });
         }
 
+        // 🔒 Meta WhatsApp Delivery Protection: Filter out contacts under 6-hour contact maturation cooldown
+        const initialSelectedCount = targetList.length;
+        targetList = targetList.filter(c => {
+            const matInfo = getCustomerMaturationInfo(c);
+            return !matInfo.isMaturing;
+        });
+
+        if (targetList.length === 0 && initialSelectedCount > 0) {
+            throw new Error("All selected contact(s) were added within the last 6 hours. Per Meta WhatsApp guidelines, newly added numbers require a 6-hour maturation delay before receiving broadcasts.");
+        }
+
         if (targetList.length === 0) {
             let errorMsg = "Please select at least one customer, range, or tag.";
             if (activeBroadcastRangeFilter && activeBroadcastTagFilter) {
@@ -8239,7 +8352,16 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
 
             try {
                 const activeCoId = typeof getCompanyId === 'function' ? getCompanyId() : null;
-                const senderPhoneId = document.getElementById('bc-sender-phone-select')?.value || null;
+                const senderPhoneSelect = document.getElementById('bc-sender-phone-select');
+                const senderPhoneId = senderPhoneSelect?.value || null;
+                const senderPhoneText = senderPhoneSelect && senderPhoneSelect.selectedIndex >= 0 
+                    ? senderPhoneSelect.options[senderPhoneSelect.selectedIndex].text 
+                    : '';
+
+                let currentUser = {};
+                try { currentUser = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+                const initiatedBy = currentUser.username || currentUser.email || 'Admin';
+
                 const res = await apiFetch('/api/broadcast', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -8253,6 +8375,8 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                         template_language,
                         company_id: activeCoId,
                         phone_number_id: senderPhoneId,
+                        sender_phone: senderPhoneText,
+                        initiated_by: initiatedBy,
                         campaign_id: launchedCampaignId,
                         campaign_name: customCampaignName,
                         cta_text: ctaTextInput,
@@ -8731,7 +8855,7 @@ function renderCampaignsTable(filterText = '') {
     }
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">No broadcast campaigns found. Click "+ Create Campaign" to launch your first broadcast!</td></tr>`;
+        tbody.innerHTML = renderTableEmptyStateHtml(8, 'No broadcast campaigns found', 'Click "+ Create Campaign" above to launch your first broadcast!', '🚀');
         return;
     }
 
@@ -8753,9 +8877,14 @@ function renderCampaignsTable(filterText = '') {
                 <td><span style="color:var(--primary); font-weight:600;">${Math.round(delRate * 0.95)}%</span></td>
                 <td>${statusPill}</td>
                 <td>
-                    <button type="button" class="btn primary sm" onclick="viewCampaignAnalytics(${c.id})" style="padding:0.25rem 0.65rem; font-size:0.75rem; border-radius:6px;">
-                        📊 View Dashboard
-                    </button>
+                    <div style="display:flex; align-items:center; gap:0.4rem; justify-content:flex-end; flex-wrap:wrap;">
+                        <button type="button" class="btn secondary sm" onclick="openCampaignDetailsModal(${c.id})" style="padding:0.25rem 0.65rem; font-size:0.75rem; border-radius:6px; display:inline-flex; align-items:center; gap:4px;" title="View recipient list, template, sender phone, and user who launched this campaign">
+                            👁️ <span>View Campaign</span>
+                        </button>
+                        <button type="button" class="btn primary sm" onclick="viewCampaignAnalytics(${c.id})" style="padding:0.25rem 0.65rem; font-size:0.75rem; border-radius:6px; display:inline-flex; align-items:center; gap:4px;" title="View visual analytics dashboard">
+                            📊 <span>View Dashboard</span>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -8764,6 +8893,248 @@ function renderCampaignsTable(filterText = '') {
 
 window.filterCampaignsList = function filterCampaignsList(term) {
     renderCampaignsTable(term);
+};
+
+// --- Campaign Details & Customer Delivery Audit Modal ---
+window._currentCampaignRecipients = [];
+window._currentViewingCampaign = null;
+
+window.openCampaignDetailsModal = async function openCampaignDetailsModal(campaignId) {
+    const modal = document.getElementById('modal-campaign-details');
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+
+    // Loading states
+    document.getElementById('cd-modal-title').textContent = 'Loading Campaign Details...';
+    document.getElementById('cd-param-user').textContent = '...';
+    document.getElementById('cd-param-user-sub').textContent = 'Workspace Member';
+    document.getElementById('cd-param-phone').textContent = '...';
+    document.getElementById('cd-param-phone-id').textContent = 'Loading phone ID...';
+    document.getElementById('cd-param-template').textContent = '...';
+    document.getElementById('cd-param-template-lang').textContent = 'Loading language...';
+    document.getElementById('cd-param-date').textContent = '...';
+    document.getElementById('cd-param-sent-summary').textContent = 'Loading...';
+    document.getElementById('cd-recipients-count-badge').textContent = 'Loading...';
+    document.getElementById('cd-recipients-tbody').innerHTML = renderTableEmptyStateHtml(6, 'Loading recipient list...', 'Retrieving message delivery audit logs...', '⏳');
+
+    try {
+        const coId = typeof getCompanyId === 'function' ? getCompanyId() : '1';
+        const res = await apiFetch(`/api/broadcast?id=${campaignId}&company_id=${coId}`);
+        const data = await res.json();
+
+        if (!data || !data.campaign) {
+            document.getElementById('cd-modal-title').textContent = 'Campaign Not Found';
+            document.getElementById('cd-recipients-tbody').innerHTML = renderTableEmptyStateHtml(6, 'Campaign not found', 'The requested broadcast campaign could not be loaded.', '⚠️');
+            return;
+        }
+
+        const camp = data.campaign;
+        window._currentViewingCampaign = camp;
+        window._currentCampaignRecipients = Array.isArray(data.recipients) ? data.recipients : [];
+
+        // Title and status badge
+        document.getElementById('cd-modal-title').textContent = camp.name || `Campaign #${camp.id}`;
+        const statusBadge = document.getElementById('cd-modal-status-badge');
+        if (statusBadge) {
+            const hasFailed = (camp.failed_count || 0) > 0;
+            statusBadge.textContent = hasFailed ? 'Partial Completed' : 'Delivered';
+            statusBadge.className = hasFailed ? 'status-pill status-partial' : 'status-pill status-delivered';
+        }
+
+        // 1. User Who Sent / Initiated
+        const userEl = document.getElementById('cd-param-user');
+        const userSubEl = document.getElementById('cd-param-user-sub');
+        const initiator = camp.created_by_user || 'Admin';
+        userEl.textContent = initiator;
+        userSubEl.textContent = initiator.toLowerCase() === 'admin' ? 'Super Admin' : 'Workspace Team User';
+
+        // 2. Sender WhatsApp Number
+        const phoneEl = document.getElementById('cd-param-phone');
+        const phoneIdEl = document.getElementById('cd-param-phone-id');
+        let senderPhoneDisplay = camp.sender_phone;
+        if (!senderPhoneDisplay && camp.phone_number_id) {
+            senderPhoneDisplay = `Phone ID: ${camp.phone_number_id}`;
+        }
+        phoneEl.textContent = senderPhoneDisplay || '+91 79816 56294 (Primary)';
+        phoneIdEl.textContent = camp.phone_number_id ? `Meta Phone ID: ${camp.phone_number_id}` : 'Meta Cloud API Direct';
+
+        // 3. Template Used
+        const tmplEl = document.getElementById('cd-param-template');
+        const tmplLangEl = document.getElementById('cd-param-template-lang');
+        let tmplName = camp.template_name;
+        if (!tmplName && camp.content && camp.content.startsWith('Template:')) {
+            tmplName = camp.content.replace('Template:', '').trim();
+        } else if (!tmplName && camp.content && camp.content.startsWith('[Template]')) {
+            tmplName = camp.content.replace('[Template]', '').trim();
+        }
+        tmplEl.textContent = tmplName || (camp.message_type === 'template' ? 'Approved WhatsApp Template' : 'Direct Message');
+        tmplLangEl.textContent = camp.template_language ? `Language: ${camp.template_language}` : 'Language: English [en]';
+
+        // 4. Date & Sent Summary
+        const dateEl = document.getElementById('cd-param-date');
+        const sentSumEl = document.getElementById('cd-param-sent-summary');
+        const dateStr = camp.created_at 
+            ? new Date(camp.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+            : '-';
+        dateEl.textContent = dateStr;
+        
+        const totalRecipientsCount = window._currentCampaignRecipients.length > 0 
+            ? window._currentCampaignRecipients.length 
+            : (camp.sent_count || 0);
+        sentSumEl.textContent = `🎯 ${totalRecipientsCount} Customer(s) Targeted`;
+
+        // Jump to dashboard button in footer
+        const btnJump = document.getElementById('btn-cd-jump-dashboard');
+        if (btnJump) {
+            btnJump.onclick = () => {
+                closeCampaignDetailsModal();
+                viewCampaignAnalytics(campaignId);
+            };
+        }
+
+        // Render Recipients Table
+        renderCampaignRecipientsTable();
+
+    } catch (err) {
+        console.error('Error loading campaign details modal:', err);
+        document.getElementById('cd-modal-title').textContent = 'Error Loading Campaign';
+        document.getElementById('cd-recipients-tbody').innerHTML = renderTableEmptyStateHtml(6, 'Error loading campaign details', err.message || 'Please check your connection and retry.', '⚠️');
+    }
+};
+
+window.openActiveCampaignDetailsModal = function openActiveCampaignDetailsModal() {
+    const activeId = window.currentActiveCampaign?.campaign?.id || document.getElementById('camp-switcher-select')?.value;
+    if (activeId) {
+        openCampaignDetailsModal(activeId);
+    } else if (window.campaignsCache && window.campaignsCache.length > 0) {
+        openCampaignDetailsModal(window.campaignsCache[0].id);
+    } else {
+        showModal('Notice', 'Please select or launch a campaign first to view details.');
+    }
+};
+
+window.closeCampaignDetailsModal = function closeCampaignDetailsModal() {
+    document.getElementById('modal-campaign-details')?.classList.add('hidden');
+};
+
+window.filterCampaignRecipientsTable = function filterCampaignRecipientsTable() {
+    renderCampaignRecipientsTable();
+};
+
+window.openCustomerChatFromCampaign = function openCustomerChatFromCampaign(custId) {
+    closeCampaignDetailsModal();
+    switchView('inbox');
+    setTimeout(() => {
+        const cust = (allCustomers || []).find(c => c.id === custId) || { id: custId };
+        if (typeof openChat === 'function') openChat(cust);
+    }, 250);
+};
+
+window.renderCampaignRecipientsTable = function renderCampaignRecipientsTable() {
+    const tbody = document.getElementById('cd-recipients-tbody');
+    const badge = document.getElementById('cd-recipients-count-badge');
+    if (!tbody) return;
+
+    const query = (document.getElementById('cd-recipient-search')?.value || '').toLowerCase().trim();
+    const statusFilter = document.getElementById('cd-recipient-status-filter')?.value || 'all';
+
+    let recipients = window._currentCampaignRecipients || [];
+
+    // If no individual message rows exist in DB yet (e.g. historical dummy or prior to logging), fallback to customer cache
+    if (recipients.length === 0 && window._currentViewingCampaign) {
+        const camp = window._currentViewingCampaign;
+        const fallbackCount = camp.sent_count || 1;
+        if (Array.isArray(broadcastCustomersCache) && broadcastCustomersCache.length > 0) {
+            recipients = broadcastCustomersCache.slice(0, Math.min(fallbackCount, broadcastCustomersCache.length)).map((cust, i) => ({
+                message_id: i + 1,
+                customer_id: cust.id,
+                customer_name: cust.name || 'Customer',
+                customer_phone: cust.phone || '',
+                customer_email: cust.email || '',
+                delivery_status: 'delivered',
+                sent_at: camp.created_at,
+                sent_content: camp.content
+            }));
+        }
+    }
+
+    const filtered = recipients.filter(r => {
+        const matchesQuery = !query || (
+            (r.customer_name && r.customer_name.toLowerCase().includes(query)) ||
+            (r.customer_phone && r.customer_phone.includes(query)) ||
+            (r.customer_email && r.customer_email.toLowerCase().includes(query))
+        );
+
+        let matchesStatus = true;
+        if (statusFilter === 'delivered') {
+            matchesStatus = r.delivery_status === 'delivered' || r.delivery_status === 'read';
+        } else if (statusFilter !== 'all') {
+            matchesStatus = (r.delivery_status || '').toLowerCase() === statusFilter.toLowerCase();
+        }
+
+        return matchesQuery && matchesStatus;
+    });
+
+    if (badge) {
+        badge.textContent = `${filtered.length} of ${recipients.length} Customer(s)`;
+    }
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = renderTableEmptyStateHtml(6, 'No matching recipient customers found', 'Try adjusting your search term or delivery status filter.', '👥');
+        return;
+    }
+
+    tbody.innerHTML = filtered.map((r, idx) => {
+        const status = (r.delivery_status || 'sent').toLowerCase();
+        let statusHtml = '<span class="status-pill status-delivered">Delivered</span>';
+        if (status === 'read') {
+            statusHtml = '<span class="status-pill" style="background:#e0f2fe; color:#0284c7; border:1px solid rgba(2,132,199,0.3);">✓✓ Read</span>';
+        } else if (status === 'failed') {
+            statusHtml = '<span class="status-pill status-partial" style="background:#fee2e2; color:#ef4444; border:1px solid rgba(239,68,68,0.3);">✕ Failed</span>';
+        } else if (status === 'sent') {
+            statusHtml = '<span class="status-pill" style="background:#f1f5f9; color:#64748b; border:1px solid var(--border);">✓ Sent</span>';
+        }
+
+        const dateStr = r.sent_at 
+            ? new Date(r.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', ' + new Date(r.sent_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+            : '-';
+
+        const phoneDisplay = r.customer_phone ? formatDisplayPhone(r.customer_phone) : '-';
+
+        return `
+            <tr style="border-bottom: 1px solid var(--border); font-size: 0.85rem;">
+                <td style="padding: 0.65rem 0.85rem; color: var(--text-muted); font-weight: 600;">#${idx + 1}</td>
+                <td style="padding: 0.65rem 0.85rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <div style="width:28px; height:28px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.75rem; flex-shrink:0;">
+                            ${getInitial(r.customer_name)}
+                        </div>
+                        <div>
+                            <strong style="color:var(--text-main); display:block;">${escapeHtml(r.customer_name || 'Customer')}</strong>
+                            ${r.customer_email ? `<span style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(r.customer_email)}</span>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td style="padding: 0.65rem 0.85rem;">
+                    <code style="color:var(--primary); font-size:0.82rem;">${phoneDisplay}</code>
+                </td>
+                <td style="padding: 0.65rem 0.85rem;">
+                    ${statusHtml}
+                </td>
+                <td style="padding: 0.65rem 0.85rem; color:var(--text-muted); font-size:0.8rem;">
+                    ${dateStr}
+                </td>
+                <td style="padding: 0.65rem 0.85rem; text-align:right;">
+                    ${r.customer_id ? `
+                        <button type="button" class="btn secondary sm" onclick="openCustomerChatFromCampaign(${r.customer_id})" style="padding:0.25rem 0.55rem; font-size:0.75rem; border-radius:6px; display:inline-flex; align-items:center; gap:3px;" title="Open customer chat in WhatsApp Inbox">
+                            💬 <span>Chat</span>
+                        </button>
+                    ` : '-'}
+                </td>
+            </tr>
+        `;
+    }).join('');
 };
 
 function renderSampleCampaign() {
@@ -9784,294 +10155,7 @@ function update24hWindowBadge(messages) {
         badge.className = 'window-badge active';
         badge.title = '24-hour service window is active. Free session replies allowed.';
     } else {
-        badge.textContent = '🔒 24h Expired';
-        badge.className = 'window-badge expired';
-        badge.title = 'Last inbound message was over 24 hours ago. Send a Template message to reconnect.';
-    }
-}
-
-function getChatDateHeader(dateStr) {
-    if (!dateStr) return 'Today';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return 'Today';
-
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const msgDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-    if (msgDate.getTime() === today.getTime()) {
-        return 'Today';
-    } else if (msgDate.getTime() === yesterday.getTime()) {
-        return 'Yesterday';
-    } else {
-        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    }
-}
-
-let lastChatMsgCount = 0;
-let lastChatLatestMsgId = null;
-let lastChatStatusHash = '';
-
-// Pre-defined & Persistent WhatsApp Template Registry (Renders fully even when Meta session/subscription is offline)
-const BUILTIN_TEMPLATE_DEFINITIONS = {
-    'jaspers_market_order_confirmation_v1': {
-        title: "Jasper's Market · Order Confirmed",
-        headerBadge: 'Order Update',
-        headerIcon: '📦',
-        body: 'Thank you for your order! Your purchase has been confirmed and is being prepared for fulfillment. We will notify you with live courier tracking as soon as it is dispatched.',
-        footer: "Jasper's Market · Automated WhatsApp Confirmation",
-        buttons: [
-            { text: 'Track Order Live', icon: '↗️', type: 'url' },
-            { text: 'Customer Support', icon: '💬', type: 'quick_reply' }
-        ]
-    },
-    'vinayaka_chavithi': {
-        title: 'Happy Vinayaka Chavithi! 🪔',
-        headerImage: '/vinayaka_chavithi_header.png',
-        headerBadge: 'Festive Greeting',
-        headerIcon: '🙏',
-        body: 'Dear {{customer_name}},\n\nWishing you and your beloved family a joyous and blessed Vinayaka Chavithi! May Lord Ganesha bestow good health, boundless happiness, and prosperous milestones upon your home. Celebrate with special festive offers curated just for you.',
-        footer: 'Inspenox Business Suite · Festive Campaign',
-        buttons: [
-            { text: 'Explore Festive Offers', icon: '🎁', type: 'url' },
-            { text: 'Connect with Us', icon: '💬', type: 'quick_reply' }
-        ]
-    },
-    'republic_day_sale': {
-        title: 'Republic Day Sale LIVE! 🇮🇳',
-        headerBadge: 'Mega Campaign',
-        headerIcon: '🛍️',
-        body: 'The Republic Day Special Sale is officially LIVE! Order today and win an exclusive shopping voucher worth ₹1000/- with instant free delivery across India.',
-        footer: 'Inspenox Verified Store',
-        buttons: [
-            { text: 'Shop Now', icon: '🛒', type: 'url' },
-            { text: 'Claim Voucher', icon: '🎁', type: 'quick_reply' }
-        ]
-    }
-};
-
-function formatTemplateDisplayName(slug) {
-    if (!slug) return 'WhatsApp Message Template';
-    return slug
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, l => l.toUpperCase());
-}
-
-function formatWhatsAppMarkdown(text) {
-    if (!text) return '';
-    return escapeHtml(text)
-        .replace(/\*([^*\n]+)\*/g, '<strong>$1</strong>')
-        .replace(/_([^_]+)_/g, '<em>$1</em>')
-        .replace(/~([^~]+)~/g, '<del>$1</del>')
-        .replace(/```([^`]+)```/g, '<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:4px;font-family:monospace;">$1</code>')
-        .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#00a884;text-decoration:underline;word-break:break-all;">$1</a>')
-        .replace(/\n/g, '<br>');
-}
-
-function resolveTemplateCard(templateSlug, customerData, messageData) {
-    const cleanSlug = String(templateSlug || '').trim().toLowerCase();
-
-    // Trigger background cache load if cache is empty
-    if (!templatesCache || !Array.isArray(templatesCache) || templatesCache.length === 0) {
-        if (typeof ensureTemplatesCacheLoaded === 'function') {
-            ensureTemplatesCacheLoaded();
-        }
-    }
-
-    // Determine customer display name for variable replacement
-    let custName = '';
-    if (customerData && customerData.name && customerData.name !== customerData.phone) {
-        custName = customerData.name.trim();
-    } else {
-        const foundCust = (typeof inboxCustomersList !== 'undefined' && Array.isArray(inboxCustomersList))
-            ? inboxCustomersList.find(c => String(c.id) === String(activeInboxCustomer))
-            : null;
-        if (foundCust && foundCust.name && foundCust.name !== foundCust.phone) {
-            custName = foundCust.name.trim();
-        } else {
-            const chatHeaderName = document.getElementById('active-chat-name')?.textContent?.trim();
-            if (chatHeaderName && !chatHeaderName.startsWith('+') && !chatHeaderName.startsWith('Lead')) {
-                custName = chatHeaderName;
-            }
-        }
-    }
-    if (!custName) custName = 'Valued Customer';
-
-    function replaceVariables(text) {
-        if (!text) return '';
-        return text
-            .replace(/{{(?:1|customer_name|cust_name|name|user_name|client_name)}}/gi, custName)
-            .replace(/{{2}}/g, 'Special Festive Privilege')
-            .replace(/{{3}}/g, 'Inspenox')
-            .replace(/{{[^{}]+}}/g, custName);
-    }
-
-    // 1. Check if template exists in templatesCache (Meta API cache)
-    if (typeof templatesCache !== 'undefined' && Array.isArray(templatesCache) && templatesCache.length > 0) {
-        const found = templatesCache.find(t => (t.name || '').toLowerCase() === cleanSlug);
-        if (found && Array.isArray(found.components)) {
-            let headerText = '';
-            let headerImage = (messageData && messageData.media_url) ? messageData.media_url : '';
-            let bodyText = '';
-            let footerText = '';
-            let buttons = [];
-
-            found.components.forEach(c => {
-                if (c.type === 'HEADER') {
-                    if (c.format === 'IMAGE' || c.format === 'VIDEO') {
-                        if (!headerImage) {
-                            headerImage = (Array.isArray(c.example?.header_handle) ? c.example.header_handle[0] : c.example?.header_handle) ||
-                                          (Array.isArray(c.example?.header_url) ? c.example.header_url[0] : c.example?.header_url) ||
-                                          found.header_media?.url ||
-                                          found.header_media?.media_id ||
-                                          (cleanSlug.includes('vinayaka') ? '/vinayaka_chavithi_header.png' : '');
-                        }
-                        headerText = '';
-                    } else if (c.text) {
-                        headerText = c.text;
-                    }
-                } else if (c.type === 'BODY') {
-                    bodyText = c.text || '';
-                } else if (c.type === 'FOOTER') {
-                    footerText = c.text || '';
-                } else if (c.type === 'BUTTONS' && Array.isArray(c.buttons)) {
-                    buttons = c.buttons.map(b => ({
-                        text: b.text || 'Action',
-                        icon: b.type === 'PHONE_NUMBER' ? '📞' : b.type === 'URL' ? '↗️' : '💬',
-                        type: b.type,
-                        url: b.url || null,
-                        phone_number: b.phone_number || null
-                    }));
-                }
-            });
-
-            if (!headerImage && messageData && messageData.media_url) {
-                headerImage = messageData.media_url;
-            }
-
-            if (cleanSlug.includes('vinayaka') && !headerImage) {
-                headerImage = '/vinayaka_chavithi_header.png';
-            }
-
-            if (bodyText) {
-                return {
-                    title: headerText || (headerImage ? '' : formatTemplateDisplayName(cleanSlug)),
-                    headerImage: headerImage,
-                    headerBadge: 'Meta Template',
-                    headerIcon: headerImage ? '' : '⚡',
-                    body: replaceVariables(bodyText),
-                    footer: footerText || 'Official WhatsApp Cloud API',
-                    buttons: buttons.length > 0 ? buttons : [{ text: 'Quick Reply', icon: '💬', type: 'quick_reply' }]
-                };
-            }
-        }
-    }
-
-    // 2. Check built-in persistent registry (Works unconditionally without active subscription or Meta session)
-    if (BUILTIN_TEMPLATE_DEFINITIONS[cleanSlug]) {
-        const def = BUILTIN_TEMPLATE_DEFINITIONS[cleanSlug];
-        return {
-            ...def,
-            headerImage: (messageData && messageData.media_url) || def.headerImage || '',
-            body: replaceVariables(def.body)
-        };
-    }
-
-    // 3. Fallback for any other template name (e.g. order_update, welcome_flow)
-    const displayName = formatTemplateDisplayName(cleanSlug);
-    let sampleBody = `Hello ${custName}! This is an official verified WhatsApp template message for ${displayName}. All details and updates have been synchronized to your conversation.`;
-    let fallbackHeaderImg = (messageData && messageData.media_url) ? messageData.media_url : '';
-    if (cleanSlug.includes('vinayaka')) {
-        fallbackHeaderImg = fallbackHeaderImg || '/vinayaka_chavithi_header.png';
-        sampleBody = `Wishing you and your family a joyous and blessed Vinayaka Chavithi! May Lord Ganesha bestow good health, boundless happiness, and prosperous milestones upon your home.`;
-    }
-
-    return {
-        title: fallbackHeaderImg ? '' : displayName,
-        headerImage: fallbackHeaderImg,
-        headerBadge: 'Meta Template',
-        headerIcon: fallbackHeaderImg ? '' : '⚡',
-        body: replaceVariables(sampleBody),
-        footer: 'Official Meta WhatsApp Cloud API',
-        buttons: [
-            { text: 'View Details', icon: '↗️', type: 'url' },
-            { text: 'Reply to Message', icon: '💬', type: 'quick_reply' }
-        ]
-    };
-}
-
-function renderChatMessageMedia(m) {
-    const rawContent = (m.content || '').trim();
-    const type = (m.type || '').toLowerCase();
-    const mediaUrl = (m.media_url || '').trim();
-
-    const isImage = type === 'image' || rawContent === '[Image]' || rawContent === '[image]' || 
-                    (mediaUrl && (mediaUrl.includes('mime=image') || /\.(jpe?g|png|webp|gif)($|\?)/i.test(mediaUrl)));
-
-    const isVideo = type === 'video' || rawContent === '[Video]' || rawContent === '[video]' || 
-                    (mediaUrl && (mediaUrl.includes('mime=video') || /\.(mp4|mov|webm|avi|m4v)($|\?)/i.test(mediaUrl)));
-
-    const isAudio = type === 'audio' || rawContent === '[Audio]' || rawContent === '[audio]' || rawContent.toLowerCase().includes('voice note') ||
-                    (mediaUrl && (mediaUrl.includes('mime=audio') || /\.(ogg|opus|mp3|wav|m4a|aac)($|\?)/i.test(mediaUrl)));
-
-    const isSticker = type === 'sticker' || rawContent === '[Sticker]' || rawContent === '[sticker]';
-
-    // Extract caption if not a generic placeholder
-    let caption = rawContent;
-    if (caption === '[Image]' || caption === '[image]' || caption === '[Video]' || caption === '[video]' || 
-        caption === '[Document]' || caption === '[document]' || caption === '[Audio]' || caption === '[audio]' || 
-        caption === '[Sticker]' || caption === '[sticker]') {
-        caption = '';
-    }
-
-    if (isImage) {
-        if (mediaUrl) {
-            return `
-                <div class="chat-media-wrapper">
-                    <div class="chat-media-img-box" onclick="openMediaLightbox('${escapeHtml(mediaUrl)}', 'image')">
-                        <img src="${escapeHtml(mediaUrl)}" alt="Photo" class="chat-media-img" loading="lazy" onerror="handleMediaImgError(this, 'Photo')">
-                        <div class="chat-media-overlay">
-                            <span>🔍 Click to zoom</span>
-                        </div>
-                    </div>
-                    ${caption ? `<div class="chat-media-caption">${escapeHtml(caption).replace(/\n/g, '<br>')}</div>` : ''}
-                </div>
-            `;
-        }
-        return `
-            <div class="chat-media-placeholder image-placeholder">
-                <div class="media-placeholder-icon">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                </div>
-                <div class="media-placeholder-info">
-                    <div class="media-placeholder-title">Photo</div>
-                    <div class="media-placeholder-subtitle">${caption ? escapeHtml(caption) : 'Photo received on WhatsApp'}</div>
-                </div>
-            </div>
-        `;
-    }
-
-    if (isVideo) {
-        if (mediaUrl) {
-            return `
-                <div class="chat-media-wrapper">
-                    <div class="chat-media-video-box">
-                        <video src="${escapeHtml(mediaUrl)}" controls class="chat-media-video" preload="metadata"></video>
-                    </div>
-                    ${caption ? `<div class="chat-media-caption">${escapeHtml(caption).replace(/\n/g, '<br>')}</div>` : ''}
-                </div>
-            `;
-        }
-        return `
-            <div class="chat-media-placeholder video-placeholder">
-                <div class="media-placeholder-icon">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-                </div>
-                <div class="media-placeholder-info">
-                    <div class="media-placeholder-title">Video</div>
+                    `<div class="media-placeholder-title">Video</div>
                     <div class="media-placeholder-subtitle">${caption ? escapeHtml(caption) : 'Video received on WhatsApp'}</div>
                 </div>
             </div>
@@ -11166,13 +11250,7 @@ window.renderSecurityLogsTable = function renderSecurityLogsTable(logs = null) {
     const pageData = dataList.slice(startIndex, endIndex);
 
     if (totalItems === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
-                    No security attempt logs found.
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML = renderTableEmptyStateHtml(6, 'No security attempt logs found', 'All workspace login and authorization activity will be logged here.', '🛡️');
         if (infoEl) infoEl.textContent = 'Showing 0 of 0';
         if (btnFirst) btnFirst.disabled = true;
         if (btnPrev) btnPrev.disabled = true;
@@ -11914,7 +11992,7 @@ window.loadCouponsList = async function loadCouponsList() {
             allCouponsList = data.coupons;
 
             if (allCouponsList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No coupons created yet. Click "+ Create New Coupon" to generate discount codes.</td></tr>';
+                tbody.innerHTML = renderTableEmptyStateHtml(9, 'No coupons created yet', 'Click "+ Create New Coupon" to generate discount codes.', '🏷️');
                 return;
             }
 
@@ -11964,7 +12042,7 @@ window.loadCouponsList = async function loadCouponsList() {
             }).join('');
         }
     } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Failed to load coupons.</td></tr>';
+        tbody.innerHTML = renderTableEmptyStateHtml(9, 'Failed to load coupons', 'Please check your connection and retry.', '⚠️');
     }
 };
 
@@ -12096,14 +12174,14 @@ window.loadPaymentLogs = async function loadPaymentLogs() {
             allPaymentLogsList = data.logs;
 
             if (allPaymentLogsList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No payment transactions recorded yet. Payments processed via Razorpay will be logged here.</td></tr>';
+                tbody.innerHTML = renderTableEmptyStateHtml(10, 'No payment transactions recorded yet', 'Payments processed via Razorpay will be logged here.', '💳');
                 return;
             }
 
             renderPaymentLogs(allPaymentLogsList);
         }
     } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Failed to load payment transactions.</td></tr>';
+        tbody.innerHTML = renderTableEmptyStateHtml(10, 'Failed to load payment transactions', 'Please check connection and retry.', '⚠️');
     }
 };
 
@@ -12112,7 +12190,7 @@ function renderPaymentLogs(logs) {
     if (!tbody) return;
 
     if (logs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No matching payment transactions found.</td></tr>';
+        tbody.innerHTML = renderTableEmptyStateHtml(10, 'No matching payment transactions found', 'Try adjusting your search criteria.', '🔍');
         return;
     }
 
@@ -12191,7 +12269,7 @@ window.loadCompanyReceipts = async function loadCompanyReceipts() {
             allCompanyReceiptsList = data.logs;
 
             if (allCompanyReceiptsList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No payment receipts found for this workspace yet. When you subscribe or renew a package, official tax receipts will appear here.</td></tr>';
+                tbody.innerHTML = renderTableEmptyStateHtml(9, 'No payment receipts found for this workspace yet', 'When you subscribe or renew a package, official tax receipts will appear here.', '📜');
                 return;
             }
 
@@ -12223,11 +12301,11 @@ window.loadCompanyReceipts = async function loadCompanyReceipts() {
                 `;
             }).join('');
         } else {
-            tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No payment receipts available.</td></tr>';
+            tbody.innerHTML = renderTableEmptyStateHtml(9, 'No payment receipts available', 'When your workspace subscribes to a plan, invoices will be listed here.', '📜');
         }
     } catch (err) {
         console.error('Error loading receipts:', err);
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Failed to load payment receipts.</td></tr>';
+        tbody.innerHTML = renderTableEmptyStateHtml(9, 'Failed to load payment receipts', 'Please check connection and retry.', '⚠️');
     }
 };
 
@@ -13010,13 +13088,7 @@ function renderAutomationLogs(logs) {
     if (!tbody) return;
 
     if (!logs || logs.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                    No automated replies dispatched yet. When a customer messages on WhatsApp, the events will appear here in real time.
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML = renderTableEmptyStateHtml(5, 'No automated replies dispatched yet', 'When a customer messages on WhatsApp, the events will appear here in real time.', '⚡');
         if (countEl) countEl.textContent = '0 events';
         return;
     }

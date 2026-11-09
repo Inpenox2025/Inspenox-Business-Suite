@@ -189,6 +189,11 @@ async function ensureBroadcastSchema(sql) {
         await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS read_count INT DEFAULT 0;`;
         await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS replied_count INT DEFAULT 0;`;
         await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS clicked_count INT DEFAULT 0;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS sender_phone TEXT;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS phone_number_id TEXT;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS template_name TEXT;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS template_language TEXT;`;
+        await sql`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS created_by_user TEXT;`;
 
         await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS campaign_id INT;`;
         broadcastSchemaEnsured = true;
@@ -243,8 +248,35 @@ module.exports = async (req, res) => {
                 const failed = camp.failed_count || (statusMap['failed'] || 0);
                 const overview = totalSent + failed;
 
+                // Fetch recipient customers with delivery statuses
+                let recipients = [];
+                try {
+                    recipients = await sql`
+                        SELECT 
+                            m.id as message_id,
+                            m.customer_id,
+                            m.status as delivery_status,
+                            m.created_at as sent_at,
+                            m.content as sent_content,
+                            m.wa_message_id,
+                            COALESCE(c.name, 'Customer') as customer_name,
+                            COALESCE(c.phone, '') as customer_phone,
+                            c.email as customer_email,
+                            c.city as customer_city,
+                            c.tags as customer_tags
+                        FROM messages m
+                        LEFT JOIN customers c ON m.customer_id = c.id
+                        WHERE m.campaign_id = ${campaignId}
+                        ORDER BY m.id ASC
+                        LIMIT 500
+                    `;
+                } catch (recipErr) {
+                    console.warn('Error fetching campaign recipients:', recipErr);
+                }
+
                 return res.status(200).json({
                     campaign: camp,
+                    recipients: recipients || [],
                     metrics: {
                         overview,
                         sent: totalSent,
@@ -280,7 +312,12 @@ module.exports = async (req, res) => {
 
     try {
         const env = req.env || process.env || {};
-        const { target, type, content, media_id, media_type, template_name, template_language, company_id, campaign_id, campaign_name, cta_text, cta_url } = req.body;
+        const { 
+            target, type, content, media_id, media_type, template_name, template_language, 
+            company_id, campaign_id, campaign_name, cta_text, cta_url,
+            phone_number_id, sender_phone, initiated_by
+        } = req.body;
+        const userInitiator = initiated_by || req.body.username || 'Admin';
 
         const sql = getDb(env);
 
@@ -294,13 +331,13 @@ module.exports = async (req, res) => {
             if (req.body.tag && String(req.body.tag).trim()) {
                 const tagPattern = `%${String(req.body.tag).trim()}%`;
                 customersToMessage = await sql`
-                    SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id 
+                    SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id, created_at 
                     FROM customers 
                     WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}
                 `;
             } else {
                 customersToMessage = await sql`
-                    SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id 
+                    SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id, created_at 
                     FROM customers 
                     WHERE company_id = ${companyId} OR company_id IS NULL
                 `;
@@ -314,7 +351,7 @@ module.exports = async (req, res) => {
                 return res.status(400).json({ error: 'No valid customer IDs provided' });
             }
             customersToMessage = await sql`
-                SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id 
+                SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id, created_at 
                 FROM customers 
                 WHERE id = ANY(${targetIds})
             `;
@@ -322,12 +359,39 @@ module.exports = async (req, res) => {
             const rawTag = target.replace('tag:', '').trim();
             const tagPattern = `%${rawTag}%`;
             customersToMessage = await sql`
-                SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id 
+                SELECT id, name, phone, email, company_name as cust_company_name, address, city, state, pincode, tags, company_id, created_at 
                 FROM customers 
                 WHERE (company_id = ${companyId} OR company_id IS NULL) AND tags ILIKE ${tagPattern}
             `;
         } else {
             return res.status(400).json({ error: 'Invalid target' });
+        }
+
+        // 🔒 Meta WhatsApp Delivery Protection: 6-Hour Contact Maturation Cooldown
+        // Meta Cloud API throttles and drops dispatches to newly registered numbers (<6 hours).
+        const sixHoursMs = 6 * 60 * 60 * 1000;
+        const now = Date.now();
+        const initialCount = customersToMessage.length;
+        const delayedCustomers = [];
+
+        customersToMessage = customersToMessage.filter(cust => {
+            if (!cust.created_at) return true;
+            const createdAtTime = new Date(cust.created_at).getTime();
+            if (!isNaN(createdAtTime) && (now - createdAtTime < sixHoursMs)) {
+                delayedCustomers.push(cust);
+                return false;
+            }
+            return true;
+        });
+
+        if (delayedCustomers.length > 0) {
+            console.log(`[Broadcast] Deferred ${delayedCustomers.length} newly added customer(s) under 6h Meta maturation cooldown.`);
+        }
+
+        if (customersToMessage.length === 0 && initialCount > 0) {
+            return res.status(400).json({ 
+                error: `All selected contact(s) were added within the last 6 hours. Per Meta Cloud API guidelines, newly registered contacts require a 6-hour maturation period before receiving bulk template broadcasts to ensure deliverability.` 
+            });
         }
 
         let phoneId = null;
@@ -448,8 +512,17 @@ module.exports = async (req, res) => {
 
             try {
                 const inserted = await sql`
-                    INSERT INTO campaigns (company_id, name, message_type, content, media_url, cta_text, cta_url, sent_count, failed_count) 
-                    VALUES (${companyId}, ${finalCampaignName}, ${type}, ${campaignContent}, ${media_id || null}, ${cleanCtaText}, ${cleanCtaUrl}, 0, 0)
+                    INSERT INTO campaigns (
+                        company_id, name, message_type, content, media_url, cta_text, cta_url, 
+                        sent_count, failed_count, sender_phone, phone_number_id, template_name, 
+                        template_language, created_by_user
+                    ) 
+                    VALUES (
+                        ${companyId}, ${finalCampaignName}, ${type}, ${campaignContent}, ${media_id || null}, 
+                        ${cleanCtaText}, ${cleanCtaUrl}, 0, 0,
+                        ${sender_phone || null}, ${phoneId || null}, ${template_name || null}, 
+                        ${template_language || null}, ${userInitiator}
+                    )
                     RETURNING id, name
                 `;
                 if (inserted && inserted.length > 0) {
@@ -793,7 +866,12 @@ module.exports = async (req, res) => {
                 await sql`
                     UPDATE campaigns 
                     SET sent_count = COALESCE(sent_count, 0) + ${sent},
-                        failed_count = COALESCE(failed_count, 0) + ${failed}
+                        failed_count = COALESCE(failed_count, 0) + ${failed},
+                        sender_phone = COALESCE(sender_phone, ${sender_phone || null}),
+                        phone_number_id = COALESCE(phone_number_id, ${phoneId || null}),
+                        template_name = COALESCE(template_name, ${template_name || null}),
+                        template_language = COALESCE(template_language, ${template_language || null}),
+                        created_by_user = COALESCE(created_by_user, ${userInitiator || null})
                     WHERE id = ${activeCampaignId}
                 `;
             } catch (e) {
