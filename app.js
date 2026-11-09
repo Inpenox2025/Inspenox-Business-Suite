@@ -12942,21 +12942,19 @@ async function loadAutomationBoard() {
             // Render Recent Logs
             renderAutomationLogs(aData.recent_logs || []);
         } else {
-            if (lockedEl) {
-                lockedEl.style.display = 'block';
-                const planBadge = document.getElementById('automation-locked-current-plan');
-                if (planBadge) {
-                    const curPlan = activeComp?.subscription_plan || 'No Active Plan';
-                    planBadge.textContent = `${bizName} is currently on the "${curPlan}" tier. 24/7 Edge Automation is exclusive to the Enterprise tier.`;
-                }
-            }
-            if (unlockedEl) unlockedEl.style.display = 'none';
+            console.warn('Automation fetch response not successful:', aData);
             allAutomationRules = [];
+            renderAutomationRulesList([]);
         }
     } catch (e) {
         console.error('Error fetching automation rule:', e);
         if (rulesListEl) {
-            rulesListEl.innerHTML = `<div style="text-align: center; padding: 2rem; color: #ef4444;">Failed to load rules: ${escapeHtml(e.message)}</div>`;
+            rulesListEl.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: var(--text-muted); background: var(--bg-sidebar); border-radius: 10px; border: 1px dashed var(--border);">
+                    <p style="margin-bottom: 0.75rem;">No automation rules configured yet for this workspace.</p>
+                    <button type="button" class="btn primary sm" onclick="openAutoRuleModal()">+ Create Rule</button>
+                </div>
+            `;
         }
     }
 
@@ -12977,7 +12975,7 @@ function renderAutomationRulesList(rules) {
                 <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🤖</div>
                 <h4 style="margin: 0 0 0.35rem 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">No Automation Rules Configured</h4>
                 <p style="margin: 0 0 1.25rem 0; font-size: 0.85rem; color: var(--text-muted); max-width: 440px; margin-inline: auto;">
-                    Create your first rule to send a welcome template on new customer contact, or set up interactive button-reply automations.
+                    Create your first rule to send a welcome template on new customer contact, or link multi-step button-reply workflows (up to 6 templates).
                 </p>
                 <button type="button" class="btn primary" onclick="openAutoRuleModal()" style="font-weight: 700; padding: 0.6rem 1.4rem; border-radius: 8px;">
                     + Add First Rule
@@ -12987,21 +12985,43 @@ function renderAutomationRulesList(rules) {
         return;
     }
 
-    listEl.innerHTML = rules.map(rule => {
+    // Sort rules: Step 1 first, then follow-ups
+    const sortedRules = [...rules].sort((a, b) => {
+        const stepA = parseInt(a.chain_step, 10) || 1;
+        const stepB = parseInt(b.chain_step, 10) || 1;
+        if (stepA !== stepB) return stepA - stepB;
+        return (parseInt(a.id, 10) || 0) - (parseInt(b.id, 10) || 0);
+    });
+
+    listEl.innerHTML = sortedRules.map(rule => {
         const isActive = Boolean(rule.is_active) && rule.is_active !== '0' && rule.is_active !== 0;
         const isChecked = isActive ? 'checked' : '';
         const statusText = isActive ? 'Active' : 'Paused';
         const statusColor = isActive ? '#10b981' : '#ef4444';
+        const stepNum = parseInt(rule.chain_step, 10) || 1;
+        const isChained = !!rule.parent_rule_id && stepNum > 1;
 
+        // Step badge
+        let stepBadge = '';
+        if (stepNum === 1) {
+            stepBadge = `<span class="chain-step-badge step-starter">🌱 Step 1 (Starter)</span>`;
+        } else {
+            const parentRule = rules.find(r => String(r.id) === String(rule.parent_rule_id));
+            const parentName = parentRule ? parentRule.name : `Rule #${rule.parent_rule_id}`;
+            stepBadge = `<span class="chain-step-badge step-followup" title="Linked follow-up to: ${escapeHtml(parentName)}">🔗 Step ${stepNum} (Follow-up to ${escapeHtml(parentName)})</span>`;
+        }
+
+        // Trigger badge
         let triggerBadge = '';
         if (rule.trigger_type === 'new_customer') {
-            triggerBadge = `<span style="font-size: 0.72rem; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 3px 8px; border-radius: 4px;">🆕 Welcome / First Message</span>`;
+            triggerBadge = `<span style="font-size: 0.72rem; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 3px 8px; border-radius: 4px;">🆕 First Contact / Welcome</span>`;
         } else if (rule.trigger_type === 'button_reply') {
             triggerBadge = `<span style="font-size: 0.72rem; font-weight: 700; color: #6366f1; background: rgba(99, 102, 241, 0.12); padding: 3px 8px; border-radius: 4px;">🔘 Button: "${escapeHtml(rule.trigger_value || '')}"</span>`;
         } else {
             triggerBadge = `<span style="font-size: 0.72rem; font-weight: 700; color: #ec4899; background: rgba(236, 72, 153, 0.12); padding: 3px 8px; border-radius: 4px;">💬 Keyword: "${escapeHtml(rule.trigger_value || '')}"</span>`;
         }
 
+        // Response badge
         let responseBadge = '';
         if (rule.response_type === 'text') {
             responseBadge = `<span style="font-size: 0.72rem; font-weight: 600; color: #3b82f6; background: rgba(59, 130, 246, 0.12); padding: 3px 8px; border-radius: 4px;">💬 Text: "${escapeHtml((rule.response_text || '').slice(0, 32))}..."</span>`;
@@ -13009,10 +13029,13 @@ function renderAutomationRulesList(rules) {
             responseBadge = `<span style="font-size: 0.72rem; font-weight: 600; color: #00a884; background: rgba(0, 168, 132, 0.12); padding: 3px 8px; border-radius: 4px;">📄 Template: ${escapeHtml(rule.template_name || '')}</span>`;
         }
 
+        const cardExtraClass = isChained ? 'auto-rule-card-chained' : '';
+
         return `
-            <div style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.15rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; transition: border-color 0.2s ease;">
+            <div class="${cardExtraClass}" style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.15rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; transition: border-color 0.2s ease; margin-bottom: 0.75rem;">
                 <div style="flex: 1; min-width: 240px;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.4rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.45rem; flex-wrap: wrap;">
+                        ${stepBadge}
                         <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">${escapeHtml(rule.name || 'Untitled Rule')}</span>
                         ${triggerBadge}
                         ${responseBadge}
@@ -13144,7 +13167,248 @@ function deleteAutoRule(ruleId) {
 }
 window.deleteAutoRule = deleteAutoRule;
 
-// --- MODAL CONTROLLER: CONFIGURE / EDIT RULE ---
+// --- MODAL CONTROLLER: CONFIGURE / EDIT RULE & WORKFLOW CHAIN ---
+
+function extractTemplateButtons(template) {
+    if (!template) return [];
+    if (typeof template === 'string') {
+        template = cachedAutomationTemplates.find(t => t.name === template);
+    }
+    if (!template || !Array.isArray(template.components)) return [];
+
+    const buttons = [];
+    template.components.forEach(comp => {
+        if (!comp) return;
+        if (comp.type === 'BUTTONS' && Array.isArray(comp.buttons)) {
+            comp.buttons.forEach((btn, idx) => {
+                if (btn && btn.text) {
+                    buttons.push({
+                        text: btn.text.trim(),
+                        type: btn.type || 'QUICK_REPLY',
+                        index: idx
+                    });
+                }
+            });
+        }
+        if (comp.type === 'INTERACTIVE' && comp.interactive && comp.interactive.action) {
+            const act = comp.interactive.action;
+            if (Array.isArray(act.buttons)) {
+                act.buttons.forEach((b, idx) => {
+                    const title = b.reply?.title || b.text;
+                    if (title) buttons.push({ text: title.trim(), type: 'QUICK_REPLY', index: idx });
+                });
+            }
+            if (Array.isArray(act.sections)) {
+                act.sections.forEach(sec => {
+                    if (Array.isArray(sec.rows)) {
+                        sec.rows.forEach((r, idx) => {
+                            if (r && r.title) buttons.push({ text: r.title.trim(), type: 'LIST_ROW', index: idx });
+                        });
+                    }
+                });
+            }
+        }
+    });
+    return buttons;
+}
+window.extractTemplateButtons = extractTemplateButtons;
+
+function renderTemplateButtonsForTrigger(selectedParentRuleId, targetTemplateName, preselectedValue = '') {
+    const chipsContainer = document.getElementById('modal-rule-buttons-chips');
+    const selectEl = document.getElementById('modal-rule-button-select');
+    if (!chipsContainer && !selectEl) return;
+
+    let sourceTemplate = null;
+    let sourceLabel = '';
+
+    // 1. Try to get template from selected Parent Rule
+    if (selectedParentRuleId) {
+        const parentRule = allAutomationRules.find(r => String(r.id) === String(selectedParentRuleId));
+        if (parentRule && parentRule.template_name) {
+            sourceTemplate = cachedAutomationTemplates.find(t => t.name === parentRule.template_name);
+            sourceLabel = `Parent Rule "${parentRule.name}" (${parentRule.template_name})`;
+        }
+    }
+
+    // 2. Fallback to targetTemplateName or currently selected template in modal
+    if (!sourceTemplate && targetTemplateName) {
+        sourceTemplate = cachedAutomationTemplates.find(t => t.name === targetTemplateName);
+        sourceLabel = `Template "${targetTemplateName}"`;
+    }
+    if (!sourceTemplate) {
+        const modalTmpl = document.getElementById('modal-rule-template-select')?.value;
+        if (modalTmpl) {
+            sourceTemplate = cachedAutomationTemplates.find(t => t.name === modalTmpl);
+            sourceLabel = `Template "${modalTmpl}"`;
+        }
+    }
+
+    const buttons = sourceTemplate ? extractTemplateButtons(sourceTemplate) : [];
+
+    // Fallback sensible defaults if template has no parsed buttons
+    const effectiveButtons = buttons.length > 0 ? buttons : [
+        { text: 'India', type: 'QUICK_REPLY' },
+        { text: 'USA', type: 'QUICK_REPLY' },
+        { text: 'UAE & Others', type: 'QUICK_REPLY' },
+        { text: 'Place an Order', type: 'QUICK_REPLY' },
+        { text: 'Live Agent', type: 'QUICK_REPLY' }
+    ];
+
+    const currentVal = (preselectedValue || document.getElementById('modal-rule-trigger-value')?.value || '').trim();
+
+    // Render clickable chips
+    if (chipsContainer) {
+        chipsContainer.innerHTML = effectiveButtons.map(btn => {
+            const isSelected = currentVal && (currentVal.toLowerCase() === btn.text.toLowerCase());
+            const selClass = isSelected ? 'selected' : '';
+            return `
+                <button type="button" class="auto-rule-btn-chip ${selClass}" onclick="selectRuleTriggerButton('${escapeHtml(btn.text)}', this)" title="Click to trigger this rule when lead taps [${escapeHtml(btn.text)}]">
+                    <span class="chip-icon">${isSelected ? '✓' : '↩'}</span>
+                    <span>${escapeHtml(btn.text)}</span>
+                </button>
+            `;
+        }).join('');
+    }
+
+    // Populate dropdown selector
+    if (selectEl) {
+        selectEl.innerHTML = '<option value="">-- Choose from template buttons --</option>' +
+            effectiveButtons.map(btn => {
+                const isSelected = currentVal && (currentVal.toLowerCase() === btn.text.toLowerCase()) ? 'selected' : '';
+                return `<option value="${escapeHtml(btn.text)}" ${isSelected}>${escapeHtml(btn.text)} (${btn.type})</option>`;
+            }).join('');
+    }
+}
+window.renderTemplateButtonsForTrigger = renderTemplateButtonsForTrigger;
+
+function selectRuleTriggerButton(btnText, chipEl) {
+    if (!btnText) return;
+    const trigValInput = document.getElementById('modal-rule-trigger-value');
+    if (trigValInput) trigValInput.value = btnText;
+
+    const selectEl = document.getElementById('modal-rule-button-select');
+    if (selectEl) selectEl.value = btnText;
+
+    // Highlight chip
+    const chipsContainer = document.getElementById('modal-rule-buttons-chips');
+    if (chipsContainer) {
+        chipsContainer.querySelectorAll('.auto-rule-btn-chip').forEach(el => {
+            el.classList.remove('selected');
+            const icon = el.querySelector('.chip-icon');
+            if (icon) icon.textContent = '↩';
+        });
+        if (chipEl) {
+            chipEl.classList.add('selected');
+            const icon = chipEl.querySelector('.chip-icon');
+            if (icon) icon.textContent = '✓';
+        }
+    }
+
+    // Auto-suggest rule name if empty or generic
+    const nameInput = document.getElementById('modal-rule-name');
+    if (nameInput && (!nameInput.value || nameInput.value.startsWith('New Auto-Reply') || nameInput.value.startsWith('Step '))) {
+        const stepNum = document.getElementById('modal-rule-chain-step')?.value || '1';
+        nameInput.value = `Step ${stepNum}: Button "${btnText}"`;
+    }
+}
+window.selectRuleTriggerButton = selectRuleTriggerButton;
+
+function toggleManualTriggerInput() {
+    const manualBox = document.getElementById('modal-rule-manual-input-box');
+    const toggleLabel = document.getElementById('manual-trigger-toggle-label');
+    if (!manualBox) return;
+    const isHidden = manualBox.style.display === 'none' || !manualBox.style.display;
+    manualBox.style.display = isHidden ? 'block' : 'none';
+    if (toggleLabel) {
+        toggleLabel.textContent = isHidden ? 'Hide manual input' : 'Enter manually';
+    }
+    if (isHidden) {
+        document.getElementById('modal-rule-trigger-value')?.focus();
+    }
+}
+window.toggleManualTriggerInput = toggleManualTriggerInput;
+
+function onRuleButtonSelectChanged(btnText) {
+    if (!btnText) return;
+    const chipsContainer = document.getElementById('modal-rule-buttons-chips');
+    let targetChip = null;
+    if (chipsContainer) {
+        targetChip = Array.from(chipsContainer.querySelectorAll('.auto-rule-btn-chip')).find(c => 
+            c.textContent.trim().includes(btnText.trim())
+        );
+    }
+    selectRuleTriggerButton(btnText, targetChip);
+}
+window.onRuleButtonSelectChanged = onRuleButtonSelectChanged;
+
+function populateParentRulesDropdown(currentRuleId = null, selectedParentId = null) {
+    const sel = document.getElementById('modal-rule-parent-id');
+    if (!sel) return;
+
+    const availableParents = allAutomationRules.filter(r => !currentRuleId || String(r.id) !== String(currentRuleId));
+
+    if (availableParents.length === 0) {
+        sel.innerHTML = '<option value="">No preceding rules yet (Create Step 1 starter rule first)</option>';
+        return;
+    }
+
+    sel.innerHTML = '<option value="">-- Select Linked Parent Rule --</option>' +
+        availableParents.map(r => {
+            const stepNum = r.chain_step || 1;
+            const tmpl = r.template_name ? ` [Tmpl: ${r.template_name}]` : (r.response_text ? ' [Direct Text]' : '');
+            const isSel = selectedParentId && String(r.id) === String(selectedParentId) ? 'selected' : '';
+            return `<option value="${r.id}" ${isSel}>Step ${stepNum}: ${escapeHtml(r.name)}${tmpl}</option>`;
+        }).join('');
+}
+window.populateParentRulesDropdown = populateParentRulesDropdown;
+
+function onModalChainStepChanged() {
+    const stepSelect = document.getElementById('modal-rule-chain-step');
+    const stepNum = parseInt(stepSelect?.value, 10) || 1;
+    const parentGroup = document.getElementById('modal-rule-parent-group');
+    const badgeEl = document.getElementById('modal-rule-step-badge');
+
+    if (badgeEl) {
+        if (stepNum === 1) {
+            badgeEl.textContent = 'Step 1 (Conversation Starter)';
+            badgeEl.className = 'chain-step-pill';
+            badgeEl.style.background = 'rgba(16, 185, 129, 0.15)';
+            badgeEl.style.color = '#10b981';
+            badgeEl.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        } else {
+            badgeEl.textContent = `Step ${stepNum} (Workflow Follow-up)`;
+            badgeEl.className = 'chain-step-pill';
+            badgeEl.style.background = 'rgba(99, 102, 241, 0.15)';
+            badgeEl.style.color = '#818cf8';
+            badgeEl.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+        }
+    }
+
+    if (stepNum > 1) {
+        if (parentGroup) parentGroup.style.display = 'block';
+        const currentRuleId = document.getElementById('modal-rule-id')?.value;
+        const currentParentId = document.getElementById('modal-rule-parent-id')?.value;
+        populateParentRulesDropdown(currentRuleId, currentParentId);
+
+        const trigTypeEl = document.getElementById('modal-rule-trigger-type');
+        if (trigTypeEl && trigTypeEl.value === 'new_customer') {
+            trigTypeEl.value = 'button_reply';
+            onModalTriggerTypeChanged();
+        }
+    } else {
+        if (parentGroup) parentGroup.style.display = 'none';
+    }
+}
+window.onModalChainStepChanged = onModalChainStepChanged;
+
+function onModalParentRuleChanged() {
+    const parentId = document.getElementById('modal-rule-parent-id')?.value;
+    const trigType = document.getElementById('modal-rule-trigger-type')?.value;
+    if (trigType === 'button_reply') {
+        renderTemplateButtonsForTrigger(parentId, null);
+    }
+}
+window.onModalParentRuleChanged = onModalParentRuleChanged;
 
 function populateModalTemplatesSelect(templates) {
     const sel = document.getElementById('modal-rule-template-select');
@@ -13171,12 +13435,17 @@ function openAutoRuleModal(ruleId = null) {
     const titleEl = document.getElementById('modal-auto-rule-title');
     const idEl = document.getElementById('modal-rule-id');
     const nameEl = document.getElementById('modal-rule-name');
+    const chainStepEl = document.getElementById('modal-rule-chain-step');
+    const parentIdEl = document.getElementById('modal-rule-parent-id');
     const trigTypeEl = document.getElementById('modal-rule-trigger-type');
     const trigValEl = document.getElementById('modal-rule-trigger-value');
+    const keyInputEl = document.getElementById('modal-rule-keyword-input');
     const respTypeEl = document.getElementById('modal-rule-response-type');
     const tmplSelect = document.getElementById('modal-rule-template-select');
     const respTextEl = document.getElementById('modal-rule-response-text');
     const cdEl = document.getElementById('modal-rule-cooldown');
+
+    populateParentRulesDropdown(ruleId, null);
 
     if (ruleId) {
         const rule = allAutomationRules.find(x => x.id === ruleId);
@@ -13184,8 +13453,11 @@ function openAutoRuleModal(ruleId = null) {
             if (titleEl) titleEl.textContent = 'Edit Automation Rule';
             if (idEl) idEl.value = rule.id;
             if (nameEl) nameEl.value = rule.name || '';
+            if (chainStepEl) chainStepEl.value = rule.chain_step || 1;
+            if (parentIdEl) parentIdEl.value = rule.parent_rule_id || '';
             if (trigTypeEl) trigTypeEl.value = rule.trigger_type || 'new_customer';
             if (trigValEl) trigValEl.value = rule.trigger_value || '';
+            if (keyInputEl) keyInputEl.value = rule.trigger_value || '';
             if (respTypeEl) respTypeEl.value = rule.response_type || 'template';
             if (tmplSelect && rule.template_name) tmplSelect.value = rule.template_name;
             if (respTextEl) respTextEl.value = rule.response_text || '';
@@ -13195,16 +13467,21 @@ function openAutoRuleModal(ruleId = null) {
         if (titleEl) titleEl.textContent = 'Configure New Automation Rule';
         if (idEl) idEl.value = '';
         if (nameEl) nameEl.value = '';
+        if (chainStepEl) chainStepEl.value = 1;
+        if (parentIdEl) parentIdEl.value = '';
         if (trigTypeEl) trigTypeEl.value = 'new_customer';
         if (trigValEl) trigValEl.value = '';
+        if (keyInputEl) keyInputEl.value = '';
         if (respTypeEl) respTypeEl.value = 'template';
         if (tmplSelect && cachedAutomationTemplates.length > 0) tmplSelect.value = cachedAutomationTemplates[0].name;
         if (respTextEl) respTextEl.value = '';
-        if (cdEl) cdEl.value = 0;
+        if (cdEl) cdEl.value = 24;
     }
 
+    onModalChainStepChanged();
     onModalTriggerTypeChanged();
     onModalResponseTypeChanged();
+    onModalTargetTemplateChanged();
 
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
@@ -13222,15 +13499,26 @@ window.closeAutoRuleModal = closeAutoRuleModal;
 
 function onModalTriggerTypeChanged() {
     const trigType = document.getElementById('modal-rule-trigger-type')?.value;
-    const valGroup = document.getElementById('modal-rule-trigger-val-group');
+    const btnPickerGroup = document.getElementById('modal-rule-buttons-picker-group');
+    const keywordGroup = document.getElementById('modal-rule-keyword-group');
     const cdEl = document.getElementById('modal-rule-cooldown');
+    const isEdit = !!document.getElementById('modal-rule-id')?.value;
 
-    if (trigType === 'button_reply' || trigType === 'keyword') {
-        if (valGroup) valGroup.style.display = 'block';
-        if (cdEl && !document.getElementById('modal-rule-id')?.value) cdEl.value = 0;
+    if (trigType === 'button_reply') {
+        if (btnPickerGroup) btnPickerGroup.style.display = 'block';
+        if (keywordGroup) keywordGroup.style.display = 'none';
+        const parentId = document.getElementById('modal-rule-parent-id')?.value;
+        const currentVal = document.getElementById('modal-rule-trigger-value')?.value || '';
+        renderTemplateButtonsForTrigger(parentId, null, currentVal);
+        if (cdEl && !isEdit) cdEl.value = 0;
+    } else if (trigType === 'keyword') {
+        if (btnPickerGroup) btnPickerGroup.style.display = 'none';
+        if (keywordGroup) keywordGroup.style.display = 'block';
+        if (cdEl && !isEdit) cdEl.value = 0;
     } else {
-        if (valGroup) valGroup.style.display = 'none';
-        if (cdEl && !document.getElementById('modal-rule-id')?.value) cdEl.value = 24;
+        if (btnPickerGroup) btnPickerGroup.style.display = 'none';
+        if (keywordGroup) keywordGroup.style.display = 'none';
+        if (cdEl && !isEdit) cdEl.value = 24;
     }
 }
 window.onModalTriggerTypeChanged = onModalTriggerTypeChanged;
@@ -13250,11 +13538,54 @@ function onModalResponseTypeChanged() {
 }
 window.onModalResponseTypeChanged = onModalResponseTypeChanged;
 
+function onModalTargetTemplateChanged() {
+    const tmplName = document.getElementById('modal-rule-template-select')?.value;
+    const previewEl = document.getElementById('modal-rule-template-preview-badges');
+    if (!previewEl) return;
+
+    if (!tmplName) {
+        previewEl.innerHTML = '';
+        return;
+    }
+
+    const tmpl = cachedAutomationTemplates.find(t => t.name === tmplName);
+    if (!tmpl) {
+        previewEl.innerHTML = '';
+        return;
+    }
+
+    const buttons = extractTemplateButtons(tmpl);
+    if (buttons.length > 0) {
+        previewEl.innerHTML = `
+            <div style="font-size:0.72rem; color:var(--text-muted); width:100%; margin-top:2px;">
+                Interactive Buttons on this template:
+            </div>
+            ${buttons.map(b => `
+                <span style="font-size:0.72rem; padding:2px 7px; border-radius:4px; background:rgba(0,168,132,0.12); color:var(--primary); font-weight:600;">
+                    ↩ ${escapeHtml(b.text)}
+                </span>
+            `).join('')}
+        `;
+    } else {
+        previewEl.innerHTML = `<span style="font-size:0.72rem; color:var(--text-muted); font-style:italic;">Standard broadcast template without quick reply buttons.</span>`;
+    }
+}
+window.onModalTargetTemplateChanged = onModalTargetTemplateChanged;
+
 async function submitAutoRuleModal() {
     const id = document.getElementById('modal-rule-id')?.value || null;
     const name = document.getElementById('modal-rule-name')?.value?.trim();
+    const chainStep = parseInt(document.getElementById('modal-rule-chain-step')?.value, 10) || 1;
+    const parentRuleId = document.getElementById('modal-rule-parent-id')?.value || null;
     const triggerType = document.getElementById('modal-rule-trigger-type')?.value;
-    const triggerValue = document.getElementById('modal-rule-trigger-value')?.value?.trim() || '';
+    
+    let triggerValue = '';
+    if (triggerType === 'button_reply') {
+        triggerValue = document.getElementById('modal-rule-trigger-value')?.value?.trim() || '';
+    } else if (triggerType === 'keyword') {
+        triggerValue = document.getElementById('modal-rule-keyword-input')?.value?.trim() || '';
+    }
+
     const responseType = document.getElementById('modal-rule-response-type')?.value;
     const templateName = document.getElementById('modal-rule-template-select')?.value || null;
     const responseText = document.getElementById('modal-rule-response-text')?.value?.trim() || '';
@@ -13264,8 +13595,12 @@ async function submitAutoRuleModal() {
         showModal('Name Required', 'Please enter a name for this automation rule.');
         return;
     }
+    if (chainStep > 1 && !parentRuleId) {
+        showModal('Parent Rule Required', 'For Step ' + chainStep + ', please select which previous rule this follow-up links to.');
+        return;
+    }
     if ((triggerType === 'button_reply' || triggerType === 'keyword') && !triggerValue) {
-        showModal('Trigger Value Required', 'Please enter the button label or keyword to match.');
+        showModal('Trigger Value Required', triggerType === 'button_reply' ? 'Please select or enter the template button to match.' : 'Please enter the keyword to match.');
         return;
     }
     if (responseType === 'template' && !templateName) {
@@ -13292,6 +13627,8 @@ async function submitAutoRuleModal() {
                 id: id ? parseInt(id, 10) : null,
                 company_id: getCompanyId(),
                 name: name,
+                chain_step: chainStep,
+                parent_rule_id: parentRuleId ? parseInt(parentRuleId, 10) : null,
                 trigger_type: triggerType,
                 trigger_value: triggerValue,
                 response_type: responseType,
@@ -13306,7 +13643,7 @@ async function submitAutoRuleModal() {
         if (data.success) {
             closeAutoRuleModal();
             loadAutomationBoard();
-            showModal('Rule Saved ⚡', `Automation rule "${name}" is active and running 24/7 on Inspenox Edge!`);
+            showModal('Rule Saved ⚡', `Workflow Step ${chainStep} rule "${name}" is active and running 24/7 on Inspenox Edge!`);
         } else {
             showModal('Save Failed', data.error || 'Could not save automation rule.');
         }

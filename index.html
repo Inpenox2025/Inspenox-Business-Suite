@@ -3898,102 +3898,185 @@
         </div>
     </div>
 
-    <!-- 2. Configure / Edit Automation Rule Modal (Supports Multi-Trigger & Button Replies) -->
+    <!-- 2. Configure / Edit Automation Rule Modal (Supports Multi-Trigger, Button Replies & Workflow Chaining) -->
     <div id="modal-auto-rule" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(8px);">
-        <div class="modal-content card modal-card" style="max-width: 540px; width: 92%; padding: 1.75rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); color: var(--text-main); max-height: 90vh; overflow-y: auto;">
+        <div class="modal-content card modal-card" style="max-width: 840px; width: 95%; padding: 1.75rem 2rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); text-align: left; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); color: var(--text-main); max-height: 90vh; overflow-y: auto;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border); padding-bottom:0.85rem; margin-bottom: 1.25rem;">
-                <div style="display: flex; align-items: center; gap: 0.65rem;">
-                    <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(99, 102, 241, 0.12); color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(99, 102, 241, 0.12); color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
                         ⚡
                     </div>
                     <div>
-                        <h3 id="modal-auto-rule-title" style="margin:0; font-size:1.15rem; font-weight:700; color:var(--text-main);">Configure Automation Rule</h3>
-                        <p style="margin:0.2rem 0 0; font-size:0.8rem; color:var(--text-muted);">Set trigger event (welcome, button click, keyword) and automatic response.</p>
+                        <h3 id="modal-auto-rule-title" style="margin:0; font-size:1.25rem; font-weight:700; color:var(--text-main);">Configure Automation Rule</h3>
+                        <p style="margin:0.2rem 0 0; font-size:0.82rem; color:var(--text-muted);">Build conversational multi-step flows (up to 6 templates) with button replies & keyword triggers.</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeAutoRuleModal()" style="background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text-muted); padding:0.25rem; line-height:1;" title="Close">&times;</button>
+                <button type="button" onclick="closeAutoRuleModal()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted); padding:0.25rem; line-height:1;" title="Close">&times;</button>
             </div>
             
             <form id="auto-rule-form" onsubmit="event.preventDefault(); submitAutoRuleModal();">
                 <input type="hidden" id="modal-rule-id" value="">
 
-                <!-- Rule Name -->
-                <div style="margin-bottom: 1.1rem;">
-                    <label for="modal-rule-name" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
-                        Rule Name <span style="color: #ef4444;">*</span>
-                    </label>
-                    <input type="text" id="modal-rule-name" placeholder="e.g. Location Select: India or Order Enquiry" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box;">
-                </div>
+                <!-- Workflow Chaining Sequence (Steps 1 to 6) -->
+                <div style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 0.85rem 1.15rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: #818cf8; display: flex; align-items: center; gap: 6px;">
+                            <span>🔗</span> Workflow Relation & Sequence (Up to 6 Templates)
+                        </span>
+                        <span id="modal-rule-step-badge" class="chain-step-pill" style="font-size: 0.75rem; padding: 3px 10px; border-radius: 999px; background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 700; border: 1px solid rgba(99, 102, 241, 0.3);">
+                            Step 1 (Conversation Starter)
+                        </span>
+                    </div>
 
-                <!-- Trigger Type -->
-                <div style="margin-bottom: 1.1rem;">
-                    <label for="modal-rule-trigger-type" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
-                        Trigger Event <span style="color: #ef4444;">*</span>
-                    </label>
-                    <select id="modal-rule-trigger-type" onchange="onModalTriggerTypeChanged()" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none;">
-                        <option value="new_customer">🆕 First Contact / Welcome (Lead initiates chat for the first time)</option>
-                        <option value="button_reply">🔘 Template Button Click (Customer clicks a Quick Reply or List option)</option>
-                        <option value="keyword">💬 Keyword Match (Customer types specific word/phrase)</option>
-                    </select>
-                </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.85rem;">
+                        <div>
+                            <label for="modal-rule-chain-step" style="display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-muted);">
+                                Step in Conversation
+                            </label>
+                            <select id="modal-rule-chain-step" onchange="onModalChainStepChanged()" style="width: 100%; padding: 0.55rem 0.75rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                                <option value="1">🌱 Step 1 - First Inbound Starter</option>
+                                <option value="2">🔗 Step 2 - Follow-up Action</option>
+                                <option value="3">🔗 Step 3 - Sub-menu / Order Flow</option>
+                                <option value="4">🔗 Step 4 - Handoff / Details</option>
+                                <option value="5">🔗 Step 5 - Confirmation</option>
+                                <option value="6">🔗 Step 6 - Wrap-up / Live Agent</option>
+                            </select>
+                        </div>
 
-                <!-- Trigger Value (Button Text / Keyword) -->
-                <div id="modal-rule-trigger-val-group" style="margin-bottom: 1.1rem; display: none;">
-                    <label for="modal-rule-trigger-value" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
-                        Button Label or Keyword to Match <span style="color: #ef4444;">*</span>
-                    </label>
-                    <input type="text" id="modal-rule-trigger-value" placeholder="e.g. India or Place an Order" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box;">
-                    <small style="display: block; margin-top: 0.3rem; font-size: 0.72rem; color: var(--text-muted);">
-                        Exact text on the template button (e.g. "India") or comma-separated keywords (e.g. "India, IN").
+                        <div id="modal-rule-parent-group" style="display: none;">
+                            <label for="modal-rule-parent-id" style="display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-muted);">
+                                Linked Parent Rule (Preceding Step)
+                            </label>
+                            <select id="modal-rule-parent-id" onchange="onModalParentRuleChanged()" style="width: 100%; padding: 0.55rem 0.75rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                                <option value="">-- Select Parent Rule --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <small style="display: block; margin-top: 0.45rem; font-size: 0.72rem; color: var(--text-muted); line-height: 1.35;">
+                        Step 1 triggers on new contact or inbound greeting. Steps 2 through 6 advance strictly when the lead replies or taps a button, creating an interactive multi-step flow without looping.
                     </small>
                 </div>
 
-                <!-- Response Type -->
-                <div style="margin-bottom: 1.1rem;">
-                    <label for="modal-rule-response-type" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
-                        Action / Response Type <span style="color: #ef4444;">*</span>
-                    </label>
-                    <select id="modal-rule-response-type" onchange="onModalResponseTypeChanged()" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none;">
-                        <option value="template">📄 Send Pre-Approved WhatsApp Template</option>
-                        <option value="text">💬 Send Direct Custom Text Reply</option>
-                    </select>
-                </div>
+                <!-- 2-Column Responsive Form Layout -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+                    <!-- Left Column: Trigger Configuration -->
+                    <div>
+                        <!-- Rule Name -->
+                        <div style="margin-bottom: 1.1rem;">
+                            <label for="modal-rule-name" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                                Rule Name <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" id="modal-rule-name" placeholder="e.g. Location Select: India or Order Enquiry" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                        </div>
 
-                <!-- Template Selector (If template response) -->
-                <div id="modal-rule-template-group" style="margin-bottom: 1.1rem;">
-                    <label for="modal-rule-template-select" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
-                        Select Pre-Approved WhatsApp Template <span style="color: #ef4444;">*</span>
-                    </label>
-                    <select id="modal-rule-template-select" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none;">
-                        <option value="">Loading approved Meta templates...</option>
-                    </select>
-                </div>
+                        <!-- Trigger Type -->
+                        <div style="margin-bottom: 1.1rem;">
+                            <label for="modal-rule-trigger-type" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                                Trigger Event <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select id="modal-rule-trigger-type" onchange="onModalTriggerTypeChanged()" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none;">
+                                <option value="new_customer">🆕 First Contact / Welcome (Lead initiates chat for the first time)</option>
+                                <option value="button_reply">🔘 Template Button Click (Customer taps a Quick Reply or List button)</option>
+                                <option value="keyword">💬 Keyword Match (Customer types specific word/phrase)</option>
+                            </select>
+                        </div>
 
-                <!-- Custom Text Area (If text response) -->
-                <div id="modal-rule-text-group" style="margin-bottom: 1.1rem; display: none;">
-                    <label for="modal-rule-response-text" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
-                        Response Message Text <span style="color: #ef4444;">*</span>
-                    </label>
-                    <textarea id="modal-rule-response-text" rows="3" placeholder="e.g. ⏳ Please wait we are connecting you to a Live Agent" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box; resize: vertical;"></textarea>
-                    <small style="display: block; margin-top: 0.3rem; font-size: 0.72rem; color: var(--text-muted);">
-                        Use <code>{{1}}</code> to automatically insert the customer's name.
-                    </small>
-                </div>
+                        <!-- Button Reply Selector / Visual Button Chips Picker -->
+                        <div id="modal-rule-buttons-picker-group" style="margin-bottom: 1.1rem; display: none;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                                <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin: 0;">
+                                    🔘 Template Button to Match <span style="color: #ef4444;">*</span>
+                                </label>
+                                <button type="button" onclick="toggleManualTriggerInput()" style="font-size: 0.75rem; color: var(--primary); background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0;">
+                                    <span id="manual-trigger-toggle-label">Enter manually</span>
+                                </button>
+                            </div>
 
-                <!-- Cooldown (Hours) -->
-                <div style="margin-bottom: 1.25rem;">
-                    <label for="modal-rule-cooldown" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
-                        Cooldown (Hours)
-                    </label>
-                    <input type="number" id="modal-rule-cooldown" value="0" min="0" max="720" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box;">
-                    <small style="display: block; margin-top: 0.25rem; font-size: 0.72rem; color: var(--text-muted);">
-                        Set to 0 for instant button responses (recommended for interactive flows). Set to 24 for welcome greetings.
-                    </small>
+                            <!-- Clickable WhatsApp Button Chips extracted from Parent or Trigger Template -->
+                            <div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 0.35rem;">
+                                Tap a button below to link it to this rule:
+                            </div>
+                            <div id="modal-rule-buttons-chips" class="auto-rule-buttons-container" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.65rem; min-height: 44px; align-items: center; padding: 0.55rem; background: var(--bg-dark, #111827); border: 1px dashed var(--border); border-radius: 8px;">
+                                <span style="font-size: 0.78rem; color: var(--text-muted); font-style: italic;">Select a parent rule or template to load its interactive buttons...</span>
+                            </div>
+
+                            <!-- Button Quick Dropdown Selector -->
+                            <select id="modal-rule-button-select" onchange="onRuleButtonSelectChanged(this.value)" style="width: 100%; padding: 0.55rem 0.75rem; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.82rem; margin-bottom: 0.4rem;">
+                                <option value="">-- Or choose from button list --</option>
+                            </select>
+
+                            <!-- Hidden / Toggleable Manual Input -->
+                            <div id="modal-rule-manual-input-box" style="display: none; margin-top: 0.4rem;">
+                                <input type="text" id="modal-rule-trigger-value" placeholder="e.g. India or Place an Order" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                                <small style="display: block; margin-top: 0.3rem; font-size: 0.72rem; color: var(--text-muted);">
+                                    Exact button label or comma-separated keywords (e.g. "India, IN").
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Keyword Match Input (Only if trigger_type is keyword) -->
+                        <div id="modal-rule-keyword-group" style="margin-bottom: 1.1rem; display: none;">
+                            <label for="modal-rule-keyword-input" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                                Keyword(s) to Match <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" id="modal-rule-keyword-input" placeholder="e.g. price, order, catalog, hi, help" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                            <small style="display: block; margin-top: 0.3rem; font-size: 0.72rem; color: var(--text-muted);">
+                                Triggers when the lead's message contains any of these comma-separated keywords.
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Response Action Configuration -->
+                    <div>
+                        <!-- Response Type -->
+                        <div style="margin-bottom: 1.1rem;">
+                            <label for="modal-rule-response-type" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                                Action / Response Type <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select id="modal-rule-response-type" onchange="onModalResponseTypeChanged()" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none;">
+                                <option value="template">📄 Send Pre-Approved WhatsApp Template</option>
+                                <option value="text">💬 Send Direct Custom Text Reply</option>
+                            </select>
+                        </div>
+
+                        <!-- Template Selector (If template response) -->
+                        <div id="modal-rule-template-group" style="margin-bottom: 1.1rem;">
+                            <label for="modal-rule-template-select" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                                Select Pre-Approved WhatsApp Template <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select id="modal-rule-template-select" onchange="onModalTargetTemplateChanged()" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none;">
+                                <option value="">Loading approved Meta templates...</option>
+                            </select>
+                            <div id="modal-rule-template-preview-badges" style="margin-top: 0.35rem; display: flex; flex-wrap: wrap; gap: 0.35rem;"></div>
+                        </div>
+
+                        <!-- Custom Text Area (If text response) -->
+                        <div id="modal-rule-text-group" style="margin-bottom: 1.1rem; display: none;">
+                            <label for="modal-rule-response-text" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                                Response Message Text <span style="color: #ef4444;">*</span>
+                            </label>
+                            <textarea id="modal-rule-response-text" rows="3" placeholder="e.g. ⏳ Please wait we are connecting you to a Live Agent" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box; resize: vertical;"></textarea>
+                            <small style="display: block; margin-top: 0.3rem; font-size: 0.72rem; color: var(--text-muted);">
+                                Use <code>{{1}}</code> to automatically insert the customer's name.
+                            </small>
+                        </div>
+
+                        <!-- Cooldown (Hours) -->
+                        <div style="margin-bottom: 1.25rem;">
+                            <label for="modal-rule-cooldown" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-main);">
+                                Cooldown (Hours)
+                            </label>
+                            <input type="number" id="modal-rule-cooldown" value="0" min="0" max="720" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-dark, #111827); border: 1px solid var(--border); color: var(--text-main); font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                            <small style="display: block; margin-top: 0.25rem; font-size: 0.72rem; color: var(--text-muted);">
+                                Set to 0 for instant interactive button responses. Set to 24 for first-message welcome greetings.
+                            </small>
+                        </div>
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 1rem;">
                     <button type="button" class="btn secondary" onclick="closeAutoRuleModal()">Cancel</button>
-                    <button type="submit" id="btn-save-rule-modal" class="btn primary" style="font-weight: 700; padding: 0.65rem 1.4rem; border-radius: 8px; gap: 6px;">
+                    <button type="submit" id="btn-save-rule-modal" class="btn primary" style="font-weight: 700; padding: 0.65rem 1.6rem; border-radius: 8px; gap: 6px;">
                         Save Rule
                     </button>
                 </div>

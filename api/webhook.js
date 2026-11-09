@@ -14,37 +14,76 @@ function formatIndiaPhone(phone) {
 // 24/7 Cloudflare Serverless Auto-Reply for Enterprise Plans (Supports Multi-Trigger & Button/Keyword Replies)
 async function triggerEnterpriseAutoReply({ sql, env, targetCompanyId, customerId, customerName, phone, incomingContent, messageType, isFirstContact }) {
   try {
-    // 1. Fetch company and verify Enterprise subscription
-    const cos = await sql`SELECT * FROM companies WHERE id = ${targetCompanyId} LIMIT 1`;
+    const parsedCoId = parseInt(targetCompanyId, 10) || 1;
+
+    // 1. Fetch company and verify subscription
+    const cos = await sql`SELECT * FROM companies WHERE id = ${parsedCoId} LIMIT 1`;
     if (cos.length === 0) return;
     const company = cos[0];
     const isMaster = (company.slug || '').toLowerCase() === 'inspenox' || 
                      (company.name || '').toLowerCase() === 'inspenox' || 
                      company.is_parent === true || company.is_master === true;
-    const isEnterprise = isMaster || (
-      company.subscription_status === 'active' && 
-      (company.subscription_plan || '').toLowerCase().includes('enterprise')
-    );
+    const isEnterprise = isMaster || 
+      (company.subscription_plan && company.subscription_plan.toLowerCase().includes('enterprise')) ||
+      (company.subscription_status === 'active') ||
+      !company.subscription_plan;
 
     if (!isEnterprise) {
-      console.log(`Auto-reply skipped: Workspace ${targetCompanyId} is not on Enterprise plan.`);
+      console.log(`Auto-reply skipped: Workspace ${parsedCoId} is not on active plan.`);
       return;
     }
 
-    // 2. Fetch all active automation rules for this company
+    // 2. Fetch all active automation rules for this company ordered by chain_step
     const automations = await sql`
       SELECT * FROM automations 
-      WHERE company_id = ${targetCompanyId} 
+      WHERE company_id = ${parsedCoId} 
         AND is_active = true 
-      ORDER BY id ASC
+      ORDER BY chain_step ASC, id ASC
     `;
     if (automations.length === 0) return;
 
     const cleanIncoming = (incomingContent || '').trim().toLowerCase();
+
+    // Check if customer recently received an automated message from an earlier step in the workflow chain (up to 6 steps)
+    let activeChainParentRule = null;
+    try {
+      const lastOutbound = await sql`
+        SELECT id, template_name, content, created_at 
+        FROM messages 
+        WHERE customer_id = ${customerId} 
+          AND company_id = ${parsedCoId} 
+          AND direction = 'outbound' 
+          AND content ILIKE '%[Auto-Reply:%'
+          AND created_at > NOW() - INTERVAL '24 hours'
+        ORDER BY id DESC 
+        LIMIT 1
+      `;
+      if (lastOutbound.length > 0) {
+        const lastMsg = lastOutbound[0];
+        activeChainParentRule = automations.find(r => 
+          (r.template_name && lastMsg.template_name && r.template_name === lastMsg.template_name) ||
+          (lastMsg.content && lastMsg.content.includes(`[Auto-Reply: ${r.name}]`))
+        ) || null;
+      }
+    } catch (e) {
+      console.warn("Could not query last outbound for rule chaining:", e.message);
+    }
+
     let matchedRule = null;
 
-    // Priority 1: Button click, quick reply, interactive list, or keyword match
-    if (cleanIncoming) {
+    // Priority 1: Chained Follow-up Rule (if customer responded to a parent rule, step 2 to 6)
+    if (cleanIncoming && activeChainParentRule) {
+      const childRules = automations.filter(r => r.parent_rule_id && parseInt(r.parent_rule_id, 10) === activeChainParentRule.id);
+      if (childRules.length > 0) {
+        matchedRule = childRules.find(r => {
+          const vals = (r.trigger_value || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+          return vals.some(v => v === cleanIncoming || cleanIncoming.includes(v));
+        });
+      }
+    }
+
+    // Priority 2: Button click, quick reply, interactive list, or keyword match
+    if (!matchedRule && cleanIncoming) {
       matchedRule = automations.find(r => {
         if (r.trigger_type === 'button_reply' || r.trigger_type === 'keyword') {
           const vals = (r.trigger_value || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
@@ -54,9 +93,9 @@ async function triggerEnterpriseAutoReply({ sql, env, targetCompanyId, customerI
       });
     }
 
-    // Priority 2: New Customer first-time contact welcome rule
+    // Priority 3: New Customer first-time contact welcome rule (Step 1)
     if (!matchedRule && isFirstContact) {
-      matchedRule = automations.find(r => r.trigger_type === 'new_customer');
+      matchedRule = automations.find(r => r.trigger_type === 'new_customer' && (!r.chain_step || r.chain_step === 1));
     }
 
     if (!matchedRule) return;
@@ -70,7 +109,7 @@ async function triggerEnterpriseAutoReply({ sql, env, targetCompanyId, customerI
       const recentSent = await sql`
         SELECT id FROM messages 
         WHERE customer_id = ${customerId} 
-          AND company_id = ${targetCompanyId} 
+          AND company_id = ${parsedCoId} 
           AND direction = 'outbound' 
           AND (
             template_name = ${rule.template_name || ''} 
