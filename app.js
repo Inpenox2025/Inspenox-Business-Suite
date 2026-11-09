@@ -10029,23 +10029,129 @@ function closeChat() {
     const strip = document.getElementById('chat-note-strip');
     if (strip) strip.style.display = 'none';
 
-    document.getElementById('chat-reply-form').style.display = 'none';
-    document.getElementById('chat-messages').innerHTML = `
-        <div class="empty-state">
-            <div class="empty-inbox-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    const replyForm = document.getElementById('chat-reply-form');
+    if (replyForm) replyForm.style.display = 'none';
+
+    const replyInput = document.getElementById('chat-reply-text');
+    if (replyInput) replyInput.value = '';
+
+    const activeCustInput = document.getElementById('chat-active-customer');
+    if (activeCustInput) activeCustInput.value = '';
+
+    if (typeof clearChatAttachment === 'function') {
+        clearChatAttachment();
+    }
+
+    const chatDropdown = document.getElementById('chat-dropdown-menu');
+    if (chatDropdown) chatDropdown.classList.add('hidden');
+
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        chatMessages.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-inbox-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <h3>Select a customer chat</h3>
+                <p>Choose a conversation from the left to start messaging in real-time.</p>
             </div>
-            <h3>Select a customer chat</h3>
-            <p>Choose a conversation from the left to start messaging in real-time.</p>
-        </div>
-    `;
+        `;
+    }
     document.querySelectorAll('.inbox-contact-card').forEach(el => el.classList.remove('active'));
 
     if (window.innerWidth <= 768) {
         document.getElementById('inbox-customers-panel')?.classList.remove('hidden');
         document.getElementById('inbox-chat-area')?.classList.add('hidden');
     }
+
+    if (window.location.hash && window.location.hash.startsWith('#inbox-chat-')) {
+        if (history.replaceState) {
+            history.replaceState({ view: 'inbox' }, '', '#inbox');
+        }
+    }
 }
+window.closeChat = closeChat;
+
+// ⌨️ WhatsApp Web Style Escape Key Handler: Closes active chat window & refocuses search
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+        // 1. If media lightbox is active, let it close first
+        const lightbox = document.getElementById('modal-media-lightbox');
+        if (lightbox && lightbox.style.display !== 'none') {
+            if (typeof window.closeMediaLightbox === 'function') {
+                window.closeMediaLightbox();
+            } else {
+                lightbox.style.display = 'none';
+            }
+            return;
+        }
+
+        // 2. If chat options dropdown menu is open, close it
+        const chatDropdown = document.getElementById('chat-dropdown-menu');
+        if (chatDropdown && !chatDropdown.classList.contains('hidden')) {
+            chatDropdown.classList.add('hidden');
+            return;
+        }
+
+        // 3. If inbox tag filter dropdown is open, close it
+        const tagDropdown = document.getElementById('inbox-tag-dropdown-menu');
+        if (tagDropdown && tagDropdown.style.display !== 'none') {
+            tagDropdown.style.display = 'none';
+            return;
+        }
+
+        // 4. If conversation notes modal is open, close it
+        const openNotesModal = document.getElementById('modal-note');
+        if (openNotesModal && openNotesModal.style.display !== 'none') {
+            openNotesModal.style.display = 'none';
+            return;
+        }
+
+        // 5. If assign tags modal is open, close it
+        const openInboxTagsModal = document.getElementById('modal-inbox-tags');
+        if (openInboxTagsModal && openInboxTagsModal.style.display !== 'none') {
+            openInboxTagsModal.style.display = 'none';
+            return;
+        }
+
+        // 6. If send template modal is open, close it
+        const openSendTplModal = document.getElementById('modal-inbox-send-template');
+        if (openSendTplModal && openSendTplModal.style.display !== 'none') {
+            openSendTplModal.style.display = 'none';
+            return;
+        }
+
+        // 7. If an attachment is staged in the chat input, clear attachment preview first
+        if (typeof stagedChatFile !== 'undefined' && stagedChatFile) {
+            clearChatAttachment();
+            return;
+        }
+
+        // 8. WhatsApp Web behavior: If chat is open (customer selected), close chat on Escape!
+        if (activeInboxCustomer) {
+            e.preventDefault();
+            closeChat();
+
+            // Focus on inbox search input just like WhatsApp Web
+            const searchInput = document.getElementById('inbox-search');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+            return;
+        }
+
+        // 9. If focus is on the inbox search bar and has text, clear search query
+        const searchInput = document.getElementById('inbox-search');
+        if (document.activeElement === searchInput && searchInput.value) {
+            searchInput.value = '';
+            if (typeof filterAndRenderInboxContacts === 'function') {
+                filterAndRenderInboxContacts();
+            }
+            return;
+        }
+    }
+});
 
 function renderActiveChatTags(customer) {
     const container = document.getElementById('active-chat-tags-list');
