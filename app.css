@@ -6162,7 +6162,24 @@ tr:hover td {
 }
 
 /* ==========================================================================
-   AUTHENTIC WHATSAPP SIMULATOR (MALABAR MULTI-STEP PROGRESSION)
+   AUTOMATION BOARD RESPONSIVE GRID LAYOUT
+   ========================================================================== */
+
+.automation-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 1080px) {
+    .automation-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   AUTHENTIC WHATSAPP SIMULATOR (INSPENOX MULTI-STEP PROGRESSION)
    ========================================================================== */
 
 .wa-sim-device {
@@ -6172,17 +6189,20 @@ tr:hover td {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.38);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
     overflow: hidden;
     position: relative;
     user-select: none;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     min-height: 520px;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
 }
 
 .wa-sim-header {
     background: #1f2c34;
-    padding: 0.6rem 0.85rem;
+    padding: 0.65rem 0.85rem;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -6207,16 +6227,16 @@ tr:hover td {
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: #4a1525;
-    border: 1.5px solid #d4af37;
+    background: linear-gradient(135deg, #005c4b 0%, #00a884 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #ffd700;
+    color: #ffffff;
     font-weight: 800;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     flex-shrink: 0;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 2px 6px rgba(0, 168, 132, 0.4);
     letter-spacing: -0.5px;
 }
 
@@ -6226,7 +6246,7 @@ tr:hover td {
 }
 
 .wa-sim-contact-title {
-    font-size: 0.86rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: #e9edef;
     display: flex;
@@ -6257,6 +6277,7 @@ tr:hover td {
     display: flex;
     align-items: center;
     gap: 4px;
+    transition: color 0.2s ease;
 }
 
 .wa-sim-contact-sub.is-typing {
@@ -6277,14 +6298,25 @@ tr:hover td {
     background-color: #0b141a;
     background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 18px 18px;
-    padding: 0.85rem 0.75rem;
+    padding: 0.85rem 0.75rem 1.25rem 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
-    max-height: 440px;
+    gap: 0.75rem;
+    height: 460px;
     overflow-y: auto;
     position: relative;
     scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #202c33 transparent;
+}
+
+.wa-sim-chat-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.wa-sim-chat-body::-webkit-scrollbar-thumb {
+    background: #202c33;
+    border-radius: 4px;
 }
 
 .wa-sim-date-pill {
@@ -6297,6 +6329,7 @@ tr:hover td {
     font-weight: 500;
     box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     margin: 2px 0 4px;
+    flex-shrink: 0;
 }
 
 .wa-sim-security-banner {
@@ -6311,29 +6344,32 @@ tr:hover td {
     max-width: 92%;
     box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     margin-bottom: 4px;
+    flex-shrink: 0;
 }
 
 .wa-sim-bubble-in {
     align-self: flex-start;
-    max-width: 86%;
+    max-width: 88%;
     background: #202c33;
     color: #e9edef;
     border-radius: 8px 8px 8px 0;
     box-shadow: 0 1px 2px rgba(0,0,0,0.25);
     overflow: hidden;
     position: relative;
-    animation: waBubbleFadeIn 0.25s ease-out;
+    flex-shrink: 0;
+    animation: waBubbleFadeIn 0.3s ease-out;
 }
 
 .wa-sim-bubble-out {
     align-self: flex-end;
-    max-width: 84%;
+    max-width: 86%;
     background: #005c4b;
     color: #e9edef;
     border-radius: 8px 8px 0 8px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.25);
     position: relative;
-    animation: waBubbleFadeIn 0.25s ease-out;
+    flex-shrink: 0;
+    animation: waBubbleFadeIn 0.3s ease-out;
 }
 
 .wa-sim-quote-card {
@@ -6357,12 +6393,13 @@ tr:hover td {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     flex-direction: column;
+    width: 100%;
 }
 
 .wa-sim-action-btn {
     padding: 8px 12px;
     color: #00a884;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     display: flex;
@@ -6372,26 +6409,28 @@ tr:hover td {
     transition: background 0.15s ease, color 0.15s ease;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     text-align: center;
+    min-height: 36px;
 }
 
 .wa-sim-action-btn:last-child {
     border-bottom: none;
 }
 
-.wa-sim-action-btn:hover {
-    background: rgba(0, 168, 132, 0.12);
+.wa-sim-action-btn:hover,
+.wa-sim-action-btn.is-active {
+    background: rgba(0, 168, 132, 0.22);
     color: #25d366;
 }
 
 .wa-sim-action-btn:active {
-    background: rgba(0, 168, 132, 0.24);
+    background: rgba(0, 168, 132, 0.32);
 }
 
 .wa-sim-list-btn {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 9px 12px;
     color: #00a884;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     display: flex;
@@ -6399,10 +6438,12 @@ tr:hover td {
     justify-content: center;
     gap: 8px;
     transition: background 0.15s ease;
+    min-height: 36px;
 }
 
-.wa-sim-list-btn:hover {
-    background: rgba(0, 168, 132, 0.12);
+.wa-sim-list-btn:hover,
+.wa-sim-list-btn.is-active {
+    background: rgba(0, 168, 132, 0.22);
 }
 
 .wa-sim-meta-time {
@@ -6465,21 +6506,34 @@ tr:hover td {
     height: 32px;
     border-radius: 50%;
     background: #202c33;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     color: #8696a0;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
     cursor: pointer;
     z-index: 10;
-    transition: transform 0.15s ease, background 0.15s ease;
+    transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
 .wa-sim-scroll-down:hover {
     background: #2a3942;
     color: #e9edef;
-    transform: translateY(1px);
+    transform: translateY(-1px);
+}
+
+.wa-sim-action-btn.sim-clicked,
+.wa-sim-list-btn.sim-clicked {
+    animation: simClickPulse 0.45s ease-out;
+    background: rgba(0, 168, 132, 0.28) !important;
+    color: #25d366 !important;
+}
+
+@keyframes simClickPulse {
+    0% { transform: scale(1); }
+    40% { transform: scale(0.96); background: rgba(0, 168, 132, 0.4); }
+    100% { transform: scale(1); }
 }
 
 /* Simulated Bottom Sheet for WhatsApp Interactive List */
@@ -6578,7 +6632,19 @@ tr:hover td {
     }
 }
 
-
-
-
+@media (max-width: 480px) {
+    .wa-sim-device {
+        max-width: 100%;
+        border-radius: 14px;
+        min-height: auto;
+    }
+    .wa-sim-chat-body {
+        height: 420px;
+        padding: 0.6rem 0.5rem 1rem 0.5rem;
+    }
+    .wa-sim-bubble-in,
+    .wa-sim-bubble-out {
+        max-width: 92%;
+    }
+}
 
