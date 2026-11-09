@@ -3949,12 +3949,25 @@
                 height: 380px;
             }
             .spotlight-section {
-                padding: 4rem 1.25rem;
+                padding: 3.5rem 1.25rem;
             }
             .spotlight-grid, .spotlight-grid.reverse {
-                grid-template-columns: minmax(0, 1fr) !important;
-                gap: 2.5rem;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 2.5rem !important;
                 direction: ltr !important;
+            }
+            /* Visual / Image / Simulator content FIRST on mobile & tablet */
+            .spotlight-grid .spotlight-visual-col {
+                order: 1 !important;
+                width: 100% !important;
+                display: flex !important;
+                justify-content: center !important;
+            }
+            /* Text content (pill, title, points list) SECOND on mobile & tablet */
+            .spotlight-grid .spotlight-text-col {
+                order: 2 !important;
+                width: 100% !important;
             }
         }
 
@@ -5572,7 +5585,7 @@
     <section id="broadcasts" class="spotlight-section">
         <div class="spotlight-grid">
             <!-- Left: High Impact Feature Points -->
-            <div>
+            <div class="spotlight-text-col">
                 <span class="spotlight-pill">🚀 Official WhatsApp Cloud API</span>
                 <h2 class="spotlight-title">Broadcast Campaigns with Live Funnel Analytics</h2>
                 <p class="spotlight-desc">Enjoy a Limitless Broadcasting experience on WhatsApp. Deliver personalized bulk promotions, time-sensitive offers, and interactive product carousels with 99%+ deliverability and zero ban risk.</p>
@@ -5609,7 +5622,7 @@
             </div>
 
             <!-- Right: Real Campaign Analytics Dashboard Window -->
-            <div>
+            <div class="spotlight-visual-col">
                 <div class="showcase-window">
                     <div class="showcase-window-header">
                         <div class="window-controls">
@@ -5671,7 +5684,7 @@
 
         <div class="spotlight-grid reverse">
             <!-- Right: Text Content -->
-            <div>
+            <div class="spotlight-text-col">
                 <span class="spotlight-pill">🎯 Meta Ads Direct Handoff</span>
                 <h2 class="spotlight-title">Convert Instagram & Facebook Traffic Directly in WhatsApp</h2>
                 <p class="spotlight-desc">Bypass friction-heavy landing pages and long web forms. Route ad clicks straight into WhatsApp, capture customer intent instantly, and accelerate conversions with interactive catalog cards and 24/7 automated flows.</p>
@@ -5700,7 +5713,7 @@
             </div>
 
             <!-- Left: Interactive Visual Flow (Ad to Lead Qualification Bot) -->
-            <div>
+            <div class="spotlight-visual-col">
                 <div class="ad-flow-card" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 1.75rem; box-shadow: 0 20px 45px rgba(0,0,0,0.25);">
                     <div style="display: flex; flex-direction: column; gap: 1.25rem;">
                         
@@ -5761,7 +5774,7 @@
     <section id="automation-flow" class="spotlight-section" style="border-top: 1px solid var(--border); background: var(--bg-card);">
         <div class="spotlight-grid">
             <!-- Left: High-Impact Feature Points -->
-            <div>
+            <div class="spotlight-text-col">
                 <span class="spotlight-pill">⚡ 24/7 Serverless Edge Automation · Enterprise Tier</span>
                 <h2 class="spotlight-title">24/7 Inspenox Edge Automation Board &amp; Interactive Chatbot Flows</h2>
                 <p class="spotlight-desc">Convert newly messaged prospects into sales around the clock. Powered by Inspenox Edge and Meta Cloud API, your WhatsApp business responds instantly with pre-approved templates, interactive quick-reply buttons, and multi-step list menus — even when you sleep or log out.</p>
@@ -5804,7 +5817,7 @@
             </div>
 
             <!-- Right: Interactive WhatsApp Smartphone Simulation Window -->
-            <div style="display: flex; justify-content: center; width: 100%; box-sizing: border-box;">
+            <div class="spotlight-visual-col" style="display: flex; justify-content: center; width: 100%; box-sizing: border-box;">
                 <div class="showcase-window" style="max-width: 440px; width: 100%; padding: 1.25rem; box-sizing: border-box; background: var(--bg-sidebar); border-radius: 16px; border: 1.5px solid var(--border);">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.4rem;">
                         <div>
@@ -5961,7 +5974,7 @@
     <section id="shared-inbox" class="spotlight-section">
         <div class="spotlight-grid">
             <!-- Left: Text Content -->
-            <div>
+            <div class="spotlight-text-col">
                 <span class="spotlight-pill">👥 Multi-Agent Team Collaboration</span>
                 <h2 class="spotlight-title">Unified Shared Team Inbox for High-Volume Support</h2>
                 <p class="spotlight-desc">Empower your entire sales and support team to operate from one verified WhatsApp number. Organize queries with visual tag labels, monitor the 24-hour service window in real time, and protect customer contacts with enterprise number masking.</p>
@@ -5998,7 +6011,7 @@
             </div>
 
             <!-- Right: Interactive Inbox UI Mockup with Masked Numbers -->
-            <div>
+            <div class="spotlight-visual-col">
                 <div class="showcase-window">
                     <div class="showcase-window-header">
                         <div class="window-controls">
