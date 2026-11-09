@@ -1,4 +1,5 @@
 const { getDb } = require('../lib/db');
+const { sendLoginOtpEmail } = require('../lib/email');
 const crypto = require('node:crypto');
 
 function hashPassword(password) {
@@ -33,6 +34,40 @@ async function ensureUsersTable(sql) {
             ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
         `;
 
+        // Create persistent auth_otps table for two-factor login verification
+        await sql`
+            CREATE TABLE IF NOT EXISTS auth_otps (
+                id SERIAL PRIMARY KEY,
+                email TEXT NOT NULL,
+                otp TEXT NOT NULL,
+                user_id INT REFERENCES users(id) ON DELETE CASCADE,
+                expires_at TIMESTAMPTZ NOT NULL,
+                created_at TIMESTAMPTZ DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata'),
+                used BOOLEAN DEFAULT FALSE
+            );
+        `;
+
+        // Automated retention cleanup: purge OTPs older than 2 days
+        await sql`
+            DELETE FROM auth_otps 
+            WHERE created_at < (NOW() AT TIME ZONE 'Asia/Kolkata') - INTERVAL '2 days';
+        `;
+
+        // Auto-link default email to admin / superadmin if null
+        await sql`
+            UPDATE users 
+            SET email = 'inspenox@gmail.com' 
+            WHERE (LOWER(username) = 'admin' OR role = 'superadmin') AND (email IS NULL OR TRIM(email) = '');
+        `;
+
+        // Auto-link company email to users if user email is null
+        await sql`
+            UPDATE users u 
+            SET email = c.email 
+            FROM companies c 
+            WHERE u.company_id = c.id AND (u.email IS NULL OR TRIM(u.email) = '') AND c.email IS NOT NULL;
+        `;
+
         // Create persistent login_attempts table for rate limiting across serverless instances
         await sql`
             CREATE TABLE IF NOT EXISTS login_attempts (
@@ -62,8 +97,8 @@ async function ensureUsersTable(sql) {
         if ((countRes[0]?.count || 0) === 0) {
             const defaultHash = hashPassword('admin123');
             await sql`
-                INSERT INTO users (username, password_hash, role)
-                VALUES ('admin', ${defaultHash}, 'admin')
+                INSERT INTO users (username, email, password_hash, role)
+                VALUES ('admin', 'inspenox@gmail.com', ${defaultHash}, 'admin')
                 ON CONFLICT (username) DO NOTHING;
             `;
             console.log('Default admin user initialized (admin / admin123)');
@@ -190,13 +225,19 @@ module.exports = async (req, res) => {
 
                 const hash = hashPassword(password);
                 const legacyHash = legacyHashPassword(password);
+                const isEmailLogin = cleanUser.includes('@') && cleanUser.includes('.');
 
-                // Support matching either username or email address
+                // Support matching either username or email address (including company email & admin email)
                 const users = await sql`
-                    SELECT id, username, email, phone, role, password_hash, company_id 
-                    FROM users 
-                    WHERE LOWER(username) = ${cleanUser} OR LOWER(COALESCE(email, '')) = ${cleanUser}
-                    LIMIT 1
+                    SELECT u.id, u.username, u.email, u.phone, u.role, u.password_hash, u.company_id, c.email as comp_email 
+                    FROM users u 
+                    LEFT JOIN companies c ON u.company_id = c.id 
+                    WHERE LOWER(TRIM(u.username)) = ${cleanUser} 
+                       OR LOWER(TRIM(COALESCE(u.email, ''))) = ${cleanUser} 
+                       OR LOWER(TRIM(COALESCE(c.email, ''))) = ${cleanUser} 
+                       OR (u.role IN ('admin', 'superadmin') AND (${cleanUser} = 'inspenox@gmail.com' OR ${cleanUser} = 'admin@inspenox.in' OR ${cleanUser} = 'admin@inspenox.com' OR ${cleanUser} ILIKE 'admin%'))
+                    ORDER BY (CASE WHEN LOWER(TRIM(COALESCE(u.email, ''))) = ${cleanUser} THEN 1 ELSE 2 END) ASC
+                    LIMIT 1;
                 `;
 
                 const isAuthSuccess = users.length > 0 && (users[0].password_hash === hash || users[0].password_hash === legacyHash);
@@ -212,7 +253,7 @@ module.exports = async (req, res) => {
                     await new Promise(r => setTimeout(r, 500));
                     const remaining = 5 - (failureCount + 1);
                     const attemptWarning = remaining > 0 ? ` (${remaining} attempt${remaining === 1 ? '' : 's'} remaining)` : '';
-                    return res.status(401).json({ error: `Invalid username/email or password${attemptWarning}` });
+                    return res.status(401).json({ error: `Invalid ${isEmailLogin ? 'email' : 'username'} or password${attemptWarning}` });
                 }
 
                 const user = users[0];
@@ -223,12 +264,176 @@ module.exports = async (req, res) => {
                     WHERE (ip_address = ${clientIp} OR username = ${cleanUser} OR username = ${user.username.toLowerCase()}) AND success = FALSE;
                 `;
 
+                // If user logged in using EMAIL: send 6-digit OTP to that email
+                if (isEmailLogin) {
+                    const targetEmail = (user.email && user.email.includes('@')) ? user.email.toLowerCase().trim() : cleanUser;
+                    const otp = String(Math.floor(100000 + Math.random() * 900000));
+
+                    // Invalidate existing unused OTPs for this email
+                    await sql`
+                        UPDATE auth_otps 
+                        SET used = TRUE 
+                        WHERE LOWER(email) = ${targetEmail} AND used = FALSE;
+                    `;
+
+                    // Store new OTP in database (valid for 10 minutes)
+                    await sql`
+                        INSERT INTO auth_otps (email, otp, user_id, expires_at)
+                        VALUES (${targetEmail}, ${otp}, ${user.id}, (NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '10 minutes');
+                    `;
+
+                    // Dispatch OTP email via Gmail SMTP
+                    try {
+                        await sendLoginOtpEmail({
+                            to: targetEmail,
+                            otp,
+                            username: user.username || 'Valued User',
+                            env
+                        });
+                    } catch (mailErr) {
+                        console.error('Failed to dispatch login OTP email:', mailErr);
+                    }
+
+                    return res.status(200).json({
+                        success: true,
+                        require_otp: true,
+                        email: targetEmail,
+                        message: `A 6-digit verification code has been sent to ${targetEmail}. Please enter it to complete login.`
+                    });
+                }
+
+                // If user logged in using USERNAME: issue token directly without OTP
                 const token = crypto.randomBytes(32).toString('hex');
 
                 return res.status(200).json({
                     success: true,
                     user: { id: user.id, username: user.username, email: user.email, phone: user.phone, role: user.role, company_id: user.company_id },
                     token
+                });
+            } catch (err) {
+                return res.status(500).json({ error: err.message });
+            }
+        }
+
+        if (action === 'verify-otp') {
+            try {
+                const { email, otp } = body;
+                const cleanEmail = String(email || '').trim().toLowerCase();
+                const cleanOtp = String(otp || '').trim().replace(/\D/g, '');
+
+                if (!cleanEmail || !cleanOtp || cleanOtp.length !== 6) {
+                    return res.status(400).json({ error: 'Valid email and 6-digit verification code are required.' });
+                }
+
+                const otpRows = await sql`
+                    SELECT id, user_id, otp, expires_at, used
+                    FROM auth_otps
+                    WHERE LOWER(email) = ${cleanEmail}
+                      AND used = FALSE
+                      AND expires_at > (NOW() AT TIME ZONE 'Asia/Kolkata')
+                    ORDER BY id DESC
+                    LIMIT 1;
+                `;
+
+                if (otpRows.length === 0) {
+                    return res.status(400).json({ error: 'Verification code expired or not found. Please click Resend Code.' });
+                }
+
+                const row = otpRows[0];
+                if (row.otp !== cleanOtp) {
+                    return res.status(400).json({ error: 'Invalid 6-digit code. Please check your email and try again.' });
+                }
+
+                // Mark OTP as used
+                await sql`UPDATE auth_otps SET used = TRUE WHERE id = ${row.id};`;
+
+                // Fetch user data
+                const userRows = await sql`
+                    SELECT id, username, email, phone, role, company_id 
+                    FROM users 
+                    WHERE id = ${row.user_id}
+                    LIMIT 1;
+                `;
+
+                if (userRows.length === 0) {
+                    return res.status(404).json({ error: 'User account not found.' });
+                }
+
+                const user = userRows[0];
+                const token = crypto.randomBytes(32).toString('hex');
+
+                return res.status(200).json({
+                    success: true,
+                    user: { id: user.id, username: user.username, email: user.email, phone: user.phone, role: user.role, company_id: user.company_id },
+                    token,
+                    message: 'Verified successfully!'
+                });
+            } catch (err) {
+                return res.status(500).json({ error: err.message });
+            }
+        }
+
+        if (action === 'resend-otp') {
+            try {
+                const { email } = body;
+                const cleanEmail = String(email || '').trim().toLowerCase();
+
+                if (!cleanEmail || !cleanEmail.includes('@')) {
+                    return res.status(400).json({ error: 'Valid email address is required.' });
+                }
+
+                // Rate limit: cooldown 30s
+                const recentCheck = await sql`
+                    SELECT id, created_at 
+                    FROM auth_otps 
+                    WHERE LOWER(email) = ${cleanEmail}
+                      AND created_at > (NOW() AT TIME ZONE 'Asia/Kolkata') - INTERVAL '30 seconds'
+                    LIMIT 1;
+                `;
+                if (recentCheck.length > 0) {
+                    return res.status(429).json({ error: 'Please wait 30 seconds before requesting another code.' });
+                }
+
+                // Look up user
+                const users = await sql`
+                    SELECT u.id, u.username, u.email, c.email as comp_email 
+                    FROM users u 
+                    LEFT JOIN companies c ON u.company_id = c.id 
+                    WHERE LOWER(TRIM(COALESCE(u.email, ''))) = ${cleanEmail} 
+                       OR LOWER(TRIM(COALESCE(c.email, ''))) = ${cleanEmail} 
+                       OR (u.role IN ('admin', 'superadmin') AND (${cleanEmail} = 'inspenox@gmail.com' OR ${cleanEmail} ILIKE 'admin%'))
+                    ORDER BY (CASE WHEN LOWER(TRIM(COALESCE(u.email, ''))) = ${cleanEmail} THEN 1 ELSE 2 END) ASC
+                    LIMIT 1;
+                `;
+
+                if (users.length === 0) {
+                    return res.status(404).json({ error: 'No account found matching this email address.' });
+                }
+
+                const user = users[0];
+                const otp = String(Math.floor(100000 + Math.random() * 900000));
+                const targetEmail = (user.email && user.email.includes('@')) ? user.email.toLowerCase().trim() : cleanEmail;
+
+                // Mark previous as used
+                await sql`UPDATE auth_otps SET used = TRUE WHERE LOWER(email) = ${targetEmail} AND used = FALSE;`;
+
+                // Insert new OTP
+                await sql`
+                    INSERT INTO auth_otps (email, otp, user_id, expires_at)
+                    VALUES (${targetEmail}, ${otp}, ${user.id}, (NOW() AT TIME ZONE 'Asia/Kolkata') + INTERVAL '10 minutes');
+                `;
+
+                // Dispatch email
+                await sendLoginOtpEmail({
+                    to: targetEmail,
+                    otp,
+                    username: user.username || 'Valued User',
+                    env
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: `New verification code sent to ${targetEmail}.`
                 });
             } catch (err) {
                 return res.status(500).json({ error: err.message });
@@ -357,17 +562,26 @@ module.exports = async (req, res) => {
 
                 const cleanEmail = String(email).trim().toLowerCase();
 
-                // Look for existing user with this email
+                // Look for existing user with this email (supports direct email, company email, and super admin)
                 let users = await sql`
-                    SELECT id, username, email, phone, role, company_id 
-                    FROM users 
-                    WHERE LOWER(COALESCE(email, '')) = ${cleanEmail}
-                    LIMIT 1
+                    SELECT u.id, u.username, u.email, u.phone, u.role, u.company_id 
+                    FROM users u 
+                    LEFT JOIN companies c ON u.company_id = c.id 
+                    WHERE LOWER(TRIM(COALESCE(u.email, ''))) = ${cleanEmail}
+                       OR LOWER(TRIM(COALESCE(c.email, ''))) = ${cleanEmail}
+                       OR (u.role IN ('admin', 'superadmin') AND (${cleanEmail} = 'inspenox@gmail.com' OR ${cleanEmail} = 'admin@inspenox.in' OR ${cleanEmail} = 'admin@inspenox.com' OR ${cleanEmail} ILIKE 'admin%'))
+                    ORDER BY (CASE WHEN LOWER(TRIM(COALESCE(u.email, ''))) = ${cleanEmail} THEN 1 ELSE 2 END) ASC
+                    LIMIT 1;
                 `;
 
                 let user;
                 if (users.length > 0) {
                     user = users[0];
+                    // Update email on user record if it was previously unset or different
+                    if (!user.email || user.email.toLowerCase().trim() !== cleanEmail) {
+                        await sql`UPDATE users SET email = ${cleanEmail} WHERE id = ${user.id};`;
+                        user.email = cleanEmail;
+                    }
                 } else {
                     // Auto-signup new user with Google OIDC
                     const cleanName = (name || cleanEmail.split('@')[0]).trim();

@@ -6608,6 +6608,41 @@
                         </button>
                     </form>
 
+                    <!-- OTP Verification Step (Shown when logging in with email) -->
+                    <div id="login-otp-step" style="display: none; animation: fadeIn 0.25s ease-out;">
+                        <div style="text-align: center; margin-bottom: 1.25rem;">
+                            <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(0, 168, 132, 0.12); color: #00a884; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 0.75rem;">
+                                ✉️
+                            </div>
+                            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);">
+                                Enter Verification Code
+                            </h3>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.45;">
+                                A 6-digit verification code has been sent to<br>
+                                <strong id="otp-target-email-display" style="color: var(--text-main); font-weight: 700;">user@example.com</strong>
+                            </p>
+                        </div>
+
+                        <form id="login-otp-form">
+                            <div class="auth-input-group" style="margin-bottom: 1.25rem;">
+                                <input type="text" id="login-otp-code" class="auth-input-field" placeholder="• • • • • •" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" required style="letter-spacing: 8px; font-size: 1.6rem; text-align: center; font-weight: 800; font-family: monospace;">
+                            </div>
+
+                            <button type="submit" id="btn-otp-verify-submit" class="btn-brand-primary" style="width: 100%; justify-content: center; padding: 0.85rem; font-size: 0.95rem; margin-bottom: 1.15rem;">
+                                Verify &amp; Log In ➔
+                            </button>
+                        </form>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.825rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <a href="javascript:void(0)" id="btn-otp-back" style="color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 4px;">
+                                ← Back to Login
+                            </a>
+                            <button type="button" id="btn-otp-resend" style="background: none; border: none; color: #00a884; font-weight: 600; cursor: pointer; font-size: 0.825rem; padding: 0;">
+                                Resend Code <span id="otp-resend-timer">(30s)</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div style="margin-top: 1.5rem; text-align: center;">
                         <a href="javascript:void(0)" id="link-forgot-password" style="font-size: 0.825rem; color: var(--text-muted); text-decoration: none;">
                             Forgot Password?
@@ -7415,6 +7450,84 @@
             }
         });
 
+        // Login OTP Management
+        let activeOtpEmail = '';
+        let resendCountdownTimer = null;
+
+        function showOtpVerificationStep(email) {
+            activeOtpEmail = email;
+            const loginForm = document.getElementById('login-form');
+            const googleBtn = document.querySelector('#view-auth-login .btn-google-sso');
+            const divider = document.querySelector('#view-auth-login .auth-divider');
+            const forgotLink = document.getElementById('link-forgot-password')?.parentElement;
+            const otpStep = document.getElementById('login-otp-step');
+            const emailDisplay = document.getElementById('otp-target-email-display');
+            const otpInput = document.getElementById('login-otp-code');
+            const errorBanner = document.getElementById('login-error-banner');
+
+            if (errorBanner) errorBanner.style.display = 'none';
+            if (loginForm) loginForm.style.display = 'none';
+            if (googleBtn) googleBtn.style.display = 'none';
+            if (divider) divider.style.display = 'none';
+            if (forgotLink) forgotLink.style.display = 'none';
+
+            if (emailDisplay) emailDisplay.textContent = email;
+            if (otpStep) otpStep.style.display = 'block';
+            if (otpInput) {
+                otpInput.value = '';
+                otpInput.focus();
+            }
+
+            startResendCountdown(30);
+        }
+
+        function hideOtpVerificationStep() {
+            if (resendCountdownTimer) clearInterval(resendCountdownTimer);
+            const loginForm = document.getElementById('login-form');
+            const googleBtn = document.querySelector('#view-auth-login .btn-google-sso');
+            const divider = document.querySelector('#view-auth-login .auth-divider');
+            const forgotLink = document.getElementById('link-forgot-password')?.parentElement;
+            const otpStep = document.getElementById('login-otp-step');
+            const errorBanner = document.getElementById('login-error-banner');
+
+            if (errorBanner) errorBanner.style.display = 'none';
+            if (otpStep) otpStep.style.display = 'none';
+            if (loginForm) loginForm.style.display = 'block';
+            if (googleBtn) googleBtn.style.display = 'flex';
+            if (divider) divider.style.display = 'flex';
+            if (forgotLink) forgotLink.style.display = 'block';
+        }
+
+        function startResendCountdown(seconds) {
+            if (resendCountdownTimer) clearInterval(resendCountdownTimer);
+            const timerSpan = document.getElementById('otp-resend-timer');
+            const resendBtn = document.getElementById('btn-otp-resend');
+            let remaining = seconds;
+
+            if (resendBtn) {
+                resendBtn.disabled = true;
+                resendBtn.style.opacity = '0.55';
+                resendBtn.style.cursor = 'not-allowed';
+            }
+
+            if (timerSpan) timerSpan.textContent = `(${remaining}s)`;
+
+            resendCountdownTimer = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(resendCountdownTimer);
+                    if (timerSpan) timerSpan.textContent = '';
+                    if (resendBtn) {
+                        resendBtn.disabled = false;
+                        resendBtn.style.opacity = '1';
+                        resendBtn.style.cursor = 'pointer';
+                    }
+                } else {
+                    if (timerSpan) timerSpan.textContent = `(${remaining}s)`;
+                }
+            }, 1000);
+        }
+
         // Login Form Submit Handler (Supports BOTH Username AND Email)
         document.getElementById('login-form')?.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -7443,6 +7556,13 @@
                 }
 
                 if (res.ok && data.success) {
+                    if (data.require_otp) {
+                        // User logged in with Email -> Transition to OTP Verification!
+                        showOtpVerificationStep(data.email);
+                        return;
+                    }
+
+                    // Direct Username Login
                     localStorage.setItem('inspenox_token', data.token);
                     localStorage.setItem('inspenox_user', JSON.stringify(data.user));
                     window.location.replace('/');
@@ -7457,6 +7577,99 @@
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Continue ➔';
             }
+        });
+
+        // OTP Verification Form Handler
+        document.getElementById('login-otp-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const otp = document.getElementById('login-otp-code')?.value.trim();
+            const errorBanner = document.getElementById('login-error-banner');
+            const submitBtn = document.getElementById('btn-otp-verify-submit');
+
+            if (!otp || otp.length !== 6) {
+                errorBanner.textContent = '⚠️ Please enter the complete 6-digit verification code.';
+                errorBanner.style.display = 'block';
+                return;
+            }
+
+            errorBanner.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="auth-btn-spinner"></span> Verifying...';
+
+            try {
+                const res = await fetch('/api/auth?action=verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: activeOtpEmail, otp })
+                });
+
+                let data = {};
+                const resText = await res.text();
+                try {
+                    data = JSON.parse(resText);
+                } catch (e) {
+                    data = { error: resText || `HTTP ${res.status}` };
+                }
+
+                if (res.ok && data.success) {
+                    submitBtn.innerHTML = '✓ Verified! Redirecting...';
+                    localStorage.setItem('inspenox_token', data.token);
+                    localStorage.setItem('inspenox_user', JSON.stringify(data.user));
+                    setTimeout(() => {
+                        window.location.replace('/');
+                    }, 350);
+                } else {
+                    errorBanner.textContent = `⚠️ ${data.error || 'Invalid verification code'}`;
+                    errorBanner.style.display = 'block';
+                }
+            } catch (err) {
+                errorBanner.textContent = `⚠️ Network Error: ${err.message}`;
+                errorBanner.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Verify &amp; Log In ➔';
+            }
+        });
+
+        // Resend OTP Button Handler
+        document.getElementById('btn-otp-resend')?.addEventListener('click', async () => {
+            const errorBanner = document.getElementById('login-error-banner');
+            errorBanner.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/auth?action=resend-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: activeOtpEmail })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    startResendCountdown(30);
+                    errorBanner.textContent = `✓ ${data.message || 'New code sent!'}`;
+                    errorBanner.style.background = 'rgba(0, 168, 132, 0.12)';
+                    errorBanner.style.borderColor = 'rgba(0, 168, 132, 0.3)';
+                    errorBanner.style.color = '#00a884';
+                    errorBanner.style.display = 'block';
+                    setTimeout(() => {
+                        errorBanner.style.display = 'none';
+                        errorBanner.style.background = '';
+                        errorBanner.style.borderColor = '';
+                        errorBanner.style.color = '';
+                    }, 4000);
+                } else {
+                    errorBanner.textContent = `⚠️ ${data.error || 'Failed to resend code'}`;
+                    errorBanner.style.display = 'block';
+                }
+            } catch (err) {
+                errorBanner.textContent = `⚠️ Network Error: ${err.message}`;
+                errorBanner.style.display = 'block';
+            }
+        });
+
+        // Back to Login Button Handler
+        document.getElementById('btn-otp-back')?.addEventListener('click', () => {
+            hideOtpVerificationStep();
         });
 
         // Signup Form Submit Handler (New User Registration)
