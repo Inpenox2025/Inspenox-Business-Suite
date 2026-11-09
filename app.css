@@ -462,6 +462,28 @@ svg {
     gap: 0.75rem;
 }
 
+/* Subscriptions & View Headers */
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+}
+
+.view-header .view-title {
+    flex: 1 1 280px;
+}
+
+.view-header .view-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+
 /* Cards & Widgets */
 .card {
     background: var(--bg-card);
@@ -2458,31 +2480,254 @@ td.empty-state .empty-state-desc,
     line-height: 1.45;
 }
 
-/* ⏳ Meta WhatsApp 6-Hour Contact Maturation & Audience Protection */
+/* 🛡️ Meta WhatsApp 6-Hour Contact Quarantine & Audience Protection */
 .bc-cust-maturing {
-    opacity: 0.75 !important;
-    background: rgba(245, 158, 11, 0.04) !important;
-    border-left: 3px solid #f59e0b !important;
+    opacity: 0.78 !important;
+    background: rgba(239, 68, 68, 0.04) !important;
+    border-left: 3px solid #ef4444 !important;
     cursor: not-allowed !important;
 }
 
 .bc-cust-maturing input[type="checkbox"] {
     cursor: not-allowed !important;
-    opacity: 0.5 !important;
+    opacity: 0.45 !important;
 }
 
 .bc-maturing-badge {
     font-size: 0.68rem;
     font-weight: 700;
-    color: #d97706;
-    background: rgba(245, 158, 11, 0.12);
-    border: 1px solid rgba(245, 158, 11, 0.28);
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.28);
     border-radius: 4px;
     padding: 2px 6px;
     display: inline-flex;
     align-items: center;
     gap: 4px;
     white-space: nowrap;
+}
+
+/* Quarantine Badge & Info Hover Popover */
+.quarantine-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.28);
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.25;
+    vertical-align: middle;
+    transition: all 0.2s ease;
+    cursor: default;
+    user-select: none;
+}
+
+.quarantine-badge:hover {
+    background: rgba(239, 68, 68, 0.16);
+    border-color: rgba(239, 68, 68, 0.45);
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
+}
+
+.quarantine-badge.sm {
+    font-size: 0.66rem;
+    padding: 1px 6px;
+}
+
+.quarantine-info-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.18);
+    color: #ef4444;
+    border: none;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 2px;
+    transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.quarantine-info-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+    transform: scale(1.15);
+}
+
+/* Floating Quarantine Popover Card */
+.quarantine-popover {
+    position: fixed;
+    z-index: 100050;
+    max-width: 440px;
+    width: calc(100vw - 2rem);
+    pointer-events: auto;
+    filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.45));
+    animation: quarantineFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes quarantineFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.quarantine-popover-card {
+    background: var(--bg-card, #1e293b);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 14px;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(239, 68, 68, 0.15);
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+}
+
+.quarantine-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(15, 23, 42, 0.45) 100%);
+    border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.quarantine-popover-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.quarantine-popover-shield {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.quarantine-popover-title {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-main, #f8fafc);
+}
+
+.quarantine-popover-subtitle {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted, #94a3b8);
+    margin-top: 1px;
+}
+
+.quarantine-popover-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #94a3b8);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.quarantine-popover-close:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-main, #f8fafc);
+}
+
+.quarantine-popover-body {
+    padding: 0.95rem 1.15rem;
+}
+
+.quarantine-popover-intro {
+    font-size: 0.78rem;
+    color: var(--text-muted, #94a3b8);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.4;
+}
+
+.quarantine-popover-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.quarantine-popover-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--text-main, #e2e8f0);
+}
+
+.quarantine-bullet-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ef4444;
+    margin-top: 6px;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.65);
+}
+
+.quarantine-popover-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 1rem;
+    background: rgba(0, 0, 0, 0.18);
+    border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+    gap: 0.5rem;
+}
+
+.quarantine-timer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
+.quarantine-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 100040;
+}
+
+@media (max-width: 600px) {
+    .quarantine-popover.mobile-modal {
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        max-width: calc(100vw - 2rem);
+        margin: 0;
+    }
 }
 
 .empty-inbox-icon svg {
@@ -3319,6 +3564,67 @@ td.empty-state .empty-state-desc,
         justify-content: center;
     }
 
+    /* Subscriptions Header & Actions on Mobile */
+    .view-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.85rem;
+    }
+
+    .view-header .view-title {
+        width: 100%;
+    }
+
+    .view-header-actions {
+        width: 100%;
+        margin-left: 0 !important;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .view-header-actions .btn {
+        flex: 1 1 calc(50% - 0.35rem);
+        min-width: 130px;
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* Toolbar Responsiveness on Mobile */
+    .toolbar-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        padding: 0.85rem;
+    }
+
+    .toolbar-card .search-box {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .toolbar-card > div {
+        width: 100%;
+        justify-content: flex-start;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .toolbar-card .table-filter-select,
+    .toolbar-card select {
+        flex: 1 1 calc(50% - 0.25rem);
+        min-width: 130px;
+    }
+
+    .toolbar-card .pagination-area {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 0.25rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border);
+    }
+
     .stats-grid {
         grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
         gap: 0.75rem;
@@ -3410,6 +3716,11 @@ td.empty-state .empty-state-desc,
     .btn {
         padding: 0.55rem 0.85rem;
         font-size: 0.85rem;
+    }
+
+    .view-header-actions .btn {
+        flex: 1 1 100% !important;
+        width: 100%;
     }
 
     .chat-header-bar {

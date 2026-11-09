@@ -63,7 +63,7 @@ if (typeof window !== 'undefined') {
     window.renderTableEmptyStateHtml = renderTableEmptyStateHtml;
 }
 
-// --- Customer Maturation Cooldown Helper (Meta 6-Hour Contact Delivery Maturation) ---
+// --- Customer Maturation / Quarantine Cooldown Helper (Meta 6-Hour Contact Delivery Maturation) ---
 function getCustomerMaturationInfo(cust) {
     if (!cust || !cust.created_at) return { isMaturing: false, remainingHours: 0, remainingMinutes: 0, timeText: '' };
     const createdTime = new Date(cust.created_at).getTime();
@@ -83,8 +83,150 @@ function getCustomerMaturationInfo(cust) {
     }
     return { isMaturing: false, remainingHours: 0, remainingMinutes: 0, timeText: '' };
 }
+
+// 🛡️ Quarantine Info Tooltip & Modal Logic
+let quarantineTooltipTimeout = null;
+let isQuarantineModalPinned = false;
+
+function showQuarantineTooltip(event, timeText) {
+    if (isQuarantineModalPinned) return;
+    clearTimeout(quarantineTooltipTimeout);
+
+    // On narrow touch screens (<=600px), avoid hover tooltips jumping on touch
+    if (typeof window !== 'undefined' && window.innerWidth <= 600) return;
+
+    const popover = document.getElementById('quarantine-info-popover');
+    const timerEl = document.getElementById('quarantine-popover-timer-text');
+    if (!popover) return;
+
+    if (timerEl) {
+        timerEl.textContent = timeText ? `Cooldown Remaining: ${timeText}` : '6-Hour Cooldown in progress';
+    }
+
+    const trigger = event.currentTarget || event.target;
+    const rect = trigger.getBoundingClientRect();
+
+    popover.classList.remove('mobile-modal');
+    popover.style.display = 'block';
+
+    const popoverRect = popover.getBoundingClientRect();
+    const padding = 12;
+
+    let left = rect.left + (rect.width / 2) - (popoverRect.width / 2);
+    if (left < padding) left = padding;
+    if (left + popoverRect.width > window.innerWidth - padding) {
+        left = window.innerWidth - popoverRect.width - padding;
+    }
+
+    let top = rect.top - popoverRect.height - 10;
+    if (top < padding) {
+        top = rect.bottom + 10;
+    }
+
+    popover.style.left = `${Math.round(left)}px`;
+    popover.style.top = `${Math.round(top)}px`;
+}
+
+function hideQuarantineTooltip() {
+    if (isQuarantineModalPinned) return;
+    clearTimeout(quarantineTooltipTimeout);
+    quarantineTooltipTimeout = setTimeout(() => {
+        const popover = document.getElementById('quarantine-info-popover');
+        if (popover && !isQuarantineModalPinned) {
+            popover.style.display = 'none';
+        }
+    }, 120);
+}
+
+function openQuarantineInfoModal(event, timeText) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    clearTimeout(quarantineTooltipTimeout);
+    isQuarantineModalPinned = true;
+
+    const popover = document.getElementById('quarantine-info-popover');
+    const backdrop = document.getElementById('quarantine-popover-backdrop');
+    const timerEl = document.getElementById('quarantine-popover-timer-text');
+    if (!popover) return;
+
+    if (timerEl) {
+        timerEl.textContent = timeText ? `Cooldown Remaining: ${timeText}` : '6-Hour Cooldown in progress';
+    }
+
+    if (typeof window !== 'undefined' && window.innerWidth <= 600) {
+        popover.classList.add('mobile-modal');
+        popover.style.display = 'block';
+        popover.style.left = '50%';
+        popover.style.top = '50%';
+        if (backdrop) backdrop.style.display = 'block';
+    } else {
+        popover.classList.remove('mobile-modal');
+        if (backdrop) backdrop.style.display = 'none';
+        popover.style.display = 'block';
+
+        const trigger = (event && (event.currentTarget || event.target)) ? (event.currentTarget || event.target) : document.body;
+        const rect = trigger.getBoundingClientRect();
+        const popoverRect = popover.getBoundingClientRect();
+        const padding = 12;
+
+        let left = rect.left + (rect.width / 2) - (popoverRect.width / 2);
+        if (left < padding) left = padding;
+        if (left + popoverRect.width > window.innerWidth - padding) {
+            left = window.innerWidth - popoverRect.width - padding;
+        }
+
+        let top = rect.top - popoverRect.height - 10;
+        if (top < padding) {
+            top = rect.bottom + 10;
+        }
+
+        popover.style.left = `${Math.round(left)}px`;
+        popover.style.top = `${Math.round(top)}px`;
+    }
+}
+
+function closeQuarantineInfo() {
+    isQuarantineModalPinned = false;
+    clearTimeout(quarantineTooltipTimeout);
+    const popover = document.getElementById('quarantine-info-popover');
+    const backdrop = document.getElementById('quarantine-popover-backdrop');
+    if (popover) popover.style.display = 'none';
+    if (backdrop) backdrop.style.display = 'none';
+}
+
+if (typeof document !== 'undefined') {
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isQuarantineModalPinned) {
+            closeQuarantineInfo();
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (isQuarantineModalPinned) {
+            const popover = document.getElementById('quarantine-info-popover');
+            if (popover && !popover.contains(e.target) && !e.target.closest('.quarantine-info-btn') && !e.target.closest('.quarantine-badge')) {
+                closeQuarantineInfo();
+            }
+        }
+    });
+
+    const popoverEl = document.getElementById('quarantine-info-popover');
+    if (popoverEl) {
+        popoverEl.addEventListener('mouseenter', () => clearTimeout(quarantineTooltipTimeout));
+        popoverEl.addEventListener('mouseleave', () => {
+            if (!isQuarantineModalPinned) hideQuarantineTooltip();
+        });
+    }
+}
+
 if (typeof window !== 'undefined') {
     window.getCustomerMaturationInfo = getCustomerMaturationInfo;
+    window.showQuarantineTooltip = showQuarantineTooltip;
+    window.hideQuarantineTooltip = hideQuarantineTooltip;
+    window.openQuarantineInfoModal = openQuarantineInfoModal;
+    window.closeQuarantineInfo = closeQuarantineInfo;
 }
 
 // --- Thumbnail & Media Preview Helpers ---
@@ -3847,7 +3989,7 @@ window.filterCustomersByTag = function filterCustomersByTag(tagVal) {
 async function loadCustomers() {
     const tbody = document.getElementById('customers-table-body');
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="10"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading customer directory...</span></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11"><div class="loading-spinner-container"><div class="spinner-icon"></div><span>Loading customer directory...</span></div></td></tr>`;
     }
     try {
         await loadTags();
@@ -3857,7 +3999,7 @@ async function loadCustomers() {
 
         if (customers.error) {
             console.error('API Error:', customers.error);
-            if (tbody) tbody.innerHTML = renderTableEmptyStateHtml(10, 'Failed to load customers', customers.error || 'Server error occurred while loading contacts.', '⚠️');
+            if (tbody) tbody.innerHTML = renderTableEmptyStateHtml(11, 'Failed to load customers', customers.error || 'Server error occurred while loading contacts.', '⚠️');
             return;
         }
 
@@ -3870,7 +4012,7 @@ async function loadCustomers() {
         syncTagSelectorDisplay('form');
     } catch (e) {
         console.error('Error loading customers:', e);
-        if (tbody) tbody.innerHTML = renderTableEmptyStateHtml(10, 'Error loading customer data', 'Please check your connection and refresh.', '⚠️');
+        if (tbody) tbody.innerHTML = renderTableEmptyStateHtml(11, 'Error loading customer data', 'Please check your connection and refresh.', '⚠️');
     }
 }
 
@@ -3902,8 +4044,23 @@ function renderCustomersTable() {
         const custDesc = c.description || c.notes || '';
 
         const matInfo = getCustomerMaturationInfo(c);
-        const maturingBadge = matInfo.isMaturing ? 
-            `<span title="Newly added contact: Broadcasts unlock in ${matInfo.timeText} (Meta 6-hour maturation requirement)" style="font-size:0.65rem; color:#d97706; background:rgba(245,158,11,0.14); border:1px solid rgba(245,158,11,0.25); border-radius:4px; padding:1px 5px; font-weight:700; margin-left:6px; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">⏳ Maturing: ${matInfo.timeText}</span>` : '';
+        const quarantineBadge = matInfo.isMaturing ? 
+            `<span class="quarantine-badge" onmouseenter="showQuarantineTooltip(event, '${matInfo.timeText}')" onmouseleave="hideQuarantineTooltip()" title="In 6-hour Quarantine cooldown (${matInfo.timeText} left)">
+                <span>🛡️ Quarantine: ${matInfo.timeText}</span>
+                <button type="button" class="quarantine-info-btn" onclick="openQuarantineInfoModal(event, '${matInfo.timeText}')" title="Why is this contact in quarantine? Click to view policy">🛈</button>
+            </span>` : '';
+
+        const addrParts = [];
+        if (c.address) addrParts.push(escapeHtml(c.address));
+        if (c.city) addrParts.push(escapeHtml(c.city));
+        if (c.state) addrParts.push(escapeHtml(c.state));
+        if (c.pincode) addrParts.push(escapeHtml(c.pincode));
+        const addressDisplayHtml = addrParts.length > 0 
+            ? `<div style="display:flex; align-items:flex-start; gap:4px; font-size:0.8rem; color:var(--text-main); line-height:1.35;">
+                <span style="opacity:0.65; flex-shrink:0;">📍</span>
+                <span>${addrParts.join(', ')}</span>
+               </div>`
+            : `<span style="font-size:0.8rem; color:var(--text-muted);">-</span>`;
 
         const tagsArr = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
         const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
@@ -3922,15 +4079,15 @@ function renderCustomersTable() {
                 <div class="user-cell">
                     <div class="user-avatar">${getInitial(c.name)}</div>
                     <div>
-                        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
-                            <strong style="color:var(--text-main);">${escapeHtml(c.name || 'Customer')}</strong>
-                            ${maturingBadge}
+                        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:5px;">
+                            <strong style="color:var(--text-main); font-size:0.9rem;">${escapeHtml(c.name || 'Customer')}</strong>
+                            ${quarantineBadge}
                         </div>
-                        ${c.city ? `<span style="font-size:0.75rem;color:var(--text-muted);">${escapeHtml(c.city)}${c.state ? ', ' + escapeHtml(c.state) : ''}</span>` : ''}
                     </div>
                 </div>
             </td>
-            <td><code style="font-size:0.85rem;color:var(--primary);">${c.phone}</code></td>
+            <td><code style="font-size:0.85rem;color:var(--primary); font-weight:600;">${c.phone}</code></td>
+            <td>${addressDisplayHtml}</td>
             <td class="cust-status-td">
                 <select class="status-select-badge status-${statusKey}" 
                         onchange="updateCustomerStatus(${c.id}, this.value, this)" 
@@ -3962,7 +4119,7 @@ function renderCustomersTable() {
     });
 
     if (totalItems === 0) {
-        tbody.innerHTML = renderTableEmptyStateHtml(10, 'No matching customers found', 'Try adjusting your search query, status, or tag filters.', '👥');
+        tbody.innerHTML = renderTableEmptyStateHtml(11, 'No matching customers found', 'Try adjusting your search query, status, or tag filters.', '👥');
     }
 
     if (pageInfo) {
@@ -4265,7 +4422,10 @@ function exportFilteredCustomers() {
             "Conversation Notes": c.description || c.notes || "",
             "Email": c.email || "",
             "Company": c.company_name || "",
+            "Address": c.address || "",
             "City": c.city || "",
+            "State": c.state || "",
+            "Pincode": c.pincode || "",
             "Tags": c.tags || "",
             "Messages Count": parseInt(c.message_count, 10) || 0,
             "Unread Messages": parseInt(c.unread_count, 10) || 0,
@@ -7596,7 +7756,7 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
             selectAllLabel.textContent = `Select All Filtered (${visibleEligibleCount} ready)`;
         } else {
             const maturingTotal = visibleCount - visibleEligibleCount;
-            selectAllLabel.textContent = `Select All Customers (${visibleEligibleCount} ready${maturingTotal > 0 ? `, ${maturingTotal} maturing` : ''})`;
+            selectAllLabel.textContent = `Select All Customers (${visibleEligibleCount} ready${maturingTotal > 0 ? `, ${maturingTotal} in quarantine` : ''})`;
         }
     }
 
@@ -7637,7 +7797,7 @@ async function loadCustomersForSelect() {
                 if (matInfo.isMaturing) maturingCount++;
             });
 
-            // Notice banner if there are maturing contacts (<6h)
+            // Notice banner if there are quarantine contacts (<6h)
             let bannerEl = document.getElementById('bc-maturing-banner');
             if (maturingCount > 0) {
                 if (!bannerEl) {
@@ -7646,9 +7806,14 @@ async function loadCustomersForSelect() {
                     list.parentNode.insertBefore(bannerEl, list);
                 }
                 bannerEl.innerHTML = `
-                    <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.28); border-radius: 8px; padding: 0.55rem 0.75rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #d97706;">
-                        <span style="font-size: 1.1rem; line-height: 1;">⏳</span>
-                        <div><strong>${maturingCount} newly added contact(s) maturing:</strong> Meta Cloud API enforces a 6-hour maturation delay for new numbers before template broadcasts. Broadcasting unlocks automatically once 6 hours pass.</div>
+                    <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.28); border-radius: 8px; padding: 0.65rem 0.85rem; margin-bottom: 0.6rem; display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; font-size: 0.78rem; color: #dc2626; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 1.15rem; line-height: 1;">🛡️</span>
+                            <div><strong>${maturingCount} newly added contact(s) in 6-hour Quarantine:</strong> Broadcast permissions are temporarily suspended. Contacts unlock automatically once 6 hours elapse.</div>
+                        </div>
+                        <button type="button" class="btn secondary sm" onclick="openQuarantineInfoModal(event, '6 hours')" style="border-color: rgba(239, 68, 68, 0.35); color: #dc2626; font-size: 0.75rem; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px; background: rgba(239, 68, 68, 0.06); cursor: pointer;">
+                            <span>🛈</span> <span>Quarantine Policy</span>
+                        </button>
                     </div>
                 `;
             } else if (bannerEl) {
@@ -7674,11 +7839,14 @@ async function loadCustomersForSelect() {
                 const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
 
                 const checkboxHtml = isMaturing
-                    ? `<input type="checkbox" class="bc-cust-cb" value="${c.id}" disabled title="Broadcasts unlock in ${matInfo.timeText} (Meta 6-hour contact maturation requirement)">`
+                    ? `<input type="checkbox" class="bc-cust-cb" value="${c.id}" disabled title="Broadcasts unlock in ${matInfo.timeText} (Meta 6-hour contact quarantine policy)">`
                     : `<input type="checkbox" class="bc-cust-cb" value="${c.id}">`;
 
                 const maturingBadgeHtml = isMaturing
-                    ? `<span class="bc-maturing-badge" title="Broadcasting unlocks in ${matInfo.timeText} per Meta WhatsApp deliverability guidelines">⏳ Maturing (${matInfo.timeText})</span>`
+                    ? `<span class="quarantine-badge sm" onmouseenter="showQuarantineTooltip(event, '${matInfo.timeText}')" onmouseleave="hideQuarantineTooltip()" title="In 6-hour Quarantine cooldown (${matInfo.timeText} left)">
+                        <span>🛡️ Quarantine: ${matInfo.timeText}</span>
+                        <button type="button" class="quarantine-info-btn" onclick="openQuarantineInfoModal(event, '${matInfo.timeText}')" title="Why is this contact in quarantine? Click to view policy">🛈</button>
+                       </span>`
                     : '';
 
                 label.innerHTML = `

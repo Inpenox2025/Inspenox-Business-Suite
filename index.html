@@ -761,6 +761,7 @@
                                 <th style="width: 50px;">S.No</th>
                                 <th style="min-width: 170px;">Customer</th>
                                 <th style="min-width: 130px;">Phone Number</th>
+                                <th style="min-width: 150px;">Address</th>
                                 <th style="min-width: 195px;">Status</th>
                                 <th style="min-width: 220px;">Conversation Notes</th>
                                 <th style="min-width: 140px;">Email</th>
@@ -772,7 +773,7 @@
                         </thead>
                         <tbody id="customers-table-body">
                             <tr>
-                                <td colspan="10" class="empty-state">
+                                <td colspan="11" class="empty-state">
                                     <div class="empty-state-content">
                                         <div class="spinner-icon" style="width:22px;height:22px;border-width:2px;margin-bottom:6px;"></div>
                                         <div class="empty-state-title">Loading customer directory...</div>
@@ -3454,19 +3455,19 @@
 
             <!-- Subscriptions, Plans & Billing View -->
             <section id="view-subscriptions" class="view">
-                <header class="view-header">
-                    <div class="view-title">
-                        <h2>💳 Subscriptions, Plans & Billing</h2>
-                        <p>Manage subscription packages, billing cycles, and payment history.</p>
+                <header class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.25rem; margin-bottom:1.75rem;">
+                    <div class="view-title" style="flex:1 1 280px;">
+                        <h2 style="margin:0 0 0.35rem 0; font-size:1.6rem; font-weight:800; letter-spacing:-0.5px;">💳 Subscriptions, Plans & Billing</h2>
+                        <p style="margin:0; color:var(--text-muted); font-size:0.88rem;">Manage subscription packages, billing cycles, and payment history.</p>
                     </div>
-                    <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+                    <div class="view-header-actions" style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin-left:auto;">
                         <button type="button" class="btn secondary sm" onclick="loadSubscriptions()"
-                            style="display:inline-flex; align-items:center; gap:6px; border-radius:8px; padding:0.45rem 0.85rem; font-size:0.8rem;">
+                            style="display:inline-flex; align-items:center; gap:6px; border-radius:8px; padding:0.48rem 0.9rem; font-size:0.82rem; font-weight:600;">
                             🔄 <span>Refresh Status</span>
                         </button>
                         <a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing#rate-cards"
                             target="_blank" rel="noopener noreferrer" class="btn secondary sm"
-                            style="gap:0.4rem; text-decoration:none; font-size:0.8rem; border-radius:8px; padding:0.45rem 0.85rem; display:inline-flex; align-items:center;">
+                            style="gap:0.45rem; text-decoration:none; font-size:0.82rem; font-weight:600; border-radius:8px; padding:0.48rem 0.9rem; display:inline-flex; align-items:center;">
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="12" y1="1" x2="12" y2="23"></line>
@@ -3476,7 +3477,7 @@
                         </a>
                         <a href="https://business.facebook.com/latest/billing_hub/" target="_blank"
                             rel="noopener noreferrer" class="btn primary sm"
-                            style="gap:0.4rem; text-decoration:none; font-size:0.8rem; border-radius:8px; padding:0.45rem 0.85rem; display:inline-flex; align-items:center;">
+                            style="gap:0.45rem; text-decoration:none; font-size:0.82rem; font-weight:600; border-radius:8px; padding:0.48rem 0.9rem; display:inline-flex; align-items:center;">
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
@@ -5237,6 +5238,48 @@
             </div>
         </div>
     </div>
+
+    <!-- 🛡️ Meta 6-Hour Contact Quarantine Policy Info Popover / Modal -->
+    <div id="quarantine-info-popover" class="quarantine-popover" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="quarantine-popover-title">
+        <div class="quarantine-popover-card">
+            <div class="quarantine-popover-header">
+                <div class="quarantine-popover-title-wrap">
+                    <span class="quarantine-popover-shield">🛡️</span>
+                    <div>
+                        <h4 id="quarantine-popover-title" class="quarantine-popover-title">Contact Quarantine Policy</h4>
+                        <span class="quarantine-popover-subtitle">Meta Cloud API 6-Hour Deliverability Safeguard</span>
+                    </div>
+                </div>
+                <button type="button" class="quarantine-popover-close" onclick="closeQuarantineInfo()" aria-label="Close" title="Close info">✕</button>
+            </div>
+            <div class="quarantine-popover-body">
+                <p class="quarantine-popover-intro">Newly registered contact numbers undergo a mandatory 6-hour security cooldown:</p>
+                <ul class="quarantine-popover-list">
+                    <li>
+                        <span class="quarantine-bullet-dot"></span>
+                        <span>For Newly added contacts will enter a 6-hour quarantine period during which broadcast permissions are suspended.</span>
+                    </li>
+                    <li>
+                        <span class="quarantine-bullet-dot"></span>
+                        <span>To prevent spam, a 6-hour cool-off period applies to all new contacts before they can be included in broadcast lists.</span>
+                    </li>
+                    <li>
+                        <span class="quarantine-bullet-dot"></span>
+                        <span>We Enforce a 6-hour broadcast restriction window on newly synchronized endpoints.</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="quarantine-popover-footer">
+                <div class="quarantine-timer-badge">
+                    <span>⏱️</span>
+                    <span id="quarantine-popover-timer-text">Remaining: 6h 0m</span>
+                </div>
+                <button type="button" class="btn secondary sm" onclick="closeQuarantineInfo()" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">Got it</button>
+            </div>
+        </div>
+    </div>
+    <!-- Backdrop for mobile modal mode -->
+    <div id="quarantine-popover-backdrop" class="quarantine-backdrop" style="display: none;" onclick="closeQuarantineInfo()"></div>
 
     <style>
         @media print {
