@@ -2827,8 +2827,21 @@ document.addEventListener('click', (e) => {
 window.toggleNavGroup = function toggleNavGroup(headerEl) {
     if (!headerEl) return;
     const group = headerEl.closest('.nav-group');
-    if (group) {
-        group.classList.toggle('collapsed');
+    if (!group) return;
+
+    const isCollapsed = group.classList.contains('collapsed');
+    if (isCollapsed) {
+        // Accordion behavior: collapse all other groups
+        document.querySelectorAll('#sidebar-nav .nav-group').forEach(g => {
+            if (g !== group) {
+                g.classList.add('collapsed');
+                const hasActive = g.querySelector('.nav-subitem.active');
+                if (!hasActive) g.classList.remove('active-group');
+            }
+        });
+        group.classList.remove('collapsed');
+    } else {
+        group.classList.add('collapsed');
     }
 };
 
@@ -3365,16 +3378,23 @@ window.switchView = function switchView(target, pushHistory = true) {
     }
 
     document.querySelectorAll('#sidebar-nav a[data-view]').forEach(a => a.classList.remove('active'));
-    document.querySelectorAll('#sidebar-nav .nav-group').forEach(g => g.classList.remove('active-group'));
 
     const link = document.querySelector(`[data-view="${target}"]`);
+    const activeParentGroup = link ? link.closest('.nav-group') : null;
+
+    // Collapse any nav-group that does not contain the active submenu!
+    document.querySelectorAll('#sidebar-nav .nav-group').forEach(g => {
+        if (g === activeParentGroup) {
+            g.classList.add('active-group');
+            g.classList.remove('collapsed');
+        } else {
+            g.classList.remove('active-group');
+            g.classList.add('collapsed');
+        }
+    });
+
     if (link) {
         link.classList.add('active');
-        const parentGroup = link.closest('.nav-group');
-        if (parentGroup) {
-            parentGroup.classList.add('active-group');
-            parentGroup.classList.remove('collapsed');
-        }
     }
 
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -13092,24 +13112,34 @@ async function toggleAutoRule(ruleId, isChecked) {
 }
 window.toggleAutoRule = toggleAutoRule;
 
-async function deleteAutoRule(ruleId) {
-    if (!confirm('Are you sure you want to delete this automation rule?')) return;
-
-    try {
-        const res = await apiFetch(`/api/automation?id=${ruleId}&company_id=${encodeURIComponent(getCompanyId())}`, {
-            method: 'DELETE'
-        });
-        const data = await res.json();
-        if (data.success) {
-            allAutomationRules = allAutomationRules.filter(x => x.id !== ruleId);
-            renderAutomationRulesList(allAutomationRules);
-            loadAutomationBoard();
-        } else {
-            showModal('Error', data.error || 'Failed to delete rule.');
-        }
-    } catch (e) {
-        showModal('Error', e.message);
-    }
+function deleteAutoRule(ruleId) {
+    showModal(
+        'Delete Automation Rule',
+        'Are you sure you want to delete this automation rule? This action cannot be undone.',
+        'confirm',
+        async () => {
+            try {
+                const res = await apiFetch(`/api/automation?id=${ruleId}&company_id=${encodeURIComponent(getCompanyId())}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    allAutomationRules = allAutomationRules.filter(x => x.id !== ruleId);
+                    renderAutomationRulesList(allAutomationRules);
+                    loadAutomationBoard();
+                    if (typeof showToast === 'function') {
+                        showToast('Automation rule deleted successfully.', 'success');
+                    }
+                } else {
+                    showModal('Error', data.error || 'Failed to delete rule.');
+                }
+            } catch (e) {
+                showModal('Error', e.message);
+            }
+        },
+        'Delete Rule',
+        'btn danger'
+    );
 }
 window.deleteAutoRule = deleteAutoRule;
 

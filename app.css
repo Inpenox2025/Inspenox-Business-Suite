@@ -311,6 +311,17 @@ svg {
     color: var(--text-main);
 }
 
+.nav-group.active-group > .nav-group-header {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.nav-group:not(.active-group) > .nav-group-header {
+    background: transparent;
+    color: var(--text-muted);
+}
+
 .nav-group-title {
     display: flex;
     align-items: center;
