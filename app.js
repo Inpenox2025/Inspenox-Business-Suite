@@ -4046,7 +4046,7 @@ function renderCustomersTable() {
         const matInfo = getCustomerMaturationInfo(c);
         const quarantineBadge = matInfo.isMaturing ? 
             `<span class="quarantine-badge" onmouseenter="showQuarantineTooltip(event, '${matInfo.timeText}')" onmouseleave="hideQuarantineTooltip()" title="In 6-hour Quarantine cooldown (${matInfo.timeText} left)">
-                <span>🛡️ Quarantine: ${matInfo.timeText}</span>
+                <span>Quarantine: ${matInfo.timeText}</span>
                 <button type="button" class="quarantine-info-btn" onclick="openQuarantineInfoModal(event, '${matInfo.timeText}')" title="Why is this contact in quarantine? Click to view policy">🛈</button>
             </span>` : '';
 
