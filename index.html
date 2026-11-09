@@ -4745,6 +4745,36 @@
         </div>
     </div>
 
+    <!-- Multi-Tenant Workspace Switching Overlay Animation -->
+    <div id="workspace-switching-overlay" class="modal-overlay hidden"
+        style="z-index: 100001; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; position: fixed; inset: 0; opacity: 0; transition: opacity 0.25s ease;">
+        <div class="card"
+            style="max-width: 420px; width: 90%; text-align: center; padding: 2.25rem 1.75rem; border-radius: 20px; border: 1.5px solid rgba(0,168,132,0.35); box-shadow: 0 25px 60px rgba(0,0,0,0.65); background: var(--bg-card); position: relative; overflow: hidden;">
+            <div style="position: absolute; top:0; left:0; right:0; height: 3px; background: linear-gradient(90deg, #00a884, #3b82f6, #10b981);">
+            </div>
+            <div style="width: 68px; height: 68px; margin: 0 auto 1.25rem auto; position: relative; display: flex; align-items: center; justify-content: center;">
+                <div class="spinner-icon"
+                    style="width: 60px; height: 60px; border-width: 3.5px; border-color: rgba(0,168,132,0.2); border-top-color: var(--primary);">
+                </div>
+                <div id="switching-overlay-avatar"
+                    style="position: absolute; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #00a884, #059669); color: #fff; font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                    I
+                </div>
+            </div>
+            <h3 id="switching-overlay-title"
+                style="margin: 0 0 0.5rem 0; font-size: 1.2rem; color: var(--text-main); font-weight: 700;">
+                Switching Workspace...
+            </h3>
+            <p id="switching-overlay-desc"
+                style="margin: 0 0 1rem 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                Loading isolated customer records, templates, analytics &amp; credentials...
+            </p>
+            <div style="padding-top: 0.85rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <span style="color: #10b981;">● Multi-Tenant Isolated Sandbox</span> • <span>Cloudflare Edge</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Workspace Payment Receipt / Tax Invoice Modal -->
     <div id="company-receipt-modal" class="modal-overlay hidden"
         onclick="if (event.target === this) closeCompanyReceiptModal()"

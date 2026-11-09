@@ -442,10 +442,61 @@ async function loadCompanies() {
     }
 }
 
+function showWorkspaceSwitchingOverlay(companyName) {
+    const overlay = document.getElementById('workspace-switching-overlay');
+    if (!overlay) return;
+    const titleEl = document.getElementById('switching-overlay-title');
+    const descEl = document.getElementById('switching-overlay-desc');
+    const avatarEl = document.getElementById('switching-overlay-avatar');
+    const name = companyName || 'Selected Organization';
+    if (titleEl) titleEl.textContent = `Switching to ${name}...`;
+    if (descEl) descEl.textContent = `Loading ${name}'s customer directory, message templates & analytics...`;
+    if (avatarEl) avatarEl.textContent = name.trim().charAt(0).toUpperCase() || 'W';
+    overlay.classList.remove('hidden');
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => {
+        overlay.style.opacity = '1';
+    });
+}
+window.showWorkspaceSwitchingOverlay = showWorkspaceSwitchingOverlay;
+
+function hideWorkspaceSwitchingOverlay() {
+    const overlay = document.getElementById('workspace-switching-overlay');
+    if (!overlay) return;
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        overlay.style.display = 'none';
+    }, 250);
+}
+window.hideWorkspaceSwitchingOverlay = hideWorkspaceSwitchingOverlay;
+
 document.getElementById('company-switcher')?.addEventListener('change', (e) => {
-    currentCompanyId = e.target.value;
+    const newCompanyId = e.target.value;
+    currentCompanyId = newCompanyId;
     localStorage.setItem('inspenox_company_id', currentCompanyId);
 
+    // 1. Resolve company name and initial for switching animation
+    const comp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(newCompanyId)) : null;
+    const isMaster = !comp || comp.is_parent || comp.is_master || (comp.slug && comp.slug.toLowerCase() === 'inspenox');
+    const targetCompName = isMaster ? 'Inspenox (Parent)' : (comp ? comp.name : 'Workspace');
+
+    // 2. Trigger Workspace Switching Loading Animation
+    showWorkspaceSwitchingOverlay(targetCompName);
+
+    // 3. Clear in-memory caches to prevent any data leaking between companies
+    templatesCache = [];
+    cachedAutomationTemplates = [];
+    allAutomationRules = [];
+    allCustomers = [];
+    inboxCustomersList = [];
+    broadcastCustomersCache = [];
+    if (typeof campaignsCache !== 'undefined') campaignsCache = [];
+    if (typeof activeCustomer !== 'undefined') activeCustomer = null;
+    if (typeof activeChatCustomer !== 'undefined') activeChatCustomer = null;
+    if (typeof closeChat === 'function') closeChat();
+
+    // 4. Update Branding, Subscriptions & Navigation Permissions
     updateBrandingForActiveCompany();
 
     const isSuper = isSuperAdmin();
@@ -454,15 +505,23 @@ document.getElementById('company-switcher')?.addEventListener('change', (e) => {
     if (secNav) secNav.style.display = isSuper ? 'flex' : 'none';
     if (subNav) subNav.style.display = 'flex';
     if (typeof updateAutomationNavVisibility === 'function') updateAutomationNavVisibility();
+    if (typeof updateCompanySubscriptionStatusUI === 'function') updateCompanySubscriptionStatusUI();
 
     if (typeof updateBroadcastSenderPhoneSelect === 'function') {
         updateBroadcastSenderPhoneSelect();
     }
 
-    ensureTemplatesCacheLoaded();
+    // 5. Invalidate and re-fetch Meta templates for the new company
+    ensureTemplatesCacheLoaded(true);
 
+    // 6. Reload current active view for the new company with fresh loading state
     const activeView = localStorage.getItem('activeView') || 'dashboard';
     switchView(activeView, false);
+
+    // 7. Dismiss switching overlay smoothly after brief animation window
+    setTimeout(() => {
+        hideWorkspaceSwitchingOverlay();
+    }, 450);
 });
 
 async function loadCompaniesSettings() {
@@ -1327,6 +1386,17 @@ window.loadDashboard = async function loadDashboard() {
     const elChats = document.getElementById('dash-stat-chats');
     const elEstCost = document.getElementById('dash-stat-est-cost');
     const elInboxList = document.getElementById('dash-inbox-list');
+    const mediaGrid = document.getElementById('dash-media-grid');
+
+    if (elCustomers) elCustomers.textContent = '...';
+    if (elMessages) elMessages.textContent = '...';
+    if (elWaSent) elWaSent.textContent = '...';
+    if (elEmailSent) elEmailSent.textContent = '...';
+    if (elSmsSent) elSmsSent.textContent = '...';
+    if (elChats) elChats.textContent = '...';
+    if (elEstCost) elEstCost.textContent = '...';
+    if (elInboxList) elInboxList.innerHTML = `<div class="loading-spinner-container" style="padding:1.5rem;"><div class="spinner-icon"></div><span>Loading recent activity...</span></div>`;
+    if (mediaGrid) mediaGrid.innerHTML = `<div class="loading-spinner-container" style="padding:1.5rem; grid-column: span 2;"><div class="spinner-icon"></div><span>Loading media...</span></div>`;
 
     try {
         const res = await apiFetch('/api/analytics');
@@ -1351,7 +1421,7 @@ window.loadDashboard = async function loadDashboard() {
                 elInboxList.innerHTML = `<div class="empty-state">No recent customer activity.</div>`;
             } else {
                 elInboxList.innerHTML = data.recent_inbound.map(msg => `
-                    <div class="dash-list-item" style="padding:0.75rem; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:0.75rem;">
+                    <div class="dash-list-item" style="padding:0.75rem; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:0.75rem; cursor:pointer;" onclick="switchView('inbox')">
                         <div class="dash-avatar" style="width:36px; height:36px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem;">
                             ${getInitial(msg.name)}
                         </div>
@@ -1362,6 +1432,35 @@ window.loadDashboard = async function loadDashboard() {
                         <span style="font-size:0.7rem; color:var(--text-muted);">${formatTime(msg.created_at)}</span>
                     </div>
                 `).join('');
+            }
+        }
+
+        if (mediaGrid) {
+            try {
+                const mediaRes = await apiFetch('/api/media');
+                const mediaList = await mediaRes.json();
+
+                if (!Array.isArray(mediaList) || mediaList.length === 0) {
+                    mediaGrid.innerHTML = '<div class="empty-state" style="grid-column: span 2;">No media uploaded yet.</div>';
+                } else {
+                    mediaGrid.innerHTML = '';
+                    const recentFiles = mediaList.slice(0, 4);
+                    recentFiles.forEach(m => {
+                        const isVideo = m.type === 'video' || (m.name && m.name.endsWith('.mp4'));
+                        const mediaHtml = isVideo
+                            ? (m.file_url ? `<video src="${m.file_url}" muted></video>` : `<div style="font-size:0.75rem;padding:0.5rem;text-align:center;">🎥 ${m.name}</div>`)
+                            : (m.file_url ? `<img src="${m.file_url}" alt="${m.name}">` : `<div style="font-size:0.75rem;padding:0.5rem;text-align:center;">🖼️ ${m.name}</div>`);
+
+                        mediaGrid.innerHTML += `
+                            <div class="dash-media-card">
+                                ${mediaHtml}
+                            </div>
+                        `;
+                    });
+                }
+            } catch (mediaErr) {
+                console.error('Error loading dashboard media:', mediaErr);
+                mediaGrid.innerHTML = '<div class="empty-state" style="grid-column: span 2;">No media uploaded yet.</div>';
             }
         }
     } catch (e) {
@@ -4384,70 +4483,8 @@ document.getElementById('btn-export-pdf-toolbar')?.addEventListener('click', exp
 
 // --- Dashboard Logic ---
 async function loadDashboard() {
-    const statCust = document.getElementById('dash-stat-customers');
-    const statMsgs = document.getElementById('dash-stat-messages');
-    const statChats = document.getElementById('dash-stat-chats');
-
-    if (statCust) statCust.textContent = '...';
-    if (statMsgs) statMsgs.textContent = '...';
-    if (statChats) statChats.textContent = '...';
-
-    try {
-        const res = await apiFetch('/api/analytics');
-        const analytics = await res.json();
-
-        if (!analytics.error) {
-            if (statCust) statCust.textContent = analytics.total_customers || 0;
-            if (statMsgs) statMsgs.textContent = analytics.messages_sent || 0;
-            if (statChats) statChats.textContent = (analytics.recent_inbound && analytics.recent_inbound.length) || 0;
-
-            const inboxList = document.getElementById('dash-inbox-list');
-            if (inboxList) {
-                if (analytics.recent_inbound && analytics.recent_inbound.length > 0) {
-                    inboxList.innerHTML = '';
-                    analytics.recent_inbound.forEach(msg => {
-                        inboxList.innerHTML += `
-                            <div class="dash-list-item" onclick="switchView('inbox')">
-                                <div class="avatar-mini">${getInitial(msg.name)}</div>
-                                <div class="dash-list-item-content">
-                                    <strong>${msg.name} (${msg.phone})</strong>
-                                    <p>${msg.content.substring(0, 60)}${msg.content.length > 60 ? '...' : ''}</p>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    inboxList.innerHTML = '<div class="empty-state">No recent inbound messages</div>';
-                }
-            }
-        }
-
-        const mediaGrid = document.getElementById('dash-media-grid');
-        if (mediaGrid) {
-            const mediaRes = await apiFetch('/api/media');
-            const mediaList = await mediaRes.json();
-
-            if (!Array.isArray(mediaList) || mediaList.length === 0) {
-                mediaGrid.innerHTML = '<div class="empty-state" style="grid-column: span 2;">No media uploaded yet.</div>';
-            } else {
-                mediaGrid.innerHTML = '';
-                const recentFiles = mediaList.slice(0, 4);
-                recentFiles.forEach(m => {
-                    const isVideo = m.type === 'video' || (m.name && m.name.endsWith('.mp4'));
-                    const mediaHtml = isVideo
-                        ? (m.file_url ? `<video src="${m.file_url}" muted></video>` : `<div style="font-size:0.75rem;padding:0.5rem;text-align:center;">🎥 ${m.name}</div>`)
-                        : (m.file_url ? `<img src="${m.file_url}" alt="${m.name}">` : `<div style="font-size:0.75rem;padding:0.5rem;text-align:center;">🖼️ ${m.name}</div>`);
-
-                    mediaGrid.innerHTML += `
-                        <div class="dash-media-card">
-                            ${mediaHtml}
-                        </div>
-                    `;
-                });
-            }
-        }
-    } catch (e) {
-        console.error('Error loading dashboard:', e);
+    if (typeof window.loadDashboard === 'function') {
+        return window.loadDashboard();
     }
 }
 
@@ -5089,8 +5126,9 @@ function checkSelectedTemplateMediaRequirement() {
 window.checkSelectedTemplateMediaRequirement = checkSelectedTemplateMediaRequirement;
 
 async function loadTemplatesForSelect() {
-    if (templatesCache.length === 0) await loadTemplates();
     const select = document.getElementById('bc-template');
+    if (select) select.innerHTML = '<option value="">Loading templates...</option>';
+    if (templatesCache.length === 0) await loadTemplates();
     if (select) {
         select.innerHTML = '';
         const approvedOnly = Array.isArray(templatesCache) ? templatesCache.filter(t => (t.status || '').toUpperCase() === 'APPROVED') : [];
@@ -7519,6 +7557,9 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
 };
 
 async function loadCustomersForSelect() {
+    const list = document.getElementById('bc-target-list');
+    if (list) list.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);"><span class="spinner-icon" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Loading customer list...</div>';
+
     try {
         await loadTags();
         const res = await apiFetch('/api/customers');
@@ -8390,6 +8431,11 @@ window.closeCampaignsListView = function closeCampaignsListView() {
 };
 
 window.loadCampaigns = async function loadCampaigns(selectedCampaignId = null) {
+    const switcher = document.getElementById('camp-switcher-select');
+    if (switcher) switcher.innerHTML = '<option value="">Loading campaigns...</option>';
+    const tbody = document.getElementById('campaigns-table-body');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7"><div class="loading-spinner-container" style="padding:1.5rem;"><div class="spinner-icon"></div><span>Loading campaign history...</span></div></td></tr>`;
+
     try {
         const coId = typeof getCompanyId === 'function' ? getCompanyId() : '1';
         const res = await apiFetch(`/api/broadcast?company_id=${coId}`);
