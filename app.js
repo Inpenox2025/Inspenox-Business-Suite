@@ -12432,7 +12432,7 @@ async function loadAutomationBoard() {
 
             if (statusEl) {
                 statusEl.textContent = activeRulesCount > 0 ? 'Active' : 'Paused';
-                statusEl.style.color = activeRulesCount > 0 ? 'var(--text-main)' : '#ef4444';
+                statusEl.style.color = activeRulesCount > 0 ? '#10b981' : '#ef4444';
             }
             if (indEl) {
                 indEl.textContent = activeRulesCount > 0 ? `● Online (${activeRulesCount} active rules)` : '○ Paused';
