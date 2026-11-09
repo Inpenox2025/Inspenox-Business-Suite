@@ -424,6 +424,9 @@ async function loadCompanies() {
             if (typeof updateCompanySubscriptionStatusUI === 'function') {
                 updateCompanySubscriptionStatusUI();
             }
+            if (typeof updateAutomationNavVisibility === 'function') {
+                updateAutomationNavVisibility();
+            }
             if (localStorage.getItem('activeView') === 'subscriptions' || window.location.hash === '#subscriptions') {
                 if (typeof renderPricingCards === 'function') {
                     renderPricingCards();
@@ -12349,14 +12352,24 @@ document.addEventListener('keydown', (e) => {
 // ENTERPRISE AUTOMATION BOARD CONTROLLER (Multi-Event & Button Replies)
 // =========================================================================
 
-function isEnterpriseActive() {
-    const coId = getCompanyId();
+function isEnterpriseActive(specificCompanyId) {
+    const coId = specificCompanyId || getCompanyId();
     const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
-    const isMaster = isSuperAdmin() || isParentAdmin() || !!(activeComp && ((activeComp.slug && activeComp.slug.toLowerCase() === 'inspenox') || (activeComp.name && activeComp.name.toLowerCase() === 'inspenox') || activeComp.is_parent === true || activeComp.is_master === true));
-    if (isMaster) return true;
-    const isExpired = !!(activeComp && activeComp.subscription_expires_at && (new Date(activeComp.subscription_expires_at) < new Date()));
-    const plan = (activeComp?.subscription_plan || '').toLowerCase();
-    const isActive = activeComp?.subscription_status === 'active';
+    if (!activeComp) {
+        if (coId === 'default' || coId === 'parent' || !coId) {
+            return isParentAdmin() || isSuperAdmin();
+        }
+        return false;
+    }
+    const isInspenox = !!((activeComp.slug && activeComp.slug.toLowerCase() === 'inspenox') || 
+                          (activeComp.name && activeComp.name.toLowerCase() === 'inspenox') || 
+                          activeComp.is_parent === true || 
+                          activeComp.is_master === true);
+    if (isInspenox) return true;
+
+    const isExpired = !!(activeComp.subscription_expires_at && (new Date(activeComp.subscription_expires_at) < new Date()));
+    const plan = (activeComp.subscription_plan || '').toLowerCase();
+    const isActive = activeComp.subscription_status === 'active';
     return !isExpired && isActive && plan.includes('enterprise');
 }
 window.isEnterpriseActive = isEnterpriseActive;
@@ -12378,22 +12391,36 @@ async function loadAutomationBoard() {
     const lockedEl = document.getElementById('automation-locked-state');
     const unlockedEl = document.getElementById('automation-unlocked-state');
 
+    const coId = getCompanyId();
+    const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
+    const bizName = (activeComp && activeComp.name && !activeComp.name.toLowerCase().includes('your business')) ? activeComp.name : 'Inspenox';
+
     if (!isEnt) {
-        if (lockedEl) lockedEl.style.display = 'block';
+        if (lockedEl) {
+            lockedEl.style.display = 'block';
+            const planBadge = document.getElementById('automation-locked-current-plan');
+            if (planBadge) {
+                const curPlan = activeComp?.subscription_plan || 'No Active Plan';
+                planBadge.textContent = `${bizName} is currently on the "${curPlan}" tier. 24/7 Edge Automation is exclusive to the Enterprise tier.`;
+            }
+        }
         if (unlockedEl) unlockedEl.style.display = 'none';
+        allAutomationRules = [];
         return;
     }
 
     if (lockedEl) lockedEl.style.display = 'none';
     if (unlockedEl) unlockedEl.style.display = 'block';
 
-    const coId = getCompanyId();
+    // Show initial loading in rules list
+    const rulesListEl = document.getElementById('auto-rules-list');
+    if (rulesListEl) {
+        rulesListEl.innerHTML = `<div style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><span class="spinner-icon" style="width:20px;height:20px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px;"></span> Loading automation rules for ${escapeHtml(bizName)}...</div>`;
+    }
 
     // Set Preview Business Name & Brand in Simulator
     const bizEl = document.getElementById('preview-auto-biz-name');
     const avatarEl = document.getElementById('preview-sim-avatar');
-    const activeComp = Array.isArray(allCompanies) ? allCompanies.find(c => String(c.id) === String(coId)) : null;
-    const bizName = (activeComp && activeComp.name && !activeComp.name.toLowerCase().includes('your business')) ? activeComp.name : 'Inspenox';
     if (bizEl) bizEl.textContent = bizName;
     if (avatarEl) avatarEl.textContent = bizName.trim().charAt(0).toUpperCase() || 'I';
     document.querySelectorAll('.preview-sim-brand').forEach(el => {
@@ -12414,6 +12441,19 @@ async function loadAutomationBoard() {
     // 2. Fetch current automation configuration & logs
     try {
         const aRes = await apiFetch(`/api/automation?company_id=${encodeURIComponent(coId)}`);
+        if (aRes.status === 403) {
+            if (lockedEl) {
+                lockedEl.style.display = 'block';
+                const planBadge = document.getElementById('automation-locked-current-plan');
+                if (planBadge) {
+                    const curPlan = activeComp?.subscription_plan || 'No Active Plan';
+                    planBadge.textContent = `${bizName} is currently on the "${curPlan}" tier. 24/7 Edge Automation is exclusive to the Enterprise tier.`;
+                }
+            }
+            if (unlockedEl) unlockedEl.style.display = 'none';
+            allAutomationRules = [];
+            return;
+        }
         const aData = await aRes.json();
 
         if (aData.success) {
@@ -12443,9 +12483,23 @@ async function loadAutomationBoard() {
 
             // Render Recent Logs
             renderAutomationLogs(aData.recent_logs || []);
+        } else {
+            if (lockedEl) {
+                lockedEl.style.display = 'block';
+                const planBadge = document.getElementById('automation-locked-current-plan');
+                if (planBadge) {
+                    const curPlan = activeComp?.subscription_plan || 'No Active Plan';
+                    planBadge.textContent = `${bizName} is currently on the "${curPlan}" tier. 24/7 Edge Automation is exclusive to the Enterprise tier.`;
+                }
+            }
+            if (unlockedEl) unlockedEl.style.display = 'none';
+            allAutomationRules = [];
         }
     } catch (e) {
         console.error('Error fetching automation rule:', e);
+        if (rulesListEl) {
+            rulesListEl.innerHTML = `<div style="text-align: center; padding: 2rem; color: #ef4444;">Failed to load rules: ${escapeHtml(e.message)}</div>`;
+        }
     }
 
     // Initialize or refresh the interactive chat simulation
@@ -12784,7 +12838,7 @@ async function submitAutoRuleModal() {
         if (data.success) {
             closeAutoRuleModal();
             loadAutomationBoard();
-            showModal('Rule Saved ⚡', `Automation rule "${name}" is active and running 24/7 on Cloudflare Edge!`);
+            showModal('Rule Saved ⚡', `Automation rule "${name}" is active and running 24/7 on Inspenox Edge!`);
         } else {
             showModal('Save Failed', data.error || 'Could not save automation rule.');
         }
