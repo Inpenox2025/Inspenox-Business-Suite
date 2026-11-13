@@ -23,6 +23,10 @@ function escapeHtml(str) {
 }
 if (typeof window !== 'undefined') {
     window.escapeHtml = escapeHtml;
+    window.formatIndiaPhone = formatIndiaPhone;
+    window.formatDisplayPhone = formatDisplayPhone;
+    window.getInitial = getInitial;
+    window.formatTime = formatTime;
 }
 
 function formatIndiaPhone(phone) {
@@ -58,6 +62,31 @@ function formatTime(dateStr) {
     } catch (e) {
         return '';
     }
+}
+
+
+function getChatDateHeader(dateStr) {
+    if (!dateStr) return 'Today';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return 'Today';
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const msgDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    if (msgDate.getTime() === today.getTime()) {
+        return 'Today';
+    } else if (msgDate.getTime() === yesterday.getTime()) {
+        return 'Yesterday';
+    } else {
+        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+}
+if (typeof window !== 'undefined') {
+    window.getChatDateHeader = getChatDateHeader;
 }
 
 // --- Table Empty State Generator (100% Responsive & Cross-Viewport Table Dimensions) ---
@@ -333,8 +362,8 @@ window.closeMediaPreview = function closeMediaPreview() {
  * -------------------------------------------------------------------------- */
 
 // --- Globals ---
-let templatesCache = [];
-let isFetchingTemplatesCache = false;
+var templatesCache = [];
+var isFetchingTemplatesCache = false;
 
 async function ensureTemplatesCacheLoaded(force = false) {
     if (!force && ((templatesCache && Array.isArray(templatesCache) && templatesCache.length > 0) || isFetchingTemplatesCache)) {
@@ -397,8 +426,8 @@ window.clearTemplatesCache = () => {
     } catch (e) {}
 };
 
-let selectedCustomerIds = [];
-let activeInboxCustomer = null;
+var selectedCustomerIds = [];
+var activeInboxCustomer = null;
 var stagedChatFile = null;
 
 window.openChangePass = function openChangePass() {
@@ -505,16 +534,16 @@ window.submitChangePass = async function submitChangePass(e) {
         }
     }
 };
-let activeCustomerData = null;
-let inboxPollInterval = null;
-let allCustomers = [];
-let filteredCustomers = [];
-let inboxCustomersList = [];
+var activeCustomerData = null;
+var inboxPollInterval = null;
+var allCustomers = [];
+var filteredCustomers = [];
+var inboxCustomersList = [];
 var availableTags = [];
 var pendingExcelCustomers = [];
 var currentInboxFilter = 'all';
 var activeInboxTagFilter = null;
-let currentCustomersPage = 1;
+var currentCustomersPage = 1;
 const CUSTOMERS_PER_PAGE = 10;
 
 // --- Modal Logic ---

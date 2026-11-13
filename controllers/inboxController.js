@@ -1328,6 +1328,162 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+
+// --- WhatsApp Chat UI Helpers (Date Headers, WhatsApp Markdown, Media & Templates) ---
+function getChatDateHeader(dateStr) {
+    if (!dateStr) return 'Today';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return 'Today';
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const msgDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    if (msgDate.getTime() === today.getTime()) {
+        return 'Today';
+    } else if (msgDate.getTime() === yesterday.getTime()) {
+        return 'Yesterday';
+    } else {
+        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+}
+window.getChatDateHeader = getChatDateHeader;
+
+function formatWhatsAppMarkdown(text) {
+    if (!text) return '';
+    let html = (typeof escapeHtml === 'function' ? escapeHtml(String(text)) : String(text));
+    // Code blocks ```code```
+    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    // Inline code `code`
+    html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    // Bold *text*
+    html = html.replace(/\*([^\*\n]+)\*/g, '<strong>$1</strong>');
+    // Italic _text_
+    html = html.replace(/_([^_\n]+)_/g, '<em>$1</em>');
+    // Strikethrough ~text~
+    html = html.replace(/~([^~\n]+)~/g, '<del>$1</del>');
+    // Line breaks
+    html = html.replace(/\n/g, '<br>');
+    return html;
+}
+window.formatWhatsAppMarkdown = formatWhatsAppMarkdown;
+
+function resolveTemplateCard(templateSlug, activeCustomerData, m) {
+    const slug = (templateSlug || '').trim();
+    let title = slug.replace(/[_-]+/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    let body = m && m.content ? m.content.replace(/^\[Template\]\s*/i, '') : `Hello ${activeCustomerData?.name || 'Customer'}, thank you for contacting us!`;
+    let headerImage = null;
+    let headerBadge = 'Meta Template';
+    let headerIcon = '📋';
+    let footer = null;
+    let buttons = [];
+
+    if (typeof templatesCache !== 'undefined' && Array.isArray(templatesCache)) {
+        const found = templatesCache.find(t => t.name === slug || t.id === slug || (t.name && t.name.toLowerCase() === slug.toLowerCase()));
+        if (found) {
+            title = found.name.replace(/[_-]+/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            if (found.category) headerBadge = `Meta ${found.category}`;
+            
+            if (Array.isArray(found.components)) {
+                for (const comp of found.components) {
+                    if (comp.type === 'HEADER') {
+                        if (comp.format === 'IMAGE' && comp.example?.header_handle?.[0]) {
+                            headerImage = comp.example.header_handle[0];
+                        } else if (comp.text) {
+                            title = comp.text;
+                        }
+                    } else if (comp.type === 'BODY') {
+                        if (comp.text) body = comp.text;
+                    } else if (comp.type === 'FOOTER') {
+                        footer = comp.text;
+                    } else if (comp.type === 'BUTTONS' && Array.isArray(comp.buttons)) {
+                        buttons = comp.buttons.map(b => ({
+                            text: b.text || 'View',
+                            url: b.url || null,
+                            phone_number: b.phone_number || null,
+                            icon: b.type === 'PHONE_NUMBER' ? '📞' : (b.type === 'URL' ? '↗️' : '💬')
+                        }));
+                    }
+                }
+            }
+        }
+    }
+
+    if (activeCustomerData?.name) {
+        body = body.replace(/\{\{1\}\}/g, activeCustomerData.name);
+    }
+
+    return {
+        slug,
+        title,
+        body,
+        headerImage,
+        headerBadge,
+        headerIcon,
+        footer,
+        buttons
+    };
+}
+window.resolveTemplateCard = resolveTemplateCard;
+
+function renderChatMessageMedia(m) {
+    const rawUrl = (m.media_url || '').trim();
+    const msgType = (m.type || '').toLowerCase();
+    const content = (m.content || '').trim();
+    const fileName = m.filename || content || 'Document';
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (s => s || '');
+
+    if (!rawUrl) {
+        if (msgType === 'image' || content.toLowerCase().includes('image')) return '📷 [Image]';
+        if (msgType === 'video' || content.toLowerCase().includes('video')) return '🎥 [Video]';
+        if (msgType === 'audio' || content.toLowerCase().includes('audio')) return '🎵 [Audio]';
+        if (msgType === 'document' || content.toLowerCase().includes('document')) return `📄 ${esc(fileName)}`;
+        return esc(content);
+    }
+
+    const safeUrl = esc(rawUrl);
+
+    if (msgType === 'image' || rawUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i) || content.toLowerCase().includes('[image]')) {
+        return `
+            <div class="chat-media-wrap">
+                <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">
+                    <img src="${safeUrl}" alt="Photo" class="chat-media-img" loading="lazy" onerror="this.onerror=null;this.parentElement.innerHTML='📷 [Image]';" />
+                </a>
+            </div>
+        `;
+    }
+    if (msgType === 'video' || rawUrl.match(/\.(mp4|mov|webm|m4v)(\?.*)?$/i) || content.toLowerCase().includes('[video]')) {
+        return `
+            <div class="chat-media-wrap">
+                <video src="${safeUrl}" controls class="chat-media-video" preload="metadata"></video>
+            </div>
+        `;
+    }
+    if (msgType === 'audio' || rawUrl.match(/\.(mp3|wav|ogg|m4a|aac)(\?.*)?$/i) || content.toLowerCase().includes('[audio]') || content.toLowerCase().includes('voice note')) {
+        return `
+            <div class="chat-media-wrap audio-wrap">
+                <audio src="${safeUrl}" controls class="chat-media-audio" preload="metadata"></audio>
+            </div>
+        `;
+    }
+    // Document fallback
+    return `
+        <div class="chat-media-wrap doc-wrap">
+            <a href="${safeUrl}" target="_blank" download class="chat-media-doc-link" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <div class="chat-doc-info">
+                    <span class="chat-doc-name">${esc(fileName)}</span>
+                    <span class="chat-doc-action">Download Document</span>
+                </div>
+            </a>
+        </div>
+    `;
+}
+window.renderChatMessageMedia = renderChatMessageMedia;
+
 async function fetchChatMessages(isInitial = false) {
     if (!activeInboxCustomer) return;
     const chatContainer = document.getElementById('chat-messages');
