@@ -10489,7 +10489,283 @@ function update24hWindowBadge(messages) {
         badge.className = 'window-badge active';
         badge.title = '24-hour service window is active. Free session replies allowed.';
     } else {
-                    `<div class="media-placeholder-title">Video</div>
+        badge.textContent = '🔒 24h Expired';
+        badge.className = 'window-badge expired';
+        badge.title = 'Last inbound message was over 24 hours ago. Send a Template message to reconnect.';
+    }
+}
+
+function getChatDateHeader(dateStr) {
+    if (!dateStr) return 'Today';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return 'Today';
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const msgDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    if (msgDate.getTime() === today.getTime()) {
+        return 'Today';
+    } else if (msgDate.getTime() === yesterday.getTime()) {
+        return 'Yesterday';
+    } else {
+        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+}
+
+let lastChatMsgCount = 0;
+let lastChatLatestMsgId = null;
+let lastChatStatusHash = '';
+
+// Pre-defined & Persistent WhatsApp Template Registry (Renders fully even when Meta session/subscription is offline)
+const BUILTIN_TEMPLATE_DEFINITIONS = {
+    'jaspers_market_order_confirmation_v1': {
+        title: "Jasper's Market · Order Confirmed",
+        headerBadge: 'Order Update',
+        headerIcon: '📦',
+        body: 'Thank you for your order! Your purchase has been confirmed and is being prepared for fulfillment. We will notify you with live courier tracking as soon as it is dispatched.',
+        footer: "Jasper's Market · Automated WhatsApp Confirmation",
+        buttons: [
+            { text: 'Track Order Live', icon: '↗️', type: 'url' },
+            { text: 'Customer Support', icon: '💬', type: 'quick_reply' }
+        ]
+    },
+    'vinayaka_chavithi': {
+        title: 'Happy Vinayaka Chavithi! 🪔',
+        headerImage: '/vinayaka_chavithi_header.png',
+        headerBadge: 'Festive Greeting',
+        headerIcon: '🙏',
+        body: 'Dear {{customer_name}},\n\nWishing you and your beloved family a joyous and blessed Vinayaka Chavithi! May Lord Ganesha bestow good health, boundless happiness, and prosperous milestones upon your home. Celebrate with special festive offers curated just for you.',
+        footer: 'Inspenox Business Suite · Festive Campaign',
+        buttons: [
+            { text: 'Explore Festive Offers', icon: '🎁', type: 'url' },
+            { text: 'Connect with Us', icon: '💬', type: 'quick_reply' }
+        ]
+    },
+    'republic_day_sale': {
+        title: 'Republic Day Sale LIVE! 🇮🇳',
+        headerBadge: 'Mega Campaign',
+        headerIcon: '🛍️',
+        body: 'The Republic Day Special Sale is officially LIVE! Order today and win an exclusive shopping voucher worth ₹1000/- with instant free delivery across India.',
+        footer: 'Inspenox Verified Store',
+        buttons: [
+            { text: 'Shop Now', icon: '🛒', type: 'url' },
+            { text: 'Claim Voucher', icon: '🎁', type: 'quick_reply' }
+        ]
+    }
+};
+
+function formatTemplateDisplayName(slug) {
+    if (!slug) return 'WhatsApp Message Template';
+    return slug
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function resolveTemplateCard(templateSlug, customerData) {
+    const cleanSlug = String(templateSlug || '').trim().toLowerCase();
+
+    // Determine customer display name for variable replacement
+    let custName = '';
+    if (customerData && customerData.name && customerData.name !== customerData.phone) {
+        custName = customerData.name.trim();
+    } else {
+        const foundCust = (typeof inboxCustomersList !== 'undefined' && Array.isArray(inboxCustomersList))
+            ? inboxCustomersList.find(c => String(c.id) === String(activeInboxCustomer))
+            : null;
+        if (foundCust && foundCust.name && foundCust.name !== foundCust.phone) {
+            custName = foundCust.name.trim();
+        } else {
+            const chatHeaderName = document.getElementById('active-chat-name')?.textContent?.trim();
+            if (chatHeaderName && !chatHeaderName.startsWith('+') && !chatHeaderName.startsWith('Lead')) {
+                custName = chatHeaderName;
+            }
+        }
+    }
+    if (!custName) custName = 'Valued Customer';
+
+    function replaceVariables(text) {
+        if (!text) return '';
+        return text
+            .replace(/{{(?:1|customer_name|cust_name|name|user_name|client_name)}}/gi, custName)
+            .replace(/{{2}}/g, 'Special Festive Privilege')
+            .replace(/{{3}}/g, 'Inspenox')
+            .replace(/{{[^{}]+}}/g, custName); // Catch-all for any other unreplaced raw variable
+    }
+
+    // 1. Check if template exists in templatesCache (Meta API cache)
+    if (typeof templatesCache !== 'undefined' && Array.isArray(templatesCache) && templatesCache.length > 0) {
+        const found = templatesCache.find(t => (t.name || '').toLowerCase() === cleanSlug);
+        if (found && Array.isArray(found.components)) {
+            let headerText = '';
+            let headerImage = '';
+            let bodyText = '';
+            let footerText = '';
+            let buttons = [];
+
+            found.components.forEach(c => {
+                if (c.type === 'HEADER') {
+                    if (c.format === 'IMAGE') {
+                        headerImage = c.example?.header_handle?.[0] || (cleanSlug.includes('vinayaka') ? '/vinayaka_chavithi_header.png' : '');
+                        headerText = ''; // Do NOT display raw string 'IMAGE Header'
+                    } else if (c.text) {
+                        headerText = c.text;
+                    }
+                } else if (c.type === 'BODY') {
+                    bodyText = c.text || '';
+                } else if (c.type === 'FOOTER') {
+                    footerText = c.text || '';
+                } else if (c.type === 'BUTTONS' && Array.isArray(c.buttons)) {
+                    buttons = c.buttons.map(b => ({
+                        text: b.text || 'Action',
+                        icon: b.type === 'PHONE_NUMBER' ? '📞' : b.type === 'URL' ? '↗️' : '💬',
+                        type: b.type
+                    }));
+                }
+            });
+
+            if (cleanSlug.includes('vinayaka') && !headerImage) {
+                headerImage = '/vinayaka_chavithi_header.png';
+            }
+
+            if (bodyText) {
+                return {
+                    title: headerText || (headerImage ? '' : formatTemplateDisplayName(cleanSlug)),
+                    headerImage: headerImage,
+                    headerBadge: 'Meta Template',
+                    headerIcon: headerImage ? '' : '⚡',
+                    body: replaceVariables(bodyText),
+                    footer: footerText || 'Official WhatsApp Cloud API',
+                    buttons: buttons.length > 0 ? buttons : [{ text: 'Quick Reply', icon: '💬', type: 'quick_reply' }]
+                };
+            }
+        }
+    }
+
+    // 2. Check built-in persistent registry (Works unconditionally without active subscription or Meta session)
+    if (BUILTIN_TEMPLATE_DEFINITIONS[cleanSlug]) {
+        const def = BUILTIN_TEMPLATE_DEFINITIONS[cleanSlug];
+        return {
+            ...def,
+            body: replaceVariables(def.body)
+        };
+    }
+
+    // 3. Fallback for any other template name (e.g. order_update, welcome_flow)
+    const displayName = formatTemplateDisplayName(cleanSlug);
+    let sampleBody = `Hello ${custName}! This is an official verified WhatsApp template message for ${displayName}. All details and updates have been synchronized to your conversation.`;
+    let fallbackHeaderImg = '';
+    if (cleanSlug.includes('vinayaka')) {
+        fallbackHeaderImg = '/vinayaka_chavithi_header.png';
+        sampleBody = `Wishing you and your family a joyous and blessed Vinayaka Chavithi! May Lord Ganesha bestow good health, boundless happiness, and prosperous milestones upon your home.`;
+    }
+
+    return {
+        title: fallbackHeaderImg ? '' : displayName,
+        headerImage: fallbackHeaderImg,
+        headerBadge: 'Meta Template',
+        headerIcon: fallbackHeaderImg ? '' : '⚡',
+        body: replaceVariables(sampleBody),
+        footer: 'Official Meta WhatsApp Cloud API',
+        buttons: [
+            { text: 'View Details', icon: '↗️', type: 'url' },
+            { text: 'Reply to Message', icon: '💬', type: 'quick_reply' }
+        ]
+    };
+}
+
+
+function formatWhatsAppMarkdown(text) {
+    if (!text) return '';
+    let html = (typeof escapeHtml === 'function' ? escapeHtml(String(text)) : String(text));
+    // Code blocks ```code```
+    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    // Inline code `code`
+    html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    // Bold *text*
+    html = html.replace(/\*([^\*\n]+)\*/g, '<strong>$1</strong>');
+    // Italic _text_
+    html = html.replace(/_([^_\n]+)_/g, '<em>$1</em>');
+    // Strikethrough ~text~
+    html = html.replace(/~([^~\n]+)~/g, '<del>$1</del>');
+    // Line breaks
+    html = html.replace(/\n/g, '<br>');
+    return html;
+}
+window.formatWhatsAppMarkdown = formatWhatsAppMarkdown;
+
+function renderChatMessageMedia(m) {
+    const rawContent = (m.content || '').trim();
+    const type = (m.type || '').toLowerCase();
+    const mediaUrl = (m.media_url || '').trim();
+
+    const isImage = type === 'image' || rawContent === '[Image]' || rawContent === '[image]' || 
+                    (mediaUrl && (mediaUrl.includes('mime=image') || /\.(jpe?g|png|webp|gif)($|\?)/i.test(mediaUrl)));
+
+    const isVideo = type === 'video' || rawContent === '[Video]' || rawContent === '[video]' || 
+                    (mediaUrl && (mediaUrl.includes('mime=video') || /\.(mp4|mov|webm|avi|m4v)($|\?)/i.test(mediaUrl)));
+
+    const isAudio = type === 'audio' || rawContent === '[Audio]' || rawContent === '[audio]' || rawContent.toLowerCase().includes('voice note') ||
+                    (mediaUrl && (mediaUrl.includes('mime=audio') || /\.(ogg|opus|mp3|wav|m4a|aac)($|\?)/i.test(mediaUrl)));
+
+    const isSticker = type === 'sticker' || rawContent === '[Sticker]' || rawContent === '[sticker]';
+
+    // Extract caption if not a generic placeholder
+    let caption = rawContent;
+    if (caption === '[Image]' || caption === '[image]' || caption === '[Video]' || caption === '[video]' || 
+        caption === '[Document]' || caption === '[document]' || caption === '[Audio]' || caption === '[audio]' || 
+        caption === '[Sticker]' || caption === '[sticker]') {
+        caption = '';
+    }
+
+    if (isImage) {
+        if (mediaUrl) {
+            return `
+                <div class="chat-media-wrapper">
+                    <div class="chat-media-img-box" onclick="openMediaLightbox('${escapeHtml(mediaUrl)}', 'image')">
+                        <img src="${escapeHtml(mediaUrl)}" alt="Photo" class="chat-media-img" loading="lazy" onerror="handleMediaImgError(this, 'Photo')">
+                        <div class="chat-media-overlay">
+                            <span>🔍 Click to zoom</span>
+                        </div>
+                    </div>
+                    ${caption ? `<div class="chat-media-caption">${escapeHtml(caption).replace(/\n/g, '<br>')}</div>` : ''}
+                </div>
+            `;
+        }
+        return `
+            <div class="chat-media-placeholder image-placeholder">
+                <div class="media-placeholder-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                </div>
+                <div class="media-placeholder-info">
+                    <div class="media-placeholder-title">Photo</div>
+                    <div class="media-placeholder-subtitle">${caption ? escapeHtml(caption) : 'Photo received on WhatsApp'}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    if (isVideo) {
+        if (mediaUrl) {
+            return `
+                <div class="chat-media-wrapper">
+                    <div class="chat-media-video-box">
+                        <video src="${escapeHtml(mediaUrl)}" controls class="chat-media-video" preload="metadata"></video>
+                    </div>
+                    ${caption ? `<div class="chat-media-caption">${escapeHtml(caption).replace(/\n/g, '<br>')}</div>` : ''}
+                </div>
+            `;
+        }
+        return `
+            <div class="chat-media-placeholder video-placeholder">
+                <div class="media-placeholder-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                </div>
+                <div class="media-placeholder-info">
+                    <div class="media-placeholder-title">Video</div>
                     <div class="media-placeholder-subtitle">${caption ? escapeHtml(caption) : 'Video received on WhatsApp'}</div>
                 </div>
             </div>
@@ -10562,7 +10838,7 @@ function update24hWindowBadge(messages) {
         const downloadUrl = mediaUrl.includes('?') ? `${mediaUrl}&download=1` : `${mediaUrl}?download=1`;
         return `
             <div class="chat-media-wrapper">
-                <div onclick="downloadChatMedia('${escapeHtml(mediaUrl)}', '${escapeHtml(docName)}')" class="chat-media-doc-card" title="Click to download ${escapeHtml(docName)}">
+                <a href="${escapeHtml(downloadUrl)}" target="_blank" download="${escapeHtml(docName)}" class="chat-media-doc-card" title="Click to download ${escapeHtml(docName)}">
                     <div class="doc-icon-badge ${badgeClass}">
                         ${escapeHtml(docExt.toUpperCase().slice(0, 4))}
                     </div>
@@ -10577,7 +10853,7 @@ function update24hWindowBadge(messages) {
                     <div class="doc-download-btn">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     </div>
-                </div>
+                </a>
                 ${caption && caption !== docName ? `<div class="chat-media-caption">${escapeHtml(caption).replace(/\n/g, '<br>')}</div>` : ''}
             </div>
         `;
@@ -10595,6 +10871,7 @@ function update24hWindowBadge(messages) {
         </div>
     `;
 }
+
 
 function handleMediaImgError(imgEl, fallbackTitle) {
     if (!imgEl) return;
