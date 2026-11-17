@@ -1,0 +1,846 @@
+/**
+ * ==========================================================================
+ * TEMPLATELIBRARY.JS - Official Meta WhatsApp Template Library & Starter Catalog
+ * ==========================================================================
+ * Provides a comprehensive, battle-tested library of pre-approved Meta WhatsApp 
+ * message templates across Utility, Marketing, and Authentication categories in
+ * English, Telugu, and Hindi. Users can browse, preview with realistic examples,
+ * and 1-click customize or submit directly to Meta without creating from scratch.
+ * ==========================================================================
+ */
+
+const META_TEMPLATE_LIBRARY = [
+    // --- TELUGU UTILITY TEMPLATES (From Meta Library) ---
+    {
+        id: 'te_address_update',
+        name: 'address_update',
+        category: 'UTILITY',
+        subtype: 'custom',
+        feature: 'Delivery update',
+        industry: 'E-commerce & Logistics',
+        language: 'te',
+        languageName: 'Telugu',
+        title: 'చిరునామా నవీకరణ',
+        breadcrumbs: 'Utility > Order management > Delivery update',
+        header: { format: 'TEXT', text: 'చిరునామా నవీకరణ' },
+        body: {
+            text: 'హాయ్ {{text}}, మీ డెలివరీ చిరునామా 123 మెయిన్ స్ట్రీట్‌కు విజయవంతంగా నవీకరించబడింది. ఏదైనా విచారణల కొరకు సంప్రదించండి support@telco.com .',
+            exampleText: 'హాయ్ రాజీవ్, మీ డెలివరీ చిరునామా 123 మెయిన్ స్ట్రీట్‌కు విజయవంతంగా నవీకరించబడింది. ఏదైనా విచారణల కొరకు సంప్రదించండి support@telco.com .'
+        },
+        footer: { text: 'Inspenox Delivery Alert' },
+        buttons: []
+    },
+    {
+        id: 'te_account_creation_confirmation',
+        name: 'account_creation_confirmation',
+        category: 'UTILITY',
+        subtype: 'custom',
+        feature: 'Account updates',
+        industry: 'General Business & Apps',
+        language: 'te',
+        languageName: 'Telugu',
+        title: 'అకౌంట్ సెటప్‌ను ఫైనలైజ్ చేయండి',
+        breadcrumbs: 'Utility > Account management > Account updates',
+        header: { format: 'TEXT', text: 'అకౌంట్ సెటప్‌ను ఫైనలైజ్ చేయండి' },
+        body: {
+            text: 'హాయ్ {{text}}, మీ కొత్త అకౌంట్ విజయవంతంగా సృష్టించబడింది. మీ ప్రొఫైల్‌ను పూర్తి చేయడం కోసం దయచేసి {{text}}ను ధృవీకరించండి.',
+            exampleText: 'హాయ్ సాయి, మీ కొత్త అకౌంట్ విజయవంతంగా సృష్టించబడింది. మీ ప్రొఫైల్‌ను పూర్తి చేయడం కోసం దయచేసి మొబైల్ నంబర్‌ను ధృవీకరించండి.'
+        },
+        footer: { text: '' },
+        buttons: [
+            { type: 'URL', text: 'అకౌంట్‌ను ధృవీకరించండి', url: 'https://example.com/verify' }
+        ]
+    },
+    {
+        id: 'te_order_delivery_tracking',
+        name: 'order_delivery_tracking',
+        category: 'UTILITY',
+        subtype: 'custom',
+        feature: 'Order status',
+        industry: 'E-Commerce & Retail',
+        language: 'te',
+        languageName: 'Telugu',
+        title: 'ఆర్డర్ షిప్పింగ్ సమాచారం',
+        breadcrumbs: 'Utility > Order tracking > Delivery status',
+        header: { format: 'TEXT', text: 'ఆర్డర్ షిప్పింగ్ అప్‌డేట్' },
+        body: {
+            text: 'హాయ్ {{customer_name}}, మీ ఆర్డర్ #{{order_id}} విజయవంతంగా పంపబడింది! అంచనా డెలివరీ తేదీ: {{delivery_date}}. క్రింది బటన్ నొక్కి ప్రత్యక్షంగా ట్రాక్ చేయండి.',
+            exampleText: 'హాయ్ విక్రమ్, మీ ఆర్డర్ #INSP-89201 విజయవంతంగా పంపబడింది! అంచనా డెలివరీ తేదీ: 22 నవంబర్. క్రింది బటన్ నొక్కి ప్రత్యక్షంగా ట్రాక్ చేయండి.'
+        },
+        footer: { text: 'షాపింగ్ చేసినందుకు ధన్యవాదాలు' },
+        buttons: [
+            { type: 'URL', text: 'ఆర్డర్ ట్రాక్ చేయండి', url: 'https://example.com/track/{{1}}' }
+        ]
+    },
+    {
+        id: 'te_catalog_showcase',
+        name: 'telugu_catalog_showcase',
+        category: 'MARKETING',
+        subtype: 'catalogue',
+        feature: 'Catalog & Products',
+        industry: 'Machinery & Equipment',
+        language: 'te',
+        languageName: 'Telugu',
+        title: 'ఉత్పత్తుల కేటలాగ్',
+        breadcrumbs: 'Marketing > Product discovery > Catalog message',
+        header: { format: 'CATALOG_HEADER', text: 'మా కొత్త ఉత్పత్తుల కేటలాగ్' },
+        body: {
+            text: 'నమస్కారం {{customer_name}}! మా సరికొత్త రోటవేటర్లు, ట్రాక్టర్లు మరియు వ్యవసాయ యంత్రాల కేటలాగ్‌ను పరిశీలించండి. ఉత్తమ ధరలు మరియు తక్షణ డెలివరీ అందుబాటులో ఉన్నాయి.',
+            exampleText: 'నమస్కారం రాజేష్ గారు! మా సరికొత్త రోటవేటర్లు, ట్రాక్టర్లు మరియు వ్యవసాయ యంత్రాల కేటలాగ్‌ను పరిశీలించండి. ఉత్తమ ధరలు మరియు తక్షణ డెలివరీ అందుబాటులో ఉన్నాయి.'
+        },
+        footer: { text: 'Inspenox Machinery' },
+        buttons: [
+            { type: 'CATALOG', text: 'కేటలాగ్ చూడండి' }
+        ]
+    },
+
+    // --- ENGLISH UTILITY TEMPLATES ---
+    {
+        id: 'en_address_update',
+        name: 'address_update_en',
+        category: 'UTILITY',
+        subtype: 'custom',
+        feature: 'Delivery update',
+        industry: 'E-commerce & Logistics',
+        language: 'en',
+        languageName: 'English',
+        title: 'Address Update Confirmation',
+        breadcrumbs: 'Utility > Order management > Delivery update',
+        header: { format: 'TEXT', text: 'Delivery Address Updated' },
+        body: {
+            text: 'Hi {{customer_name}}, your shipping address for shipment #{{order_id}} has been updated to: {{new_address}}. For questions, email support@inspenox.com.',
+            exampleText: 'Hi Alex, your shipping address for shipment #ORD-98412 has been updated to: 42 Palm Street, Suite 3B. For questions, email support@inspenox.com.'
+        },
+        footer: { text: 'Inspenox Logistics Dispatch' },
+        buttons: [
+            { type: 'PHONE_NUMBER', text: 'Call Support', phone_number: '+919553262002' }
+        ]
+    },
+    {
+        id: 'en_order_status_tracking',
+        name: 'order_status_tracking',
+        category: 'UTILITY',
+        subtype: 'custom',
+        feature: 'Order status',
+        industry: 'E-Commerce & Retail',
+        language: 'en',
+        languageName: 'English',
+        title: 'Order Dispatched & Tracking',
+        breadcrumbs: 'Utility > Order tracking > Delivery status',
+        header: { format: 'TEXT', text: 'Your Order is on the Way! 🚚' },
+        body: {
+            text: 'Hello {{customer_name}}, great news! Your order #{{order_id}} has shipped via {{carrier_name}}. Expected delivery date is {{delivery_date}}.',
+            exampleText: 'Hello Sarah, great news! Your order #94821 has shipped via BlueDart Express. Expected delivery date is Friday, Nov 21.'
+        },
+        footer: { text: 'Thank you for your purchase!' },
+        buttons: [
+            { type: 'URL', text: 'Track Shipment ↗', url: 'https://example.com/track/{{1}}' }
+        ]
+    },
+    {
+        id: 'en_payment_reminder',
+        name: 'payment_reminder_notice',
+        category: 'UTILITY',
+        subtype: 'custom',
+        feature: 'Payment reminders',
+        industry: 'Finance & B2B Services',
+        language: 'en',
+        languageName: 'English',
+        title: 'Payment Reminder & Invoice',
+        breadcrumbs: 'Utility > Billing > Payment reminder',
+        header: { format: 'TEXT', text: 'Payment Due Reminder' },
+        body: {
+            text: 'Dear {{customer_name}}, this is a friendly reminder that invoice #{{invoice_id}} for ₹{{amount}} is due on {{due_date}}. Tap below to view invoice and pay securely.',
+            exampleText: 'Dear Rajesh, this is a friendly reminder that invoice #INV-2026-88 for ₹14,500.00 is due on 25 Nov 2026. Tap below to view invoice and pay securely.'
+        },
+        footer: { text: 'Inspenox Finance Accounts' },
+        buttons: [
+            { type: 'URL', text: 'Pay Invoice Securely ↗', url: 'https://example.com/pay/{{1}}' }
+        ]
+    },
+    {
+        id: 'en_appointment_confirmation',
+        name: 'appointment_confirmation',
+        category: 'UTILITY',
+        subtype: 'custom',
+        feature: 'Account updates',
+        industry: 'Healthcare & Consulting',
+        language: 'en',
+        languageName: 'English',
+        title: 'Appointment Confirmation',
+        breadcrumbs: 'Utility > Bookings > Appointment confirmation',
+        header: { format: 'TEXT', text: 'Appointment Confirmed' },
+        body: {
+            text: 'Hello {{customer_name}}, your consultation with {{advisor_name}} is confirmed for {{date}} at {{time}}. Please arrive 10 minutes prior.',
+            exampleText: 'Hello Michael, your consultation with Dr. Arvind Kumar is confirmed for Thursday, Nov 20 at 10:30 AM. Please arrive 10 minutes prior.'
+        },
+        footer: { text: 'Please notify us 24h in advance if rescheduling.' },
+        buttons: [
+            { type: 'QUICK_REPLY', text: 'Confirm Attendance' },
+            { type: 'QUICK_REPLY', text: 'Reschedule' }
+        ]
+    },
+
+    // --- ENGLISH MARKETING TEMPLATES ---
+    {
+        id: 'en_catalog_product_showcase',
+        name: 'catalog_product_showcase',
+        category: 'MARKETING',
+        subtype: 'catalogue',
+        feature: 'Catalog & Products',
+        industry: 'E-commerce & Manufacturing',
+        language: 'en',
+        languageName: 'English',
+        title: 'Interactive Product Catalog',
+        breadcrumbs: 'Marketing > Product discovery > Catalog message',
+        header: { format: 'CATALOG_HEADER', text: 'Explore Our New Product Catalog' },
+        body: {
+            text: 'Discover our latest equipment, rotavators, tractors, and machinery in our digital WhatsApp catalog! Browse specs, view photos, and place orders directly in chat. #happyshopping',
+            exampleText: 'Discover our latest equipment, rotavators, tractors, and machinery in our digital WhatsApp catalog! Browse specs, view photos, and place orders directly in chat. #happyshopping'
+        },
+        footer: { text: 'Inspenox Machinery Systems' },
+        buttons: [
+            { type: 'CATALOG', text: 'View catalog' }
+        ]
+    },
+    {
+        id: 'en_multi_product_showcase',
+        name: 'multi_product_collection',
+        category: 'MARKETING',
+        subtype: 'catalogue',
+        feature: 'Catalog & Products',
+        industry: 'E-commerce & Retail',
+        language: 'en',
+        languageName: 'English',
+        title: 'Curated Multi-Product Showcase (MPM)',
+        breadcrumbs: 'Marketing > Curated collections > Multi-product message',
+        header: { format: 'CATALOG_HEADER', text: 'Featured Equipment Picks' },
+        body: {
+            text: 'Hi {{customer_name}}, we have handpicked our top-rated agricultural rotavators and tillers matching your regional soil type. Take a look below and order in chat with 0% interest financing!',
+            exampleText: 'Hi Venkat, we have handpicked our top-rated agricultural rotavators and tillers matching your regional soil type. Take a look below and order in chat with 0% interest financing!'
+        },
+        footer: { text: 'Available while seasonal stocks last' },
+        buttons: [
+            { type: 'MPM', text: 'View Products' }
+        ]
+    },
+    {
+        id: 'en_festive_discount_sale',
+        name: 'festive_discount_sale',
+        category: 'MARKETING',
+        subtype: 'custom',
+        feature: 'Offers & Promotions',
+        industry: 'Retail & Consumer Goods',
+        language: 'en',
+        languageName: 'English',
+        title: 'Festive Flash Sale & Coupon',
+        breadcrumbs: 'Marketing > Promotions > Coupon & discount',
+        header: { format: 'TEXT', text: 'Special Festive Offer! 🎁' },
+        body: {
+            text: 'Celebrate this season with up to {{discount}}% OFF on all purchases! Use coupon code {{coupon_code}} at checkout. Valid until {{expiry_date}}.',
+            exampleText: 'Celebrate this season with up to 30% OFF on all purchases! Use coupon code FESTIVE30 at checkout. Valid until Sunday Midnight.'
+        },
+        footer: { text: 'Terms & conditions apply' },
+        buttons: [
+            { type: 'COPY_CODE', text: 'Copy Offer Code', example: 'FESTIVE30' },
+            { type: 'URL', text: 'Shop Online ↗', url: 'https://example.com/shop' }
+        ]
+    },
+    {
+        id: 'en_abandoned_cart_recovery',
+        name: 'abandoned_cart_recovery',
+        category: 'MARKETING',
+        subtype: 'custom',
+        feature: 'Offers & Promotions',
+        industry: 'E-Commerce & Retail',
+        language: 'en',
+        languageName: 'English',
+        title: 'Abandoned Cart Recovery & Free Delivery',
+        breadcrumbs: 'Marketing > Sales recovery > Cart reminder',
+        header: { format: 'TEXT', text: 'Did You Forget Something? 🛒' },
+        body: {
+            text: 'Hi {{customer_name}}, items in your shopping cart are selling fast! Complete your purchase in the next 24 hours to receive FREE express shipping.',
+            exampleText: 'Hi Anita, items in your shopping cart are selling fast! Complete your purchase in the next 24 hours to receive FREE express shipping.'
+        },
+        footer: { text: 'Inspenox Store' },
+        buttons: [
+            { type: 'URL', text: 'Complete Your Order ↗', url: 'https://example.com/checkout' }
+        ]
+    },
+    {
+        id: 'en_call_permission_request',
+        name: 'call_permission_request',
+        category: 'MARKETING',
+        subtype: 'calling_permissions',
+        feature: 'Call permissions',
+        industry: 'Consulting & High-Ticket Sales',
+        language: 'en',
+        languageName: 'English',
+        title: 'WhatsApp Calling Permission Request',
+        breadcrumbs: 'Marketing > Customer contact > Call permissions',
+        header: { format: 'TEXT', text: 'Direct Consultation Request' },
+        body: {
+            text: 'Hi {{customer_name}}, our senior equipment specialist would like to briefly call you on WhatsApp regarding your inquiry about {{product_name}}. May we place a call?',
+            exampleText: 'Hi Pradeep, our senior equipment specialist would like to briefly call you on WhatsApp regarding your inquiry about Shaktiman Rotavator. May we place a call?'
+        },
+        footer: { text: 'Tap below to select your preference' },
+        buttons: [
+            { type: 'QUICK_REPLY', text: 'Always allow calls' },
+            { type: 'QUICK_REPLY', text: 'Temporarily allow' },
+            { type: 'QUICK_REPLY', text: 'Not now' }
+        ]
+    },
+
+    // --- AUTHENTICATION TEMPLATES ---
+    {
+        id: 'en_two_factor_auth_otp',
+        name: 'two_factor_auth_otp',
+        category: 'AUTHENTICATION',
+        subtype: 'custom',
+        feature: 'Account & Security',
+        industry: 'Security & Access',
+        language: 'en',
+        languageName: 'English',
+        title: 'One-Time Verification Password (OTP)',
+        breadcrumbs: 'Authentication > Security > OTP verification',
+        header: { format: 'NONE', text: '' },
+        body: {
+            text: '{{1}} is your Inspenox verification code. For your security, do not share this code with anyone. Code expires in 10 minutes.',
+            exampleText: '582910 is your Inspenox verification code. For your security, do not share this code with anyone. Code expires in 10 minutes.'
+        },
+        footer: { text: '' },
+        buttons: [
+            { type: 'OTP', text: 'Copy Code', otp_type: 'COPY_CODE' }
+        ]
+    },
+    {
+        id: 'te_auth_otp_code',
+        name: 'telugu_auth_otp_code',
+        category: 'AUTHENTICATION',
+        subtype: 'custom',
+        feature: 'Account & Security',
+        industry: 'Security & Access',
+        language: 'te',
+        languageName: 'Telugu',
+        title: 'వన్ టైమ్ పాస్‌వర్డ్ (OTP)',
+        breadcrumbs: 'Authentication > Security > OTP code',
+        header: { format: 'NONE', text: '' },
+        body: {
+            text: '{{1}} మీ భద్రతా ధృవీకరణ కోడ్. మీ ఖాతా భద్రత కోసం, ఈ కోడ్‌ను ఎవరితోనూ పంచుకోవద్దు. ఇది 10 నిమిషాలు మాత్రమే చెల్లుబాటు అవుతుంది.',
+            exampleText: '934812 మీ భద్రతా ధృవీకరణ కోడ్. మీ ఖాతా భద్రత కోసం, ఈ కోడ్‌ను ఎవరితోనూ పంచుకోవద్దు. ఇది 10 నిమిషాలు మాత్రమే చెల్లుబాటు అవుతుంది.'
+        },
+        footer: { text: '' },
+        buttons: [
+            { type: 'OTP', text: 'కోడ్‌ను కాపీ చేయండి', otp_type: 'COPY_CODE' }
+        ]
+    },
+
+    // --- HINDI UTILITY & MARKETING TEMPLATES ---
+    {
+        id: 'hi_order_delivery_tracking',
+        name: 'hindi_order_tracking',
+        category: 'UTILITY',
+        subtype: 'custom',
+        feature: 'Order status',
+        industry: 'E-Commerce & Retail',
+        language: 'hi',
+        languageName: 'Hindi',
+        title: 'ऑर्डर डिलीवरी ट्रैकिंग',
+        breadcrumbs: 'Utility > Order tracking > Delivery update',
+        header: { format: 'TEXT', text: 'आपका ऑर्डर भेज दिया गया है 📦' },
+        body: {
+            text: 'नमस्ते {{customer_name}}, आपका ऑर्डर #{{order_id}} भेज दिया गया है। अनुमानित डिलीवरी तिथि {{delivery_date}} है। नीचे दिए गए लिंक से लाइव ट्रैक करें।',
+            exampleText: 'नमस्ते अमित, आपका ऑर्डर #ORD-55412 भेज दिया गया है। अनुमानित डिलीवरी तिथि 22 नवंबर है। नीचे दिए गए लिंक से लाइव ट्रैक करें।'
+        },
+        footer: { text: 'हमारे साथ खरीदारी करने के लिए धन्यवाद!' },
+        buttons: [
+            { type: 'URL', text: 'ऑर्डर ट्रैक करें ↗', url: 'https://example.com/track/{{1}}' }
+        ]
+    },
+    {
+        id: 'hi_catalog_showcase',
+        name: 'hindi_catalog_showcase',
+        category: 'MARKETING',
+        subtype: 'catalogue',
+        feature: 'Catalog & Products',
+        industry: 'Machinery & Equipment',
+        language: 'hi',
+        languageName: 'Hindi',
+        title: 'उत्पाद कैटलॉग एक्सप्लोर करें',
+        breadcrumbs: 'Marketing > Product discovery > Catalog message',
+        header: { format: 'CATALOG_HEADER', text: 'हमारा नया उत्पाद कैटलॉग' },
+        body: {
+            text: 'नमस्ते {{customer_name}}! हमारे नवीनतम रोटावेटर, ट्रैक्टर और कृषि उपकरणों की पूरी सूची हमारे व्हाट्सएप कैटलॉग में देखें।',
+            exampleText: 'नमस्ते विजय जी! हमारे नवीनतम रोटावेटर, ट्रैक्टर और कृषि उपकरणों की पूरी सूची हमारे व्हाट्सएप कैटलॉग में देखें।'
+        },
+        footer: { text: 'Inspenox Machinery' },
+        buttons: [
+            { type: 'CATALOG', text: 'View catalog' }
+        ]
+    }
+];
+
+// --- State Management ---
+let currentLibraryCategory = 'ALL';
+let currentLibraryFeature = 'ALL';
+let currentLibraryLanguage = 'ALL';
+let currentLibrarySearch = '';
+let activeModalTemplate = null;
+let activeModalPreviewTab = 'parameters'; // 'parameters' | 'example'
+
+// --- View Tabs Switcher (My Templates vs Template Library) ---
+window.switchTemplateTab = function switchTemplateTab(tab) {
+    const myTabBtn = document.getElementById('tab-my-templates');
+    const libTabBtn = document.getElementById('tab-library-templates');
+    const myView = document.getElementById('templates-my-container');
+    const libView = document.getElementById('templates-library-container');
+
+    if (tab === 'library') {
+        if (myTabBtn) myTabBtn.classList.remove('active');
+        if (libTabBtn) libTabBtn.classList.add('active');
+        if (myView) myView.style.display = 'none';
+        if (libView) {
+            libView.style.display = 'block';
+            renderTemplateLibrary();
+        }
+    } else {
+        if (myTabBtn) myTabBtn.classList.add('active');
+        if (libTabBtn) libTabBtn.classList.remove('active');
+        if (myView) myView.style.display = 'block';
+        if (libView) libView.style.display = 'none';
+    }
+};
+
+// --- Render Template Library ---
+window.renderTemplateLibrary = function renderTemplateLibrary() {
+    const grid = document.getElementById('template-library-grid');
+    const countBadge = document.getElementById('library-templates-count');
+    if (!grid) return;
+
+    const filtered = META_TEMPLATE_LIBRARY.filter(t => {
+        const matchCat = currentLibraryCategory === 'ALL' || t.category === currentLibraryCategory;
+        const matchFeature = currentLibraryFeature === 'ALL' || t.feature === currentLibraryFeature;
+        const matchLang = currentLibraryLanguage === 'ALL' || t.language === currentLibraryLanguage;
+        const matchSearch = !currentLibrarySearch || 
+            (t.name || '').toLowerCase().includes(currentLibrarySearch) ||
+            (t.title || '').toLowerCase().includes(currentLibrarySearch) ||
+            (t.body?.text || '').toLowerCase().includes(currentLibrarySearch) ||
+            (t.feature || '').toLowerCase().includes(currentLibrarySearch);
+
+        return matchCat && matchFeature && matchLang && matchSearch;
+    });
+
+    if (countBadge) {
+        countBadge.textContent = `${filtered.length} templates`;
+    }
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🔍</div>
+                <h4 style="color: var(--text-main); margin: 0 0 0.35rem 0;">No templates match your filters</h4>
+                <p style="font-size: 0.85rem; margin: 0 0 1rem 0;">Try resetting the language, category, or search keywords.</p>
+                <button type="button" class="btn secondary sm" onclick="resetLibraryFilters()">Reset Filters</button>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = filtered.map(t => {
+        const catBadgeColor = t.category === 'UTILITY' ? 'badge-blue' : (t.category === 'MARKETING' ? 'badge-green' : 'badge-amber');
+        
+        // Highlight parameters like {{text}} or {{customer_name}}
+        const formattedBody = escapeHtml(t.body.text).replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, '<span style="color:#00a884; font-weight:700; background:rgba(0,168,132,0.1); padding:1px 5px; border-radius:4px;">{{$1}}</span>');
+
+        // Buttons HTML preview
+        let buttonsHtml = '';
+        if (Array.isArray(t.buttons) && t.buttons.length > 0) {
+            buttonsHtml = `
+                <div style="display:flex; flex-direction:column; gap:0.3rem; margin-top:0.6rem; border-top:1px solid #e9edef; padding-top:0.5rem;">
+                    ${t.buttons.map(b => {
+                        const icon = b.type === 'CATALOG' ? '🛒' : (b.type === 'MPM' ? '🛍️' : (b.type === 'URL' ? '↗' : (b.type === 'PHONE_NUMBER' ? '📞' : '📋')));
+                        return `<div style="color:#00a884; font-size:0.75rem; font-weight:600; text-align:center; padding:0.3rem; background:#fff; border-radius:6px; border:1px solid #e9edef; display:flex; align-items:center; justify-content:center; gap:5px;">
+                            <span>${icon}</span> <span>${escapeHtml(b.text || 'View')}</span>
+                        </div>`;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        return `
+            <div class="card library-template-card" style="cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; border-radius:12px; transition:all 0.2s; border:1px solid var(--border);" onclick="openLibraryTemplateModal('${t.id}')">
+                <div>
+                    <!-- Card Top Header -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                        <span class="badge ${catBadgeColor}" style="font-size:0.68rem; font-weight:700; letter-spacing:0.04em;">${t.category}</span>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${t.languageName}</span>
+                            <span style="font-size:0.85rem;">🌐</span>
+                        </div>
+                    </div>
+
+                    <!-- WhatsApp Preview Bubble -->
+                    <div style="background:#efeae2; border-radius:10px; padding:0.85rem; margin-bottom:0.85rem; box-shadow:inset 0 1px 3px rgba(0,0,0,0.05); font-family:system-ui, -apple-system, sans-serif;">
+                        <div style="background:#ffffff; border-radius:8px 8px 8px 0; padding:0.75rem 0.85rem; box-shadow:0 1px 2px rgba(0,0,0,0.12);">
+                            ${t.header?.text ? `
+                                <div style="font-weight:700; font-size:0.825rem; color:#111b21; margin-bottom:0.35rem; display:flex; align-items:center; gap:5px;">
+                                    ${t.header.format === 'CATALOG_HEADER' ? '🛍️' : ''}
+                                    <span>${escapeHtml(t.header.text)}</span>
+                                </div>
+                            ` : ''}
+                            <div style="font-size:0.8rem; color:#111b21; line-height:1.45; word-break:break-word;">
+                                ${formattedBody}
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.35rem; font-size:0.65rem; color:#667781;">
+                                <span>${escapeHtml(t.footer?.text || '')}</span>
+                                <span style="display:flex; align-items:center; gap:2px;">
+                                    <span>07:01</span>
+                                    <span style="color:#53bdeb; font-weight:bold;">✓✓</span>
+                                </span>
+                            </div>
+                            ${buttonsHtml}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Bottom Actions -->
+                <div style="border-top:1px solid var(--border); padding-top:0.75rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
+                    <div>
+                        <div style="font-weight:700; font-size:0.825rem; color:var(--text-main); font-family:monospace;">${escapeHtml(t.name)}</div>
+                        <div style="font-size:0.72rem; color:var(--text-muted);">${escapeHtml(t.feature)}</div>
+                    </div>
+                    <button type="button" class="btn primary sm" style="font-size:0.75rem; padding:0.35rem 0.75rem; white-space:nowrap;" onclick="event.stopPropagation(); openLibraryTemplateModal('${t.id}')">
+                        Use Template ➔
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+// --- Library Filters Helpers ---
+window.filterLibraryByCategory = function filterLibraryByCategory(cat) {
+    currentLibraryCategory = cat;
+    document.querySelectorAll('.library-cat-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cat === cat);
+    });
+    renderTemplateLibrary();
+};
+
+window.filterLibraryByFeature = function filterLibraryByFeature(feat) {
+    currentLibraryFeature = feat;
+    document.querySelectorAll('.library-feature-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.feature === feat);
+    });
+    renderTemplateLibrary();
+};
+
+window.filterLibraryByLanguage = function filterLibraryByLanguage(lang) {
+    currentLibraryLanguage = lang;
+    renderTemplateLibrary();
+};
+
+window.filterLibraryBySearch = function filterLibraryBySearch(val) {
+    currentLibrarySearch = (val || '').toLowerCase().trim();
+    renderTemplateLibrary();
+};
+
+window.resetLibraryFilters = function resetLibraryFilters() {
+    currentLibraryCategory = 'ALL';
+    currentLibraryFeature = 'ALL';
+    currentLibraryLanguage = 'ALL';
+    currentLibrarySearch = '';
+
+    const searchInput = document.getElementById('library-search-input');
+    const langSelect = document.getElementById('library-lang-select');
+    if (searchInput) searchInput.value = '';
+    if (langSelect) langSelect.value = 'ALL';
+
+    document.querySelectorAll('.library-cat-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cat === 'ALL');
+    });
+    document.querySelectorAll('.library-feature-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.feature === 'ALL');
+    });
+
+    renderTemplateLibrary();
+};
+
+// --- Template Details Preview Modal (Matching Image 2) ---
+window.openLibraryTemplateModal = function openLibraryTemplateModal(templateId) {
+    const tpl = META_TEMPLATE_LIBRARY.find(t => t.id === templateId);
+    if (!tpl) return;
+
+    activeModalTemplate = tpl;
+    activeModalPreviewTab = 'parameters';
+
+    const modal = document.getElementById('modal-template-library-preview');
+    if (!modal) return;
+
+    // Header & Breadcrumbs
+    const titleEl = document.getElementById('lib-modal-title');
+    const breadcrumbsEl = document.getElementById('lib-modal-breadcrumbs');
+    if (titleEl) titleEl.textContent = tpl.name;
+    if (breadcrumbsEl) breadcrumbsEl.textContent = tpl.breadcrumbs || `${tpl.category} > ${tpl.feature}`;
+
+    // Suggested Template Name Input
+    const nameInput = document.getElementById('lib-modal-tpl-name');
+    if (nameInput) {
+        nameInput.value = tpl.name;
+    }
+
+    renderLibraryModalBubblePreview();
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+};
+
+window.closeLibraryTemplateModal = function closeLibraryTemplateModal() {
+    const modal = document.getElementById('modal-template-library-preview');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+    activeModalTemplate = null;
+};
+
+window.switchLibraryModalTab = function switchLibraryModalTab(tabName) {
+    activeModalPreviewTab = tabName;
+    const tabParams = document.getElementById('tab-lib-parameters');
+    const tabExample = document.getElementById('tab-lib-example');
+    if (tabParams) tabParams.classList.toggle('active', tabName === 'parameters');
+    if (tabExample) tabExample.classList.toggle('active', tabName === 'example');
+    renderLibraryModalBubblePreview();
+};
+
+function renderLibraryModalBubblePreview() {
+    const bubbleContent = document.getElementById('lib-modal-bubble-content');
+    if (!bubbleContent || !activeModalTemplate) return;
+
+    const tpl = activeModalTemplate;
+    const isExample = activeModalPreviewTab === 'example';
+
+    const rawText = isExample ? tpl.body.exampleText : tpl.body.text;
+    const displayText = isExample 
+        ? escapeHtml(rawText)
+        : escapeHtml(rawText).replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, '<span style="color:#00a884; font-weight:700; background:rgba(0,168,132,0.12); padding:1px 5px; border-radius:4px;">{{$1}}</span>');
+
+    let buttonsHtml = '';
+    if (Array.isArray(tpl.buttons) && tpl.buttons.length > 0) {
+        buttonsHtml = `
+            <div style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.75rem; border-top:1px solid #e9edef; padding-top:0.6rem;">
+                ${tpl.buttons.map(b => {
+                    const icon = b.type === 'CATALOG' ? '🛒' : (b.type === 'MPM' ? '🛍️' : (b.type === 'URL' ? '↗' : (b.type === 'PHONE_NUMBER' ? '📞' : '📋')));
+                    return `<div style="color:#00a884; font-size:0.8rem; font-weight:600; text-align:center; padding:0.4rem; background:#fff; border-radius:6px; border:1px solid #e9edef; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <span>${icon}</span> <span>${escapeHtml(b.text || 'View')}</span>
+                    </div>`;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    bubbleContent.innerHTML = `
+        <div style="background:#ffffff; border-radius:8px 8px 8px 0; padding:0.85rem 1rem; box-shadow:0 1px 2px rgba(0,0,0,0.15);">
+            ${tpl.header?.text ? `
+                <div style="font-weight:700; font-size:0.9rem; color:#111b21; margin-bottom:0.4rem; display:flex; align-items:center; gap:6px;">
+                    ${tpl.header.format === 'CATALOG_HEADER' ? '🛍️' : ''}
+                    <span>${escapeHtml(tpl.header.text)}</span>
+                </div>
+            ` : ''}
+            <div style="font-size:0.85rem; color:#111b21; line-height:1.5; word-break:break-word;">
+                ${displayText}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.4rem; font-size:0.68rem; color:#667781;">
+                <span>${escapeHtml(tpl.footer?.text || '')}</span>
+                <span style="display:flex; align-items:center; gap:2px;">
+                    <span>07:01</span>
+                    <span style="color:#53bdeb; font-weight:bold;">✓✓</span>
+                </span>
+            </div>
+            ${buttonsHtml}
+        </div>
+    `;
+}
+
+// --- Action 1: "Customise Template" (Pre-fills Step 2 Template Builder Wizard) ---
+window.customizeLibraryTemplate = function customizeLibraryTemplate() {
+    if (!activeModalTemplate) return;
+    const tpl = activeModalTemplate;
+    const customName = document.getElementById('lib-modal-tpl-name')?.value.trim() || tpl.name;
+
+    closeLibraryTemplateModal();
+
+    // Open Template Creator Modal directly on Step 2 with all data populated
+    if (typeof openTemplateModal === 'function') {
+        openTemplateModal();
+    }
+
+    currentSelectedCategory = tpl.category;
+    currentSelectedSubtype = tpl.subtype || 'custom';
+
+    if (typeof goToStep === 'function') {
+        goToStep(2);
+    }
+    if (typeof renderStep2Form === 'function') {
+        renderStep2Form(currentSelectedCategory, currentSelectedSubtype);
+    }
+
+    // Populate Fields
+    setTimeout(() => {
+        const nameInp = document.getElementById('tpl-name');
+        const langSel = document.getElementById('tpl-lang');
+        const bodyInp = document.getElementById('tpl-body');
+        const footerInp = document.getElementById('tpl-footer');
+        const headerType = document.getElementById('tpl-header-type');
+        const headerText = document.getElementById('tpl-header-text');
+
+        if (nameInp) nameInp.value = customName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        if (langSel && tpl.language) {
+            let opt = Array.from(langSel.options).find(o => o.value === tpl.language);
+            if (!opt) {
+                const newOpt = document.createElement('option');
+                newOpt.value = tpl.language;
+                newOpt.textContent = `${tpl.languageName} (${tpl.language})`;
+                langSel.appendChild(newOpt);
+            }
+            langSel.value = tpl.language;
+        }
+
+        if (headerType && tpl.header) {
+            if (tpl.header.format === 'TEXT' && headerText) {
+                headerType.value = 'TEXT';
+                headerText.value = tpl.header.text;
+                const hGroup = document.getElementById('tpl-header-text-group');
+                if (hGroup) hGroup.style.display = 'block';
+            }
+        }
+
+        if (bodyInp) bodyInp.value = tpl.body.text;
+        if (footerInp && tpl.footer) footerInp.value = tpl.footer.text || '';
+
+        // Add pre-defined buttons if applicable
+        if (Array.isArray(tpl.buttons) && typeof addTemplateButton === 'function') {
+            tpl.buttons.forEach(b => {
+                if (['QUICK_REPLY', 'URL', 'PHONE_NUMBER', 'COPY_CODE'].includes(b.type)) {
+                    addTemplateButton(b.type, b);
+                }
+            });
+        }
+
+        if (typeof updateBannerTitle === 'function') updateBannerTitle();
+        if (typeof updateLivePreview === 'function') updateLivePreview();
+
+        showToast(`Loaded "${tpl.name}" from Template Library! Tweak any details and submit.`, 'success');
+    }, 50);
+};
+
+// --- Action 2: "Submit to Meta" Directly from Library Modal ---
+window.submitLibraryTemplateDirectly = async function submitLibraryTemplateDirectly() {
+    if (!activeModalTemplate) return;
+    const tpl = activeModalTemplate;
+    const nameInput = document.getElementById('lib-modal-tpl-name');
+    const customName = (nameInput?.value || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+
+    if (!customName) {
+        if (nameInput) {
+            nameInput.focus();
+            nameInput.style.borderColor = '#ef4444';
+        }
+        showToast('Please enter a template name', 'warning');
+        return;
+    }
+
+    const submitBtn = document.getElementById('btn-lib-modal-submit');
+    const origHtml = submitBtn ? submitBtn.innerHTML : 'Submit to Meta';
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner" style="width:14px; height:14px;"></span> Submitting to Meta...';
+    }
+
+    try {
+        const components = [];
+
+        // Header
+        if (tpl.header && tpl.header.format === 'TEXT' && tpl.header.text) {
+            components.push({
+                type: 'HEADER',
+                format: 'TEXT',
+                text: tpl.header.text
+            });
+        }
+
+        // Body
+        const bodyComp = {
+            type: 'BODY',
+            text: tpl.body.text
+        };
+        const posMatches = [...tpl.body.text.matchAll(/\{\{(\d+)\}\}/g)];
+        if (posMatches.length > 0) {
+            bodyComp.example = { body_text: [['Sample_1']] };
+        }
+        components.push(bodyComp);
+
+        // Footer
+        if (tpl.footer && tpl.footer.text) {
+            components.push({
+                type: 'FOOTER',
+                text: tpl.footer.text
+            });
+        }
+
+        // Buttons
+        if (Array.isArray(tpl.buttons) && tpl.buttons.length > 0) {
+            const btnList = [];
+            tpl.buttons.forEach(b => {
+                if (b.type === 'CATALOG') btnList.push({ type: 'CATALOG', text: b.text || 'View catalog' });
+                else if (b.type === 'MPM') btnList.push({ type: 'MPM', text: b.text || 'View Products' });
+                else if (b.type === 'URL') btnList.push({ type: 'URL', text: b.text, url: b.url });
+                else if (b.type === 'QUICK_REPLY') btnList.push({ type: 'QUICK_REPLY', text: b.text });
+                else if (b.type === 'OTP') btnList.push({ type: 'OTP', otp_type: 'COPY_CODE', text: b.text || 'Copy Code' });
+            });
+            if (btnList.length > 0) {
+                components.push({ type: 'BUTTONS', buttons: btnList });
+            }
+        }
+
+        const payload = {
+            name: customName,
+            category: tpl.category,
+            language: tpl.language,
+            components
+        };
+
+        const res = await apiFetch('/api/templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+            showModal('Submission Error', data.error);
+        } else {
+            closeLibraryTemplateModal();
+            showModal('Success!', `Template "${customName}" submitted to Meta Cloud API successfully! Status: ${data.template?.status || 'PENDING'}`);
+            if (typeof loadTemplates === 'function') loadTemplates();
+            switchTemplateTab('my');
+        }
+    } catch(err) {
+        showModal('Error', 'Failed to connect to template API: ' + err.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origHtml;
+        }
+    }
+};
+
+// Initialize Library on DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+    // If the template view is loaded, ensure library can be rendered
+    const libView = document.getElementById('templates-library-container');
+    if (libView) {
+        renderTemplateLibrary();
+    }
+});

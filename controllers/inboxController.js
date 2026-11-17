@@ -2696,3 +2696,298 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
     }
 });
 
+// ==========================================================================
+// QUICK REPLIES SYSTEM (Interakt-Style Canned Responses & / Slash Trigger)
+// ==========================================================================
+
+const DEFAULT_QUICK_REPLIES = [
+    {
+        shortcut: '/course',
+        title: 'Course Assigned',
+        body: 'Hello {{Name}},\n\nWe have checked from our end. The course has been Assigned to your Account.\n\nKindly Login-in to see your Course.'
+    },
+    {
+        shortcut: '/welcome',
+        title: 'Welcome Greeting',
+        body: 'Hello {{Name}}! Welcome to Inspenox. How may we assist you today?'
+    },
+    {
+        shortcut: '/pricing',
+        title: 'Pricing & Plans',
+        body: 'Hello {{Name}}, our WhatsApp Marketing plans start at just ₹999/month. Would you like a quick walkthrough or quotation?'
+    },
+    {
+        shortcut: '/catalog',
+        title: 'Product Catalog',
+        body: 'Hi {{Name}}, please browse our official product catalogue here: https://inspenox.com/catalog. Let us know if you need any assistance!'
+    },
+    {
+        shortcut: '/support',
+        title: 'Support Query Logged',
+        body: 'Dear {{Name}}, your request has been assigned to our customer support executive. We will revert with a resolution within 30 minutes.'
+    },
+    {
+        shortcut: '/payment',
+        title: 'Payment & UPI Link',
+        body: 'Hi {{Name}}, you can securely complete your payment via UPI / Razorpay link here: https://inspenox.com/pay'
+    }
+];
+
+function getQuickRepliesStorageKey() {
+    const coId = (typeof getCompanyId === 'function') ? getCompanyId() : 'default';
+    return `inspenox_quick_replies_${coId}`;
+}
+
+window.getQuickRepliesList = function getQuickRepliesList() {
+    try {
+        const stored = localStorage.getItem(getQuickRepliesStorageKey());
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+    } catch(e) {}
+    return DEFAULT_QUICK_REPLIES;
+};
+
+window.saveQuickRepliesList = function saveQuickRepliesList(list) {
+    try {
+        localStorage.setItem(getQuickRepliesStorageKey(), JSON.stringify(list));
+    } catch(e) {}
+};
+
+window.openQuickRepliesModal = function openQuickRepliesModal() {
+    const modal = document.getElementById('modal-quick-replies');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    renderQuickRepliesModalList();
+    const searchInp = document.getElementById('quick-replies-search');
+    if (searchInp) {
+        searchInp.value = '';
+        setTimeout(() => searchInp.focus(), 100);
+    }
+};
+
+window.closeQuickRepliesModal = function closeQuickRepliesModal() {
+    const modal = document.getElementById('modal-quick-replies');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+    toggleQuickReplyAddForm(false);
+};
+
+window.toggleQuickReplyAddForm = function toggleQuickReplyAddForm(show) {
+    const form = document.getElementById('quick-reply-create-form');
+    if (!form) return;
+    const shouldShow = (show !== undefined) ? show : (form.style.display === 'none');
+    form.style.display = shouldShow ? 'block' : 'none';
+    if (shouldShow) {
+        document.getElementById('new-qr-shortcut')?.focus();
+    }
+};
+
+window.saveNewQuickReply = function saveNewQuickReply() {
+    const scInp = document.getElementById('new-qr-shortcut');
+    const titleInp = document.getElementById('new-qr-title');
+    const bodyInp = document.getElementById('new-qr-body');
+
+    let shortcut = (scInp?.value || '').trim();
+    const title = (titleInp?.value || '').trim();
+    const body = (bodyInp?.value || '').trim();
+
+    if (!shortcut) {
+        alert('Please enter a shortcut (e.g. /course)');
+        return;
+    }
+    if (!shortcut.startsWith('/')) shortcut = '/' + shortcut;
+    shortcut = shortcut.toLowerCase().replace(/\s+/g, '');
+
+    if (!title) {
+        alert('Please enter a title for the quick reply.');
+        return;
+    }
+    if (!body) {
+        alert('Please enter the message content.');
+        return;
+    }
+
+    const list = getQuickRepliesList();
+    const existingIdx = list.findIndex(r => r.shortcut === shortcut);
+    if (existingIdx >= 0) {
+        list[existingIdx] = { shortcut, title, body };
+    } else {
+        list.push({ shortcut, title, body });
+    }
+
+    saveQuickRepliesList(list);
+    showToast(`Quick reply "${shortcut}" saved!`, 'success');
+
+    if (scInp) scInp.value = '';
+    if (titleInp) titleInp.value = '';
+    if (bodyInp) bodyInp.value = '';
+    toggleQuickReplyAddForm(false);
+    renderQuickRepliesModalList();
+};
+
+window.deleteQuickReply = function deleteQuickReply(shortcut) {
+    if (!confirm(`Delete quick reply "${shortcut}"?`)) return;
+    let list = getQuickRepliesList();
+    list = list.filter(r => r.shortcut !== shortcut);
+    saveQuickRepliesList(list);
+    renderQuickRepliesModalList();
+    showToast(`Quick reply removed.`, 'info');
+};
+
+window.filterQuickRepliesList = function filterQuickRepliesList(query = '') {
+    renderQuickRepliesModalList(query);
+};
+
+function renderQuickRepliesModalList(query = '') {
+    const container = document.getElementById('quick-replies-list');
+    if (!container) return;
+
+    let list = getQuickRepliesList();
+    const q = (query || '').toLowerCase().trim();
+    if (q) {
+        list = list.filter(r => r.shortcut.toLowerCase().includes(q) || r.title.toLowerCase().includes(q) || r.body.toLowerCase().includes(q));
+    }
+
+    if (list.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.85rem;">No quick replies match "${escapeHtml(q)}". Click "+ Add Reply" above to create one.</div>`;
+        return;
+    }
+
+    container.innerHTML = list.map(r => `
+        <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:0.85rem 1rem; display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; box-shadow:var(--shadow-sm);">
+            <div style="flex:1;">
+                <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.3rem;">
+                    <span style="background:rgba(0,168,132,0.12); color:var(--primary); font-family:monospace; font-weight:700; font-size:0.85rem; padding:0.15rem 0.5rem; border-radius:4px;">${escapeHtml(r.shortcut)}</span>
+                    <strong style="font-size:0.9rem; color:var(--text-main);">${escapeHtml(r.title)}</strong>
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-muted); white-space:pre-wrap; line-height:1.45; max-height:80px; overflow:hidden;">${escapeHtml(r.body)}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+                <button type="button" class="btn primary sm" onclick="insertQuickReply('${escapeHtml(r.shortcut)}')" style="white-space:nowrap; padding:0.35rem 0.75rem; font-size:0.775rem;">
+                    Use Reply
+                </button>
+                <button type="button" class="icon-btn" onclick="deleteQuickReply('${escapeHtml(r.shortcut)}')" title="Delete" style="color:var(--danger); border:none; background:transparent; font-size:1.1rem; cursor:pointer;">
+                    ✕
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.insertQuickReply = function insertQuickReply(shortcut) {
+    const list = getQuickRepliesList();
+    const found = list.find(r => r.shortcut === shortcut);
+    if (!found) return;
+
+    const input = document.getElementById('chat-reply-text');
+    if (!input) return;
+
+    // Get active customer info to interpolate variables
+    let custName = 'Customer';
+    let custPhone = '';
+    if (typeof activeInboxCustomer !== 'undefined' && activeInboxCustomer) {
+        let cust = (typeof inboxCustomersList !== 'undefined') ? inboxCustomersList.find(c => String(c.id) === String(activeInboxCustomer)) : null;
+        if (cust) {
+            custName = cust.name || 'Customer';
+            custPhone = cust.phone || '';
+        }
+    }
+
+    let resolvedText = found.body
+        .replace(/\{\{Name\}\}/gi, custName)
+        .replace(/\{\{CustomerName\}\}/gi, custName)
+        .replace(/\{\{Phone\}\}/gi, custPhone);
+
+    input.value = resolvedText;
+    closeQuickRepliesModal();
+    hideQuickReplyPopup();
+
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+};
+
+// Inline / Slash Command Autocomplete in Chat Input
+function hideQuickReplyPopup() {
+    const popup = document.getElementById('chat-quick-reply-popup');
+    if (popup) {
+        popup.style.display = 'none';
+        popup.innerHTML = '';
+    }
+}
+
+function handleChatInputSlashCommands(e) {
+    const input = e.target;
+    const val = input.value;
+    const popup = document.getElementById('chat-quick-reply-popup');
+    if (!popup) return;
+
+    if (!val.startsWith('/')) {
+        hideQuickReplyPopup();
+        return;
+    }
+
+    const query = val.toLowerCase();
+    const list = getQuickRepliesList().filter(r => r.shortcut.toLowerCase().startsWith(query) || r.title.toLowerCase().includes(query.slice(1)));
+
+    if (list.length === 0) {
+        hideQuickReplyPopup();
+        return;
+    }
+
+    popup.innerHTML = `
+        <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); padding:0.25rem 0.5rem; border-bottom:1px solid var(--border); margin-bottom:0.25rem; display:flex; justify-content:space-between;">
+            <span>⚡ QUICK REPLIES</span>
+            <span style="font-weight:normal; font-size:0.7rem;">Click or Tab to insert</span>
+        </div>
+        ${list.map(r => `
+            <div class="qr-popup-item" onclick="insertQuickReply('${escapeHtml(r.shortcut)}')"
+                style="padding:0.45rem 0.6rem; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; transition:background 0.15s ease;"
+                onmouseover="this.style.background='rgba(0,168,132,0.1)'" onmouseout="this.style.background='transparent'">
+                <div style="display:flex; align-items:center; gap:0.5rem; overflow:hidden;">
+                    <span style="font-family:monospace; font-weight:700; font-size:0.8rem; color:var(--primary); background:rgba(0,168,132,0.12); padding:0.1rem 0.35rem; border-radius:3px;">${escapeHtml(r.shortcut)}</span>
+                    <span style="font-size:0.8rem; font-weight:600; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(r.title)}</span>
+                </div>
+                <span style="font-size:0.7rem; color:var(--text-muted); white-space:nowrap;">Enter ↵</span>
+            </div>
+        `).join('')}
+    `;
+
+    popup.style.display = 'block';
+
+    if (e.key === 'Enter' || e.key === 'Tab') {
+        if (list.length > 0) {
+            e.preventDefault();
+            insertQuickReply(list[0].shortcut);
+        }
+    }
+}
+
+// Bind chat input listeners for Quick Replies
+document.addEventListener('DOMContentLoaded', () => {
+    const replyInput = document.getElementById('chat-reply-text');
+    if (replyInput) {
+        replyInput.addEventListener('keyup', handleChatInputSlashCommands);
+        replyInput.addEventListener('keydown', (e) => {
+            if ((e.key === 'Tab' || e.key === 'Enter') && replyInput.value.startsWith('/')) {
+                const query = replyInput.value.toLowerCase();
+                const list = getQuickRepliesList().filter(r => r.shortcut.toLowerCase().startsWith(query));
+                if (list.length > 0) {
+                    e.preventDefault();
+                    insertQuickReply(list[0].shortcut);
+                }
+            }
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#chat-reply-form')) {
+            hideQuickReplyPopup();
+        }
+    });
+});
+

@@ -2669,5 +2669,213 @@ window.submitLinkCatalog = async function submitLinkCatalog() {
     }
 };
 
+// --- Catalog Modal Tabs Switching (In-App Creator vs Meta Commerce Link) ---
+window.switchCatalogModalTab = function switchCatalogModalTab(tab) {
+    const btnInApp = document.getElementById('tab-cat-btn-inapp');
+    const btnMeta = document.getElementById('tab-cat-btn-meta');
+    const contentInApp = document.getElementById('catalog-tab-content-inapp');
+    const contentMeta = document.getElementById('catalog-tab-content-meta');
+
+    if (tab === 'inapp') {
+        if (btnInApp) {
+            btnInApp.classList.add('active');
+            btnInApp.style.color = 'var(--primary)';
+            btnInApp.style.borderBottom = '3px solid var(--primary)';
+            btnInApp.style.background = 'var(--bg-card)';
+        }
+        if (btnMeta) {
+            btnMeta.classList.remove('active');
+            btnMeta.style.color = 'var(--text-muted)';
+            btnMeta.style.borderBottom = '3px solid transparent';
+            btnMeta.style.background = 'transparent';
+        }
+        if (contentInApp) contentInApp.style.display = 'block';
+        if (contentMeta) contentMeta.style.display = 'none';
+    } else {
+        if (btnMeta) {
+            btnMeta.classList.add('active');
+            btnMeta.style.color = 'var(--primary)';
+            btnMeta.style.borderBottom = '3px solid var(--primary)';
+            btnMeta.style.background = 'var(--bg-card)';
+        }
+        if (btnInApp) {
+            btnInApp.classList.remove('active');
+            btnInApp.style.color = 'var(--text-muted)';
+            btnInApp.style.borderBottom = '3px solid transparent';
+            btnInApp.style.background = 'transparent';
+        }
+        if (contentInApp) contentInApp.style.display = 'none';
+        if (contentMeta) contentMeta.style.display = 'block';
+    }
+};
+
+window.addCatalogProductRow = function addCatalogProductRow(name = '', price = '', sku = '') {
+    const container = document.getElementById('inapp-cat-products-container');
+    if (!container) return;
+
+    const row = document.createElement('div');
+    row.className = 'inapp-product-row';
+    row.style.cssText = 'background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.75rem; display: grid; grid-template-columns: 2fr 1fr 1fr 32px; gap: 0.5rem; align-items: center;';
+    row.innerHTML = `
+        <div>
+            <input type="text" class="inp-prod-name" placeholder="Item Name (e.g. Cotton T-Shirt)" value="${escapeHtml(name)}"
+                style="width: 100%; padding: 0.45rem 0.6rem; border-radius: 6px; background: var(--bg-main); border: 1px solid var(--border); color: var(--text-main); font-size: 0.8rem;">
+        </div>
+        <div>
+            <input type="number" class="inp-prod-price" placeholder="Price (₹)" value="${escapeHtml(String(price))}"
+                style="width: 100%; padding: 0.45rem 0.6rem; border-radius: 6px; background: var(--bg-main); border: 1px solid var(--border); color: var(--text-main); font-size: 0.8rem;">
+        </div>
+        <div>
+            <input type="text" class="inp-prod-sku" placeholder="SKU / ID" value="${escapeHtml(sku)}"
+                style="width: 100%; padding: 0.45rem 0.6rem; border-radius: 6px; background: var(--bg-main); border: 1px solid var(--border); color: var(--text-main); font-size: 0.8rem;">
+        </div>
+        <button type="button" class="icon-btn" onclick="removeCatalogProductRow(this)" title="Delete Item"
+            style="color: var(--danger); font-size: 1rem; border: none; background: transparent; cursor: pointer;">✕</button>
+    `;
+    container.appendChild(row);
+};
+
+window.removeCatalogProductRow = function removeCatalogProductRow(btn) {
+    const row = btn.closest('.inapp-product-row');
+    const container = document.getElementById('inapp-cat-products-container');
+    if (!row || !container) return;
+
+    const allRows = container.querySelectorAll('.inapp-product-row');
+    if (allRows.length > 1) {
+        row.remove();
+    } else {
+        row.querySelectorAll('input').forEach(i => i.value = '');
+    }
+};
+
+window.submitInAppCatalog = async function submitInAppCatalog() {
+    const nameInput = document.getElementById('inapp-cat-name');
+    const descInput = document.getElementById('inapp-cat-desc');
+    const saveBtn = document.getElementById('btn-save-inapp-catalog');
+    const catName = (nameInput?.value || '').trim();
+
+    if (!catName) {
+        showModal('Catalog Name Required', 'Please enter a name for your product catalog.');
+        if (nameInput) nameInput.focus();
+        return;
+    }
+
+    const rows = document.querySelectorAll('#inapp-cat-products-container .inapp-product-row');
+    const items = [];
+    rows.forEach(r => {
+        const pName = (r.querySelector('.inp-prod-name')?.value || '').trim();
+        const pPrice = parseFloat(r.querySelector('.inp-prod-price')?.value) || 0;
+        const pSku = (r.querySelector('.inp-prod-sku')?.value || '').trim() || `SKU_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+
+        if (pName) {
+            items.push({
+                name: pName,
+                price: pPrice,
+                currency: 'INR',
+                retailer_id: pSku,
+                description: pName
+            });
+        }
+    });
+
+    if (items.length === 0) {
+        showModal('Product Required', 'Please add at least one product item to your catalog.');
+        return;
+    }
+
+    const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+    const origHtml = saveBtn ? saveBtn.innerHTML : '💾 Save Catalog';
+
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner" style="width:14px; height:14px;"></span> Saving...';
+    }
+
+    try {
+        const res = await apiFetch('/api/catalogs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'create_inapp_catalog',
+                company_id: coId,
+                name: catName,
+                description: (descInput?.value || '').trim(),
+                items
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.error || !data.success) {
+            showModal('Error', data.error || 'Failed to create product catalog.');
+        } else {
+            showToast(data.message || 'Catalog created successfully!', 'success');
+            await loadConnectedCatalogs();
+            setTimeout(() => {
+                closeCatalogSetupModal();
+            }, 900);
+        }
+    } catch(err) {
+        showModal('Error', 'Network error creating catalog: ' + err.message);
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = origHtml;
+        }
+    }
+};
+
+window.downloadCatalogCsvFeed = function downloadCatalogCsvFeed(catalogId = '') {
+    const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+    let url = `/api/catalogs?action=export_csv`;
+    if (catalogId) url += `&catalog_id=${encodeURIComponent(catalogId)}`;
+    if (coId) url += `&company_id=${encodeURIComponent(coId)}`;
+    window.open(url, '_blank');
+};
+
+// --- Template Tab Switching (My Templates vs Template Library) ---
+window.switchTemplateTab = function switchTemplateTab(tab) {
+    const myBtn = document.getElementById('tab-btn-my-templates');
+    const libBtn = document.getElementById('tab-btn-library-templates');
+    const myContainer = document.getElementById('templates-my-container');
+    const libContainer = document.getElementById('templates-library-container');
+
+    if (tab === 'library') {
+        if (libBtn) {
+            libBtn.classList.add('active');
+            libBtn.style.color = 'var(--primary)';
+            libBtn.style.borderBottom = '3px solid var(--primary)';
+            libBtn.style.background = 'var(--bg-card)';
+        }
+        if (myBtn) {
+            myBtn.classList.remove('active');
+            myBtn.style.color = 'var(--text-muted)';
+            myBtn.style.borderBottom = '3px solid transparent';
+            myBtn.style.background = 'transparent';
+        }
+        if (myContainer) myContainer.style.display = 'none';
+        if (libContainer) libContainer.style.display = 'block';
+
+        if (typeof renderTemplateLibrary === 'function') {
+            renderTemplateLibrary();
+        }
+    } else {
+        if (myBtn) {
+            myBtn.classList.add('active');
+            myBtn.style.color = 'var(--primary)';
+            myBtn.style.borderBottom = '3px solid var(--primary)';
+            myBtn.style.background = 'var(--bg-card)';
+        }
+        if (libBtn) {
+            libBtn.classList.remove('active');
+            libBtn.style.color = 'var(--text-muted)';
+            libBtn.style.borderBottom = '3px solid transparent';
+            libBtn.style.background = 'transparent';
+        }
+        if (myContainer) myContainer.style.display = 'block';
+        if (libContainer) libContainer.style.display = 'none';
+    }
+};
+
 
 
