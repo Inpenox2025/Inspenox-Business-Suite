@@ -225,6 +225,22 @@ svg {
     display: none;
 }
 
+/* Multi-tenant Company Switcher: strictly hidden by default to prevent superadmin dropdown flash on slow networks */
+.company-switcher-container {
+    display: none !important;
+}
+
+html.is-superadmin .company-switcher-container,
+body.is-superadmin .company-switcher-container,
+.company-switcher-container.show-superadmin {
+    display: block !important;
+}
+
+html.is-tenant .company-switcher-container,
+body.is-tenant .company-switcher-container {
+    display: none !important;
+}
+
 #sidebar-nav {
     display: flex;
     flex-direction: column;

@@ -541,13 +541,25 @@ async function loadCompanies() {
 
     // Child tenant employee restricted to their specific non-parent company
     const isChildTenant = !isParent && !isSuper;
-    if (isChildTenant && user.company_id && String(user.company_id) !== 'default' && String(user.company_id) !== 'parent') {
-        currentCompanyId = String(user.company_id);
-        localStorage.setItem('inspenox_company_id', currentCompanyId);
-        if (switcherContainer) switcherContainer.style.display = 'none';
+    if (isChildTenant) {
+        if (user.company_id && String(user.company_id) !== 'default' && String(user.company_id) !== 'parent') {
+            currentCompanyId = String(user.company_id);
+            localStorage.setItem('inspenox_company_id', currentCompanyId);
+        }
+        document.documentElement.classList.remove('is-superadmin');
+        document.documentElement.classList.add('is-tenant');
+        if (switcherContainer) {
+            switcherContainer.style.setProperty('display', 'none', 'important');
+            switcherContainer.classList.remove('show-superadmin');
+        }
     } else {
         // Superadmin and Inspenox Parent Admin MUST ALWAYS see the company switcher dropdown in sidebar!
-        if (switcherContainer) switcherContainer.style.display = 'block';
+        document.documentElement.classList.add('is-superadmin');
+        document.documentElement.classList.remove('is-tenant');
+        if (switcherContainer) {
+            switcherContainer.style.setProperty('display', 'block', 'important');
+            switcherContainer.classList.add('show-superadmin');
+        }
     }
 
     try {
@@ -561,9 +573,19 @@ async function loadCompanies() {
             const activeIsSuper = isSuperAdmin();
             const activeIsParent = isParentAdmin();
             if (!activeIsParent && !activeIsSuper) {
-                if (switcherContainer) switcherContainer.style.display = 'none';
+                document.documentElement.classList.remove('is-superadmin');
+                document.documentElement.classList.add('is-tenant');
+                if (switcherContainer) {
+                    switcherContainer.style.setProperty('display', 'none', 'important');
+                    switcherContainer.classList.remove('show-superadmin');
+                }
             } else {
-                if (switcherContainer) switcherContainer.style.display = 'block';
+                document.documentElement.classList.add('is-superadmin');
+                document.documentElement.classList.remove('is-tenant');
+                if (switcherContainer) {
+                    switcherContainer.style.setProperty('display', 'block', 'important');
+                    switcherContainer.classList.add('show-superadmin');
+                }
             }
 
             const selectEl = document.getElementById('company-switcher');

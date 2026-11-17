@@ -135,6 +135,25 @@
         window.addEventListener('popstate', function () {
             checkAuthAndRedirect();
         });
+
+        // Instant synchronous role & tenant detection to prevent superadmin UI flash on slow networks
+        (function () {
+            try {
+                var u = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
+                var role = (u.role || '').toLowerCase().trim();
+                var uname = (u.username || '').toLowerCase().trim();
+                var cname = (u.company_name || '').toLowerCase().trim();
+                var coId = u.company_id;
+                var isSuper = role === 'superadmin' || uname === 'superadmin' || uname === 'inspenox' ||
+                    (cname.includes('inspenox') && (role === 'admin' || uname === 'admin')) ||
+                    (uname === 'admin' && (!coId || coId === 'default' || coId === 'parent'));
+                if (isSuper) {
+                    document.documentElement.classList.add('is-superadmin');
+                } else {
+                    document.documentElement.classList.add('is-tenant');
+                }
+            } catch (e) { }
+        })();
     </script>
 </head>
 
@@ -181,10 +200,37 @@
                 </button>
             </div>
 
+            <script>
+                // Instant synchronous branding & navigation text setup to eliminate any loading flicker
+                (function () {
+                    try {
+                        var u = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
+                        var role = (u.role || '').toLowerCase().trim();
+                        var uname = (u.username || '').toLowerCase().trim();
+                        var cname = (u.company_name || '').toLowerCase().trim();
+                        var coId = u.company_id;
+                        var isSuper = role === 'superadmin' || uname === 'superadmin' || uname === 'inspenox' ||
+                            (cname.includes('inspenox') && (role === 'admin' || uname === 'admin')) ||
+                            (uname === 'admin' && (!coId || coId === 'default' || coId === 'parent'));
+                        if (!isSuper && u.company_name) {
+                            var brandNameEl = document.getElementById('nav-active-company-name');
+                            if (brandNameEl) {
+                                brandNameEl.textContent = u.company_name;
+                                brandNameEl.title = u.company_name;
+                            }
+                            var poweredBadge = document.getElementById('nav-powered-by-badge');
+                            if (poweredBadge) poweredBadge.style.display = 'flex';
+                            var settingsNav = document.querySelector('#sidebar-nav a[data-view="settings"] span');
+                            if (settingsNav) settingsNav.textContent = 'Meta Credentials';
+                        }
+                    } catch (e) { }
+                })();
+            </script>
+
             <nav id="sidebar-nav">
-                <!-- Company Switcher -->
+                <!-- Company Switcher (Strictly for Superadmin & Inspenox Parent Admin) -->
                 <div class="company-switcher-container"
-                    style="padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; background: rgba(0,0,0,0.15); border-radius: 8px;">
+                    style="display: none !important; padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; background: rgba(0,0,0,0.15); border-radius: 8px;">
                     <label for="company-switcher"
                         style="display: flex; align-items: center; justify-content: space-between; font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem;">
                         <span>Active Company</span>
