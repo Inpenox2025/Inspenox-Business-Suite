@@ -17,6 +17,7 @@ const webhookHandler = require('../../api/webhook');
 const paymentsHandler = require('../../api/payments');
 const tagsHandler = require('../../api/tags');
 const productsHandler = require('../../api/products');
+const catalogsHandler = require('../../api/catalogs');
 const mediaProxyHandler = require('../../api/media-proxy');
 const automationHandler = require('../../api/automation');
 
@@ -41,7 +42,8 @@ const routes = {
     'payments': paymentsHandler,
     'subscriptions': paymentsHandler,
     'tags': tagsHandler,
-    'products': productsHandler
+    'products': productsHandler,
+    'catalogs': catalogsHandler
 };
 
 async function handleApi(request, env, paramsPath = null) {

@@ -6074,6 +6074,88 @@
         </div>
     </div>
 
+    <!-- Meta Catalog Connection & Setup Modal -->
+    <div id="modal-catalog-setup" class="modal-overlay hidden"
+        style="z-index: 10005; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(5px);">
+        <div class="modal-content card"
+            style="max-width: 520px; width: 92%; padding: 1.5rem; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 20px 45px rgba(0,0,0,0.45);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                <div>
+                    <h3
+                        style="margin: 0; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                        <span>📦</span> <span>Connect Meta Product Catalog</span>
+                    </h3>
+                    <p style="margin: 0.2rem 0 0 0; font-size: 0.775rem; color: var(--text-muted);">
+                        Link your Meta Commerce Manager catalog to enable WhatsApp Catalog Messages & Cart orders
+                    </p>
+                </div>
+                <button type="button" class="icon-btn" onclick="closeCatalogSetupModal()"
+                    style="font-size: 1.2rem; cursor: pointer;">✕</button>
+            </div>
+
+            <!-- Current Connection Status -->
+            <div id="catalog-setup-status-box" style="margin-bottom: 1.25rem;">
+                <div
+                    style="padding: 0.85rem 1rem; border-radius: 8px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="spinner" style="width: 18px; height: 18px;"></span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Checking Meta Catalog status...</span>
+                </div>
+            </div>
+
+            <!-- Step by step guide -->
+            <div
+                style="background: var(--bg-sidebar); border-radius: 10px; border: 1px solid var(--border); padding: 1rem; margin-bottom: 1.25rem;">
+                <h4
+                    style="margin: 0 0 0.6rem 0; font-size: 0.85rem; color: var(--text-main); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;">
+                    How to Create & Link Your Catalog
+                </h4>
+                <ol
+                    style="margin: 0; padding-left: 1.2rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.55; display: flex; flex-direction: column; gap: 0.45rem;">
+                    <li>
+                        <strong>Create your Catalog:</strong> Open <a href="https://commerce.facebook.com/commerce"
+                            target="_blank" rel="noopener"
+                            style="color: var(--primary); text-decoration: underline; font-weight: 600;">Meta Commerce
+                            Manager ↗</a>, click <em>Add Catalog</em>, select <em>E-commerce / Products</em>, and add your items with images, prices & descriptions.
+                    </li>
+                    <li>
+                        <strong>Find your Catalog ID:</strong> Inside Commerce Manager, go to <em>Settings &gt; Catalog Info</em> and copy your <strong>15-16 digit Catalog ID</strong>.
+                    </li>
+                    <li>
+                        <strong>Link Catalog below:</strong> Paste your Catalog ID and click <em>Link Catalog to WhatsApp</em>.
+                    </li>
+                </ol>
+            </div>
+
+            <!-- Catalog ID Input Form -->
+            <div style="margin-bottom: 1.25rem;">
+                <label
+                    style="display: block; font-size: 0.825rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.4rem;">
+                    Meta Catalog ID <span style="color: var(--danger);">*</span>
+                </label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="input-meta-catalog-id" placeholder="e.g. 109283746592837"
+                        style="flex: 1; padding: 0.6rem 0.85rem; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-main); font-size: 0.9rem; font-family: monospace;">
+                    <button type="button" class="btn primary" id="btn-link-meta-catalog" onclick="submitLinkCatalog()"
+                        style="white-space: nowrap; padding: 0.6rem 1rem;">
+                        🔗 Link Catalog
+                    </button>
+                </div>
+                <div id="catalog-setup-error-msg"
+                    style="display: none; color: #ef4444; font-size: 0.775rem; margin-top: 0.4rem;"></div>
+            </div>
+
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 0.85rem;">
+                <a href="https://business.facebook.com/wa/manage/home/" target="_blank" rel="noopener"
+                    style="font-size: 0.775rem; color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                    Open WhatsApp Manager Settings ↗
+                </a>
+                <button type="button" class="btn secondary sm" onclick="closeCatalogSetupModal()">Done / Close</button>
+            </div>
+        </div>
+    </div>
+
     <!--  Meta 6-Hour Contact Quarantine Policy Info Popover / Modal -->
     <div id="quarantine-info-popover" class="quarantine-popover" style="display: none;" role="dialog" aria-modal="true"
         aria-labelledby="quarantine-popover-title">

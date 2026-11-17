@@ -7049,7 +7049,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const buttonType = document.getElementById('tpl-button-type')?.value;
 
         if (!name) {
-            showModal('Validation Error', 'Please enter a valid template name.');
+            const nameEl = document.getElementById('tpl-name');
+            if (nameEl) {
+                nameEl.focus();
+                nameEl.style.borderColor = '#ef4444';
+                nameEl.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+                nameEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            showModal('Validation Error', 'Please enter a valid template name (e.g. spring_collection_catalog). Lowercase letters, numbers, and underscores only.');
             return;
         }
 
@@ -7284,10 +7291,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         } else if (currentSelectedSubtype === 'catalogue') {
-            components.push({
-                type: 'BUTTONS',
-                buttons: [{ type: 'CATALOG' }]
-            });
+            const catFormat = document.querySelector('input[name="cat-format"]:checked')?.value || 'single';
+            if (catFormat === 'multi') {
+                components.push({
+                    type: 'BUTTONS',
+                    buttons: [{ type: 'MPM', text: 'View Products' }]
+                });
+            } else {
+                components.push({
+                    type: 'BUTTONS',
+                    buttons: [{ type: 'CATALOG', text: 'View catalog' }]
+                });
+            }
         }
 
         if (submitBtn) {
@@ -7339,6 +7354,187 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+
+// --- Meta Commerce Manager & Product Catalog Management ---
+window.onCatalogFormatChange = function onCatalogFormatChange(val) {
+    if (typeof updateLivePreview === 'function') {
+        updateLivePreview();
+    }
+};
+
+window.openCatalogSetupModal = function openCatalogSetupModal() {
+    const modal = document.getElementById('modal-catalog-setup');
+    if (modal) modal.classList.remove('hidden');
+    loadConnectedCatalogs();
+};
+
+window.closeCatalogSetupModal = function closeCatalogSetupModal() {
+    const modal = document.getElementById('modal-catalog-setup');
+    if (modal) modal.classList.add('hidden');
+    const errBox = document.getElementById('catalog-setup-error-msg');
+    if (errBox) errBox.style.display = 'none';
+};
+
+window.loadConnectedCatalogs = async function loadConnectedCatalogs() {
+    const statusBox = document.getElementById('catalog-setup-status-box');
+    const tplContainer = document.getElementById('tpl-catalog-status-container');
+    const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+
+    let url = '/api/catalogs';
+    if (coId && coId !== 'default' && coId !== 'parent' && coId !== 'all') {
+        url += `?company_id=${encodeURIComponent(coId)}`;
+    }
+
+    try {
+        const res = await apiFetch(url);
+        const data = await res.json();
+
+        if (data.connected && Array.isArray(data.catalogs) && data.catalogs.length > 0) {
+            const cat = data.catalogs[0];
+            const catName = cat.name || `Catalog #${cat.id}`;
+            const pCountText = cat.product_count !== null ? ` · ${cat.product_count} products` : '';
+
+            if (statusBox) {
+                statusBox.innerHTML = `
+                    <div style="padding:0.85rem 1rem; border-radius:8px; background:rgba(16, 185, 129, 0.12); border:1px solid #10b981; display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; gap:0.6rem;">
+                            <span style="color:#10b981; font-size:1.2rem; font-weight:bold;">✓</span>
+                            <div>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <strong style="color:var(--text-main); font-size:0.9rem;">${escapeHtml(catName)}</strong>
+                                    <span style="background:#10b981; color:#fff; font-size:0.68rem; font-weight:700; padding:2px 7px; border-radius:10px;">CONNECTED</span>
+                                </div>
+                                <span style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">ID: ${cat.id}${pCountText}</span>
+                            </div>
+                        </div>
+                        <a href="https://commerce.facebook.com/commerce" target="_blank" rel="noopener" class="btn secondary sm" style="text-decoration:none; font-size:0.75rem; padding:0.3rem 0.6rem;">
+                            Open Commerce Manager ↗
+                        </a>
+                    </div>
+                `;
+            }
+
+            if (tplContainer) {
+                tplContainer.innerHTML = `
+                    <div style="background:rgba(16, 185, 129, 0.08); border:1px solid rgba(16, 185, 129, 0.35); border-radius:8px; padding:0.75rem 1rem; display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; gap:0.55rem;">
+                            <span style="color:#10b981; font-size:1.15rem; font-weight:bold;">✓</span>
+                            <div>
+                                <strong style="font-size:0.85rem; color:var(--text-main); display:block;">Connected: ${escapeHtml(catName)}</strong>
+                                <span style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">Catalog ID: #${cat.id}${pCountText}</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn secondary sm" onclick="openCatalogSetupModal()" style="font-size:0.75rem; padding:0.35rem 0.65rem;">
+                            Manage Catalog
+                        </button>
+                    </div>
+                `;
+            }
+        } else {
+            if (statusBox) {
+                statusBox.innerHTML = `
+                    <div style="padding:0.85rem 1rem; border-radius:8px; background:rgba(245, 158, 11, 0.1); border:1px solid #f59e0b; display:flex; align-items:center; gap:0.65rem;">
+                        <span style="font-size:1.25rem;">⚠️</span>
+                        <div>
+                            <strong style="color:var(--text-main); font-size:0.85rem; display:block;">No Meta Catalog Connected</strong>
+                            <span style="font-size:0.775rem; color:var(--text-muted);">Connect your Meta Commerce Manager catalog below to enable WhatsApp Catalog features.</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (tplContainer) {
+                tplContainer.innerHTML = `
+                    <div style="background:rgba(245, 158, 11, 0.08); border:1px solid rgba(245, 158, 11, 0.32); border-radius:8px; padding:0.75rem 1rem;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.35rem;">
+                            <span style="font-size:1.1rem;">⚠️</span>
+                            <strong style="font-size:0.85rem; color:var(--text-main);">Meta Catalog Not Connected</strong>
+                        </div>
+                        <p style="font-size:0.775rem; color:var(--text-muted); margin-bottom:0.65rem; line-height:1.4;">
+                            WhatsApp requires an active product catalog linked to your WhatsApp Business Account before you can submit a catalog template.
+                        </p>
+                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <button type="button" class="btn primary sm" onclick="openCatalogSetupModal()">🔗 Connect Meta Catalog</button>
+                            <a href="https://commerce.facebook.com/commerce" target="_blank" rel="noopener" class="btn secondary sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;">Create on Meta ↗</a>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    } catch (err) {
+        console.warn('Failed to load connected catalogs:', err);
+        if (tplContainer) {
+            tplContainer.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.8rem; color:var(--text-muted);">Catalogue connects via Meta Commerce Manager.</span>
+                    <button type="button" class="btn secondary sm" onclick="openCatalogSetupModal()">Connect</button>
+                </div>
+            `;
+        }
+    }
+};
+
+window.submitLinkCatalog = async function submitLinkCatalog() {
+    const input = document.getElementById('input-meta-catalog-id');
+    const errBox = document.getElementById('catalog-setup-error-msg');
+    const btn = document.getElementById('btn-link-meta-catalog');
+    const catalogId = (input?.value || '').trim();
+
+    if (errBox) errBox.style.display = 'none';
+
+    if (!catalogId) {
+        if (errBox) {
+            errBox.textContent = 'Please enter your Meta Catalog ID from Commerce Manager.';
+            errBox.style.display = 'block';
+        }
+        return;
+    }
+
+    const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+    const origBtnHtml = btn ? btn.innerHTML : '🔗 Link Catalog';
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="width:14px; height:14px;"></span> Linking...';
+    }
+
+    try {
+        const res = await apiFetch('/api/catalogs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                catalog_id: catalogId,
+                company_id: coId
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.error || !data.success) {
+            if (errBox) {
+                errBox.textContent = data.error || 'Failed to link catalog to WhatsApp.';
+                errBox.style.display = 'block';
+            }
+        } else {
+            if (input) input.value = '';
+            showToast(data.message || 'Meta Catalog connected successfully!', 'success');
+            await loadConnectedCatalogs();
+            setTimeout(() => {
+                closeCatalogSetupModal();
+            }, 1000);
+        }
+    } catch (err) {
+        if (errBox) {
+            errBox.textContent = 'Network or API error: ' + err.message;
+            errBox.style.display = 'block';
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origBtnHtml;
+        }
+    }
+};
 
 // --- Broadcast Logic ---
 const bcDisplay = document.getElementById('bc-target-display');
