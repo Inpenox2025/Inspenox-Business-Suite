@@ -151,24 +151,32 @@ function populateBroadcastRangeOptions() {
     }
 }
 
-// Populate Product Selector in Top Bar & Chips inside Dropdown (co-aware of active range)
+// ==========================================================================
+// TARGET AUDIENCE FILTERING: PRODUCTS, TAGS & BATCH RANGES
+// ==========================================================================
+
+// 1. Product Filter Helpers
 function populateBroadcastProductFilterOptions() {
     const sel = document.getElementById('bc-product-filter-select');
     const chipsContainer = document.getElementById('bc-product-chips-container');
     const hasRange = !!activeBroadcastRangeFilter;
+    const lowerTag = (activeBroadcastTagFilter || '').toLowerCase().trim();
 
     const prodCounts = {};
     const prodCountsInRange = {};
     broadcastCustomersCache.forEach((c, idx) => {
         const srNo = idx + 1;
         const inRange = !hasRange || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
+        const custTags = c.tags ? String(c.tags).split(',').map(s => s.trim().toLowerCase()) : [];
+        const matchesTag = !lowerTag || custTags.includes(lowerTag);
+
         if (c.product) {
-            c.product.split(',').forEach(raw => {
+            String(c.product).split(',').forEach(raw => {
                 const p = raw.trim();
                 if (p) {
                     const lower = p.toLowerCase();
                     prodCounts[lower] = (prodCounts[lower] || 0) + 1;
-                    if (inRange) {
+                    if (inRange && matchesTag) {
                         prodCountsInRange[lower] = (prodCountsInRange[lower] || 0) + 1;
                     }
                 }
@@ -189,7 +197,7 @@ function populateBroadcastProductFilterOptions() {
             const opt = document.createElement('option');
             opt.value = p.name;
             opt.textContent = hasRange ? `📦 ${p.name} (${count} in range / ${totalProd} total)` : `📦 ${p.name} (${count})`;
-            if (p.name.toLowerCase() === activeBroadcastProductFilter.toLowerCase()) opt.selected = true;
+            if (p.name.toLowerCase() === (activeBroadcastProductFilter || '').toLowerCase()) opt.selected = true;
             sel.appendChild(opt);
         });
     }
@@ -212,7 +220,7 @@ function populateBroadcastProductFilterOptions() {
             const lower = (p.name || '').toLowerCase();
             const count = hasRange ? (prodCountsInRange[lower] || 0) : (prodCounts[lower] || 0);
             if (count === 0 && !hasRange) return;
-            const isActive = p.name.toLowerCase() === activeBroadcastProductFilter.toLowerCase();
+            const isActive = p.name.toLowerCase() === (activeBroadcastProductFilter || '').toLowerCase();
             const chip = document.createElement('button');
             chip.type = 'button';
             chip.className = 'btn sm';
@@ -244,20 +252,27 @@ window.applyBroadcastProductFilter = function applyBroadcastProductFilter(prodNa
     if (clearBtn) clearBtn.style.display = 'inline-flex';
 
     populateBroadcastProductFilterOptions();
+    populateBroadcastRangeOptions();
+    populateBroadcastTagFilterOptions();
 
     if (autoSelect && activeBroadcastProductFilter) {
         const lowerProd = activeBroadcastProductFilter.toLowerCase();
         let matchedCount = 0;
 
         document.querySelectorAll('.bc-cust-cb').forEach(cb => {
-            const custId = parseInt(cb.value, 10);
+            if (cb.disabled) {
+                cb.checked = false;
+                return;
+            }
             const label = cb.closest('.option-item');
             const srNo = label ? parseInt(label.getAttribute('data-sr'), 10) : 0;
-            const cust = broadcastCustomersCache.find(c => c.id === custId);
+            const cust = broadcastCustomersCache.find(c => String(c.id) === String(cb.value));
 
             const inRange = !activeBroadcastRangeFilter || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
-            const hasTag = !activeBroadcastTagFilter || (cust && cust.tags && cust.tags.split(',').map(s => s.trim().toLowerCase()).includes(activeBroadcastTagFilter.toLowerCase()));
-            const hasProd = cust && cust.product && cust.product.split(',').map(s => s.trim().toLowerCase()).some(p => p.includes(lowerProd));
+            const custTags = cust && cust.tags ? String(cust.tags).split(',').map(s => s.trim().toLowerCase()) : [];
+            const hasTag = !activeBroadcastTagFilter || custTags.includes(activeBroadcastTagFilter.toLowerCase());
+            const custProds = cust && cust.product ? String(cust.product).split(',').map(s => s.trim().toLowerCase()) : [];
+            const hasProd = custProds.some(p => p === lowerProd || p.includes(lowerProd));
 
             if (inRange && hasTag && hasProd) {
                 cb.checked = true;
@@ -268,7 +283,7 @@ window.applyBroadcastProductFilter = function applyBroadcastProductFilter(prodNa
         });
 
         const selectAll = document.getElementById('bc-select-all');
-        if (selectAll) selectAll.checked = matchedCount > 0;
+        if (selectAll) selectAll.checked = (matchedCount > 0 && matchedCount === broadcastCustomersCache.length);
         updateBcDisplay();
     }
 
@@ -284,29 +299,34 @@ window.clearBroadcastProductFilter = function clearBroadcastProductFilter() {
     if (clearBtn) clearBtn.style.display = 'none';
 
     populateBroadcastProductFilterOptions();
+    populateBroadcastRangeOptions();
+    populateBroadcastTagFilterOptions();
     filterBroadcastCustomerList();
     updateBcDisplay();
 };
 
-// Populate Tag Selector in Top Bar & Chips inside Dropdown (co-aware of active range)
+// 2. Tag Filter Helpers
 function populateBroadcastTagFilterOptions() {
     const sel = document.getElementById('bc-tag-filter-select');
     const chipsContainer = document.getElementById('bc-tag-chips-container');
     const hasRange = !!activeBroadcastRangeFilter;
+    const lowerProd = (activeBroadcastProductFilter || '').toLowerCase().trim();
 
-    // Calculate customer count per tag overall and within active range
     const tagCounts = {};
     const tagCountsInRange = {};
     broadcastCustomersCache.forEach((c, idx) => {
         const srNo = idx + 1;
         const inRange = !hasRange || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
+        const custProds = c.product ? String(c.product).split(',').map(s => s.trim().toLowerCase()) : [];
+        const matchesProd = !lowerProd || custProds.some(p => p === lowerProd || p.includes(lowerProd));
+
         if (c.tags) {
-            c.tags.split(',').forEach(raw => {
+            String(c.tags).split(',').forEach(raw => {
                 const t = raw.trim();
                 if (t) {
                     const lower = t.toLowerCase();
                     tagCounts[lower] = (tagCounts[lower] || 0) + 1;
-                    if (inRange) {
+                    if (inRange && matchesProd) {
                         tagCountsInRange[lower] = (tagCountsInRange[lower] || 0) + 1;
                     }
                 }
@@ -323,15 +343,13 @@ function populateBroadcastTagFilterOptions() {
             const opt = document.createElement('option');
             opt.value = t.name;
             opt.textContent = hasRange ? `🏷️ ${t.name} (${count} in range / ${totalTag} total)` : `🏷️ ${t.name} (${count})`;
-            if (t.name.toLowerCase() === activeBroadcastTagFilter.toLowerCase()) opt.selected = true;
+            if (t.name.toLowerCase() === (activeBroadcastTagFilter || '').toLowerCase()) opt.selected = true;
             sel.appendChild(opt);
         });
     }
 
     if (chipsContainer) {
         chipsContainer.innerHTML = '';
-
-        // "All Tags" Chip
         const allChip = document.createElement('button');
         allChip.type = 'button';
         const isAllActive = !activeBroadcastTagFilter;
@@ -348,7 +366,7 @@ function populateBroadcastTagFilterOptions() {
             const lower = (t.name || '').toLowerCase();
             const count = hasRange ? (tagCountsInRange[lower] || 0) : (tagCounts[lower] || 0);
             if (count === 0 && !t.is_default && !hasRange) return;
-            const isActive = t.name.toLowerCase() === activeBroadcastTagFilter.toLowerCase();
+            const isActive = t.name.toLowerCase() === (activeBroadcastTagFilter || '').toLowerCase();
             const chip = document.createElement('button');
             chip.type = 'button';
             chip.className = 'btn sm';
@@ -366,113 +384,43 @@ function populateBroadcastTagFilterOptions() {
     }
 }
 
-// Populate Product Selector in Top Bar & Chips inside Dropdown (co-aware of active range)
-function populateBroadcastProductFilterOptions() {
-    const sel = document.getElementById('bc-product-filter-select');
-    const chipsContainer = document.getElementById('bc-product-chips-container');
-    const hasRange = !!activeBroadcastRangeFilter;
-
-    const prodCounts = {};
-    const prodCountsInRange = {};
-    broadcastCustomersCache.forEach((c, idx) => {
-        const srNo = idx + 1;
-        const inRange = !hasRange || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
-        if (c.product) {
-            c.product.split(',').forEach(raw => {
-                const p = raw.trim();
-                if (p) {
-                    const lower = p.toLowerCase();
-                    prodCounts[lower] = (prodCounts[lower] || 0) + 1;
-                    if (inRange) {
-                        prodCountsInRange[lower] = (prodCountsInRange[lower] || 0) + 1;
-                    }
-                }
-            });
-        }
-    });
-
-    const prods = (typeof availableProducts !== 'undefined' && Array.isArray(availableProducts) && availableProducts.length > 0)
-        ? availableProducts
-        : (window.availableProducts || []);
-
-    if (sel) {
-        sel.innerHTML = '<option value="">-- Filter By Products --</option>';
-        prods.forEach(p => {
-            const lower = (p.name || '').toLowerCase();
-            const count = hasRange ? (prodCountsInRange[lower] || 0) : (prodCounts[lower] || 0);
-            const totalProd = prodCounts[lower] || 0;
-            const opt = document.createElement('option');
-            opt.value = p.name;
-            opt.textContent = hasRange ? `📦 ${p.name} (${count} in range / ${totalProd} total)` : `📦 ${p.name} (${count})`;
-            if (p.name.toLowerCase() === activeBroadcastProductFilter.toLowerCase()) opt.selected = true;
-            sel.appendChild(opt);
-        });
-    }
-
-    if (chipsContainer) {
-        chipsContainer.innerHTML = '';
-        const allChip = document.createElement('button');
-        allChip.type = 'button';
-        const isAllActive = !activeBroadcastProductFilter;
-        allChip.className = `btn sm ${isAllActive ? 'primary' : 'secondary'}`;
-        allChip.style.cssText = 'padding: 0.2rem 0.55rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0;';
-        const allCount = hasRange
-            ? Math.max(0, Math.min(activeBroadcastRangeFilter.end, broadcastCustomersCache.length) - activeBroadcastRangeFilter.start + 1)
-            : broadcastCustomersCache.length;
-        allChip.innerHTML = `All (${allCount})`;
-        allChip.onclick = () => clearBroadcastProductFilter();
-        chipsContainer.appendChild(allChip);
-
-        prods.forEach(p => {
-            const lower = (p.name || '').toLowerCase();
-            const count = hasRange ? (prodCountsInRange[lower] || 0) : (prodCounts[lower] || 0);
-            if (count === 0 && !hasRange) return;
-            const isActive = p.name.toLowerCase() === activeBroadcastProductFilter.toLowerCase();
-            const chip = document.createElement('button');
-            chip.type = 'button';
-            chip.className = 'btn sm';
-            chip.style.cssText = `padding: 0.2rem 0.6rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0; cursor: pointer; border: 1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; background: ${isActive ? 'var(--primary-light)' : 'var(--bg-card)'}; color: ${isActive ? 'var(--primary)' : 'var(--text-main)'}; font-weight: ${isActive ? '700' : '500'};`;
-            chip.innerHTML = `📦 ${escapeHtml(p.name)} <span style="opacity:0.75; font-size:0.68rem;">(${count})</span>`;
-            chip.onclick = () => {
-                if (isActive) {
-                    clearBroadcastProductFilter();
-                } else {
-                    applyBroadcastProductFilter(p.name, true);
-                }
-            };
-            chipsContainer.appendChild(chip);
-        });
-    }
-}
-
-window.applyBroadcastProductFilter = function applyBroadcastProductFilter(prodName, autoSelect = false) {
-    activeBroadcastProductFilter = (prodName || '').trim();
-    if (!activeBroadcastProductFilter) {
-        clearBroadcastProductFilter();
+window.applyBroadcastTagFilter = function applyBroadcastTagFilter(tagName, autoSelect = false) {
+    activeBroadcastTagFilter = (tagName || '').trim();
+    if (!activeBroadcastTagFilter) {
+        clearBroadcastTagFilter();
         return;
     }
 
-    const sel = document.getElementById('bc-product-filter-select');
-    if (sel) sel.value = activeBroadcastProductFilter;
+    const sel = document.getElementById('bc-tag-filter-select');
+    if (sel) sel.value = activeBroadcastTagFilter;
 
-    const clearBtn = document.getElementById('btn-bc-clear-product-filter');
+    const clearBtn = document.getElementById('btn-bc-clear-tag-filter');
     if (clearBtn) clearBtn.style.display = 'inline-flex';
 
+    populateBroadcastTagFilterOptions();
     populateBroadcastProductFilterOptions();
+    populateBroadcastRangeOptions();
 
-    if (autoSelect && activeBroadcastProductFilter) {
-        const lowerProd = activeBroadcastProductFilter.toLowerCase();
+    // If autoSelect: Check ONLY customers having this tag AND inside active range AND matching product!
+    if (autoSelect && activeBroadcastTagFilter) {
+        const lowerTag = activeBroadcastTagFilter.toLowerCase();
+        const lowerProd = (activeBroadcastProductFilter || '').toLowerCase();
         let matchedCount = 0;
 
         document.querySelectorAll('.bc-cust-cb').forEach(cb => {
-            const custId = parseInt(cb.value, 10);
+            if (cb.disabled) {
+                cb.checked = false;
+                return;
+            }
             const label = cb.closest('.option-item');
             const srNo = label ? parseInt(label.getAttribute('data-sr'), 10) : 0;
-            const cust = broadcastCustomersCache.find(c => c.id === custId);
+            const cust = broadcastCustomersCache.find(c => String(c.id) === String(cb.value));
 
             const inRange = !activeBroadcastRangeFilter || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
-            const hasTag = !activeBroadcastTagFilter || (cust && cust.tags && cust.tags.split(',').map(s => s.trim().toLowerCase()).includes(activeBroadcastTagFilter.toLowerCase()));
-            const hasProd = cust && cust.product && cust.product.split(',').map(s => s.trim().toLowerCase()).some(p => p.includes(lowerProd));
+            const custTags = cust && cust.tags ? String(cust.tags).split(',').map(s => s.trim().toLowerCase()) : [];
+            const hasTag = custTags.includes(lowerTag);
+            const custProds = cust && cust.product ? String(cust.product).split(',').map(s => s.trim().toLowerCase()) : [];
+            const hasProd = !lowerProd || custProds.some(p => p === lowerProd || p.includes(lowerProd));
 
             if (inRange && hasTag && hasProd) {
                 cb.checked = true;
@@ -483,27 +431,30 @@ window.applyBroadcastProductFilter = function applyBroadcastProductFilter(prodNa
         });
 
         const selectAll = document.getElementById('bc-select-all');
-        if (selectAll) selectAll.checked = matchedCount > 0;
+        if (selectAll) selectAll.checked = (matchedCount > 0 && matchedCount === broadcastCustomersCache.length);
+
         updateBcDisplay();
     }
 
     filterBroadcastCustomerList();
 };
 
-window.clearBroadcastProductFilter = function clearBroadcastProductFilter() {
-    activeBroadcastProductFilter = '';
-    const sel = document.getElementById('bc-product-filter-select');
+window.clearBroadcastTagFilter = function clearBroadcastTagFilter() {
+    activeBroadcastTagFilter = '';
+    const sel = document.getElementById('bc-tag-filter-select');
     if (sel) sel.value = '';
 
-    const clearBtn = document.getElementById('btn-bc-clear-product-filter');
+    const clearBtn = document.getElementById('btn-bc-clear-tag-filter');
     if (clearBtn) clearBtn.style.display = 'none';
 
+    populateBroadcastTagFilterOptions();
     populateBroadcastProductFilterOptions();
+    populateBroadcastRangeOptions();
     filterBroadcastCustomerList();
     updateBcDisplay();
 };
 
-// Apply Range Selection Filter (e.g. '1-250', '251-500', or {start: 1, end: 250})
+// 3. Batch Range Filter Helpers
 window.applyBroadcastRangeFilter = function applyBroadcastRangeFilter(rangeVal, autoSelect = true) {
     if (!rangeVal) {
         clearBroadcastRangeFilter();
@@ -535,23 +486,30 @@ window.applyBroadcastRangeFilter = function applyBroadcastRangeFilter(rangeVal, 
 
     populateBroadcastRangeOptions();
     populateBroadcastTagFilterOptions();
+    populateBroadcastProductFilterOptions();
 
-    // If autoSelect: Check ONLY customers that match the active range AND active tag!
+    // If autoSelect: Check ONLY customers that match the active range AND active tag AND active product!
     if (autoSelect) {
         const lowerTag = (activeBroadcastTagFilter || '').toLowerCase().trim();
+        const lowerProd = (activeBroadcastProductFilter || '').toLowerCase().trim();
         let selectedCount = 0;
 
         document.querySelectorAll('.bc-cust-cb').forEach(cb => {
-            const custId = parseInt(cb.value, 10);
+            if (cb.disabled) {
+                cb.checked = false;
+                return;
+            }
             const label = cb.closest('.option-item');
             const srNo = label ? parseInt(label.getAttribute('data-sr'), 10) : 0;
-            const cust = broadcastCustomersCache.find(c => c.id === custId);
+            const cust = broadcastCustomersCache.find(c => String(c.id) === String(cb.value));
 
             const inRange = srNo >= start && srNo <= end;
-            const custTags = cust && cust.tags ? cust.tags.split(',').map(s => s.trim().toLowerCase()) : [];
+            const custTags = cust && cust.tags ? String(cust.tags).split(',').map(s => s.trim().toLowerCase()) : [];
             const hasTag = !lowerTag || custTags.includes(lowerTag);
+            const custProds = cust && cust.product ? String(cust.product).split(',').map(s => s.trim().toLowerCase()) : [];
+            const hasProd = !lowerProd || custProds.some(p => p === lowerProd || p.includes(lowerProd));
 
-            if (inRange && hasTag) {
+            if (inRange && hasTag && hasProd) {
                 cb.checked = true;
                 selectedCount++;
             } else {
@@ -560,7 +518,7 @@ window.applyBroadcastRangeFilter = function applyBroadcastRangeFilter(rangeVal, 
         });
 
         const selectAll = document.getElementById('bc-select-all');
-        if (selectAll) selectAll.checked = selectedCount > 0;
+        if (selectAll) selectAll.checked = (selectedCount > 0 && selectedCount === broadcastCustomersCache.length);
     }
 
     filterBroadcastCustomerList();
@@ -577,68 +535,7 @@ window.clearBroadcastRangeFilter = function clearBroadcastRangeFilter() {
 
     populateBroadcastRangeOptions();
     populateBroadcastTagFilterOptions();
-    filterBroadcastCustomerList();
-    updateBcDisplay();
-};
-
-// Apply Tag Selection Filter (Combine with active range)
-window.applyBroadcastTagFilter = function applyBroadcastTagFilter(tagName, autoSelect = false) {
-    activeBroadcastTagFilter = (tagName || '').trim();
-    if (!activeBroadcastTagFilter) {
-        clearBroadcastTagFilter();
-        return;
-    }
-
-    const sel = document.getElementById('bc-tag-filter-select');
-    if (sel) sel.value = activeBroadcastTagFilter;
-
-    const clearBtn = document.getElementById('btn-bc-clear-tag-filter');
-    if (clearBtn) clearBtn.style.display = 'inline-flex';
-
-    populateBroadcastTagFilterOptions();
-    populateBroadcastRangeOptions();
-
-    // If autoSelect: Check ONLY customers having this tag AND inside active range!
-    if (autoSelect && activeBroadcastTagFilter) {
-        const lowerTag = activeBroadcastTagFilter.toLowerCase();
-        let matchedCount = 0;
-
-        document.querySelectorAll('.bc-cust-cb').forEach(cb => {
-            const custId = parseInt(cb.value, 10);
-            const label = cb.closest('.option-item');
-            const srNo = label ? parseInt(label.getAttribute('data-sr'), 10) : 0;
-            const cust = broadcastCustomersCache.find(c => c.id === custId);
-
-            const inRange = !activeBroadcastRangeFilter || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
-            const hasTag = cust && cust.tags && cust.tags.split(',').map(s => s.trim().toLowerCase()).includes(lowerTag);
-
-            if (inRange && hasTag) {
-                cb.checked = true;
-                matchedCount++;
-            } else {
-                cb.checked = false;
-            }
-        });
-
-        const selectAll = document.getElementById('bc-select-all');
-        if (selectAll) selectAll.checked = matchedCount > 0;
-
-        updateBcDisplay();
-    }
-
-    filterBroadcastCustomerList();
-};
-
-window.clearBroadcastTagFilter = function clearBroadcastTagFilter() {
-    activeBroadcastTagFilter = '';
-    const sel = document.getElementById('bc-tag-filter-select');
-    if (sel) sel.value = '';
-
-    const clearBtn = document.getElementById('btn-bc-clear-tag-filter');
-    if (clearBtn) clearBtn.style.display = 'none';
-
-    populateBroadcastTagFilterOptions();
-    populateBroadcastRangeOptions();
+    populateBroadcastProductFilterOptions();
     filterBroadcastCustomerList();
     updateBcDisplay();
 };
@@ -648,6 +545,7 @@ window.clearBroadcastAudienceSelection = function clearBroadcastAudienceSelectio
     const selectAll = document.getElementById('bc-select-all');
     if (selectAll) selectAll.checked = false;
     clearBroadcastTagFilter();
+    clearBroadcastProductFilter();
     clearBroadcastRangeFilter();
     updateBcDisplay();
 };
@@ -961,10 +859,18 @@ function updateBcDisplay() {
     const selectAll = document.getElementById('bc-select-all');
     if (selectedCustomerIds.length === 0) {
         bcDisplay.textContent = "Select Audience...";
-    } else if (selectAll?.checked && !activeBroadcastTagFilter && !activeBroadcastRangeFilter) {
+    } else if (selectAll?.checked && !activeBroadcastTagFilter && !activeBroadcastRangeFilter && !activeBroadcastProductFilter && selectedCustomerIds.length === broadcastCustomersCache.length) {
         bcDisplay.textContent = `All Customers Selected (${broadcastCustomersCache.length})`;
+    } else if (activeBroadcastRangeFilter && activeBroadcastTagFilter && activeBroadcastProductFilter) {
+        bcDisplay.textContent = `🎯 ${selectedCustomerIds.length} with "${activeBroadcastProductFilter}" & "${activeBroadcastTagFilter}" in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} Selected`;
+    } else if (activeBroadcastTagFilter && activeBroadcastProductFilter) {
+        bcDisplay.textContent = `🎯 ${selectedCustomerIds.length} with "${activeBroadcastProductFilter}" & "${activeBroadcastTagFilter}" Selected`;
+    } else if (activeBroadcastRangeFilter && activeBroadcastProductFilter) {
+        bcDisplay.textContent = `🎯 ${selectedCustomerIds.length} Customer(s) with "${activeBroadcastProductFilter}" in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} Selected`;
     } else if (activeBroadcastRangeFilter && activeBroadcastTagFilter) {
         bcDisplay.textContent = `🎯 ${selectedCustomerIds.length} with "${activeBroadcastTagFilter}" in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} Selected`;
+    } else if (activeBroadcastProductFilter) {
+        bcDisplay.textContent = `🎯 ${selectedCustomerIds.length} Customer(s) with "${activeBroadcastProductFilter}" Selected`;
     } else if (activeBroadcastRangeFilter) {
         bcDisplay.textContent = `🎯 ${selectedCustomerIds.length} Customer(s) in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} Selected`;
     } else if (activeBroadcastTagFilter) {
@@ -1380,13 +1286,13 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
         const checkedCbs = document.querySelectorAll('.bc-cust-cb:checked');
         const checkedIds = Array.from(checkedCbs).map(cb => String(cb.value));
 
-        if (isSelectAll && !activeBroadcastTagFilter && !activeBroadcastRangeFilter) {
+        if (isSelectAll && !activeBroadcastTagFilter && !activeBroadcastRangeFilter && !activeBroadcastProductFilter) {
             // Truly all customers in the workspace
             const res = await apiFetch('/api/customers');
             const allCust = await res.json();
             if (Array.isArray(allCust)) targetList = allCust;
         } else if (checkedIds.length > 0) {
-            // Specific customers checked individually or via range/tag auto-select
+            // Specific customers checked individually or via range/tag/product auto-select
             if (broadcastCustomersCache && broadcastCustomersCache.length > 0) {
                 targetList = broadcastCustomersCache.filter(c => checkedIds.includes(String(c.id)));
             } else {
@@ -1396,8 +1302,8 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                     targetList = allCust.filter(c => checkedIds.includes(String(c.id)));
                 }
             }
-        } else if (activeBroadcastRangeFilter || activeBroadcastTagFilter) {
-            // Range or tag selected but no individual checkboxes explicitly ticked
+        } else if (activeBroadcastRangeFilter || activeBroadcastTagFilter || activeBroadcastProductFilter) {
+            // Range, tag, or product selected but no individual checkboxes explicitly ticked
             const pool = (broadcastCustomersCache && broadcastCustomersCache.length > 0)
                 ? broadcastCustomersCache
                 : await (await apiFetch('/api/customers')).json();
@@ -1407,13 +1313,15 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                     const matchesRange = !activeBroadcastRangeFilter || (sr >= activeBroadcastRangeFilter.start && sr <= activeBroadcastRangeFilter.end);
                     const custTags = c.tags ? c.tags.split(',').map(s => s.trim().toLowerCase()) : [];
                     const matchesTag = !activeBroadcastTagFilter || custTags.includes(activeBroadcastTagFilter.toLowerCase().trim());
-                    return matchesRange && matchesTag;
+                    const custProds = c.product ? c.product.split(',').map(s => s.trim().toLowerCase()) : [];
+                    const matchesProd = !activeBroadcastProductFilter || custProds.some(p => p === activeBroadcastProductFilter.toLowerCase().trim() || p.includes(activeBroadcastProductFilter.toLowerCase().trim()));
+                    return matchesRange && matchesTag && matchesProd;
                 });
             }
         }
 
-        // 🔒 STRICT TAG & RANGE FILTER CHECK:
-        // Guarantee that if a tag or range filter is active, only customers satisfying both are included
+        // 🔒 STRICT TAG, PRODUCT & RANGE FILTER CHECK:
+        // Guarantee that if a tag, product, or range filter is active, only customers satisfying all active filters are included
         if (activeBroadcastTagFilter) {
             const lowerFilterTag = activeBroadcastTagFilter.toLowerCase().trim();
             targetList = targetList.filter(c => {
@@ -1422,9 +1330,17 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                 return custTags.includes(lowerFilterTag);
             });
         }
+        if (activeBroadcastProductFilter) {
+            const lowerFilterProd = activeBroadcastProductFilter.toLowerCase().trim();
+            targetList = targetList.filter(c => {
+                if (!c.product) return false;
+                const custProds = c.product.split(',').map(s => s.trim().toLowerCase());
+                return custProds.some(p => p === lowerFilterProd || p.includes(lowerFilterProd));
+            });
+        }
         if (activeBroadcastRangeFilter) {
             targetList = targetList.filter(c => {
-                const idx = broadcastCustomersCache.findIndex(bc => bc.id === c.id);
+                const idx = broadcastCustomersCache.findIndex(bc => String(bc.id) === String(c.id));
                 const sr = idx !== -1 ? idx + 1 : 0;
                 return sr >= activeBroadcastRangeFilter.start && sr <= activeBroadcastRangeFilter.end;
             });
