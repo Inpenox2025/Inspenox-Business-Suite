@@ -21,11 +21,7 @@ This directory contains the modularized frontend controllers migrated directly f
 | 11 | **`automationController.js`** | Enterprise 24/7 Automation Board controller (`loadAutomationBoard`, `renderAutomationRulesList`), trigger events (First Contact / Welcome, Inbound Keyword, Button Click Reply), 6-step workflow chaining, interactive Meta template button reply chip picker, rule add/edit modal, test dispatch, active/inactive toggle, and custom delete confirmation modal. | `12809 - 13802` |
 | 12 | **`simulatorController.js`** | Interactive WhatsApp Smartphone Simulator controller (used in the Automation Board and Landing Page), multi-step bot progression simulation (Welcome ➔ Location ➔ List Menu ➔ Order ➔ Live Agent), stepper pills, button click simulation, hover detection, and auto-play replay loops. | `13803 - 14141` |
 
----
 
-## 🚀 Future Integration in `index.html`
-
-When you are ready to integrate these modular controllers into `index.html` in place of the single `app.js`, simply replace:
 
 ```html
 <script src="/app.js"></script>
