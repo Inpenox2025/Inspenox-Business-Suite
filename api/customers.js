@@ -95,36 +95,67 @@ module.exports = async (req, res) => {
             const newAssignedTo = assigned_to !== undefined ? (assigned_to && assigned_to !== 'unassigned' ? String(assigned_to).trim() : null) : undefined;
             const newAssignedBy = assigned_by ? String(assigned_by).trim() : null;
             const isUnassigning = shouldUpdateAssignment && (assigned_to === null || assigned_to === '' || assigned_to === 'unassigned') && (!assigned_user_id || assigned_user_id === '0');
+            const nowIso = new Date().toISOString();
 
-            const updated = isNaN(targetId)
-                ? await sql`
-                    UPDATE customers 
-                    SET status = COALESCE(${status !== undefined ? status : null}, status),
-                        description = COALESCE(${description !== undefined ? description : null}, description),
-                        tags = COALESCE(${tags !== undefined ? tags : null}, tags),
-                        name = COALESCE(${name !== undefined ? name : null}, name),
-                        phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone),
-                        assigned_user_id = ${shouldUpdateAssignment ? (isUnassigning ? null : (newAssignedUserId !== undefined ? newAssignedUserId : null)) : sql`assigned_user_id`},
-                        assigned_to = ${shouldUpdateAssignment ? (isUnassigning ? null : (newAssignedTo !== undefined ? newAssignedTo : null)) : sql`assigned_to`},
-                        assigned_by = ${shouldUpdateAssignment ? (isUnassigning ? null : newAssignedBy) : sql`assigned_by`},
-                        assigned_at = ${shouldUpdateAssignment ? (isUnassigning ? null : sql`NOW() AT TIME ZONE 'Asia/Kolkata'`) : sql`assigned_at`}
-                    WHERE id = ${id}
-                    RETURNING *
-                `
-                : await sql`
-                    UPDATE customers 
-                    SET status = COALESCE(${status !== undefined ? status : null}, status),
-                        description = COALESCE(${description !== undefined ? description : null}, description),
-                        tags = COALESCE(${tags !== undefined ? tags : null}, tags),
-                        name = COALESCE(${name !== undefined ? name : null}, name),
-                        phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone),
-                        assigned_user_id = ${shouldUpdateAssignment ? (isUnassigning ? null : (newAssignedUserId !== undefined ? newAssignedUserId : null)) : sql`assigned_user_id`},
-                        assigned_to = ${shouldUpdateAssignment ? (isUnassigning ? null : (newAssignedTo !== undefined ? newAssignedTo : null)) : sql`assigned_to`},
-                        assigned_by = ${shouldUpdateAssignment ? (isUnassigning ? null : newAssignedBy) : sql`assigned_by`},
-                        assigned_at = ${shouldUpdateAssignment ? (isUnassigning ? null : sql`NOW() AT TIME ZONE 'Asia/Kolkata'`) : sql`assigned_at`}
-                    WHERE id = ${targetId}
-                    RETURNING *
-                `;
+            let updated;
+            if (shouldUpdateAssignment) {
+                const finalUserId = isUnassigning ? null : (newAssignedUserId !== undefined ? newAssignedUserId : null);
+                const finalTo = isUnassigning ? null : (newAssignedTo !== undefined ? newAssignedTo : null);
+                const finalBy = isUnassigning ? null : newAssignedBy;
+                const finalAt = isUnassigning ? null : nowIso;
+
+                updated = isNaN(targetId)
+                    ? await sql`
+                        UPDATE customers 
+                        SET status = COALESCE(${status !== undefined ? status : null}, status),
+                            description = COALESCE(${description !== undefined ? description : null}, description),
+                            tags = COALESCE(${tags !== undefined ? tags : null}, tags),
+                            name = COALESCE(${name !== undefined ? name : null}, name),
+                            phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone),
+                            assigned_user_id = ${finalUserId},
+                            assigned_to = ${finalTo},
+                            assigned_by = ${finalBy},
+                            assigned_at = ${finalAt}
+                        WHERE id = ${id}
+                        RETURNING *
+                    `
+                    : await sql`
+                        UPDATE customers 
+                        SET status = COALESCE(${status !== undefined ? status : null}, status),
+                            description = COALESCE(${description !== undefined ? description : null}, description),
+                            tags = COALESCE(${tags !== undefined ? tags : null}, tags),
+                            name = COALESCE(${name !== undefined ? name : null}, name),
+                            phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone),
+                            assigned_user_id = ${finalUserId},
+                            assigned_to = ${finalTo},
+                            assigned_by = ${finalBy},
+                            assigned_at = ${finalAt}
+                        WHERE id = ${targetId}
+                        RETURNING *
+                    `;
+            } else {
+                updated = isNaN(targetId)
+                    ? await sql`
+                        UPDATE customers 
+                        SET status = COALESCE(${status !== undefined ? status : null}, status),
+                            description = COALESCE(${description !== undefined ? description : null}, description),
+                            tags = COALESCE(${tags !== undefined ? tags : null}, tags),
+                            name = COALESCE(${name !== undefined ? name : null}, name),
+                            phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone)
+                        WHERE id = ${id}
+                        RETURNING *
+                    `
+                    : await sql`
+                        UPDATE customers 
+                        SET status = COALESCE(${status !== undefined ? status : null}, status),
+                            description = COALESCE(${description !== undefined ? description : null}, description),
+                            tags = COALESCE(${tags !== undefined ? tags : null}, tags),
+                            name = COALESCE(${name !== undefined ? name : null}, name),
+                            phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone)
+                        WHERE id = ${targetId}
+                        RETURNING *
+                    `;
+            }
 
             if (!updated || updated.length === 0) {
                 return res.status(404).json({ error: 'Customer not found' });
