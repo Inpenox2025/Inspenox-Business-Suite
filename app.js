@@ -3412,6 +3412,13 @@ window.switchView = function switchView(target, pushHistory = true) {
             document.getElementById('inbox-customers-panel')?.classList.remove('hidden');
             document.getElementById('inbox-chat-area')?.classList.add('hidden');
         }
+        if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+            if (typeof window.loadProducts === 'function') {
+                window.loadProducts().catch(() => {});
+            } else if (typeof fetchInboxCompanyProducts === 'function') {
+                fetchInboxCompanyProducts().catch(() => {});
+            }
+        }
         loadInboxSidebar();
         ensureTemplatesCacheLoaded();
     } else {
@@ -10295,13 +10302,6 @@ function updateCampaignTimelineChart(camp, metrics, tabName) {
         peakX = 290; peakY = 80;
     } else if (tabName === 'delivered' || tabName === 'sent' || tabName === 'overview') {
         dArea = "M 60 195 Q 100 20, 140 30 T 220 35 T 300 25 T 380 40 T 460 30 T 520 195 Z";
-        dLine = "M 60 195 Q 100 20, 140 30 T 220 35 T 300 25 T 380 40 T 460 30 T 520 195";
-        peakX = 300; peakY = 25;
-    } else if (tabName === 'read') {
-        dArea = "M 60 195 Q 100 35, 140 45 T 220 55 T 300 40 T 380 50 T 460 45 T 520 195 Z";
-        dLine = "M 60 195 Q 100 35, 140 45 T 220 55 T 300 40 T 380 50 T 460 45 T 520 195";
-        peakX = 300; peakY = 40;
-    } else if (tabName === 'replied') {
         dArea = "M 60 195 Q 95 70, 130 85 T 210 120 T 290 95 T 370 130 T 450 90 T 520 195 Z";
         dLine = "M 60 195 Q 95 70, 130 85 T 210 120 T 290 95 T 370 130 T 450 90 T 520 195";
         peakX = 290; peakY = 95;
@@ -10672,6 +10672,13 @@ async function loadInboxSidebar() {
     try {
         if (typeof availableTags === 'undefined' || !availableTags || availableTags.length === 0) {
             if (typeof loadTags === 'function') loadTags().catch(() => { });
+        }
+        if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+            if (typeof window.loadProducts === 'function') {
+                window.loadProducts().catch(() => {});
+            } else if (typeof fetchInboxCompanyProducts === 'function') {
+                fetchInboxCompanyProducts().catch(() => {});
+            }
         }
 
         const res = await apiFetch('/api/customers');
@@ -11230,6 +11237,15 @@ async function openChat(customer, pushHistory = true) {
     if (activeName) activeName.textContent = customer.name;
     if (activePhone) activePhone.textContent = formatDisplayPhone(customer.phone);
     renderActiveChatTags(customer);
+    if (typeof renderActiveChatProducts === 'function') renderActiveChatProducts(customer);
+
+    if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+        if (typeof window.loadProducts === 'function') {
+            window.loadProducts().catch(() => {});
+        } else if (typeof fetchInboxCompanyProducts === 'function') {
+            fetchInboxCompanyProducts().catch(() => {});
+        }
+    }
 
     const badge = document.getElementById('active-chat-window-badge');
     if (badge) {
@@ -11718,6 +11734,331 @@ window.saveInboxCustomerTags = async function saveInboxCustomerTags() {
 document.getElementById('inbox-modal-tag-search')?.addEventListener('input', () => {
     renderInboxModalTagsList();
 });
+
+// --- Active Chat Product Tagging ---
+if (!Array.isArray(window.availableProducts)) window.availableProducts = [];
+
+const DEFAULT_PRODUCT_PALETTES = {
+    'rotavator': { cls: 'tag-pill-emerald', bg: '#ecfdf5', text: '#047857', border: '#a7f3d0' },
+    'tractor': { cls: 'tag-pill-blue', bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+    'baler': { cls: 'tag-pill-amber', bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+    'power tiller': { cls: 'tag-pill-purple', bg: '#faf5ff', text: '#7e22ce', border: '#e9d5ff' },
+    'online course': { cls: 'tag-pill-indigo', bg: '#eef2ff', text: '#4338ca', border: '#c7d2fe' },
+    'service plan': { cls: 'tag-pill-teal', bg: '#f0fdfa', text: '#0f766e', border: '#99f6e4' }
+};
+
+if (typeof window.getProductStyle !== 'function') {
+    window.getProductStyle = function getProductStyle(prodName) {
+        if (!prodName) return { cls: 'tag-pill-gray', styleAttr: '' };
+        const clean = String(prodName).trim();
+        const lower = clean.toLowerCase();
+        if (DEFAULT_PRODUCT_PALETTES[lower]) {
+            const pal = DEFAULT_PRODUCT_PALETTES[lower];
+            return { cls: pal.cls, styleAttr: `background:${pal.bg}; color:${pal.text}; border-color:${pal.border};` };
+        }
+        const found = (window.availableProducts || []).find(p => (p.name || '').toLowerCase() === lower);
+        if (found && (found.bg_color || found.color)) {
+            const bg = found.bg_color || '#ecfdf5';
+            const txt = found.text_color || '#047857';
+            const bdr = found.border_color || '#a7f3d0';
+            return { cls: '', styleAttr: `background:${bg}; color:${txt}; border-color:${bdr};` };
+        }
+        let hash = 0;
+        for (let i = 0; i < clean.length; i++) hash = (hash << 5) - hash + clean.charCodeAt(i);
+        const EXTRA = [
+            { cls: 'tag-pill-emerald', bg: '#ecfdf5', text: '#047857', border: '#a7f3d0' },
+            { cls: 'tag-pill-blue', bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+            { cls: 'tag-pill-amber', bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+            { cls: 'tag-pill-purple', bg: '#faf5ff', text: '#7e22ce', border: '#e9d5ff' },
+            { cls: 'tag-pill-indigo', bg: '#eef2ff', text: '#4338ca', border: '#c7d2fe' },
+            { cls: 'tag-pill-teal', bg: '#f0fdfa', text: '#0f766e', border: '#99f6e4' },
+            { cls: 'tag-pill-pink', bg: '#fdf2f8', text: '#be185d', border: '#fbcfe8' },
+            { cls: 'tag-pill-orange', bg: '#fff7ed', text: '#c2410c', border: '#fed7aa' }
+        ];
+        const pal = EXTRA[Math.abs(hash) % EXTRA.length];
+        return { cls: pal.cls, styleAttr: `background:${pal.bg}; color:${pal.text}; border-color:${pal.border};` };
+    };
+}
+
+function renderActiveChatProducts(customer) {
+    const container = document.getElementById('active-chat-products-list');
+    if (!container) return;
+    container.innerHTML = '';
+    const cust = customer || activeCustomerData;
+    if (!cust) return;
+
+    const prods = (cust.product || '').split(',').map(s => s.trim()).filter(Boolean);
+    prods.forEach(pn => {
+        const style = (typeof getProductStyle === 'function') ? getProductStyle(pn) : { cls: 'tag-pill-emerald', styleAttr: '' };
+        const pill = document.createElement('span');
+        pill.className = `contact-tag-pill ${style.cls}`;
+        pill.setAttribute('style', (style.styleAttr || '') + '; cursor:pointer; font-size:0.7rem; padding:0.12rem 0.45rem; display:inline-flex; align-items:center; gap:3px;');
+        pill.innerHTML = `<span>📦</span><span>${escapeHtml(pn)}</span>`;
+        pill.title = 'Click to manage products interested in';
+        pill.onclick = () => openInboxAssignProductsModal();
+        container.appendChild(pill);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.style.cssText = 'font-size:0.68rem; font-weight:600; padding:0.12rem 0.45rem; border-radius:4px; background:rgba(0,0,0,0.05); color:var(--text-muted); border:1px dashed var(--border); cursor:pointer; display:inline-flex; align-items:center; gap:3px; transition:all 0.15s;';
+    addBtn.innerHTML = '<span>📦</span><span>+ Product</span>';
+    addBtn.title = 'Assign or edit products interested in for this chat';
+    addBtn.onclick = () => openInboxAssignProductsModal();
+    container.appendChild(addBtn);
+}
+
+window.fetchInboxCompanyProducts = async function fetchInboxCompanyProducts() {
+    try {
+        const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+        let url = '/api/products';
+        if (coId && coId !== 'default' && coId !== 'parent') url = `/api/products?company_id=${coId}`;
+        const res = await apiFetch(url);
+        const data = await res.json();
+        if (data && Array.isArray(data.products) && data.products.length > 0) {
+            window.availableProducts = data.products;
+        } else if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+            window.availableProducts = [
+                { name: 'Rotavator' }, { name: 'Tractor' }, { name: 'Baler' },
+                { name: 'Power Tiller' }, { name: 'Online Course' }, { name: 'Service Plan' }
+            ];
+        }
+    } catch(e) {
+        console.warn('Failed to fetch inbox products from API:', e);
+        if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+            window.availableProducts = [
+                { name: 'Rotavator' }, { name: 'Tractor' }, { name: 'Baler' },
+                { name: 'Power Tiller' }, { name: 'Online Course' }, { name: 'Service Plan' }
+            ];
+        }
+    }
+};
+
+window.openInboxAssignProductsModal = async function openInboxAssignProductsModal() {
+    if (!activeInboxCustomer || !activeCustomerData) {
+        showToast('Please select a chat first.', 'warning');
+        return;
+    }
+    const modal = document.getElementById('modal-inbox-products');
+    if (!modal) return;
+
+    const custNameEl = document.getElementById('inbox-product-modal-cust-name');
+    if (custNameEl) {
+        custNameEl.textContent = `Chat: ${activeCustomerData.name} (${formatDisplayPhone(activeCustomerData.phone)})`;
+    }
+
+    const searchInput = document.getElementById('inbox-modal-product-search');
+    if (searchInput) searchInput.value = '';
+
+    inboxModalSelectedProducts = (activeCustomerData.product || '').split(',').map(s => s.trim()).filter(Boolean);
+
+    // Initial render with current/default products so modal opens without lag
+    renderInboxModalProductsList();
+    modal.style.display = 'flex';
+
+    // If company products not loaded from server yet, fetch and re-render
+    if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+        if (typeof window.loadProducts === 'function') {
+            await window.loadProducts();
+        } else {
+            await fetchInboxCompanyProducts();
+        }
+        renderInboxModalProductsList();
+    }
+};
+
+window.closeInboxAssignProductsModal = function closeInboxAssignProductsModal() {
+    const modal = document.getElementById('modal-inbox-products');
+    if (modal) modal.style.display = 'none';
+};
+
+window.renderInboxModalProductsList = function renderInboxModalProductsList() {
+    const listEl = document.getElementById('inbox-modal-products-list');
+    if (!listEl) return;
+    const searchVal = (document.getElementById('inbox-modal-product-search')?.value || '').toLowerCase().trim();
+
+    let prods = [];
+    if (Array.isArray(window.availableProducts) && window.availableProducts.length > 0) {
+        prods = [...window.availableProducts];
+    } else if (typeof availableProducts !== 'undefined' && Array.isArray(availableProducts) && availableProducts.length > 0) {
+        prods = [...availableProducts];
+    } else {
+        prods = [
+            { name: 'Rotavator' }, { name: 'Tractor' }, { name: 'Baler' },
+            { name: 'Power Tiller' }, { name: 'Online Course' }, { name: 'Service Plan' }
+        ];
+    }
+
+    // Always include any products currently assigned to this customer
+    const existingNames = new Set(prods.map(p => (p.name || '').toLowerCase()));
+    (inboxModalSelectedProducts || []).forEach(pn => {
+        if (pn && !existingNames.has(pn.toLowerCase())) {
+            prods.push({ name: pn });
+            existingNames.add(pn.toLowerCase());
+        }
+    });
+
+    const filtered = prods.filter(p => !searchVal || (p.name || '').toLowerCase().includes(searchVal));
+
+    if (filtered.length === 0) {
+        listEl.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:1rem;">No matching products found</div>`;
+        return;
+    }
+
+    listEl.innerHTML = filtered.map(p => {
+        const isChecked = inboxModalSelectedProducts.some(prod => prod.toLowerCase() === (p.name || '').toLowerCase());
+        const style = (typeof getProductStyle === 'function') ? getProductStyle(p.name) : { cls: 'tag-pill-emerald', styleAttr: '' };
+        const escaped = (p.name || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+        return `
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:0.45rem 0.6rem; border-radius:8px; background:${isChecked ? 'rgba(16, 185, 129, 0.08)' : 'var(--bg-main, #fafafa)'}; border:1px solid ${isChecked ? 'rgba(16, 185, 129, 0.3)' : 'var(--border)'}; cursor:pointer;" onclick="toggleInboxModalProduct('${escaped}')">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} style="cursor:pointer;" onclick="event.stopPropagation(); toggleInboxModalProduct('${escaped}')">
+                    <span class="contact-tag-pill ${style.cls}" style="${style.styleAttr}">📦 ${escapeHtml(p.name)}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+window.toggleInboxModalProduct = function toggleInboxModalProduct(prodName) {
+    const idx = inboxModalSelectedProducts.findIndex(p => p.toLowerCase() === prodName.toLowerCase());
+    if (idx >= 0) {
+        inboxModalSelectedProducts.splice(idx, 1);
+    } else {
+        inboxModalSelectedProducts.push(prodName);
+    }
+    renderInboxModalProductsList();
+};
+
+window.submitInboxNewProduct = async function submitInboxNewProduct() {
+    const input = document.getElementById('inbox-new-product-input');
+    const name = (input?.value || '').trim();
+    if (!name) return;
+
+    try {
+        const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+        const res = await apiFetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, company_id: coId })
+        });
+        const data = await res.json();
+        if (data && (data.success || data.product)) {
+            const pObj = data.product || { name };
+            if (!window.availableProducts) window.availableProducts = [];
+            if (!window.availableProducts.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+                window.availableProducts.push(pObj);
+            }
+            if (!inboxModalSelectedProducts.some(p => p.toLowerCase() === name.toLowerCase())) {
+                inboxModalSelectedProducts.push(name);
+            }
+            if (input) input.value = '';
+            renderInboxModalProductsList();
+            showToast(`Added product "${name}"`, 'success');
+        }
+    } catch(err) {
+        console.error('Failed to create product from inbox:', err);
+    }
+};
+
+window.saveInboxCustomerProducts = async function saveInboxCustomerProducts() {
+    if (!activeInboxCustomer || !activeCustomerData) return;
+
+    const saveBtn = document.getElementById('btn-save-inbox-products');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+    }
+
+    const newProdsStr = inboxModalSelectedProducts.join(', ');
+
+    try {
+        const res = await apiFetch('/api/customers', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: activeInboxCustomer,
+                product: newProdsStr,
+                company_id: (typeof getCompanyId === 'function') ? getCompanyId() : undefined
+            })
+        });
+        const data = await res.json();
+        if (data.error) {
+            throw new Error(data.error);
+        } else {
+            // 1. Immediately update activeCustomerData
+            activeCustomerData.product = newProdsStr;
+
+            // 2. Immediately update in inboxCustomersList
+            if (typeof inboxCustomersList !== 'undefined' && Array.isArray(inboxCustomersList)) {
+                const inListCust = inboxCustomersList.find(c => String(c.id) === String(activeInboxCustomer) || String(c.id) === String(activeCustomerData.id));
+                if (inListCust) inListCust.product = newProdsStr;
+            }
+
+            // 3. Immediately update in allCustomers if present
+            if (typeof allCustomers !== 'undefined' && Array.isArray(allCustomers)) {
+                const inAllCust = allCustomers.find(c => String(c.id) === String(activeInboxCustomer) || String(c.id) === String(activeCustomerData.id));
+                if (inAllCust) inAllCust.product = newProdsStr;
+            }
+
+            // 4. Close modal immediately
+            closeInboxAssignProductsModal();
+
+            // 5. Re-render active chat header product pills
+            if (typeof renderActiveChatProducts === 'function') renderActiveChatProducts(activeCustomerData);
+
+            // 6. Directly update sidebar contact card products preview in place
+            const activeCard = document.querySelector(`.inbox-contact-card[data-id="${activeInboxCustomer}"]`);
+            if (activeCard) {
+                let prodsContainer = activeCard.querySelector('.inbox-card-products');
+                if (newProdsStr.trim()) {
+                    const prodNames = newProdsStr.split(',').map(p => p.trim()).filter(Boolean);
+                    const prodsHtml = prodNames.slice(0, 2).map(pn => {
+                        const style = (typeof getProductStyle === 'function') ? getProductStyle(pn) : { cls: 'tag-pill-emerald', styleAttr: '' };
+                        return `<span class="contact-tag-pill ${style.cls}" style="${style.styleAttr}; font-size:0.65rem; padding:0.08rem 0.4rem;">📦 ${escapeHtml(pn)}</span>`;
+                    }).join('') + (prodNames.length > 2 ? `<span style="font-size:0.6rem; color:var(--text-muted); align-self:center;">+${prodNames.length - 2}</span>` : '');
+
+                    if (prodsContainer) {
+                        prodsContainer.innerHTML = prodsHtml;
+                    } else {
+                        const details = activeCard.querySelector('.contact-details');
+                        if (details) {
+                            const newDiv = document.createElement('div');
+                            newDiv.className = 'inbox-card-products';
+                            newDiv.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.25rem; margin-top:0.25rem;';
+                            newDiv.innerHTML = prodsHtml;
+                            const tagsDiv = details.querySelector('.inbox-card-tags');
+                            if (tagsDiv) details.insertBefore(newDiv, tagsDiv);
+                            else details.appendChild(newDiv);
+                        }
+                    }
+                } else if (prodsContainer) {
+                    prodsContainer.remove();
+                }
+            }
+
+            // 7. Refresh customer table if available
+            if (typeof renderCustomersTable === 'function') {
+                renderCustomersTable();
+            }
+
+            // 8. Refresh sidebar list filter if active
+            if (typeof filterAndRenderInboxContacts === 'function') {
+                filterAndRenderInboxContacts();
+            }
+
+            showToast('Products updated successfully', 'success');
+        }
+    } catch(e) {
+        console.error('Failed to save inbox products:', e);
+        showToast('Failed to save products: ' + (e.message || 'Unknown error'), 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Products';
+        }
+    }
+};
 
 function renderTick(status, direction) {
     if (direction === 'inbound') return '';

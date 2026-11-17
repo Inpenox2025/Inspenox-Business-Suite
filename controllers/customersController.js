@@ -180,7 +180,7 @@ window.loadProducts = async function loadProducts() {
         if (coId && coId !== 'default' && coId !== 'parent') url = `/api/products?company_id=${coId}`;
         const res = await apiFetch(url);
         const data = await res.json();
-        if (data && Array.isArray(data.products)) {
+        if (data && Array.isArray(data.products) && data.products.length > 0) {
             window.availableProducts = data.products;
         } else {
             window.availableProducts = [
@@ -201,6 +201,9 @@ window.loadProducts = async function loadProducts() {
     renderProductDropdownItems('quick');
     if (typeof populateBroadcastProductFilterOptions === 'function') {
         populateBroadcastProductFilterOptions();
+    }
+    if (typeof renderInboxModalProductsList === 'function') {
+        renderInboxModalProductsList();
     }
 };
 

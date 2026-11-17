@@ -25,6 +25,13 @@ async function loadInboxSidebar() {
         if (typeof availableTags === 'undefined' || !availableTags || availableTags.length === 0) {
             if (typeof loadTags === 'function') loadTags().catch(() => {});
         }
+        if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+            if (typeof window.loadProducts === 'function') {
+                window.loadProducts().catch(() => {});
+            } else if (typeof fetchInboxCompanyProducts === 'function') {
+                fetchInboxCompanyProducts().catch(() => {});
+            }
+        }
 
         const res = await apiFetch('/api/customers');
         const customers = await res.json();
@@ -614,6 +621,14 @@ async function openChat(customer, pushHistory = true) {
     if (activePhone) activePhone.textContent = formatDisplayPhone(customer.phone);
     renderActiveChatTags(customer);
     renderActiveChatProducts(customer);
+
+    if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+        if (typeof window.loadProducts === 'function') {
+            window.loadProducts().catch(() => {});
+        } else if (typeof fetchInboxCompanyProducts === 'function') {
+            fetchInboxCompanyProducts().catch(() => {});
+        }
+    }
 
     const badge = document.getElementById('active-chat-window-badge');
     if (badge) {
@@ -1331,7 +1346,33 @@ function renderActiveChatProducts(customer) {
     container.appendChild(addBtn);
 }
 
-window.openInboxAssignProductsModal = function openInboxAssignProductsModal() {
+window.fetchInboxCompanyProducts = async function fetchInboxCompanyProducts() {
+    try {
+        const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+        let url = '/api/products';
+        if (coId && coId !== 'default' && coId !== 'parent') url = `/api/products?company_id=${coId}`;
+        const res = await apiFetch(url);
+        const data = await res.json();
+        if (data && Array.isArray(data.products) && data.products.length > 0) {
+            window.availableProducts = data.products;
+        } else if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+            window.availableProducts = [
+                { name: 'Rotavator' }, { name: 'Tractor' }, { name: 'Baler' },
+                { name: 'Power Tiller' }, { name: 'Online Course' }, { name: 'Service Plan' }
+            ];
+        }
+    } catch(e) {
+        console.warn('Failed to fetch inbox products from API:', e);
+        if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+            window.availableProducts = [
+                { name: 'Rotavator' }, { name: 'Tractor' }, { name: 'Baler' },
+                { name: 'Power Tiller' }, { name: 'Online Course' }, { name: 'Service Plan' }
+            ];
+        }
+    }
+};
+
+window.openInboxAssignProductsModal = async function openInboxAssignProductsModal() {
     if (!activeInboxCustomer || !activeCustomerData) {
         showToast('Please select a chat first.', 'warning');
         return;
@@ -1344,9 +1385,24 @@ window.openInboxAssignProductsModal = function openInboxAssignProductsModal() {
         custNameEl.textContent = `Chat: ${activeCustomerData.name} (${formatDisplayPhone(activeCustomerData.phone)})`;
     }
 
+    const searchInput = document.getElementById('inbox-modal-product-search');
+    if (searchInput) searchInput.value = '';
+
     inboxModalSelectedProducts = (activeCustomerData.product || '').split(',').map(s => s.trim()).filter(Boolean);
+    
+    // Immediate render with available products or defaults
     renderInboxModalProductsList();
     modal.style.display = 'flex';
+
+    // If company products not loaded from server yet, fetch and re-render
+    if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+        if (typeof window.loadProducts === 'function') {
+            await window.loadProducts();
+        } else {
+            await fetchInboxCompanyProducts();
+        }
+        renderInboxModalProductsList();
+    }
 };
 
 window.closeInboxAssignProductsModal = function closeInboxAssignProductsModal() {
@@ -1359,12 +1415,26 @@ window.renderInboxModalProductsList = function renderInboxModalProductsList() {
     if (!listEl) return;
     const searchVal = (document.getElementById('inbox-modal-product-search')?.value || '').toLowerCase().trim();
 
-    const prods = (typeof availableProducts !== 'undefined' && Array.isArray(availableProducts) && availableProducts.length > 0)
-        ? availableProducts
-        : (window.availableProducts || [
+    let prods = [];
+    if (Array.isArray(window.availableProducts) && window.availableProducts.length > 0) {
+        prods = [...window.availableProducts];
+    } else if (typeof availableProducts !== 'undefined' && Array.isArray(availableProducts) && availableProducts.length > 0) {
+        prods = [...availableProducts];
+    } else {
+        prods = [
             { name: 'Rotavator' }, { name: 'Tractor' }, { name: 'Baler' },
             { name: 'Power Tiller' }, { name: 'Online Course' }, { name: 'Service Plan' }
-        ]);
+        ];
+    }
+
+    // Always include any products currently assigned to this customer
+    const existingNames = new Set(prods.map(p => (p.name || '').toLowerCase()));
+    (inboxModalSelectedProducts || []).forEach(pn => {
+        if (pn && !existingNames.has(pn.toLowerCase())) {
+            prods.push({ name: pn });
+            existingNames.add(pn.toLowerCase());
+        }
+    });
 
     const filtered = prods.filter(p => !searchVal || (p.name || '').toLowerCase().includes(searchVal));
 

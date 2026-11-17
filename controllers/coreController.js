@@ -750,6 +750,13 @@ window.switchView = function switchView(target, pushHistory = true) {
             document.getElementById('inbox-customers-panel')?.classList.remove('hidden');
             document.getElementById('inbox-chat-area')?.classList.add('hidden');
         }
+        if (!Array.isArray(window.availableProducts) || window.availableProducts.length === 0) {
+            if (typeof window.loadProducts === 'function') {
+                window.loadProducts().catch(() => {});
+            } else if (typeof fetchInboxCompanyProducts === 'function') {
+                fetchInboxCompanyProducts().catch(() => {});
+            }
+        }
         loadInboxSidebar();
         ensureTemplatesCacheLoaded();
     } else {
