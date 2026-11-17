@@ -4481,7 +4481,7 @@ function exportFilteredCustomers() {
             "Phone Number": cleanPhone,
             "Display Phone": formatDisplayPhone(c.phone),
             "Assigned / Handled By": c.assigned_to || c.assigned_by || "Unassigned",
-            "Product": c.product || c.company_name || c.tags || "-",
+            "Product": (c.product && String(c.product).trim()) ? String(c.product).trim() : "-",
             "Conversation Notes": c.description || c.notes || "",
             "Email": c.email || "",
             "Company": c.company_name || "",
@@ -4666,7 +4666,7 @@ async function exportFilteredCustomersPdf() {
         const msgCount = `${c.message_count || 0} msgs`;
         const custStatus = c.status || 'Open - Not Contacted';
         const assignedPerson = c.assigned_to || c.assigned_by || 'Unassigned';
-        const productVal = c.product || c.company_name || (c.tags ? c.tags.split(',')[0].trim() : '-') || '-';
+        const productVal = (c.product && String(c.product).trim()) ? String(c.product).trim() : '-';
         const custDesc = (c.description || c.notes || '').slice(0, 140) || '-';
 
         return [

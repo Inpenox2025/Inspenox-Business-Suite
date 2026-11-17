@@ -16,6 +16,7 @@ const uploadSessionHandler = require('../../api/upload-session');
 const webhookHandler = require('../../api/webhook');
 const paymentsHandler = require('../../api/payments');
 const tagsHandler = require('../../api/tags');
+const productsHandler = require('../../api/products');
 const mediaProxyHandler = require('../../api/media-proxy');
 const automationHandler = require('../../api/automation');
 
@@ -39,7 +40,8 @@ const routes = {
     'webhook': webhookHandler,
     'payments': paymentsHandler,
     'subscriptions': paymentsHandler,
-    'tags': tagsHandler
+    'tags': tagsHandler,
+    'products': productsHandler
 };
 
 async function handleApi(request, env, paramsPath = null) {

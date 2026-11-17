@@ -22,6 +22,11 @@ module.exports = async (req, res) => {
         }
 
         const sql = getDb(env);
+        try {
+            await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS product TEXT DEFAULT NULL;`;
+        } catch(e) {}
+
+        const { default_product } = req.body || {};
 
         // Resolve company_id from body, query, or x-company-id header
         const rawCo = (req.body && req.body.company_id) || req.query.company_id || (req.headers && req.headers['x-company-id']) || null;
@@ -51,6 +56,7 @@ module.exports = async (req, res) => {
             const city = cust.city || null;
             const status = cust.status ? String(cust.status).trim() : 'Open - Not Contacted';
             const description = cust.description || cust.notes || cust.conversation_notes || '';
+            const product = (cust.product || cust.products || cust.product_interested || default_product || '').trim() || null;
             
             let finalTags = cust.tags ? String(cust.tags).trim() : null;
             if (default_tags && String(default_tags).trim()) {
@@ -66,14 +72,15 @@ module.exports = async (req, res) => {
             }
             
             await sql`
-                INSERT INTO customers (name, phone, email, company_name, city, tags, status, description, company_id, is_saved) 
-                VALUES (${name}, ${cleanPhone}, ${email}, ${companyName}, ${city}, ${finalTags}, ${status}, ${description}, ${targetCompanyId}, true) 
+                INSERT INTO customers (name, phone, email, company_name, city, tags, product, status, description, company_id, is_saved) 
+                VALUES (${name}, ${cleanPhone}, ${email}, ${companyName}, ${city}, ${finalTags}, ${product}, ${status}, ${description}, ${targetCompanyId}, true) 
                 ON CONFLICT (phone) DO UPDATE SET 
                     name = EXCLUDED.name,
                     email = COALESCE(EXCLUDED.email, customers.email),
                     company_name = COALESCE(EXCLUDED.company_name, customers.company_name),
                     city = COALESCE(EXCLUDED.city, customers.city),
                     tags = COALESCE(EXCLUDED.tags, customers.tags),
+                    product = COALESCE(EXCLUDED.product, customers.product),
                     status = COALESCE(customers.status, EXCLUDED.status),
                     description = CASE 
                         WHEN EXCLUDED.description IS NOT NULL AND EXCLUDED.description != '' THEN EXCLUDED.description 

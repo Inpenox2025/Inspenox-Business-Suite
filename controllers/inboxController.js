@@ -14,6 +14,7 @@
 if (typeof currentInboxFilter === 'undefined') var currentInboxFilter = 'all';
 if (typeof activeInboxTagFilter === 'undefined') var activeInboxTagFilter = null;
 var inboxModalSelectedTags = [];
+var inboxModalSelectedProducts = [];
 
 async function loadInboxSidebar() {
     const sidebar = document.getElementById('inbox-customers');
@@ -206,6 +207,21 @@ function renderInboxContacts(list) {
             `;
         }
 
+        // Render customer product preview
+        let productHtml = '';
+        if (c.product && String(c.product).trim()) {
+            const prodNames = String(c.product).split(',').map(p => p.trim()).filter(Boolean);
+            if (prodNames.length > 0) {
+                productHtml = `<div class="inbox-card-products" style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-top:0.25rem;">` +
+                    prodNames.slice(0, 2).map(pn => {
+                        const style = (typeof getProductStyle === 'function') ? getProductStyle(pn) : { cls: 'tag-pill-emerald', styleAttr: '' };
+                        return `<span class="contact-tag-pill ${style.cls}" style="${style.styleAttr}; font-size:0.65rem; padding:0.08rem 0.4rem;" title="Product Interested: ${pn}">📦 ${escapeHtml(pn)}</span>`;
+                    }).join('') +
+                    (prodNames.length > 2 ? `<span style="font-size:0.6rem; color:var(--text-muted); align-self:center;">+${prodNames.length - 2}</span>` : '') +
+                    `</div>`;
+            }
+        }
+
         // Render customer tags preview
         let tagsHtml = '';
         if (c.tags && String(c.tags).trim()) {
@@ -239,6 +255,7 @@ function renderInboxContacts(list) {
                     </div>
                 </div>
                 ${lastMsgHtml}
+                ${productHtml}
                 ${tagsHtml}
             </div>
             ${unreadBadgeHtml}
@@ -596,6 +613,7 @@ async function openChat(customer, pushHistory = true) {
     if (activeName) activeName.textContent = customer.name;
     if (activePhone) activePhone.textContent = formatDisplayPhone(customer.phone);
     renderActiveChatTags(customer);
+    renderActiveChatProducts(customer);
 
     const badge = document.getElementById('active-chat-window-badge');
     if (badge) {
@@ -1267,6 +1285,214 @@ window.saveInboxCustomerTags = async function saveInboxCustomerTags() {
 document.getElementById('inbox-modal-tag-search')?.addEventListener('input', () => {
     renderInboxModalTagsList();
 });
+
+// --- Active Chat Product Tagging ---
+function renderActiveChatProducts(customer) {
+    const container = document.getElementById('active-chat-products-list');
+    if (!container) return;
+    container.innerHTML = '';
+    const cust = customer || activeCustomerData;
+    if (!cust) return;
+
+    const prods = (cust.product || '').split(',').map(s => s.trim()).filter(Boolean);
+    prods.forEach(pn => {
+        const style = (typeof getProductStyle === 'function') ? getProductStyle(pn) : { cls: 'tag-pill-emerald', styleAttr: '' };
+        const pill = document.createElement('span');
+        pill.className = `contact-tag-pill ${style.cls}`;
+        pill.setAttribute('style', (style.styleAttr || '') + '; cursor:pointer; font-size:0.7rem; padding:0.12rem 0.45rem; display:inline-flex; align-items:center; gap:3px;');
+        pill.innerHTML = `<span>📦</span><span>${escapeHtml(pn)}</span>`;
+        pill.title = 'Click to manage products interested in';
+        pill.onclick = () => openInboxAssignProductsModal();
+        container.appendChild(pill);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.style.cssText = 'font-size:0.68rem; font-weight:600; padding:0.12rem 0.45rem; border-radius:4px; background:rgba(0,0,0,0.05); color:var(--text-muted); border:1px dashed var(--border); cursor:pointer; display:inline-flex; align-items:center; gap:3px; transition:all 0.15s;';
+    addBtn.innerHTML = '<span>📦</span><span>+ Product</span>';
+    addBtn.title = 'Assign or edit products interested in for this chat';
+    addBtn.onclick = () => openInboxAssignProductsModal();
+    container.appendChild(addBtn);
+}
+
+window.openInboxAssignProductsModal = function openInboxAssignProductsModal() {
+    if (!activeInboxCustomer || !activeCustomerData) {
+        showToast('Please select a chat first.', 'warning');
+        return;
+    }
+    const modal = document.getElementById('modal-inbox-products');
+    if (!modal) return;
+
+    const custNameEl = document.getElementById('inbox-product-modal-cust-name');
+    if (custNameEl) {
+        custNameEl.textContent = `Chat: ${activeCustomerData.name} (${formatDisplayPhone(activeCustomerData.phone)})`;
+    }
+
+    inboxModalSelectedProducts = (activeCustomerData.product || '').split(',').map(s => s.trim()).filter(Boolean);
+    renderInboxModalProductsList();
+    modal.style.display = 'flex';
+};
+
+window.closeInboxAssignProductsModal = function closeInboxAssignProductsModal() {
+    const modal = document.getElementById('modal-inbox-products');
+    if (modal) modal.style.display = 'none';
+};
+
+window.renderInboxModalProductsList = function renderInboxModalProductsList() {
+    const listEl = document.getElementById('inbox-modal-products-list');
+    if (!listEl) return;
+    const searchVal = (document.getElementById('inbox-modal-product-search')?.value || '').toLowerCase().trim();
+
+    const prods = (typeof availableProducts !== 'undefined' && Array.isArray(availableProducts) && availableProducts.length > 0)
+        ? availableProducts
+        : (window.availableProducts || [
+            { name: 'Rotavator' }, { name: 'Tractor' }, { name: 'Baler' },
+            { name: 'Power Tiller' }, { name: 'Online Course' }, { name: 'Service Plan' }
+        ]);
+
+    const filtered = prods.filter(p => !searchVal || (p.name || '').toLowerCase().includes(searchVal));
+
+    if (filtered.length === 0) {
+        listEl.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:1rem;">No matching products found</div>`;
+        return;
+    }
+
+    listEl.innerHTML = filtered.map(p => {
+        const isChecked = inboxModalSelectedProducts.some(prod => prod.toLowerCase() === (p.name || '').toLowerCase());
+        const style = (typeof getProductStyle === 'function') ? getProductStyle(p.name) : { cls: 'tag-pill-emerald', styleAttr: '' };
+        const escaped = (p.name || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+        return `
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:0.45rem 0.6rem; border-radius:8px; background:${isChecked ? 'rgba(16, 185, 129, 0.08)' : 'var(--bg-main, #fafafa)'}; border:1px solid ${isChecked ? 'rgba(16, 185, 129, 0.3)' : 'var(--border)'}; cursor:pointer;" onclick="toggleInboxModalProduct('${escaped}')">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} style="cursor:pointer;" onclick="event.stopPropagation(); toggleInboxModalProduct('${escaped}')">
+                    <span class="contact-tag-pill ${style.cls}" style="${style.styleAttr}">📦 ${escapeHtml(p.name)}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+window.toggleInboxModalProduct = function toggleInboxModalProduct(prodName) {
+    const idx = inboxModalSelectedProducts.findIndex(p => p.toLowerCase() === prodName.toLowerCase());
+    if (idx >= 0) {
+        inboxModalSelectedProducts.splice(idx, 1);
+    } else {
+        inboxModalSelectedProducts.push(prodName);
+    }
+    renderInboxModalProductsList();
+};
+
+window.submitInboxNewProduct = async function submitInboxNewProduct() {
+    const input = document.getElementById('inbox-new-product-input');
+    const name = (input?.value || '').trim();
+    if (!name) return;
+
+    try {
+        const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+        const res = await apiFetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, company_id: coId })
+        });
+        const data = await res.json();
+        if (data && (data.success || data.product)) {
+            const pObj = data.product || { name };
+            if (!window.availableProducts) window.availableProducts = [];
+            if (!window.availableProducts.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+                window.availableProducts.push(pObj);
+            }
+            if (!inboxModalSelectedProducts.some(p => p.toLowerCase() === name.toLowerCase())) {
+                inboxModalSelectedProducts.push(name);
+            }
+            if (input) input.value = '';
+            renderInboxModalProductsList();
+            showToast(`Added product "${name}"`, 'success');
+        }
+    } catch(err) {
+        console.error('Failed to create product from inbox:', err);
+    }
+};
+
+window.saveInboxCustomerProducts = async function saveInboxCustomerProducts() {
+    if (!activeInboxCustomer || !activeCustomerData) return;
+
+    const saveBtn = document.getElementById('btn-save-inbox-products');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+    }
+
+    const newProdsStr = inboxModalSelectedProducts.join(', ');
+
+    try {
+        const res = await apiFetch('/api/customers', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: activeInboxCustomer,
+                product: newProdsStr,
+                company_id: (typeof getCompanyId === 'function') ? getCompanyId() : undefined
+            })
+        });
+        const data = await res.json();
+        if (data.error) {
+            throw new Error(data.error);
+        } else {
+            activeCustomerData.product = newProdsStr;
+
+            const inListCust = inboxCustomersCache.find(c => c.id === activeCustomerData.id);
+            if (inListCust) inListCust.product = newProdsStr;
+
+            if (typeof allCustomers !== 'undefined' && Array.isArray(allCustomers)) {
+                const inAllCust = allCustomers.find(c => c.id === activeCustomerData.id);
+                if (inAllCust) inAllCust.product = newProdsStr;
+            }
+
+            closeInboxAssignProductsModal();
+            renderActiveChatProducts(activeCustomerData);
+
+            // Update contact card preview
+            const activeCard = document.querySelector(`.inbox-contact-card[data-id="${activeInboxCustomer}"]`);
+            if (activeCard) {
+                let prodsContainer = activeCard.querySelector('.inbox-card-products');
+                if (newProdsStr.trim()) {
+                    const prodNames = newProdsStr.split(',').map(p => p.trim()).filter(Boolean);
+                    const prodsHtml = prodNames.slice(0, 2).map(pn => {
+                        const style = (typeof getProductStyle === 'function') ? getProductStyle(pn) : { cls: 'tag-pill-emerald', styleAttr: '' };
+                        return `<span class="contact-tag-pill ${style.cls}" style="${style.styleAttr}; font-size:0.65rem; padding:0.08rem 0.4rem;">📦 ${escapeHtml(pn)}</span>`;
+                    }).join('') + (prodNames.length > 2 ? `<span style="font-size:0.6rem; color:var(--text-muted); align-self:center;">+${prodNames.length - 2}</span>` : '');
+
+                    if (prodsContainer) {
+                        prodsContainer.innerHTML = prodsHtml;
+                    } else {
+                        const details = activeCard.querySelector('.contact-details');
+                        if (details) {
+                            const newDiv = document.createElement('div');
+                            newDiv.className = 'inbox-card-products';
+                            newDiv.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.25rem; margin-top:0.25rem;';
+                            newDiv.innerHTML = prodsHtml;
+                            const tagsDiv = details.querySelector('.inbox-card-tags');
+                            if (tagsDiv) details.insertBefore(newDiv, tagsDiv);
+                            else details.appendChild(newDiv);
+                        }
+                    }
+                } else if (prodsContainer) {
+                    prodsContainer.remove();
+                }
+            }
+
+            showToast('Products updated successfully', 'success');
+        }
+    } catch(e) {
+        console.error('Failed to save inbox products:', e);
+        showToast('Failed to save products: ' + (e.message || 'Unknown error'), 'error');
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Products';
+        }
+    }
+};
 
 function renderTick(status, direction) {
     if (direction === 'inbound') return '';

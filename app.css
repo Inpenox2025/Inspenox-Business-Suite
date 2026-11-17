@@ -5391,6 +5391,31 @@ td.empty-state .empty-state-desc,
     color: #b45309 !important;
     border-color: #fde68a !important;
 }
+.tag-pill-emerald {
+    background: #ecfdf5 !important;
+    color: #047857 !important;
+    border-color: #a7f3d0 !important;
+}
+.tag-pill-teal {
+    background: #f0fdfa !important;
+    color: #0f766e !important;
+    border-color: #99f6e4 !important;
+}
+.tag-pill-indigo {
+    background: #eef2ff !important;
+    color: #4338ca !important;
+    border-color: #c7d2fe !important;
+}
+.tag-pill-orange {
+    background: #fff7ed !important;
+    color: #c2410c !important;
+    border-color: #fed7aa !important;
+}
+.tag-pill-cyan {
+    background: #cffafe !important;
+    color: #0e7490 !important;
+    border-color: #a5f3fc !important;
+}
 
 /* Tag Selector Dropdown Component */
 .tag-selector-box {

@@ -19,6 +19,7 @@ module.exports = async (req, res) => {
         await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Open - Not Contacted';`;
         await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';`;
         await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_saved BOOLEAN DEFAULT true;`;
+        await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS product TEXT DEFAULT NULL;`;
         await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS assigned_user_id INT REFERENCES users(id) ON DELETE SET NULL;`;
         await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS assigned_to TEXT DEFAULT NULL;`;
         await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS assigned_at TIMESTAMPTZ DEFAULT NULL;`;
@@ -84,7 +85,7 @@ module.exports = async (req, res) => {
 
     if (req.method === 'PATCH') {
         try {
-            const { id, status, description, name, phone, tags, assigned_user_id, assigned_to, assigned_by } = req.body || {};
+            const { id, status, description, name, phone, tags, product, assigned_user_id, assigned_to, assigned_by } = req.body || {};
             if (!id) return res.status(400).json({ error: 'Customer ID required' });
             const targetId = parseInt(id, 10);
             const cleanPhone = phone ? formatIndiaPhone(phone) : null;
@@ -110,6 +111,7 @@ module.exports = async (req, res) => {
                         SET status = COALESCE(${status !== undefined ? status : null}, status),
                             description = COALESCE(${description !== undefined ? description : null}, description),
                             tags = COALESCE(${tags !== undefined ? tags : null}, tags),
+                            product = COALESCE(${product !== undefined ? product : null}, product),
                             name = COALESCE(${name !== undefined ? name : null}, name),
                             phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone),
                             assigned_user_id = ${finalUserId},
@@ -124,6 +126,7 @@ module.exports = async (req, res) => {
                         SET status = COALESCE(${status !== undefined ? status : null}, status),
                             description = COALESCE(${description !== undefined ? description : null}, description),
                             tags = COALESCE(${tags !== undefined ? tags : null}, tags),
+                            product = COALESCE(${product !== undefined ? product : null}, product),
                             name = COALESCE(${name !== undefined ? name : null}, name),
                             phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone),
                             assigned_user_id = ${finalUserId},
@@ -140,6 +143,7 @@ module.exports = async (req, res) => {
                         SET status = COALESCE(${status !== undefined ? status : null}, status),
                             description = COALESCE(${description !== undefined ? description : null}, description),
                             tags = COALESCE(${tags !== undefined ? tags : null}, tags),
+                            product = COALESCE(${product !== undefined ? product : null}, product),
                             name = COALESCE(${name !== undefined ? name : null}, name),
                             phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone)
                         WHERE id = ${id}
@@ -150,6 +154,7 @@ module.exports = async (req, res) => {
                         SET status = COALESCE(${status !== undefined ? status : null}, status),
                             description = COALESCE(${description !== undefined ? description : null}, description),
                             tags = COALESCE(${tags !== undefined ? tags : null}, tags),
+                            product = COALESCE(${product !== undefined ? product : null}, product),
                             name = COALESCE(${name !== undefined ? name : null}, name),
                             phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone)
                         WHERE id = ${targetId}
@@ -188,15 +193,16 @@ module.exports = async (req, res) => {
     if (req.method === 'POST' || req.method === 'PUT') {
         try {
             const { 
-                id, name, phone, email, company_name, address, city, state, pincode, country, tags, status, description, notes, custom_fields, company_id 
+                id, name, phone, email, company_name, address, city, state, pincode, country, tags, product, status, description, notes, custom_fields, company_id 
             } = req.body || {};
 
-            if (id && (!name || !phone) && (tags !== undefined || status !== undefined || description !== undefined)) {
+            if (id && (!name || !phone) && (tags !== undefined || product !== undefined || status !== undefined || description !== undefined)) {
                 const targetId = parseInt(id, 10);
                 const updated = isNaN(targetId)
                     ? await sql`
                         UPDATE customers 
                         SET tags = COALESCE(${tags !== undefined ? tags : null}, tags),
+                            product = COALESCE(${product !== undefined ? product : null}, product),
                             status = COALESCE(${status !== undefined ? status : null}, status),
                             description = COALESCE(${description !== undefined ? description : null}, description)
                         WHERE id = ${id}
@@ -205,6 +211,7 @@ module.exports = async (req, res) => {
                     : await sql`
                         UPDATE customers 
                         SET tags = COALESCE(${tags !== undefined ? tags : null}, tags),
+                            product = COALESCE(${product !== undefined ? product : null}, product),
                             status = COALESCE(${status !== undefined ? status : null}, status),
                             description = COALESCE(${description !== undefined ? description : null}, description)
                         WHERE id = ${targetId}
@@ -251,6 +258,7 @@ module.exports = async (req, res) => {
                         pincode = ${pincode || null},
                         country = ${country || 'India'},
                         tags = ${tags || null},
+                        product = ${product !== undefined ? (product || null) : sql`product`},
                         status = COALESCE(${status !== undefined ? status : null}, status),
                         description = COALESCE(${description !== undefined ? description : null}, description),
                         notes = ${notes || null},
@@ -284,6 +292,7 @@ module.exports = async (req, res) => {
                             pincode = ${pincode || null},
                             country = ${country || 'India'},
                             tags = ${tags || null},
+                            product = COALESCE(${product !== undefined ? product : null}, product),
                             status = COALESCE(${status !== undefined ? status : null}, status),
                             description = COALESCE(${description !== undefined ? description : null}, description),
                             notes = ${notes || null},
@@ -297,9 +306,9 @@ module.exports = async (req, res) => {
                 } else {
                     const result = await sql`
                         INSERT INTO customers (
-                            name, phone, email, company_name, address, city, state, pincode, country, tags, status, description, notes, custom_fields, company_id, is_saved
+                            name, phone, email, company_name, address, city, state, pincode, country, tags, product, status, description, notes, custom_fields, company_id, is_saved
                         ) VALUES (
-                            ${name}, ${cleanPhone}, ${email || null}, ${company_name || null}, ${address || null}, ${city || null}, ${state || null}, ${pincode || null}, ${country || 'India'}, ${tags || null}, ${custStatus}, ${custDesc}, ${notes || null}, ${customJson}::jsonb, ${targetCompanyId}, true
+                            ${name}, ${cleanPhone}, ${email || null}, ${company_name || null}, ${address || null}, ${city || null}, ${state || null}, ${pincode || null}, ${country || 'India'}, ${tags || null}, ${product || null}, ${custStatus}, ${custDesc}, ${notes || null}, ${customJson}::jsonb, ${targetCompanyId}, true
                         ) 
                         ON CONFLICT (phone) DO UPDATE SET 
                             name = EXCLUDED.name,
@@ -310,6 +319,7 @@ module.exports = async (req, res) => {
                             state = COALESCE(EXCLUDED.state, customers.state),
                             pincode = COALESCE(EXCLUDED.pincode, customers.pincode),
                             tags = COALESCE(EXCLUDED.tags, customers.tags),
+                            product = COALESCE(EXCLUDED.product, customers.product),
                             status = COALESCE(customers.status, EXCLUDED.status),
                             description = CASE 
                                 WHEN EXCLUDED.description IS NOT NULL AND EXCLUDED.description != '' THEN EXCLUDED.description 

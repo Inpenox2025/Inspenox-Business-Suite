@@ -29,6 +29,7 @@ document.getElementById('btn-bc-target-done')?.addEventListener('click', () => {
 
 let broadcastCustomersCache = [];
 let activeBroadcastTagFilter = '';
+let activeBroadcastProductFilter = '';
 let activeBroadcastRangeFilter = null; // { start: number, end: number, label: string }
 
 // Dynamic customer range generator based on total audience size
@@ -150,6 +151,143 @@ function populateBroadcastRangeOptions() {
     }
 }
 
+// Populate Product Selector in Top Bar & Chips inside Dropdown (co-aware of active range)
+function populateBroadcastProductFilterOptions() {
+    const sel = document.getElementById('bc-product-filter-select');
+    const chipsContainer = document.getElementById('bc-product-chips-container');
+    const hasRange = !!activeBroadcastRangeFilter;
+
+    const prodCounts = {};
+    const prodCountsInRange = {};
+    broadcastCustomersCache.forEach((c, idx) => {
+        const srNo = idx + 1;
+        const inRange = !hasRange || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
+        if (c.product) {
+            c.product.split(',').forEach(raw => {
+                const p = raw.trim();
+                if (p) {
+                    const lower = p.toLowerCase();
+                    prodCounts[lower] = (prodCounts[lower] || 0) + 1;
+                    if (inRange) {
+                        prodCountsInRange[lower] = (prodCountsInRange[lower] || 0) + 1;
+                    }
+                }
+            });
+        }
+    });
+
+    const prods = (typeof availableProducts !== 'undefined' && Array.isArray(availableProducts) && availableProducts.length > 0)
+        ? availableProducts
+        : (window.availableProducts || []);
+
+    if (sel) {
+        sel.innerHTML = '<option value="">-- Filter By Products --</option>';
+        prods.forEach(p => {
+            const lower = (p.name || '').toLowerCase();
+            const count = hasRange ? (prodCountsInRange[lower] || 0) : (prodCounts[lower] || 0);
+            const totalProd = prodCounts[lower] || 0;
+            const opt = document.createElement('option');
+            opt.value = p.name;
+            opt.textContent = hasRange ? `📦 ${p.name} (${count} in range / ${totalProd} total)` : `📦 ${p.name} (${count})`;
+            if (p.name.toLowerCase() === activeBroadcastProductFilter.toLowerCase()) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    if (chipsContainer) {
+        chipsContainer.innerHTML = '';
+        const allChip = document.createElement('button');
+        allChip.type = 'button';
+        const isAllActive = !activeBroadcastProductFilter;
+        allChip.className = `btn sm ${isAllActive ? 'primary' : 'secondary'}`;
+        allChip.style.cssText = 'padding: 0.2rem 0.55rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0;';
+        const allCount = hasRange
+            ? Math.max(0, Math.min(activeBroadcastRangeFilter.end, broadcastCustomersCache.length) - activeBroadcastRangeFilter.start + 1)
+            : broadcastCustomersCache.length;
+        allChip.innerHTML = `All (${allCount})`;
+        allChip.onclick = () => clearBroadcastProductFilter();
+        chipsContainer.appendChild(allChip);
+
+        prods.forEach(p => {
+            const lower = (p.name || '').toLowerCase();
+            const count = hasRange ? (prodCountsInRange[lower] || 0) : (prodCounts[lower] || 0);
+            if (count === 0 && !hasRange) return;
+            const isActive = p.name.toLowerCase() === activeBroadcastProductFilter.toLowerCase();
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'btn sm';
+            chip.style.cssText = `padding: 0.2rem 0.6rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0; cursor: pointer; border: 1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; background: ${isActive ? 'var(--primary-light)' : 'var(--bg-card)'}; color: ${isActive ? 'var(--primary)' : 'var(--text-main)'}; font-weight: ${isActive ? '700' : '500'};`;
+            chip.innerHTML = `📦 ${escapeHtml(p.name)} <span style="opacity:0.75; font-size:0.68rem;">(${count})</span>`;
+            chip.onclick = () => {
+                if (isActive) {
+                    clearBroadcastProductFilter();
+                } else {
+                    applyBroadcastProductFilter(p.name, true);
+                }
+            };
+            chipsContainer.appendChild(chip);
+        });
+    }
+}
+
+window.applyBroadcastProductFilter = function applyBroadcastProductFilter(prodName, autoSelect = false) {
+    activeBroadcastProductFilter = (prodName || '').trim();
+    if (!activeBroadcastProductFilter) {
+        clearBroadcastProductFilter();
+        return;
+    }
+
+    const sel = document.getElementById('bc-product-filter-select');
+    if (sel) sel.value = activeBroadcastProductFilter;
+
+    const clearBtn = document.getElementById('btn-bc-clear-product-filter');
+    if (clearBtn) clearBtn.style.display = 'inline-flex';
+
+    populateBroadcastProductFilterOptions();
+
+    if (autoSelect && activeBroadcastProductFilter) {
+        const lowerProd = activeBroadcastProductFilter.toLowerCase();
+        let matchedCount = 0;
+
+        document.querySelectorAll('.bc-cust-cb').forEach(cb => {
+            const custId = parseInt(cb.value, 10);
+            const label = cb.closest('.option-item');
+            const srNo = label ? parseInt(label.getAttribute('data-sr'), 10) : 0;
+            const cust = broadcastCustomersCache.find(c => c.id === custId);
+
+            const inRange = !activeBroadcastRangeFilter || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
+            const hasTag = !activeBroadcastTagFilter || (cust && cust.tags && cust.tags.split(',').map(s => s.trim().toLowerCase()).includes(activeBroadcastTagFilter.toLowerCase()));
+            const hasProd = cust && cust.product && cust.product.split(',').map(s => s.trim().toLowerCase()).some(p => p.includes(lowerProd));
+
+            if (inRange && hasTag && hasProd) {
+                cb.checked = true;
+                matchedCount++;
+            } else {
+                cb.checked = false;
+            }
+        });
+
+        const selectAll = document.getElementById('bc-select-all');
+        if (selectAll) selectAll.checked = matchedCount > 0;
+        updateBcDisplay();
+    }
+
+    filterBroadcastCustomerList();
+};
+
+window.clearBroadcastProductFilter = function clearBroadcastProductFilter() {
+    activeBroadcastProductFilter = '';
+    const sel = document.getElementById('bc-product-filter-select');
+    if (sel) sel.value = '';
+
+    const clearBtn = document.getElementById('btn-bc-clear-product-filter');
+    if (clearBtn) clearBtn.style.display = 'none';
+
+    populateBroadcastProductFilterOptions();
+    filterBroadcastCustomerList();
+    updateBcDisplay();
+};
+
 // Populate Tag Selector in Top Bar & Chips inside Dropdown (co-aware of active range)
 function populateBroadcastTagFilterOptions() {
     const sel = document.getElementById('bc-tag-filter-select');
@@ -227,6 +365,143 @@ function populateBroadcastTagFilterOptions() {
         });
     }
 }
+
+// Populate Product Selector in Top Bar & Chips inside Dropdown (co-aware of active range)
+function populateBroadcastProductFilterOptions() {
+    const sel = document.getElementById('bc-product-filter-select');
+    const chipsContainer = document.getElementById('bc-product-chips-container');
+    const hasRange = !!activeBroadcastRangeFilter;
+
+    const prodCounts = {};
+    const prodCountsInRange = {};
+    broadcastCustomersCache.forEach((c, idx) => {
+        const srNo = idx + 1;
+        const inRange = !hasRange || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
+        if (c.product) {
+            c.product.split(',').forEach(raw => {
+                const p = raw.trim();
+                if (p) {
+                    const lower = p.toLowerCase();
+                    prodCounts[lower] = (prodCounts[lower] || 0) + 1;
+                    if (inRange) {
+                        prodCountsInRange[lower] = (prodCountsInRange[lower] || 0) + 1;
+                    }
+                }
+            });
+        }
+    });
+
+    const prods = (typeof availableProducts !== 'undefined' && Array.isArray(availableProducts) && availableProducts.length > 0)
+        ? availableProducts
+        : (window.availableProducts || []);
+
+    if (sel) {
+        sel.innerHTML = '<option value="">-- Filter By Products --</option>';
+        prods.forEach(p => {
+            const lower = (p.name || '').toLowerCase();
+            const count = hasRange ? (prodCountsInRange[lower] || 0) : (prodCounts[lower] || 0);
+            const totalProd = prodCounts[lower] || 0;
+            const opt = document.createElement('option');
+            opt.value = p.name;
+            opt.textContent = hasRange ? `📦 ${p.name} (${count} in range / ${totalProd} total)` : `📦 ${p.name} (${count})`;
+            if (p.name.toLowerCase() === activeBroadcastProductFilter.toLowerCase()) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    if (chipsContainer) {
+        chipsContainer.innerHTML = '';
+        const allChip = document.createElement('button');
+        allChip.type = 'button';
+        const isAllActive = !activeBroadcastProductFilter;
+        allChip.className = `btn sm ${isAllActive ? 'primary' : 'secondary'}`;
+        allChip.style.cssText = 'padding: 0.2rem 0.55rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0;';
+        const allCount = hasRange
+            ? Math.max(0, Math.min(activeBroadcastRangeFilter.end, broadcastCustomersCache.length) - activeBroadcastRangeFilter.start + 1)
+            : broadcastCustomersCache.length;
+        allChip.innerHTML = `All (${allCount})`;
+        allChip.onclick = () => clearBroadcastProductFilter();
+        chipsContainer.appendChild(allChip);
+
+        prods.forEach(p => {
+            const lower = (p.name || '').toLowerCase();
+            const count = hasRange ? (prodCountsInRange[lower] || 0) : (prodCounts[lower] || 0);
+            if (count === 0 && !hasRange) return;
+            const isActive = p.name.toLowerCase() === activeBroadcastProductFilter.toLowerCase();
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'btn sm';
+            chip.style.cssText = `padding: 0.2rem 0.6rem; font-size: 0.725rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0; cursor: pointer; border: 1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; background: ${isActive ? 'var(--primary-light)' : 'var(--bg-card)'}; color: ${isActive ? 'var(--primary)' : 'var(--text-main)'}; font-weight: ${isActive ? '700' : '500'};`;
+            chip.innerHTML = `📦 ${escapeHtml(p.name)} <span style="opacity:0.75; font-size:0.68rem;">(${count})</span>`;
+            chip.onclick = () => {
+                if (isActive) {
+                    clearBroadcastProductFilter();
+                } else {
+                    applyBroadcastProductFilter(p.name, true);
+                }
+            };
+            chipsContainer.appendChild(chip);
+        });
+    }
+}
+
+window.applyBroadcastProductFilter = function applyBroadcastProductFilter(prodName, autoSelect = false) {
+    activeBroadcastProductFilter = (prodName || '').trim();
+    if (!activeBroadcastProductFilter) {
+        clearBroadcastProductFilter();
+        return;
+    }
+
+    const sel = document.getElementById('bc-product-filter-select');
+    if (sel) sel.value = activeBroadcastProductFilter;
+
+    const clearBtn = document.getElementById('btn-bc-clear-product-filter');
+    if (clearBtn) clearBtn.style.display = 'inline-flex';
+
+    populateBroadcastProductFilterOptions();
+
+    if (autoSelect && activeBroadcastProductFilter) {
+        const lowerProd = activeBroadcastProductFilter.toLowerCase();
+        let matchedCount = 0;
+
+        document.querySelectorAll('.bc-cust-cb').forEach(cb => {
+            const custId = parseInt(cb.value, 10);
+            const label = cb.closest('.option-item');
+            const srNo = label ? parseInt(label.getAttribute('data-sr'), 10) : 0;
+            const cust = broadcastCustomersCache.find(c => c.id === custId);
+
+            const inRange = !activeBroadcastRangeFilter || (srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end);
+            const hasTag = !activeBroadcastTagFilter || (cust && cust.tags && cust.tags.split(',').map(s => s.trim().toLowerCase()).includes(activeBroadcastTagFilter.toLowerCase()));
+            const hasProd = cust && cust.product && cust.product.split(',').map(s => s.trim().toLowerCase()).some(p => p.includes(lowerProd));
+
+            if (inRange && hasTag && hasProd) {
+                cb.checked = true;
+                matchedCount++;
+            } else {
+                cb.checked = false;
+            }
+        });
+
+        const selectAll = document.getElementById('bc-select-all');
+        if (selectAll) selectAll.checked = matchedCount > 0;
+        updateBcDisplay();
+    }
+
+    filterBroadcastCustomerList();
+};
+
+window.clearBroadcastProductFilter = function clearBroadcastProductFilter() {
+    activeBroadcastProductFilter = '';
+    const sel = document.getElementById('bc-product-filter-select');
+    if (sel) sel.value = '';
+
+    const clearBtn = document.getElementById('btn-bc-clear-product-filter');
+    if (clearBtn) clearBtn.style.display = 'none';
+
+    populateBroadcastProductFilterOptions();
+    filterBroadcastCustomerList();
+    updateBcDisplay();
+};
 
 // Apply Range Selection Filter (e.g. '1-250', '251-500', or {start: 1, end: 250})
 window.applyBroadcastRangeFilter = function applyBroadcastRangeFilter(rangeVal, autoSelect = true) {
@@ -445,6 +720,7 @@ window.selectUnsentInCurrentFilter = function selectUnsentInCurrentFilter() {
 window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
     const searchVal = (document.getElementById('bc-customer-search')?.value || '').toLowerCase().trim();
     const lowerFilterTag = activeBroadcastTagFilter.toLowerCase().trim();
+    const lowerFilterProd = activeBroadcastProductFilter.toLowerCase().trim();
 
     let visibleCount = 0;
     let visibleEligibleCount = 0;
@@ -460,6 +736,9 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
         const custTags = cust.tags ? cust.tags.split(',').map(s => s.trim().toLowerCase()) : [];
         const matchesTag = !lowerFilterTag || custTags.includes(lowerFilterTag);
 
+        const custProds = cust.product ? cust.product.split(',').map(s => s.trim().toLowerCase()) : [];
+        const matchesProd = !lowerFilterProd || custProds.some(p => p.includes(lowerFilterProd));
+
         const matchesRange = !activeBroadcastRangeFilter || (
             srNo >= activeBroadcastRangeFilter.start && srNo <= activeBroadcastRangeFilter.end
         );
@@ -467,12 +746,13 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
         const matchesSearch = !searchVal || (
             (cust.name && cust.name.toLowerCase().includes(searchVal)) ||
             (cust.phone && cust.phone.includes(searchVal)) ||
+            (cust.product && cust.product.toLowerCase().includes(searchVal)) ||
             String(srNo) === searchVal ||
             ('#' + srNo) === searchVal ||
             custTags.some(t => t.includes(searchVal))
         );
 
-        if (matchesTag && matchesRange && matchesSearch) {
+        if (matchesTag && matchesProd && matchesRange && matchesSearch) {
             label.style.display = 'flex';
             visibleCount++;
             if (!isMaturing) visibleEligibleCount++;
@@ -483,8 +763,12 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
 
     const selectAllLabel = document.getElementById('bc-select-all-label');
     if (selectAllLabel) {
-        if (activeBroadcastRangeFilter && activeBroadcastTagFilter) {
+        if (activeBroadcastRangeFilter && activeBroadcastTagFilter && activeBroadcastProductFilter) {
+            selectAllLabel.textContent = `Select All with Product "${activeBroadcastProductFilter}" & Tag "${activeBroadcastTagFilter}" in Range (${visibleEligibleCount} ready)`;
+        } else if (activeBroadcastRangeFilter && activeBroadcastTagFilter) {
             selectAllLabel.textContent = `Select All with Tag "${activeBroadcastTagFilter}" in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} (${visibleEligibleCount} ready)`;
+        } else if (activeBroadcastProductFilter) {
+            selectAllLabel.textContent = `Select All with Product "${activeBroadcastProductFilter}" (${visibleEligibleCount} ready)`;
         } else if (activeBroadcastRangeFilter) {
             selectAllLabel.textContent = `Select All in Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end} (${visibleEligibleCount} ready)`;
         } else if (activeBroadcastTagFilter) {
@@ -507,6 +791,7 @@ window.filterBroadcastCustomerList = function filterBroadcastCustomerList() {
         const parts = [];
         if (activeBroadcastRangeFilter) parts.push(`Range #${activeBroadcastRangeFilter.start}-#${activeBroadcastRangeFilter.end}`);
         if (activeBroadcastTagFilter) parts.push(`Tag: ${activeBroadcastTagFilter}`);
+        if (activeBroadcastProductFilter) parts.push(`Product: ${activeBroadcastProductFilter}`);
         summarySpan.textContent = parts.join(' • ');
     }
 };
@@ -517,6 +802,7 @@ async function loadCustomersForSelect() {
 
     try {
         await loadTags();
+        if (typeof loadProducts === 'function') await loadProducts();
         const res = await apiFetch('/api/customers');
         const customers = await res.json();
 
@@ -572,6 +858,8 @@ async function loadCustomersForSelect() {
 
                 const outboundCount = parseInt(c.outbound_count || 0, 10);
                 const isSent = outboundCount > 0;
+                const prodsArr = (c.product && String(c.product).trim()) ? String(c.product).split(',').map(s => s.trim()).filter(Boolean) : [];
+                const prodPillsHtml = prodsArr.map(p => (typeof renderProductPillHtml === 'function') ? renderProductPillHtml(p) : `<span class="tag-pill tag-pill-emerald">📦 ${escapeHtml(p)}</span>`).join('');
                 const tagsArr = c.tags ? c.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
                 const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
 
@@ -602,6 +890,7 @@ async function loadCustomersForSelect() {
                             : `<span class="bc-pending-badge" title="No outbound messages sent yet">• Unsent</span>`
                         }
                         <div class="bc-cust-tags">
+                            ${prodPillsHtml}
                             ${pillsHtml}
                         </div>
                     </div>
@@ -611,6 +900,7 @@ async function loadCustomersForSelect() {
 
             populateBroadcastRangeOptions();
             populateBroadcastTagFilterOptions();
+            populateBroadcastProductFilterOptions();
 
             const selectAll = document.getElementById('bc-select-all');
             const cbs = document.querySelectorAll('.bc-cust-cb');

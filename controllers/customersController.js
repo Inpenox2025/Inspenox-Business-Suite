@@ -117,6 +117,277 @@ function updateTagFilterDropdown() {
     });
 }
 
+// --- Products Management System (Interested Products Segmentation) ---
+if (!Array.isArray(window.availableProducts)) window.availableProducts = [];
+
+const DEFAULT_PRODUCT_PALETTES = {
+    'rotavator': { cls: 'tag-pill-emerald', bg: '#ecfdf5', text: '#047857', border: '#a7f3d0' },
+    'tractor': { cls: 'tag-pill-blue', bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+    'baler': { cls: 'tag-pill-amber', bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+    'power tiller': { cls: 'tag-pill-purple', bg: '#faf5ff', text: '#7e22ce', border: '#e9d5ff' },
+    'online course': { cls: 'tag-pill-indigo', bg: '#eef2ff', text: '#4338ca', border: '#c7d2fe' },
+    'service plan': { cls: 'tag-pill-teal', bg: '#f0fdfa', text: '#0f766e', border: '#99f6e4' }
+};
+
+window.getProductStyle = function getProductStyle(prodName) {
+    if (!prodName) return { cls: 'tag-pill-gray', styleAttr: '' };
+    const clean = String(prodName).trim();
+    const lower = clean.toLowerCase();
+    if (DEFAULT_PRODUCT_PALETTES[lower]) {
+        const pal = DEFAULT_PRODUCT_PALETTES[lower];
+        return { cls: pal.cls, styleAttr: `background:${pal.bg}; color:${pal.text}; border-color:${pal.border};` };
+    }
+    const found = (window.availableProducts || []).find(p => (p.name || '').toLowerCase() === lower);
+    if (found && (found.bg_color || found.color)) {
+        const bg = found.bg_color || '#ecfdf5';
+        const txt = found.text_color || '#047857';
+        const bdr = found.border_color || '#a7f3d0';
+        return { cls: '', styleAttr: `background:${bg}; color:${txt}; border-color:${bdr};` };
+    }
+    let hash = 0;
+    for (let i = 0; i < clean.length; i++) hash = (hash << 5) - hash + clean.charCodeAt(i);
+    const EXTRA = [
+        { cls: 'tag-pill-emerald', bg: '#ecfdf5', text: '#047857', border: '#a7f3d0' },
+        { cls: 'tag-pill-blue', bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+        { cls: 'tag-pill-amber', bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+        { cls: 'tag-pill-purple', bg: '#faf5ff', text: '#7e22ce', border: '#e9d5ff' },
+        { cls: 'tag-pill-indigo', bg: '#eef2ff', text: '#4338ca', border: '#c7d2fe' },
+        { cls: 'tag-pill-teal', bg: '#f0fdfa', text: '#0f766e', border: '#99f6e4' },
+        { cls: 'tag-pill-pink', bg: '#fdf2f8', text: '#be185d', border: '#fbcfe8' }
+    ];
+    const pal = EXTRA[Math.abs(hash) % EXTRA.length];
+    return { cls: pal.cls, styleAttr: `background:${pal.bg}; color:${pal.text}; border-color:${pal.border};` };
+};
+
+window.renderProductPillHtml = function renderProductPillHtml(prodName, removable = false, context = '') {
+    if (!prodName) return '';
+    const clean = String(prodName).trim();
+    const style = getProductStyle(clean);
+    const escaped = clean.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+    return `
+        <span class="tag-pill ${style.cls}" style="${style.styleAttr}" title="Product Interested: ${clean}">
+            <span style="font-size:0.75rem;">📦</span>
+            <span>${clean}</span>
+            ${removable ? `<span class="tag-remove-btn" onclick="removeSelectedProduct('${context}', '${escaped}', event)" title="Remove product">✕</span>` : ''}
+        </span>
+    `;
+};
+
+window.loadProducts = async function loadProducts() {
+    try {
+        const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+        let url = '/api/products';
+        if (coId && coId !== 'default' && coId !== 'parent') url = `/api/products?company_id=${coId}`;
+        const res = await apiFetch(url);
+        const data = await res.json();
+        if (data && Array.isArray(data.products)) {
+            window.availableProducts = data.products;
+        } else {
+            window.availableProducts = [
+                { name: 'Rotavator' }, { name: 'Tractor' }, { name: 'Baler' },
+                { name: 'Power Tiller' }, { name: 'Online Course' }, { name: 'Service Plan' }
+            ];
+        }
+    } catch (err) {
+        console.warn('Failed to load products from API, using fallback defaults:', err);
+        window.availableProducts = [
+            { name: 'Rotavator' }, { name: 'Tractor' }, { name: 'Baler' },
+            { name: 'Power Tiller' }, { name: 'Online Course' }, { name: 'Service Plan' }
+        ];
+    }
+    updateProductFilterDropdown();
+    renderProductDropdownItems('form');
+    renderProductDropdownItems('excel');
+    renderProductDropdownItems('quick');
+    if (typeof populateBroadcastProductFilterOptions === 'function') {
+        populateBroadcastProductFilterOptions();
+    }
+};
+
+function updateProductFilterDropdown() {
+    const sel = document.getElementById('customers-product-filter');
+    if (!sel) return;
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">📦 All Products (Filter)</option>';
+    (window.availableProducts || []).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = `📦 ${p.name}`;
+        if (p.name === currentVal) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+function getSelectedProducts(context) {
+    if (context === 'form') {
+        const val = document.getElementById('cust-product')?.value || '';
+        return val ? val.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+    if (context === 'excel') {
+        const val = document.getElementById('excel-import-product')?.value || '';
+        return val ? val.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+    if (context === 'quick') {
+        const custId = document.getElementById('quick-product-cust-id')?.value;
+        const cust = allCustomers.find(c => String(c.id) === String(custId));
+        return (cust && cust.product) ? cust.product.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+    return [];
+}
+
+function setSelectedProducts(context, prodsArr) {
+    const unique = Array.from(new Set(prodsArr.map(s => s.trim()).filter(Boolean)));
+    const str = unique.join(', ');
+    if (context === 'form') {
+        const inp = document.getElementById('cust-product');
+        if (inp) inp.value = str;
+    } else if (context === 'excel') {
+        const inp = document.getElementById('excel-import-product');
+        if (inp) inp.value = str;
+    }
+    syncProductSelectorDisplay(context);
+    renderProductDropdownItems(context);
+}
+
+function syncProductSelectorDisplay(context) {
+    if (context === 'quick') return;
+    const prods = getSelectedProducts(context);
+    const container = document.getElementById(context === 'form' ? 'cust-selected-products-container' : 'excel-selected-products-container');
+    const placeholder = document.getElementById(context === 'form' ? 'cust-products-placeholder' : 'excel-products-placeholder');
+    if (!container) return;
+    container.innerHTML = prods.map(p => renderProductPillHtml(p, true, context)).join('');
+    if (placeholder) {
+        placeholder.style.display = prods.length > 0 ? 'none' : 'inline';
+    }
+}
+
+window.removeSelectedProduct = function removeSelectedProduct(context, prodName, e) {
+    if (e) e.stopPropagation();
+    const current = getSelectedProducts(context);
+    const updated = current.filter(p => p.toLowerCase() !== prodName.toLowerCase());
+    setSelectedProducts(context, updated);
+};
+
+window.renderProductDropdownItems = function renderProductDropdownItems(context) {
+    const listEl = document.getElementById(`${context}-product-items-list`);
+    if (!listEl) return;
+    const searchVal = (document.getElementById(`${context}-product-search`)?.value || '').toLowerCase().trim();
+    const selected = getSelectedProducts(context).map(s => s.toLowerCase());
+
+    const filtered = (window.availableProducts || []).filter(p => !searchVal || (p.name || '').toLowerCase().includes(searchVal));
+
+    if (filtered.length === 0) {
+        listEl.innerHTML = `<div style="font-size:0.775rem; color:var(--text-muted); text-align:center; padding:0.75rem 0;">No matching products found</div>`;
+        return;
+    }
+
+    listEl.innerHTML = filtered.map(p => {
+        const isChecked = selected.includes((p.name || '').toLowerCase());
+        const escaped = (p.name || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+        return `
+            <div class="tag-item-row" onclick="toggleProductOption('${context}', '${escaped}', event)">
+                <input type="checkbox" class="tag-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); toggleProductOption('${context}', '${escaped}', event)">
+                ${renderProductPillHtml(p.name)}
+            </div>
+        `;
+    }).join('');
+};
+
+window.toggleProductOption = function toggleProductOption(context, prodName, e) {
+    if (e && e.target && e.target.type !== 'checkbox') {
+        const cb = e.currentTarget.querySelector('input[type="checkbox"]');
+        if (cb) cb.checked = !cb.checked;
+    }
+    const current = getSelectedProducts(context);
+    const exists = current.some(p => p.toLowerCase() === prodName.toLowerCase());
+    let updated = [];
+    if (exists) {
+        updated = current.filter(p => p.toLowerCase() !== prodName.toLowerCase());
+    } else {
+        updated = [...current, prodName];
+    }
+
+    if (context === 'quick') {
+        const custId = document.getElementById('quick-product-cust-id')?.value;
+        const cust = allCustomers.find(c => String(c.id) === String(custId));
+        if (cust) {
+            cust.product = updated.join(', ');
+        }
+        renderProductDropdownItems('quick');
+    } else {
+        setSelectedProducts(context, updated);
+    }
+};
+
+window.showNewProductInput = function showNewProductInput(context) {
+    const box = document.getElementById(`${context}-new-product-box`);
+    const btn = document.getElementById(`${context}-btn-show-new-product`);
+    const input = document.getElementById(`${context}-new-product-name`);
+    if (box) box.classList.add('show');
+    if (btn) btn.style.display = 'none';
+    if (input) { input.value = ''; input.focus(); }
+};
+
+window.cancelNewProduct = function cancelNewProduct(context) {
+    const box = document.getElementById(`${context}-new-product-box`);
+    const btn = document.getElementById(`${context}-btn-show-new-product`);
+    if (box) box.classList.remove('show');
+    if (btn) btn.style.display = 'flex';
+};
+
+window.submitNewProduct = async function submitNewProduct(context) {
+    const input = document.getElementById(`${context}-new-product-name`);
+    const prodName = (input?.value || '').trim();
+    if (!prodName) return;
+
+    try {
+        const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+        const res = await apiFetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: prodName, company_id: coId })
+        });
+        const data = await res.json();
+        if (data && (data.success || data.product)) {
+            if (!(window.availableProducts || []).some(p => p.name.toLowerCase() === prodName.toLowerCase())) {
+                window.availableProducts.push(data.product || { name: prodName });
+            }
+            const current = getSelectedProducts(context);
+            if (!current.some(p => p.toLowerCase() === prodName.toLowerCase())) {
+                setSelectedProducts(context, [...current, prodName]);
+            }
+            cancelNewProduct(context);
+            updateProductFilterDropdown();
+            renderProductDropdownItems('form');
+            renderProductDropdownItems('excel');
+            renderProductDropdownItems('quick');
+            if (typeof populateBroadcastProductFilterOptions === 'function') {
+                populateBroadcastProductFilterOptions();
+            }
+        }
+    } catch (err) {
+        console.error('Failed to create product:', err);
+    }
+};
+
+window.toggleProductDropdown = function toggleProductDropdown(context, e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById(`${context}-product-dropdown-menu`);
+    if (!menu) return;
+    const isShown = menu.classList.contains('show');
+    document.querySelectorAll('.tag-dropdown-menu').forEach(m => m.classList.remove('show'));
+    if (!isShown) {
+        menu.classList.add('show');
+        renderProductDropdownItems(context);
+        const searchInput = document.getElementById(`${context}-product-search`);
+        if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+    }
+};
+
+window.filterProductDropdown = function filterProductDropdown(context) {
+    renderProductDropdownItems(context);
+};
+
 function getSelectedTags(context) {
     if (context === 'form') {
         const val = document.getElementById('cust-tags')?.value || '';
@@ -353,6 +624,73 @@ window.saveQuickTags = async function saveQuickTags() {
     }
 };
 
+window.openQuickProductModal = function openQuickProductModal(custId, e) {
+    if (e) e.stopPropagation();
+    const cust = allCustomers.find(c => String(c.id) === String(custId));
+    if (!cust) return;
+
+    const idInput = document.getElementById('quick-product-cust-id');
+    const nameEl = document.getElementById('quick-product-cust-name');
+    if (idInput) idInput.value = cust.id;
+    if (nameEl) nameEl.textContent = `${cust.name} (${cust.phone})`;
+
+    cancelNewProduct('quick');
+    const searchInput = document.getElementById('quick-product-search');
+    if (searchInput) searchInput.value = '';
+
+    renderProductDropdownItems('quick');
+    const modal = document.getElementById('quick-product-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeQuickProductModal = function closeQuickProductModal() {
+    const modal = document.getElementById('quick-product-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.saveQuickProducts = async function saveQuickProducts() {
+    const custId = document.getElementById('quick-product-cust-id')?.value;
+    const cust = allCustomers.find(c => String(c.id) === String(custId));
+    if (!cust) return;
+
+    const btn = document.getElementById('btn-save-quick-products');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = 'Saving...';
+    }
+
+    try {
+        const res = await apiFetch('/api/customers', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: custId,
+                product: cust.product || ''
+            })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+            closeQuickProductModal();
+            renderCustomersTable();
+            showModal('Product Updated', `Successfully updated product for ${cust.name}.`);
+        }
+    } catch (err) {
+        console.error('Failed to update product:', err);
+        showModal('Error', 'Failed to update product.');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'Save Product';
+        }
+    }
+};
+
 // --- Lead Status Helpers ---
 function getStatusKey(status) {
     if (!status) return 'open';
@@ -428,6 +766,7 @@ function applyCustomerFilters() {
     const query = (document.getElementById('customers-search')?.value || '').toLowerCase().trim();
     const statusFilter = document.getElementById('customers-status-filter')?.value || 'all';
     const selectedTag = (document.getElementById('customers-tag-filter')?.value || '').toLowerCase().trim();
+    const selectedProduct = (document.getElementById('customers-product-filter')?.value || '').toLowerCase().trim();
 
     filteredCustomers = (allCustomers || []).filter(c => {
         const matchesQuery = (!query) || (
@@ -436,6 +775,7 @@ function applyCustomerFilters() {
             (c.email && c.email.toLowerCase().includes(query)) ||
             (c.company_name && c.company_name.toLowerCase().includes(query)) ||
             (c.tags && c.tags.toLowerCase().includes(query)) ||
+            (c.product && c.product.toLowerCase().includes(query)) ||
             (c.description && c.description.toLowerCase().includes(query)) ||
             (c.notes && c.notes.toLowerCase().includes(query)) ||
             (c.city && c.city.toLowerCase().includes(query))
@@ -451,6 +791,11 @@ function applyCustomerFilters() {
         if (selectedTag) {
             const custTags = (c.tags || '').split(',').map(s => s.trim().toLowerCase());
             if (!custTags.includes(selectedTag)) return false;
+        }
+
+        if (selectedProduct) {
+            const custProds = (c.product || '').split(',').map(s => s.trim().toLowerCase());
+            if (!custProds.some(p => p.includes(selectedProduct))) return false;
         }
 
         return true;
@@ -486,13 +831,14 @@ async function loadCustomers() {
     }
     try {
         await loadTags();
+        if (typeof loadProducts === 'function') await loadProducts();
 
         const res = await apiFetch('/api/customers');
         const customers = await res.json();
 
         if (customers.error) {
             console.error('API Error:', customers.error);
-            if (tbody) tbody.innerHTML = renderTableEmptyStateHtml(11, 'Failed to load customers', customers.error || 'Server error occurred while loading contacts.', '⚠️');
+            if (tbody) tbody.innerHTML = renderTableEmptyStateHtml(12, 'Failed to load customers', customers.error || 'Server error occurred while loading contacts.', '⚠️');
             return;
         }
 
@@ -503,11 +849,16 @@ async function loadCustomers() {
         if (statEl) statEl.textContent = allCustomers.length;
 
         syncTagSelectorDisplay('form');
+        syncProductSelectorDisplay('form');
     } catch (e) {
         console.error('Error loading customers:', e);
-        if (tbody) tbody.innerHTML = renderTableEmptyStateHtml(11, 'Error loading customer data', 'Please check your connection and refresh.', '⚠️');
+        if (tbody) tbody.innerHTML = renderTableEmptyStateHtml(12, 'Error loading customer data', 'Please check your connection and refresh.', '⚠️');
     }
 }
+
+window.filterCustomersByProduct = function filterCustomersByProduct() {
+    applyCustomerFilters();
+};
 
 function renderCustomersTable() {
     const tbody = document.getElementById('customers-table-body');
@@ -555,6 +906,17 @@ function renderCustomersTable() {
                </div>`
             : `<span style="font-size:0.8rem; color:var(--text-muted);">-</span>`;
 
+        const prodsArr = (c.product && String(c.product).trim()) ? String(c.product).split(',').map(t => t.trim()).filter(Boolean) : [];
+        const prodsPillsHtml = prodsArr.map(p => renderProductPillHtml(p)).join('');
+        const productDisplayHtml = `
+            <div class="table-tags-cell">
+                ${prodsPillsHtml}
+                <button type="button" class="btn-edit-tag-quick" onclick="openQuickProductModal(${c.id}, event)" title="Update products interested in for this customer">
+                    <span>📦</span> <span>${prodsArr.length > 0 ? 'Edit' : '+ Product'}</span>
+                </button>
+            </div>
+        `;
+
         const tagsArr = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
         const pillsHtml = tagsArr.map(t => renderTagPillHtml(t)).join('');
         const tagsDisplayHtml = `
@@ -580,6 +942,7 @@ function renderCustomersTable() {
                 </div>
             </td>
             <td><code style="font-size:0.85rem;color:var(--primary); font-weight:600;">${c.phone}</code></td>
+            <td>${productDisplayHtml}</td>
             <td>${addressDisplayHtml}</td>
             <td class="cust-status-td">
                 <select class="status-select-badge status-${statusKey}" 
@@ -663,6 +1026,10 @@ window.editCustomer = (id) => {
         document.getElementById('cust-tags').value = cust.tags || '';
         syncTagSelectorDisplay('form');
     }
+    if (document.getElementById('cust-product')) {
+        document.getElementById('cust-product').value = cust.product || '';
+        syncProductSelectorDisplay('form');
+    }
     const statusSelect = document.getElementById('cust-status');
     if (statusSelect) {
         statusSelect.value = cust.status || 'Open - Not Contacted';
@@ -720,6 +1087,10 @@ document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
         document.getElementById('cust-tags').value = '';
         syncTagSelectorDisplay('form');
     }
+    if (document.getElementById('cust-product')) {
+        document.getElementById('cust-product').value = '';
+        syncProductSelectorDisplay('form');
+    }
     document.getElementById('btn-save-cust').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>Add Customer</span>`;
     document.getElementById('btn-cancel-edit').style.display = 'none';
 
@@ -741,6 +1112,7 @@ document.getElementById('add-customer-form')?.addEventListener('submit', async (
     const state = document.getElementById('cust-state')?.value || '';
     const pincode = document.getElementById('cust-pincode')?.value || '';
     const tags = document.getElementById('cust-tags')?.value || '';
+    const product = document.getElementById('cust-product')?.value || '';
     const status = document.getElementById('cust-status')?.value || 'Open - Not Contacted';
     const description = document.getElementById('cust-description')?.value.trim() || '';
     const notes = document.getElementById('cust-notes')?.value || '';
@@ -759,6 +1131,7 @@ document.getElementById('add-customer-form')?.addEventListener('submit', async (
                 state,
                 pincode,
                 tags,
+                product,
                 status,
                 description,
                 notes,
@@ -951,7 +1324,7 @@ function exportFilteredCustomers() {
             "Phone Number": cleanPhone,
             "Display Phone": formatDisplayPhone(c.phone),
             "Assigned / Handled By": c.assigned_to || c.assigned_by || "Unassigned",
-            "Product": c.product || c.company_name || c.tags || "-",
+            "Product": (c.product && String(c.product).trim()) ? String(c.product).trim() : "-",
             "Conversation Notes": c.description || c.notes || "",
             "Email": c.email || "",
             "Company": c.company_name || "",
@@ -1136,7 +1509,7 @@ async function exportFilteredCustomersPdf() {
         const msgCount = `${c.message_count || 0} msgs`;
         const custStatus = c.status || 'Open - Not Contacted';
         const assignedPerson = c.assigned_to || c.assigned_by || 'Unassigned';
-        const productVal = c.product || c.company_name || (c.tags ? c.tags.split(',')[0].trim() : '-') || '-';
+        const productVal = (c.product && String(c.product).trim()) ? String(c.product).trim() : '-';
         const custDesc = (c.description || c.notes || '').slice(0, 140) || '-';
 
         return [
