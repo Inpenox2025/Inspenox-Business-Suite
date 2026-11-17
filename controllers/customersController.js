@@ -1233,3 +1233,7 @@ async function exportFilteredCustomersPdf() {
 document.getElementById('btn-export-pdf')?.addEventListener('click', exportFilteredCustomersPdf);
 document.getElementById('btn-export-pdf-toolbar')?.addEventListener('click', exportFilteredCustomersPdf);
 
+window.exportFilteredCustomers = exportFilteredCustomers;
+window.exportFilteredCustomersPdf = exportFilteredCustomersPdf;
+
+

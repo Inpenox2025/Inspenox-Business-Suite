@@ -417,7 +417,15 @@
                             messaging
                             stats.</p>
                     </div>
-                    <div class="header-actions">
+                    <div class="header-actions" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                        <button type="button" class="btn secondary" onclick="exportAssignedWorkPdf()" title="Download Leads PDF Report">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="width:16px;height:16px;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            Download Report (PDF)
+                        </button>
                         <button class="btn primary" onclick="switchView('send')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 style="width:16px;height:16px;">
@@ -533,6 +541,21 @@
                             </select>
                             <button type="button" class="btn secondary sm" onclick="loadAssignedWorkTable()" title="Refresh assigned leads">
                                 🔄 Refresh
+                            </button>
+                            <button type="button" class="btn secondary sm" onclick="exportAssignedWorkPdf()" title="Download PDF Report for leads">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                                <span>Download PDF</span>
+                            </button>
+                            <button type="button" class="btn secondary sm" onclick="exportAssignedWorkExcel()" title="Export leads to Excel">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span>Export Excel</span>
                             </button>
                         </div>
                     </div>

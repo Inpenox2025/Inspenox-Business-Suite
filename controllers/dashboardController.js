@@ -344,6 +344,310 @@ window.openChatFromLead = function openChatFromLead(customerId) {
     }, 280);
 };
 
+window.exportAssignedWorkPdf = async function exportAssignedWorkPdf() {
+    let list = allAssignedLeadsList;
+    if (!list || list.length === 0) {
+        try {
+            const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+            let url = '/api/customers';
+            if (coId && coId !== 'default' && coId !== 'parent') url = `/api/customers?company_id=${coId}`;
+            const res = await apiFetch(url);
+            list = await res.json();
+            if (Array.isArray(list)) allAssignedLeadsList = list;
+        } catch(e) {}
+    }
+
+    if (!list || list.length === 0) {
+        if (typeof showModal === 'function') {
+            showModal('No Leads to Export', 'There are no customer leads available in this workspace to generate a report.');
+        } else {
+            alert('No customer leads available to export.');
+        }
+        return;
+    }
+
+    const filter = document.getElementById('dash-assigned-filter')?.value || 'my';
+    const curUser = getLoggedInUser();
+    const myUname = (curUser.username || '').toLowerCase();
+    const myUid = curUser.id;
+
+    let targetRows = list.filter(c => {
+        const hasAssignee = Boolean(c.assigned_to || c.assigned_user_id);
+        const isMine = (c.assigned_to && c.assigned_to.toLowerCase() === myUname) ||
+                       (c.assigned_user_id && String(c.assigned_user_id) === String(myUid));
+        if (filter === 'my') return isMine;
+        if (filter === 'unassigned') return !hasAssignee;
+        return hasAssignee;
+    });
+
+    if (targetRows.length === 0) {
+        targetRows = [...list];
+    }
+
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        if (typeof showModal === 'function') {
+            showModal('Loading PDF Generator', 'Downloading PDF generator library, please wait a moment...');
+        }
+        try {
+            await new Promise((resolve, reject) => {
+                const s1 = document.createElement('script');
+                s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                s1.onload = () => {
+                    const s2 = document.createElement('script');
+                    s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+                    s2.onload = resolve;
+                    s2.onerror = reject;
+                    document.head.appendChild(s2);
+                };
+                s1.onerror = reject;
+                document.head.appendChild(s1);
+            });
+        } catch (err) {
+            if (typeof showModal === 'function') {
+                showModal('PDF Error', 'Failed to load PDF library. Please check your internet connection.');
+            }
+            return;
+        }
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const companyName = (typeof getStoredCompany === 'function' && getStoredCompany()?.name) ? getStoredCompany().name : (document.getElementById('nav-company-name')?.textContent || 'Inspenox');
+
+    // 1. Top Branded Header
+    doc.setFillColor(0, 168, 132);
+    doc.rect(0, 0, pageWidth, 55, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text(`${companyName.toUpperCase()} - CUSTOMERS DIRECTORY`, 30, 32);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.text('WhatsApp Business Marketing Platform', 30, 46);
+
+    const nowFormatted = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    doc.setFontSize(8);
+    doc.text(`Generated: ${nowFormatted}`, pageWidth - 30, 38, { align: 'right' });
+
+    // 2. Filter Summary Banner
+    doc.setFillColor(245, 247, 248);
+    doc.roundedRect(30, 68, pageWidth - 60, 36, 4, 4, 'F');
+    doc.setDrawColor(218, 222, 226);
+    doc.roundedRect(30, 68, pageWidth - 60, 36, 4, 4, 'S');
+
+    doc.setFontSize(8.5);
+    const bannerY = 89;
+    let currentX = 42;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(60, 70, 80);
+    doc.text('Filter Status:', currentX, bannerY);
+    currentX += doc.getTextWidth('Filter Status:') + 5;
+
+    const filterText = filter === 'my' ? 'My Assigned Leads' : (filter === 'unassigned' ? 'Unassigned Leads' : 'All Leads');
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 168, 132);
+    doc.text(filterText, currentX, bannerY);
+
+    const totalCountText = `${targetRows.length} contact(s)`;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    const countWidth = doc.getTextWidth(totalCountText);
+    const rightEdge = pageWidth - 42;
+
+    doc.setTextColor(60, 70, 80);
+    doc.text('Total Records: ', rightEdge - countWidth, bannerY, { align: 'right' });
+
+    doc.setTextColor(0, 168, 132);
+    doc.text(totalCountText, rightEdge, bannerY, { align: 'right' });
+
+    // 3. Table Rows with Handled By and Status on the right side
+    const tableData = targetRows.map((c, index) => {
+        const phoneFormatted = (typeof formatDisplayPhone === 'function') ? formatDisplayPhone(c.phone) : (c.phone || '-');
+        const msgCount = `${c.message_count || 0} msgs`;
+        const custStatus = c.status || 'Open - Not Contacted';
+        const assignedPerson = c.assigned_to || c.assigned_by || 'Unassigned';
+        const productVal = c.product || c.company_name || (c.tags ? c.tags.split(',')[0].trim() : '-') || '-';
+        const custDesc = (c.description || c.notes || '').slice(0, 140) || '-';
+
+        return [
+            index + 1,
+            c.name || 'Customer',
+            phoneFormatted,
+            assignedPerson,
+            productVal,
+            custDesc,
+            msgCount,
+            custStatus
+        ];
+    });
+
+    doc.autoTable({
+        startY: 116,
+        head: [['S.No', 'Customer Name', 'Phone Number', 'Handled / Assigned To', 'Product', 'Conversation Notes', 'Messages', 'Status']],
+        body: tableData,
+        theme: 'striped',
+        margin: { left: 30, right: 30, bottom: 42 },
+        styles: {
+            fontSize: 7.5,
+            cellPadding: 4,
+            font: 'helvetica',
+            textColor: [33, 37, 41],
+            lineColor: [228, 232, 235],
+            lineWidth: 0.5
+        },
+        headStyles: {
+            fillColor: [0, 92, 75],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 8,
+            halign: 'left'
+        },
+        alternateRowStyles: {
+            fillColor: [248, 250, 251]
+        },
+        columnStyles: {
+            0: { cellWidth: 24, halign: 'center' },
+            1: { cellWidth: 84, fontStyle: 'bold' },
+            2: { cellWidth: 76 },
+            3: { cellWidth: 76, fontStyle: 'bold' },
+            4: { cellWidth: 54 },
+            5: { cellWidth: 108 },
+            6: { cellWidth: 46, halign: 'center' },
+            7: { cellWidth: 67, fontStyle: 'bold', halign: 'center' }
+        },
+        didParseCell: function(data) {
+            // Column 7 is Status (right end)
+            if (data.section === 'body' && data.column.index === 7) {
+                const text = String(data.cell.raw || '');
+                if (text.includes('Open')) {
+                    data.cell.styles.textColor = [37, 99, 235];
+                } else if (text.includes('Working')) {
+                    data.cell.styles.textColor = [217, 119, 6];
+                } else if (text.includes('Closed')) {
+                    data.cell.styles.textColor = [100, 116, 139];
+                } else if (text.includes('Converted')) {
+                    data.cell.styles.textColor = [5, 150, 105];
+                }
+            }
+        },
+        didDrawPage: function(data) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(130, 140, 150);
+
+            doc.setDrawColor(220, 224, 228);
+            doc.setLineWidth(0.5);
+            doc.line(30, pageHeight - 26, pageWidth - 30, pageHeight - 26);
+
+            doc.text(`Powering WhatsApp & Omnichannel Marketing for ${companyName}`, 30, pageHeight - 14);
+            const pageStr = `Page ${data.pageNumber}`;
+            doc.text(pageStr, pageWidth - 30, pageHeight - 14, { align: 'right' });
+        }
+    });
+
+    const prefix = companyName.replace(/[^a-zA-Z0-9]+/g, '_');
+    const nowStr = new Date().toISOString().slice(0, 10);
+    const filename = `${prefix}_Leads_Report_${filter}_${tableData.length}_records_${nowStr}.pdf`;
+
+    doc.save(filename);
+
+    if (typeof showModal === 'function') {
+        showModal('PDF Report Downloaded', `Successfully generated PDF leads report with ${tableData.length} customer records to <strong>${filename}</strong>.`);
+    }
+};
+
+window.exportAssignedWorkExcel = function exportAssignedWorkExcel() {
+    let list = allAssignedLeadsList;
+    if (!list || list.length === 0) {
+        if (typeof showModal === 'function') {
+            showModal('No Leads to Export', 'There are no leads available to export.');
+        } else {
+            alert('No leads available to export.');
+        }
+        return;
+    }
+
+    const filter = document.getElementById('dash-assigned-filter')?.value || 'my';
+    const curUser = getLoggedInUser();
+    const myUname = (curUser.username || '').toLowerCase();
+    const myUid = curUser.id;
+
+    let targetRows = list.filter(c => {
+        const hasAssignee = Boolean(c.assigned_to || c.assigned_user_id);
+        const isMine = (c.assigned_to && c.assigned_to.toLowerCase() === myUname) ||
+                       (c.assigned_user_id && String(c.assigned_user_id) === String(myUid));
+        if (filter === 'my') return isMine;
+        if (filter === 'unassigned') return !hasAssignee;
+        return hasAssignee;
+    });
+
+    if (targetRows.length === 0) targetRows = [...list];
+
+    const exportRows = targetRows.map((c, index) => {
+        const cleanPhone = (typeof formatIndiaPhone === 'function') ? formatIndiaPhone(c.phone) : c.phone;
+        const createdDate = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
+        const lastMsgTime = c.last_message_at ? new Date(c.last_message_at).toLocaleString() : 'No messages';
+
+        return {
+            "Sr No": index + 1,
+            "Customer Name": c.name || "Customer",
+            "Phone Number": cleanPhone,
+            "Display Phone": (typeof formatDisplayPhone === 'function') ? formatDisplayPhone(c.phone) : c.phone,
+            "Handled / Assigned To": c.assigned_to || c.assigned_by || "Unassigned",
+            "Product": c.product || c.company_name || c.tags || "-",
+            "Conversation Notes": c.description || c.notes || "",
+            "Email": c.email || "",
+            "Company": c.company_name || "",
+            "Messages Count": parseInt(c.message_count, 10) || 0,
+            "Date Added": createdDate,
+            "Last Conversation Activity": lastMsgTime,
+            "Status": c.status || "Open - Not Contacted"
+        };
+    });
+
+    if (typeof XLSX === 'undefined') {
+        alert('Excel library not loaded.');
+        return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Assigned Leads");
+
+    worksheet['!cols'] = [
+        { wch: 8 },  // Sr No
+        { wch: 24 }, // Customer Name
+        { wch: 16 }, // Phone Number
+        { wch: 18 }, // Display Phone
+        { wch: 22 }, // Assigned / Handled By
+        { wch: 18 }, // Product
+        { wch: 35 }, // Notes
+        { wch: 24 }, // Email
+        { wch: 20 }, // Company
+        { wch: 16 }, // Messages Count
+        { wch: 14 }, // Date Added
+        { wch: 26 }, // Last Activity
+        { wch: 22 }  // Status (end)
+    ];
+
+    const companyName = (typeof getStoredCompany === 'function' && getStoredCompany()?.name) ? getStoredCompany().name : (document.getElementById('nav-company-name')?.textContent || 'Inspenox');
+    const prefix = companyName.replace(/[^a-zA-Z0-9]+/g, '_');
+    const nowStr = new Date().toISOString().slice(0, 10);
+    const filename = `${prefix}_Leads_${filter}_${exportRows.length}_records_${nowStr}.xlsx`;
+
+    XLSX.writeFile(workbook, filename);
+
+    if (typeof showModal === 'function') {
+        showModal('Export Successful', `Successfully exported ${exportRows.length} lead(s) to <strong>${filename}</strong>.`);
+    }
+};
+
 window.loadUsageAnalytics = async function loadUsageAnalytics(daysParam) {
     const isParent = isParentAdmin();
     const elBadge = document.getElementById('usage-meta-badge');

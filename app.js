@@ -4480,7 +4480,8 @@ function exportFilteredCustomers() {
             "Customer Name": c.name || "Customer",
             "Phone Number": cleanPhone,
             "Display Phone": formatDisplayPhone(c.phone),
-            "Status": c.status || "Open - Not Contacted",
+            "Assigned / Handled By": c.assigned_to || c.assigned_by || "Unassigned",
+            "Product": c.product || c.company_name || c.tags || "-",
             "Conversation Notes": c.description || c.notes || "",
             "Email": c.email || "",
             "Company": c.company_name || "",
@@ -4492,7 +4493,8 @@ function exportFilteredCustomers() {
             "Messages Count": parseInt(c.message_count, 10) || 0,
             "Unread Messages": parseInt(c.unread_count, 10) || 0,
             "Date Added": createdDate,
-            "Last Conversation Activity": lastMsgTime
+            "Last Conversation Activity": lastMsgTime,
+            "Status": c.status || "Open - Not Contacted"
         };
     });
 
@@ -4510,7 +4512,8 @@ function exportFilteredCustomers() {
         { wch: 24 }, // Customer Name
         { wch: 16 }, // Phone Number
         { wch: 18 }, // Display Phone
-        { wch: 22 }, // Status
+        { wch: 22 }, // Assigned / Handled By
+        { wch: 18 }, // Product
         { wch: 35 }, // Conversation Notes
         { wch: 24 }, // Email
         { wch: 20 }, // Company
@@ -4519,7 +4522,8 @@ function exportFilteredCustomers() {
         { wch: 16 }, // Messages Count
         { wch: 16 }, // Unread Messages
         { wch: 14 }, // Date Added
-        { wch: 26 }  // Last Conversation Activity
+        { wch: 26 }, // Last Conversation Activity
+        { wch: 22 }  // Status (at the end)
     ];
 
     const companyName = getActiveCompanyName();
@@ -4661,27 +4665,31 @@ async function exportFilteredCustomersPdf() {
         const phoneFormatted = formatDisplayPhone(c.phone);
         const msgCount = `${c.message_count || 0} msgs`;
         const custStatus = c.status || 'Open - Not Contacted';
+        const assignedPerson = c.assigned_to || c.assigned_by || 'Unassigned';
+        const productVal = c.product || c.company_name || (c.tags ? c.tags.split(',')[0].trim() : '-') || '-';
         const custDesc = (c.description || c.notes || '').slice(0, 140) || '-';
 
         return [
             index + 1,
             c.name || 'Customer',
             phoneFormatted,
-            custStatus,
+            assignedPerson,
+            productVal,
             custDesc,
-            msgCount
+            msgCount,
+            custStatus
         ];
     });
 
     doc.autoTable({
         startY: 116,
-        head: [['S.No', 'Customer Name', 'Phone Number', 'Status', 'Conversation Notes', 'Messages']],
+        head: [['S.No', 'Customer Name', 'Phone Number', 'Handled / Assigned To', 'Product', 'Conversation Notes', 'Messages', 'Status']],
         body: tableData,
         theme: 'striped',
         margin: { left: 30, right: 30, bottom: 42 },
         styles: {
-            fontSize: 8,
-            cellPadding: 4.5,
+            fontSize: 7.5,
+            cellPadding: 4,
             font: 'helvetica',
             textColor: [33, 37, 41],
             lineColor: [228, 232, 235],
@@ -4691,22 +4699,24 @@ async function exportFilteredCustomersPdf() {
             fillColor: [0, 92, 75],
             textColor: [255, 255, 255],
             fontStyle: 'bold',
-            fontSize: 8.5,
+            fontSize: 8,
             halign: 'left'
         },
         alternateRowStyles: {
             fillColor: [248, 250, 251]
         },
         columnStyles: {
-            0: { cellWidth: 26, halign: 'center' },
-            1: { cellWidth: 105, fontStyle: 'bold' },
-            2: { cellWidth: 90 },
-            3: { cellWidth: 105, fontStyle: 'bold' },
-            4: { cellWidth: 154 },
-            5: { cellWidth: 55, halign: 'center' }
+            0: { cellWidth: 24, halign: 'center' },
+            1: { cellWidth: 84, fontStyle: 'bold' },
+            2: { cellWidth: 76 },
+            3: { cellWidth: 76, fontStyle: 'bold' },
+            4: { cellWidth: 54 },
+            5: { cellWidth: 108 },
+            6: { cellWidth: 46, halign: 'center' },
+            7: { cellWidth: 67, fontStyle: 'bold', halign: 'center' }
         },
         didParseCell: function(data) {
-            if (data.section === 'body' && data.column.index === 3) {
+            if (data.section === 'body' && data.column.index === 7) {
                 const text = String(data.cell.raw || '');
                 if (text.includes('Open')) {
                     data.cell.styles.textColor = [37, 99, 235];
@@ -4754,11 +4764,7 @@ document.getElementById('btn-export-pdf')?.addEventListener('click', exportFilte
 document.getElementById('btn-export-pdf-toolbar')?.addEventListener('click', exportFilteredCustomersPdf);
 
 // --- Dashboard Logic ---
-async function loadDashboard() {
-    if (typeof window.loadDashboard === 'function') {
-        return window.loadDashboard();
-    }
-}
+// Dashboard loader is defined above and in controllers/dashboardController.js
 
 // Excel Import with Tag Configuration & Opt-in Consent
 window.closeExcelImportModal = function closeExcelImportModal() {
