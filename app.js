@@ -1413,8 +1413,10 @@ window.openUserModal = function openUserModal(userId = null) {
             const coUsers = (allUsersList || []).filter(u => String(u.company_id) === String(activeCo.id));
             if (typeof limit === 'number' && coUsers.length >= limit) {
                 showModal(
-                    'User Limit Reached',
-                    `Your current plan (${activeCo.subscription_plan || 'No Active Plan'}) allows a maximum of ${limitLabel}. You currently have ${coUsers.length} active user(s).\n\nPlease upgrade your subscription in Subscriptions & Billing to add more team members.`
+                    'Plan User Limit Reached',
+                    `⚠️ Your workspace plan (<strong>${escapeHtml(activeCo.subscription_plan || 'No Active Plan')}</strong>) allows a maximum of <strong>${limitLabel}</strong>.<br><br>You currently have <strong>${coUsers.length}</strong> active user account(s).<br><br>Please upgrade your subscription plan in Subscriptions & Billing to add more team members or employees.`,
+                    'Upgrade Plan',
+                    () => { if (typeof switchView === 'function') switchView('billing'); }
                 );
                 return;
             }

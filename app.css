@@ -7236,5 +7236,205 @@ td.empty-state .empty-state-desc,
     }
 }
 
+/* ==========================================================================
+   Lead Assignment & Team Tracking Styles (Interakt Style)
+   ========================================================================== */
+.chat-assign-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.chat-assign-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.75rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.chat-assign-btn:hover {
+    border-color: var(--primary);
+    background: var(--bg-hover);
+}
+
+.chat-assign-btn.is-assigned {
+    border-color: rgba(16, 185, 129, 0.4);
+    background: rgba(16, 185, 129, 0.08);
+    color: #10b981;
+}
+
+.chat-assign-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.chat-assign-name {
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+}
+
+.chat-assign-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    z-index: 1100;
+    min-width: 230px;
+    max-width: 300px;
+    padding: 0.4rem 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-assign-dropdown.hidden {
+    display: none;
+}
+
+.chat-assign-dropdown-header {
+    padding: 0.5rem 0.85rem 0.35rem 0.85rem;
+    font-size: 0.725rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.25rem;
+}
+
+.chat-assign-users-list {
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.chat-assign-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.825rem;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    gap: 0.5rem;
+}
+
+.chat-assign-option:hover {
+    background: var(--bg-hover);
+}
+
+.chat-assign-option.selected {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    font-weight: 600;
+}
+
+.chat-assign-opt-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.chat-assign-opt-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Chat timeline system event line */
+.chat-system-event {
+    display: flex;
+    justify-content: center;
+    margin: 0.85rem 0;
+    width: 100%;
+    animation: fadeIn 0.25s ease;
+}
+
+.chat-system-event span {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    max-width: 90%;
+    text-align: center;
+}
+
+/* Inbox card assignee pill */
+.inbox-card-assignee {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.12);
+    padding: 0.1rem 0.45rem;
+    border-radius: 12px;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    white-space: nowrap;
+}
+
+/* Dashboard Assigned Work Table */
+.badge-assignee {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 20px;
+    font-size: 0.775rem;
+    font-weight: 600;
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.badge-assignee.unassigned {
+    background: rgba(100, 116, 139, 0.1);
+    color: var(--text-muted);
+    border-color: var(--border);
+}
+
+@media (max-width: 768px) {
+    .chat-assign-name {
+        max-width: 80px;
+    }
+    .chat-assign-btn {
+        padding: 0.3rem 0.55rem;
+        font-size: 0.75rem;
+    }
+}
+
+
 
 

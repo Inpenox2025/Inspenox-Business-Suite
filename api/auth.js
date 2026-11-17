@@ -156,6 +156,41 @@ module.exports = async (req, res) => {
                 });
             }
 
+            if (action === 'check-user-limit') {
+                const checkCoId = req.query.company_id ? parseInt(req.query.company_id, 10) : null;
+                if (!checkCoId) {
+                    return res.status(200).json({ allowed: true, current_count: 0, max_allowed: 999999, plan_name: 'Inspenox Master' });
+                }
+                const compRows = await sql`SELECT id, name, slug, subscription_plan, subscription_status FROM companies WHERE id = ${checkCoId} LIMIT 1`;
+                if (compRows.length === 0) {
+                    return res.status(404).json({ error: 'Company not found' });
+                }
+                const comp = compRows[0];
+                const isParent = (comp.slug && comp.slug.toLowerCase() === 'inspenox') || (comp.name && comp.name.toLowerCase() === 'inspenox');
+                if (isParent) {
+                    return res.status(200).json({ allowed: true, is_parent: true, current_count: 0, max_allowed: 999999, plan_name: 'Inspenox Master' });
+                }
+                const planStr = (comp.subscription_plan || '').toLowerCase();
+                const isPaid = comp.subscription_status === 'active' && planStr && planStr !== 'none';
+                let maxAllowedUsers = 1;
+                let limitLabel = '1 User (No Active Plan)';
+                if (isPaid) {
+                    if (planStr.includes('enterprise')) { maxAllowedUsers = 999999; limitLabel = 'Unlimited'; }
+                    else if (planStr.includes('growth')) { maxAllowedUsers = 5; limitLabel = '5 Users'; }
+                    else if (planStr.includes('starter')) { maxAllowedUsers = 2; limitLabel = '2 Users'; }
+                }
+                const countRes = await sql`SELECT COUNT(*)::int as count FROM users WHERE company_id = ${checkCoId}`;
+                const currentCount = countRes[0]?.count || 0;
+                return res.status(200).json({
+                    allowed: currentCount < maxAllowedUsers,
+                    current_count: currentCount,
+                    max_allowed: maxAllowedUsers,
+                    limit_label: limitLabel,
+                    plan_name: comp.subscription_plan || 'No Active Plan',
+                    is_limit_reached: currentCount >= maxAllowedUsers
+                });
+            }
+
             const companyFilter = req.query.company_id;
             let users;
             if (req.query.all !== 'true' && companyFilter && companyFilter !== 'default' && companyFilter !== 'null' && companyFilter !== 'all') {
@@ -658,7 +693,11 @@ module.exports = async (req, res) => {
                 const cleanEmail = email && String(email).trim() ? String(email).trim().toLowerCase() : null;
                 const cleanPhone = phone && String(phone).trim() ? String(phone).trim() : null;
                 const userRole = role || 'admin';
-                const coId = (company_id && company_id !== 'default' && company_id !== 'parent' && String(company_id).trim() !== '' && String(company_id) !== 'null') ? parseInt(company_id) : null;
+                const rawHeaderCo = req.headers && (req.headers['x-company-id'] || req.headers['x-company']);
+                const parsedHeaderCo = rawHeaderCo && !isNaN(parseInt(rawHeaderCo, 10)) ? parseInt(rawHeaderCo, 10) : null;
+                const coId = (company_id && company_id !== 'default' && company_id !== 'parent' && String(company_id).trim() !== '' && String(company_id) !== 'null') 
+                    ? parseInt(company_id, 10) 
+                    : parsedHeaderCo;
                 const targetId = (id !== undefined && id !== null && String(id).trim() !== '' && String(id) !== '0' && String(id) !== 'null' && String(id) !== 'undefined') ? parseInt(id) : null;
 
                 if (targetId) {

@@ -19,6 +19,10 @@ module.exports = async (req, res) => {
         await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Open - Not Contacted';`;
         await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';`;
         await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_saved BOOLEAN DEFAULT true;`;
+        await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS assigned_user_id INT REFERENCES users(id) ON DELETE SET NULL;`;
+        await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS assigned_to TEXT DEFAULT NULL;`;
+        await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS assigned_at TIMESTAMPTZ DEFAULT NULL;`;
+        await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS assigned_by TEXT DEFAULT NULL;`;
     } catch (e) {}
 
     const rawCompanyId = req.query.company_id || (req.body && req.body.company_id) || (req.headers && req.headers['x-company-id']) || null;
@@ -80,10 +84,17 @@ module.exports = async (req, res) => {
 
     if (req.method === 'PATCH') {
         try {
-            const { id, status, description, name, phone, tags } = req.body || {};
+            const { id, status, description, name, phone, tags, assigned_user_id, assigned_to, assigned_by } = req.body || {};
             if (!id) return res.status(400).json({ error: 'Customer ID required' });
             const targetId = parseInt(id, 10);
             const cleanPhone = phone ? formatIndiaPhone(phone) : null;
+
+            // Handle assignment change
+            const shouldUpdateAssignment = (assigned_user_id !== undefined || assigned_to !== undefined);
+            const newAssignedUserId = assigned_user_id !== undefined ? (assigned_user_id ? parseInt(assigned_user_id, 10) : null) : undefined;
+            const newAssignedTo = assigned_to !== undefined ? (assigned_to && assigned_to !== 'unassigned' ? String(assigned_to).trim() : null) : undefined;
+            const newAssignedBy = assigned_by ? String(assigned_by).trim() : null;
+            const isUnassigning = shouldUpdateAssignment && (assigned_to === null || assigned_to === '' || assigned_to === 'unassigned') && (!assigned_user_id || assigned_user_id === '0');
 
             const updated = isNaN(targetId)
                 ? await sql`
@@ -92,7 +103,11 @@ module.exports = async (req, res) => {
                         description = COALESCE(${description !== undefined ? description : null}, description),
                         tags = COALESCE(${tags !== undefined ? tags : null}, tags),
                         name = COALESCE(${name !== undefined ? name : null}, name),
-                        phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone)
+                        phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone),
+                        assigned_user_id = ${shouldUpdateAssignment ? (isUnassigning ? null : (newAssignedUserId !== undefined ? newAssignedUserId : null)) : sql`assigned_user_id`},
+                        assigned_to = ${shouldUpdateAssignment ? (isUnassigning ? null : (newAssignedTo !== undefined ? newAssignedTo : null)) : sql`assigned_to`},
+                        assigned_by = ${shouldUpdateAssignment ? (isUnassigning ? null : newAssignedBy) : sql`assigned_by`},
+                        assigned_at = ${shouldUpdateAssignment ? (isUnassigning ? null : sql`NOW() AT TIME ZONE 'Asia/Kolkata'`) : sql`assigned_at`}
                     WHERE id = ${id}
                     RETURNING *
                 `
@@ -102,13 +117,35 @@ module.exports = async (req, res) => {
                         description = COALESCE(${description !== undefined ? description : null}, description),
                         tags = COALESCE(${tags !== undefined ? tags : null}, tags),
                         name = COALESCE(${name !== undefined ? name : null}, name),
-                        phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone)
+                        phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone),
+                        assigned_user_id = ${shouldUpdateAssignment ? (isUnassigning ? null : (newAssignedUserId !== undefined ? newAssignedUserId : null)) : sql`assigned_user_id`},
+                        assigned_to = ${shouldUpdateAssignment ? (isUnassigning ? null : (newAssignedTo !== undefined ? newAssignedTo : null)) : sql`assigned_to`},
+                        assigned_by = ${shouldUpdateAssignment ? (isUnassigning ? null : newAssignedBy) : sql`assigned_by`},
+                        assigned_at = ${shouldUpdateAssignment ? (isUnassigning ? null : sql`NOW() AT TIME ZONE 'Asia/Kolkata'`) : sql`assigned_at`}
                     WHERE id = ${targetId}
                     RETURNING *
                 `;
 
             if (!updated || updated.length === 0) {
                 return res.status(404).json({ error: 'Customer not found' });
+            }
+
+            // If assignment changed, record system event note in conversation history
+            if (shouldUpdateAssignment) {
+                const updatedCust = updated[0];
+                const custCompanyId = updatedCust.company_id || companyId || 1;
+                const assignTarget = updatedCust.assigned_to;
+                const assignMsg = assignTarget 
+                    ? `This conversation was assigned to ${assignTarget} by ${newAssignedBy || 'Admin'}`
+                    : `This conversation was unassigned by ${newAssignedBy || 'Admin'}`;
+                try {
+                    await sql`
+                        INSERT INTO messages (company_id, customer_id, direction, type, content, status)
+                        VALUES (${custCompanyId}, ${updatedCust.id}, 'system', 'event', ${assignMsg}, 'sent');
+                    `;
+                } catch(msgErr) {
+                    console.warn('Assignment system message note error:', msgErr);
+                }
             }
 
             return res.status(200).json({ success: true, customer: updated[0] });

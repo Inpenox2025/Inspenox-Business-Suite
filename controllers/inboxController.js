@@ -86,6 +86,15 @@ function filterAndRenderInboxContacts() {
             if (is24hActive) return false;
         } else if (currentInboxFilter === 'unsaved') {
             if (!isInboundLead) return false;
+        } else if (currentInboxFilter === 'my-leads') {
+            const curUser = getLoggedInUser();
+            const myUname = (curUser.username || '').toLowerCase();
+            const myUid = curUser.id;
+            const isMine = (c.assigned_to && c.assigned_to.toLowerCase() === myUname) ||
+                           (c.assigned_user_id && String(c.assigned_user_id) === String(myUid));
+            if (!isMine) return false;
+        } else if (currentInboxFilter === 'unassigned') {
+            if (c.assigned_to || c.assigned_user_id) return false;
         } else if (currentInboxFilter === 'status-open') {
             if (custStatus !== 'Open - Not Contacted') return false;
         } else if (currentInboxFilter === 'status-working') {
@@ -176,6 +185,9 @@ function renderInboxContacts(list) {
         const statusKey = getStatusKey(custStatus);
         const statusShort = getStatusShort(custStatus);
         const statusPillHtml = `<span class="status-pill status-${statusKey}">${statusShort}</span>`;
+        const assigneePillHtml = c.assigned_to
+            ? `<span class="inbox-card-assignee" title="Assigned to ${escapeHtml(c.assigned_to)}">👤 ${escapeHtml(c.assigned_to)}</span>`
+            : '';
 
         let lastMsgHtml = '';
         if (c.last_message_content || c.last_message_at) {
@@ -219,9 +231,12 @@ function renderInboxContacts(list) {
                     <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(c.name)}</span>
                     ${leadTagHtml}
                 </div>
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.4rem; margin-top:0.2rem;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.4rem; margin-top:0.2rem; flex-wrap:wrap;">
                     <div class="contact-phone">${formatDisplayPhone(c.phone)}</div>
-                    ${statusPillHtml}
+                    <div style="display:flex; align-items:center; gap:0.3rem;">
+                        ${assigneePillHtml}
+                        ${statusPillHtml}
+                    </div>
                 </div>
                 ${lastMsgHtml}
                 ${tagsHtml}
@@ -613,6 +628,9 @@ async function openChat(customer, pushHistory = true) {
     // Sync conversation notes strip
     syncChatNotesUI(customer);
 
+    // Update Lead Assignment Button in Chat Header
+    updateChatAssigneeUI(customer);
+
     document.getElementById('chat-active-customer').value = customer.id;
     document.getElementById('chat-reply-form').style.display = 'flex';
 
@@ -627,6 +645,200 @@ async function openChat(customer, pushHistory = true) {
     if (inboxPollInterval) clearInterval(inboxPollInterval);
     inboxPollInterval = setInterval(fetchChatMessages, 4000);
 }
+
+window.openChat = openChat;
+
+// Workspace Team Members for Lead Assignment
+let companyTeamMembersList = [];
+
+function getLoggedInUser() {
+    try {
+        return JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
+    } catch(e) {
+        return {};
+    }
+}
+
+function updateChatAssigneeUI(customer) {
+    const btn = document.getElementById('btn-chat-assign');
+    const nameEl = document.getElementById('chat-assign-name');
+    const avatarEl = document.getElementById('chat-assign-avatar');
+    if (!btn || !nameEl || !avatarEl) return;
+
+    const assignedName = customer?.assigned_to || '';
+    if (assignedName) {
+        nameEl.textContent = assignedName;
+        avatarEl.textContent = getInitial(assignedName);
+        btn.classList.add('is-assigned');
+        btn.title = `Lead assigned to: ${assignedName} (click to change)`;
+    } else {
+        nameEl.textContent = 'Unassigned';
+        avatarEl.textContent = '👤';
+        btn.classList.remove('is-assigned');
+        btn.title = 'Click to assign this conversation to a team member';
+    }
+}
+
+async function loadCompanyUsersForAssignment() {
+    const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+    let url = '/api/auth';
+    if (coId && coId !== 'default' && coId !== 'parent') {
+        url = `/api/auth?company_id=${coId}`;
+    }
+    try {
+        const res = await apiFetch(url);
+        const users = await res.json();
+        if (Array.isArray(users)) {
+            companyTeamMembersList = users;
+        }
+    } catch (e) {
+        console.warn('Failed to load company team members for lead assignment:', e);
+    }
+    return companyTeamMembersList;
+}
+
+window.toggleChatAssignDropdown = async function toggleChatAssignDropdown(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('chat-assign-dropdown');
+    if (!dropdown) return;
+
+    if (!dropdown.classList.contains('hidden')) {
+        dropdown.classList.add('hidden');
+        return;
+    }
+
+    const listEl = document.getElementById('chat-assign-users-list');
+    if (!listEl) return;
+
+    listEl.innerHTML = '<div style="padding:0.75rem;font-size:0.8rem;color:var(--text-muted);text-align:center;"><span class="spinner"></span> Loading team members...</div>';
+    dropdown.classList.remove('hidden');
+
+    await loadCompanyUsersForAssignment();
+
+    const curUser = getLoggedInUser();
+    const myUname = (curUser.username || '').toLowerCase();
+    const myUid = curUser.id;
+    const currentAssigneeName = (activeCustomerData?.assigned_to || '').toLowerCase();
+    const currentAssigneeId = activeCustomerData?.assigned_user_id;
+
+    let html = '';
+
+    // Option 1: Unassigned (Clear assignment)
+    const isUnassigned = !currentAssigneeName && !currentAssigneeId;
+    html += `
+        <div class="chat-assign-option ${isUnassigned ? 'selected' : ''}" onclick="assignLeadToUser(null, null)">
+            <div class="chat-assign-opt-info">
+                <span class="chat-assign-avatar" style="background:var(--border);color:var(--text-muted);">⚪</span>
+                <span class="chat-assign-opt-name">Unassigned</span>
+            </div>
+            ${isUnassigned ? '<span style="color:#10b981;font-weight:700;">✓</span>' : ''}
+        </div>
+    `;
+
+    // Option 2: Yourself
+    if (curUser.username) {
+        const isMyselfSelected = (currentAssigneeName === myUname) || (currentAssigneeId && String(currentAssigneeId) === String(myUid));
+        html += `
+            <div class="chat-assign-option ${isMyselfSelected ? 'selected' : ''}" onclick="assignLeadToUser('${curUser.id}', '${escapeHtml(curUser.username)}')">
+                <div class="chat-assign-opt-info">
+                    <span class="chat-assign-avatar" style="background:var(--primary-light);color:var(--primary);">${getInitial(curUser.username)}</span>
+                    <span class="chat-assign-opt-name">To Yourself (${escapeHtml(curUser.username)})</span>
+                </div>
+                ${isMyselfSelected ? '<span style="color:#10b981;font-weight:700;">✓</span>' : ''}
+            </div>
+        `;
+    }
+
+    // Other Team Members
+    (companyTeamMembersList || []).forEach(u => {
+        if (curUser.username && u.username.toLowerCase() === myUname) return;
+        const isSelected = (currentAssigneeName === u.username.toLowerCase()) || (currentAssigneeId && String(currentAssigneeId) === String(u.id));
+        html += `
+            <div class="chat-assign-option ${isSelected ? 'selected' : ''}" onclick="assignLeadToUser('${u.id}', '${escapeHtml(u.username)}')">
+                <div class="chat-assign-opt-info">
+                    <span class="chat-assign-avatar">${getInitial(u.username)}</span>
+                    <div style="min-width:0;flex:1;">
+                        <span class="chat-assign-opt-name" style="display:block;">${escapeHtml(u.username)}</span>
+                        ${u.role ? `<span style="font-size:0.675rem;color:var(--text-muted);text-transform:uppercase;">${u.role}</span>` : ''}
+                    </div>
+                </div>
+                ${isSelected ? '<span style="color:#10b981;font-weight:700;">✓</span>' : ''}
+            </div>
+        `;
+    });
+
+    listEl.innerHTML = html;
+};
+
+window.assignLeadToUser = async function assignLeadToUser(userId, username) {
+    if (!activeCustomerData || !activeCustomerData.id) return;
+    const custId = activeCustomerData.id;
+    const curUser = getLoggedInUser();
+    const assignerName = curUser.username || 'Admin';
+
+    const dropdown = document.getElementById('chat-assign-dropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+
+    try {
+        const payload = {
+            id: custId,
+            assigned_user_id: userId ? parseInt(userId, 10) : null,
+            assigned_to: username || null,
+            assigned_by: assignerName
+        };
+
+        const res = await apiFetch('/api/customers', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.success && data.customer) {
+            // Update active customer object
+            activeCustomerData.assigned_user_id = data.customer.assigned_user_id;
+            activeCustomerData.assigned_to = data.customer.assigned_to;
+            activeCustomerData.assigned_by = data.customer.assigned_by;
+            activeCustomerData.assigned_at = data.customer.assigned_at;
+
+            // Update in customer list
+            const foundInList = (inboxCustomersList || []).find(c => String(c.id) === String(custId));
+            if (foundInList) {
+                foundInList.assigned_user_id = data.customer.assigned_user_id;
+                foundInList.assigned_to = data.customer.assigned_to;
+                foundInList.assigned_by = data.customer.assigned_by;
+                foundInList.assigned_at = data.customer.assigned_at;
+            }
+
+            // Update header UI
+            updateChatAssigneeUI(activeCustomerData);
+
+            // Re-render sidebar contacts so assignee pill updates
+            filterAndRenderInboxContacts();
+
+            // Refresh chat messages to display the system event line
+            fetchChatMessages(false);
+
+            const msg = username ? `🎉 Lead assigned to ${username}` : 'Lead unassigned';
+            if (typeof showToast === 'function') {
+                showToast(msg, 'success');
+            }
+        } else {
+            throw new Error(data.error || 'Failed to update lead assignment');
+        }
+    } catch (err) {
+        console.error('Error assigning lead:', err);
+        if (typeof showModal === 'function') {
+            showModal('Assignment Error', err.message || 'Could not assign lead.');
+        } else {
+            alert('Failed to assign lead: ' + err.message);
+        }
+    }
+};
+
+document.getElementById('btn-chat-assign')?.addEventListener('click', (e) => {
+    toggleChatAssignDropdown(e);
+});
 
 document.getElementById('chat-header-status-select')?.addEventListener('change', async (e) => {
     if (!activeInboxCustomer) return;
@@ -674,6 +886,8 @@ function closeChat() {
 
     const chatDropdown = document.getElementById('chat-dropdown-menu');
     if (chatDropdown) chatDropdown.classList.add('hidden');
+    const assignDropdown = document.getElementById('chat-assign-dropdown');
+    if (assignDropdown) assignDropdown.classList.add('hidden');
 
     const chatMessages = document.getElementById('chat-messages');
     if (chatMessages) {
@@ -1682,6 +1896,15 @@ async function fetchChatMessages(isInitial = false) {
                 chatContainer.appendChild(divider);
             }
 
+            // System event notice (e.g. Lead assignment event)
+            if (m.direction === 'system') {
+                const sysRow = document.createElement('div');
+                sysRow.className = 'chat-system-event';
+                sysRow.innerHTML = `<span>📌 ${escapeHtml(m.content || 'System Notice')}</span>`;
+                chatContainer.appendChild(sysRow);
+                return;
+            }
+
             const row = document.createElement('div');
             row.className = `msg-row ${m.direction}`;
 
@@ -1962,11 +2185,15 @@ document.getElementById('chat-menu-btn')?.addEventListener('click', (e) => {
     if (menu) menu.classList.toggle('hidden');
 });
 
-// Close dropdown menu when clicking anywhere outside
+// Close dropdown menus when clicking anywhere outside
 document.addEventListener('click', (e) => {
     const menu = document.getElementById('chat-dropdown-menu');
-    if (menu && !menu.classList.contains('hidden')) {
+    if (menu && !menu.classList.contains('hidden') && !e.target.closest('#chat-menu-btn')) {
         menu.classList.add('hidden');
+    }
+    const assignDropdown = document.getElementById('chat-assign-dropdown');
+    if (assignDropdown && !assignDropdown.classList.contains('hidden') && !e.target.closest('#chat-assign-container')) {
+        assignDropdown.classList.add('hidden');
     }
 });
 

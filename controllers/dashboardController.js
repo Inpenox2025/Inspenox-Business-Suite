@@ -95,9 +95,253 @@ window.loadDashboard = async function loadDashboard() {
                 mediaGrid.innerHTML = '<div class="empty-state" style="grid-column: span 2;">No media uploaded yet.</div>';
             }
         }
+
+        // Load Assigned Work & Leads Tracker Table
+        if (typeof loadAssignedWorkTable === 'function') {
+            loadAssignedWorkTable();
+        }
     } catch (e) {
         console.error('Error loading dashboard analytics:', e);
     }
+};
+
+let allAssignedLeadsList = [];
+
+function getLoggedInUser() {
+    try {
+        return JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
+    } catch(e) {
+        return {};
+    }
+}
+
+window.loadAssignedWorkTable = async function loadAssignedWorkTable() {
+    const tbody = document.getElementById('dash-assigned-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="7" style="text-align:center; padding:1.75rem;">
+                <div class="loading-spinner-container">
+                    <div class="spinner-icon"></div>
+                    <span>Loading assigned workspace leads...</span>
+                </div>
+            </td>
+        </tr>
+    `;
+
+    try {
+        const coId = (typeof getCompanyId === 'function') ? getCompanyId() : null;
+        let url = '/api/customers';
+        if (coId && coId !== 'default' && coId !== 'parent') {
+            url = `/api/customers?company_id=${coId}`;
+        }
+        const res = await apiFetch(url);
+        const customers = await res.json();
+
+        if (Array.isArray(customers)) {
+            allAssignedLeadsList = customers;
+            filterAssignedWorkTable();
+        } else {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No leads found for this workspace.</td></tr>`;
+        }
+    } catch (err) {
+        console.error('Error loading assigned leads table:', err);
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:var(--error);">Failed to load assigned leads.</td></tr>`;
+    }
+};
+
+window.filterAssignedWorkTable = function filterAssignedWorkTable() {
+    const tbody = document.getElementById('dash-assigned-tbody');
+    if (!tbody) return;
+
+    const filter = document.getElementById('dash-assigned-filter')?.value || 'my';
+    const curUser = getLoggedInUser();
+    const myUname = (curUser.username || '').toLowerCase();
+    const myUid = curUser.id;
+
+    const now = Date.now();
+    const twentyFourHoursMs = 24 * 60 * 60 * 1000;
+
+    let filtered = (allAssignedLeadsList || []).filter(c => {
+        const hasAssignee = Boolean(c.assigned_to || c.assigned_user_id);
+        const isMine = (c.assigned_to && c.assigned_to.toLowerCase() === myUname) ||
+                       (c.assigned_user_id && String(c.assigned_user_id) === String(myUid));
+
+        if (filter === 'my') {
+            return isMine;
+        } else if (filter === 'unassigned') {
+            return !hasAssignee;
+        } else {
+            return hasAssignee;
+        }
+    });
+
+    if (filter === 'all' && filtered.length === 0 && allAssignedLeadsList.length > 0) {
+        filtered = [...allAssignedLeadsList];
+    }
+
+    filtered.sort((a, b) => {
+        const timeA = new Date(a.last_message_at || a.last_inbound_at || a.created_at || 0).getTime();
+        const timeB = new Date(b.last_message_at || b.last_inbound_at || b.created_at || 0).getTime();
+        return timeB - timeA;
+    });
+
+    let totalAssigned = 0;
+    let active24h = 0;
+    let pendingAction = 0;
+    let converted = 0;
+
+    filtered.forEach(c => {
+        totalAssigned++;
+        const is24h = c.last_inbound_at && (now - new Date(c.last_inbound_at).getTime() <= twentyFourHoursMs);
+        if (is24h) active24h++;
+        const st = c.status || 'Open - Not Contacted';
+        if (st === 'Converted') converted++;
+        if (st === 'Open - Not Contacted' || (parseInt(c.unread_count) > 0)) pendingAction++;
+    });
+
+    const elTotal = document.getElementById('dash-assigned-stat-total');
+    const elActive = document.getElementById('dash-assigned-stat-active');
+    const elPending = document.getElementById('dash-assigned-stat-pending');
+    const elConverted = document.getElementById('dash-assigned-stat-converted');
+
+    if (elTotal) elTotal.textContent = totalAssigned;
+    if (elActive) elActive.textContent = active24h;
+    if (elPending) elPending.textContent = pendingAction;
+    if (elConverted) elConverted.textContent = converted;
+
+    if (filtered.length === 0) {
+        let emptyMsg = filter === 'my'
+            ? 'No leads currently assigned to you. Select "All Team Leads" or "Unassigned Leads" to view others.'
+            : (filter === 'unassigned' ? 'No unassigned leads found in this workspace.' : 'No assigned leads found.');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">
+                    <div style="font-size:1.75rem; margin-bottom:0.4rem;">📋</div>
+                    <div style="font-weight:600; font-size:0.9rem; color:var(--text-main); margin-bottom:0.25rem;">${emptyMsg}</div>
+                    <button class="btn secondary sm" style="margin-top:0.5rem;" onclick="switchView('inbox')">Go to Live Inbox →</button>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = '';
+    filtered.forEach((c, idx) => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid var(--border)';
+
+        const is24h = c.last_inbound_at && (now - new Date(c.last_inbound_at).getTime() <= twentyFourHoursMs);
+        const windowBadgeHtml = is24h
+            ? `<span class="window-badge active" style="font-size:0.7rem; padding:0.15rem 0.45rem;">⚡ 24h Active</span>`
+            : `<span class="window-badge expired" style="font-size:0.7rem; padding:0.15rem 0.45rem;">🔒 Expired</span>`;
+
+        const custStatus = c.status || 'Open - Not Contacted';
+        const statusKey = (typeof getStatusKey === 'function') ? getStatusKey(custStatus) : 'open';
+
+        const assigneeHtml = c.assigned_to
+            ? `<span class="badge-assignee">👤 ${escapeHtml(c.assigned_to)}</span>`
+            : `<span class="badge-assignee unassigned">⚪ Unassigned</span>`;
+
+        let preview = c.last_message_content || 'No messages yet';
+        if (preview.startsWith('[Template]')) {
+            preview = '📋 ' + preview.replace(/^\[Template\]\s*/i, '');
+        } else if (preview.length > 32) {
+            preview = preview.slice(0, 32) + '...';
+        }
+        const timeStr = (c.last_message_at || c.last_inbound_at) ? formatTime(c.last_message_at || c.last_inbound_at) : '-';
+
+        let tagsHtml = '';
+        if (c.tags && String(c.tags).trim()) {
+            const firstTag = String(c.tags).split(',')[0].trim();
+            tagsHtml = `<span style="font-size:0.65rem; background:rgba(0,168,132,0.1); color:var(--primary); padding:0.1rem 0.35rem; border-radius:4px; margin-left:0.3rem;">🏷️ ${escapeHtml(firstTag)}</span>`;
+        }
+
+        tr.innerHTML = `
+            <td style="padding:0.65rem 0.75rem; color:var(--text-muted); font-size:0.8rem; font-weight:600;">${idx + 1}</td>
+            <td style="padding:0.65rem 0.75rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <div style="width:30px; height:30px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.75rem; flex-shrink:0;">
+                        ${getInitial(c.name)}
+                    </div>
+                    <div>
+                        <div style="font-weight:600; font-size:0.85rem; color:var(--text-main); display:flex; align-items:center;">
+                            <span>${escapeHtml(c.name || 'Unnamed Lead')}</span>
+                            ${tagsHtml}
+                        </div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${formatDisplayPhone(c.phone)}</div>
+                    </div>
+                </div>
+            </td>
+            <td style="padding:0.65rem 0.75rem;">${assigneeHtml}</td>
+            <td style="padding:0.65rem 0.75rem;">
+                <select class="chat-header-status-select status-${statusKey}" style="font-size:0.75rem; padding:0.25rem 0.5rem; height:auto;" onchange="updateLeadStatusFromDash('${c.id}', this.value)">
+                    <option value="Open - Not Contacted" ${custStatus === 'Open - Not Contacted' ? 'selected' : ''}>🔵 Open</option>
+                    <option value="Working - Contacted" ${custStatus === 'Working - Contacted' ? 'selected' : ''}>🟡 Working</option>
+                    <option value="Closed - Not Converted" ${custStatus === 'Closed - Not Converted' ? 'selected' : ''}>⚪ Closed</option>
+                    <option value="Converted" ${custStatus === 'Converted' ? 'selected' : ''}>🟢 Converted</option>
+                </select>
+            </td>
+            <td style="padding:0.65rem 0.75rem;">${windowBadgeHtml}</td>
+            <td style="padding:0.65rem 0.75rem; max-width:200px;">
+                <div style="font-size:0.775rem; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(preview)}</div>
+                <div style="font-size:0.675rem; color:var(--text-muted);">${timeStr}</div>
+            </td>
+            <td style="padding:0.65rem 0.75rem; text-align:right;">
+                <button type="button" class="btn primary sm" onclick="openChatFromLead('${c.id}')" style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.35rem 0.65rem; font-size:0.75rem; white-space:nowrap;">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Track &amp; Chat →</span>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+};
+
+window.updateLeadStatusFromDash = async function updateLeadStatusFromDash(customerId, newStatus) {
+    try {
+        const res = await apiFetch('/api/customers', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: customerId, status: newStatus })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const found = (allAssignedLeadsList || []).find(c => String(c.id) === String(customerId));
+            if (found) found.status = newStatus;
+            filterAssignedWorkTable();
+            if (typeof showToast === 'function') {
+                showToast(`Status updated to "${newStatus}"`, 'success');
+            }
+        }
+    } catch (e) {
+        console.error('Failed to update lead status from dashboard:', e);
+    }
+};
+
+window.openChatFromLead = function openChatFromLead(customerId) {
+    if (typeof switchView === 'function') {
+        switchView('inbox');
+    }
+    setTimeout(async () => {
+        let cust = null;
+        if (typeof inboxCustomersList !== 'undefined' && Array.isArray(inboxCustomersList)) {
+            cust = inboxCustomersList.find(c => String(c.id) === String(customerId));
+        }
+        if (!cust) {
+            try {
+                const res = await apiFetch(`/api/customers?id=${customerId}`);
+                const data = await res.json();
+                cust = Array.isArray(data) ? data.find(c => String(c.id) === String(customerId)) : data;
+            } catch (e) { }
+        }
+        if (cust && typeof openChat === 'function') {
+            openChat(cust);
+        }
+    }, 280);
 };
 
 window.loadUsageAnalytics = async function loadUsageAnalytics(daysParam) {

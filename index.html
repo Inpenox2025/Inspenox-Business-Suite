@@ -511,6 +511,80 @@
                     </div>
                 </div>
 
+                <!-- Assigned Work & Leads Tracker Card -->
+                <div class="card assigned-work-card" id="dash-assigned-work-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+                    <div class="assigned-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                                📋
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Assigned Work & Leads Tracker</h3>
+                                <p style="margin: 0.15rem 0 0 0; font-size: 0.775rem; color: var(--text-muted);">
+                                    Track and manage customer leads assigned to you and your team members across this company workspace.
+                                </p>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <select id="dash-assigned-filter" class="chat-header-status-select" style="padding: 0.4rem 0.75rem; font-size: 0.825rem; font-weight: 600;" onchange="filterAssignedWorkTable()">
+                                <option value="my">👤 My Assigned Leads</option>
+                                <option value="all">👥 All Team Leads</option>
+                                <option value="unassigned">⚪ Unassigned Leads</option>
+                            </select>
+                            <button type="button" class="btn secondary sm" onclick="loadAssignedWorkTable()" title="Refresh assigned leads">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mini KPI Summary Strip -->
+                    <div class="assigned-stats-strip" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                        <div style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem;">
+                            <span style="font-size: 0.725rem; color: var(--text-muted); display: block; font-weight: 500;">Total Assigned</span>
+                            <strong id="dash-assigned-stat-total" style="font-size: 1.25rem; color: var(--text-main); font-weight: 700;">0</strong>
+                        </div>
+                        <div style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem;">
+                            <span style="font-size: 0.725rem; color: var(--text-muted); display: block; font-weight: 500;">⚡ 24h Active</span>
+                            <strong id="dash-assigned-stat-active" style="font-size: 1.25rem; color: #10b981; font-weight: 700;">0</strong>
+                        </div>
+                        <div style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem;">
+                            <span style="font-size: 0.725rem; color: var(--text-muted); display: block; font-weight: 500;">🟡 Open / Needs Action</span>
+                            <strong id="dash-assigned-stat-pending" style="font-size: 1.25rem; color: #f59e0b; font-weight: 700;">0</strong>
+                        </div>
+                        <div style="background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem;">
+                            <span style="font-size: 0.725rem; color: var(--text-muted); display: block; font-weight: 500;">🟢 Converted</span>
+                            <strong id="dash-assigned-stat-converted" style="font-size: 1.25rem; color: #059669; font-weight: 700;">0</strong>
+                        </div>
+                    </div>
+
+                    <!-- Assigned Leads Table -->
+                    <div class="table-responsive" style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+                        <table class="table" style="width: 100%; border-collapse: collapse; margin: 0;">
+                            <thead style="position: sticky; top: 0; background: var(--bg-sidebar); z-index: 2;">
+                                <tr>
+                                    <th style="width: 40px; padding: 0.6rem 0.75rem;">#</th>
+                                    <th style="padding: 0.6rem 0.75rem;">Customer Lead</th>
+                                    <th style="padding: 0.6rem 0.75rem;">Assigned Employee</th>
+                                    <th style="padding: 0.6rem 0.75rem;">Lead Status</th>
+                                    <th style="padding: 0.6rem 0.75rem;">24h Window</th>
+                                    <th style="padding: 0.6rem 0.75rem;">Latest Message</th>
+                                    <th style="padding: 0.6rem 0.75rem; text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dash-assigned-tbody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                                        <div class="loading-spinner-container">
+                                            <div class="spinner-icon"></div>
+                                            <span>Loading assigned leads...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="dashboard-widgets">
                     <div class="widget card">
                         <div class="widget-header">
@@ -1985,6 +2059,8 @@
                             <div class="inbox-filter-chips" id="inbox-filter-chips">
                                 <button type="button" class="inbox-filter-chip active" data-filter="all">All
                                     Chats</button>
+                                <button type="button" class="inbox-filter-chip" data-filter="my-leads">👤 My Leads</button>
+                                <button type="button" class="inbox-filter-chip" data-filter="unassigned">⚪ Unassigned</button>
                                 <button type="button" class="inbox-filter-chip" data-filter="free">⚡ 24h Active</button>
                                 <button type="button" class="inbox-filter-chip" data-filter="expired">🔒 24h
                                     Expired</button>
@@ -2050,6 +2126,22 @@
                                             </svg>
                                             <span>Notes</span>
                                         </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Lead Assignment Dropdown (Interakt Style) -->
+                            <div class="chat-assign-container" id="chat-assign-container">
+                                <button type="button" id="btn-chat-assign" class="chat-assign-btn" title="Click to assign lead to an employee">
+                                    <span class="chat-assign-avatar" id="chat-assign-avatar">👤</span>
+                                    <span class="chat-assign-name" id="chat-assign-name">Unassigned</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="chat-assign-chevron" style="width:12px;height:12px;opacity:0.7;">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <div id="chat-assign-dropdown" class="chat-assign-dropdown hidden">
+                                    <div class="chat-assign-dropdown-header">Assign Lead To</div>
+                                    <div id="chat-assign-users-list" class="chat-assign-users-list">
+                                        <!-- Populated via loadChatAssignDropdown() -->
                                     </div>
                                 </div>
                             </div>
