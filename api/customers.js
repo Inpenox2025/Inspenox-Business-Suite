@@ -98,6 +98,18 @@ module.exports = async (req, res) => {
             const isUnassigning = shouldUpdateAssignment && (assigned_to === null || assigned_to === '' || assigned_to === 'unassigned') && (!assigned_user_id || assigned_user_id === '0');
             const nowIso = new Date().toISOString();
 
+            const hasTags = tags !== undefined;
+            const cleanTags = hasTags ? (tags ? String(tags).trim() : null) : null;
+            const hasProduct = product !== undefined;
+            const cleanProduct = hasProduct ? (product ? String(product).trim() : null) : null;
+            const hasStatus = status !== undefined;
+            const cleanStatus = hasStatus ? (status ? String(status).trim() : null) : null;
+            const hasDesc = description !== undefined;
+            const cleanDesc = hasDesc ? (description ? String(description).trim() : '') : null;
+            const hasName = name !== undefined;
+            const cleanName = hasName ? (name ? String(name).trim() : null) : null;
+            const hasPhone = cleanPhone !== null;
+
             let updated;
             if (shouldUpdateAssignment) {
                 const finalUserId = isUnassigning ? null : (newAssignedUserId !== undefined ? newAssignedUserId : null);
@@ -108,12 +120,12 @@ module.exports = async (req, res) => {
                 updated = isNaN(targetId)
                     ? await sql`
                         UPDATE customers 
-                        SET status = COALESCE(${status !== undefined ? status : null}, status),
-                            description = COALESCE(${description !== undefined ? description : null}, description),
-                            tags = COALESCE(${tags !== undefined ? tags : null}, tags),
-                            product = COALESCE(${product !== undefined ? product : null}, product),
-                            name = COALESCE(${name !== undefined ? name : null}, name),
-                            phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone),
+                        SET status = CASE WHEN ${hasStatus} THEN ${cleanStatus} ELSE status END,
+                            description = CASE WHEN ${hasDesc} THEN ${cleanDesc} ELSE description END,
+                            tags = CASE WHEN ${hasTags} THEN ${cleanTags} ELSE tags END,
+                            product = CASE WHEN ${hasProduct} THEN ${cleanProduct} ELSE product END,
+                            name = CASE WHEN ${hasName} THEN ${cleanName} ELSE name END,
+                            phone = CASE WHEN ${hasPhone} THEN ${cleanPhone} ELSE phone END,
                             assigned_user_id = ${finalUserId},
                             assigned_to = ${finalTo},
                             assigned_by = ${finalBy},
@@ -123,12 +135,12 @@ module.exports = async (req, res) => {
                     `
                     : await sql`
                         UPDATE customers 
-                        SET status = COALESCE(${status !== undefined ? status : null}, status),
-                            description = COALESCE(${description !== undefined ? description : null}, description),
-                            tags = COALESCE(${tags !== undefined ? tags : null}, tags),
-                            product = COALESCE(${product !== undefined ? product : null}, product),
-                            name = COALESCE(${name !== undefined ? name : null}, name),
-                            phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone),
+                        SET status = CASE WHEN ${hasStatus} THEN ${cleanStatus} ELSE status END,
+                            description = CASE WHEN ${hasDesc} THEN ${cleanDesc} ELSE description END,
+                            tags = CASE WHEN ${hasTags} THEN ${cleanTags} ELSE tags END,
+                            product = CASE WHEN ${hasProduct} THEN ${cleanProduct} ELSE product END,
+                            name = CASE WHEN ${hasName} THEN ${cleanName} ELSE name END,
+                            phone = CASE WHEN ${hasPhone} THEN ${cleanPhone} ELSE phone END,
                             assigned_user_id = ${finalUserId},
                             assigned_to = ${finalTo},
                             assigned_by = ${finalBy},
@@ -140,23 +152,23 @@ module.exports = async (req, res) => {
                 updated = isNaN(targetId)
                     ? await sql`
                         UPDATE customers 
-                        SET status = COALESCE(${status !== undefined ? status : null}, status),
-                            description = COALESCE(${description !== undefined ? description : null}, description),
-                            tags = COALESCE(${tags !== undefined ? tags : null}, tags),
-                            product = COALESCE(${product !== undefined ? product : null}, product),
-                            name = COALESCE(${name !== undefined ? name : null}, name),
-                            phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone)
+                        SET status = CASE WHEN ${hasStatus} THEN ${cleanStatus} ELSE status END,
+                            description = CASE WHEN ${hasDesc} THEN ${cleanDesc} ELSE description END,
+                            tags = CASE WHEN ${hasTags} THEN ${cleanTags} ELSE tags END,
+                            product = CASE WHEN ${hasProduct} THEN ${cleanProduct} ELSE product END,
+                            name = CASE WHEN ${hasName} THEN ${cleanName} ELSE name END,
+                            phone = CASE WHEN ${hasPhone} THEN ${cleanPhone} ELSE phone END
                         WHERE id = ${id}
                         RETURNING *
                     `
                     : await sql`
                         UPDATE customers 
-                        SET status = COALESCE(${status !== undefined ? status : null}, status),
-                            description = COALESCE(${description !== undefined ? description : null}, description),
-                            tags = COALESCE(${tags !== undefined ? tags : null}, tags),
-                            product = COALESCE(${product !== undefined ? product : null}, product),
-                            name = COALESCE(${name !== undefined ? name : null}, name),
-                            phone = COALESCE(${cleanPhone !== null ? cleanPhone : null}, phone)
+                        SET status = CASE WHEN ${hasStatus} THEN ${cleanStatus} ELSE status END,
+                            description = CASE WHEN ${hasDesc} THEN ${cleanDesc} ELSE description END,
+                            tags = CASE WHEN ${hasTags} THEN ${cleanTags} ELSE tags END,
+                            product = CASE WHEN ${hasProduct} THEN ${cleanProduct} ELSE product END,
+                            name = CASE WHEN ${hasName} THEN ${cleanName} ELSE name END,
+                            phone = CASE WHEN ${hasPhone} THEN ${cleanPhone} ELSE phone END
                         WHERE id = ${targetId}
                         RETURNING *
                     `;
@@ -198,22 +210,31 @@ module.exports = async (req, res) => {
 
             if (id && (!name || !phone) && (tags !== undefined || product !== undefined || status !== undefined || description !== undefined)) {
                 const targetId = parseInt(id, 10);
+                const hasTags = tags !== undefined;
+                const cleanTags = hasTags ? (tags ? String(tags).trim() : null) : null;
+                const hasProduct = product !== undefined;
+                const cleanProduct = hasProduct ? (product ? String(product).trim() : null) : null;
+                const hasStatus = status !== undefined;
+                const cleanStatus = hasStatus ? (status ? String(status).trim() : null) : null;
+                const hasDesc = description !== undefined;
+                const cleanDesc = hasDesc ? (description ? String(description).trim() : '') : null;
+
                 const updated = isNaN(targetId)
                     ? await sql`
                         UPDATE customers 
-                        SET tags = COALESCE(${tags !== undefined ? tags : null}, tags),
-                            product = COALESCE(${product !== undefined ? product : null}, product),
-                            status = COALESCE(${status !== undefined ? status : null}, status),
-                            description = COALESCE(${description !== undefined ? description : null}, description)
+                        SET tags = CASE WHEN ${hasTags} THEN ${cleanTags} ELSE tags END,
+                            product = CASE WHEN ${hasProduct} THEN ${cleanProduct} ELSE product END,
+                            status = CASE WHEN ${hasStatus} THEN ${cleanStatus} ELSE status END,
+                            description = CASE WHEN ${hasDesc} THEN ${cleanDesc} ELSE description END
                         WHERE id = ${id}
                         RETURNING *
                     `
                     : await sql`
                         UPDATE customers 
-                        SET tags = COALESCE(${tags !== undefined ? tags : null}, tags),
-                            product = COALESCE(${product !== undefined ? product : null}, product),
-                            status = COALESCE(${status !== undefined ? status : null}, status),
-                            description = COALESCE(${description !== undefined ? description : null}, description)
+                        SET tags = CASE WHEN ${hasTags} THEN ${cleanTags} ELSE tags END,
+                            product = CASE WHEN ${hasProduct} THEN ${cleanProduct} ELSE product END,
+                            status = CASE WHEN ${hasStatus} THEN ${cleanStatus} ELSE status END,
+                            description = CASE WHEN ${hasDesc} THEN ${cleanDesc} ELSE description END
                         WHERE id = ${targetId}
                         RETURNING *
                     `;

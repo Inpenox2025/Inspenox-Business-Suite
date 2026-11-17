@@ -611,7 +611,26 @@ window.saveQuickTags = async function saveQuickTags() {
         if (data && data.success) {
             closeQuickTagModal();
             renderCustomersTable();
-            showModal('Tags Updated', `Successfully updated tags for ${cust.name}.`);
+
+            // Sync with Inbox list if loaded
+            if (typeof inboxCustomersList !== 'undefined' && Array.isArray(inboxCustomersList)) {
+                const inInbox = inboxCustomersList.find(c => String(c.id) === String(custId));
+                if (inInbox) inInbox.tags = cust.tags || '';
+            }
+
+            // Sync with active open chat if this customer is currently open
+            if (typeof activeCustomerData !== 'undefined' && activeCustomerData && String(activeCustomerData.id) === String(custId)) {
+                activeCustomerData.tags = cust.tags || '';
+                if (typeof renderActiveChatTags === 'function') {
+                    renderActiveChatTags(activeCustomerData);
+                }
+            }
+
+            if (typeof showToast === 'function') {
+                showToast(`Updated tags for ${cust.name}`, 'success');
+            } else {
+                showModal('Tags Updated', `Successfully updated tags for ${cust.name}.`);
+            }
         }
     } catch (err) {
         console.error('Failed to update tags:', err);
@@ -678,7 +697,26 @@ window.saveQuickProducts = async function saveQuickProducts() {
         if (data && data.success) {
             closeQuickProductModal();
             renderCustomersTable();
-            showModal('Product Updated', `Successfully updated product for ${cust.name}.`);
+
+            // Sync with Inbox list if loaded
+            if (typeof inboxCustomersList !== 'undefined' && Array.isArray(inboxCustomersList)) {
+                const inInbox = inboxCustomersList.find(c => String(c.id) === String(custId));
+                if (inInbox) inInbox.product = cust.product || '';
+            }
+
+            // Sync with active open chat if this customer is currently open
+            if (typeof activeCustomerData !== 'undefined' && activeCustomerData && String(activeCustomerData.id) === String(custId)) {
+                activeCustomerData.product = cust.product || '';
+                if (typeof renderActiveChatProducts === 'function') {
+                    renderActiveChatProducts(activeCustomerData);
+                }
+            }
+
+            if (typeof showToast === 'function') {
+                showToast(`Updated product for ${cust.name}`, 'success');
+            } else {
+                showModal('Product Updated', `Successfully updated product for ${cust.name}.`);
+            }
         }
     } catch (err) {
         console.error('Failed to update product:', err);

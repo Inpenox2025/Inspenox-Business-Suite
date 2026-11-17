@@ -1438,20 +1438,28 @@ window.saveInboxCustomerProducts = async function saveInboxCustomerProducts() {
         if (data.error) {
             throw new Error(data.error);
         } else {
+            // 1. Immediately update activeCustomerData
             activeCustomerData.product = newProdsStr;
 
-            const inListCust = inboxCustomersCache.find(c => c.id === activeCustomerData.id);
-            if (inListCust) inListCust.product = newProdsStr;
+            // 2. Immediately update in inboxCustomersList
+            if (typeof inboxCustomersList !== 'undefined' && Array.isArray(inboxCustomersList)) {
+                const inListCust = inboxCustomersList.find(c => String(c.id) === String(activeInboxCustomer) || String(c.id) === String(activeCustomerData.id));
+                if (inListCust) inListCust.product = newProdsStr;
+            }
 
+            // 3. Immediately update in allCustomers if present
             if (typeof allCustomers !== 'undefined' && Array.isArray(allCustomers)) {
-                const inAllCust = allCustomers.find(c => c.id === activeCustomerData.id);
+                const inAllCust = allCustomers.find(c => String(c.id) === String(activeInboxCustomer) || String(c.id) === String(activeCustomerData.id));
                 if (inAllCust) inAllCust.product = newProdsStr;
             }
 
+            // 4. Close modal immediately
             closeInboxAssignProductsModal();
+
+            // 5. Re-render active chat header product pills
             renderActiveChatProducts(activeCustomerData);
 
-            // Update contact card preview
+            // 6. Directly update sidebar contact card products preview in place
             const activeCard = document.querySelector(`.inbox-contact-card[data-id="${activeInboxCustomer}"]`);
             if (activeCard) {
                 let prodsContainer = activeCard.querySelector('.inbox-card-products');
@@ -1479,6 +1487,16 @@ window.saveInboxCustomerProducts = async function saveInboxCustomerProducts() {
                 } else if (prodsContainer) {
                     prodsContainer.remove();
                 }
+            }
+
+            // 7. Refresh customer table if available
+            if (typeof renderCustomersTable === 'function') {
+                renderCustomersTable();
+            }
+
+            // 8. Refresh sidebar list filter if active
+            if (typeof filterAndRenderInboxContacts === 'function') {
+                filterAndRenderInboxContacts();
             }
 
             showToast('Products updated successfully', 'success');
