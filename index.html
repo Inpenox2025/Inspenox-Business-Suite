@@ -2330,97 +2330,102 @@
                     <div class="inbox-chat-panel card" id="inbox-chat-area">
                         <!-- Active Chat Top Bar -->
                         <div class="chat-header-bar" id="chat-header-bar" style="display:none;">
-                            <button type="button" id="close-chat-btn" class="icon-btn back-btn" title="Back to Chats"
-                                aria-label="Back">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                    style="width:18px;height:18px;">
-                                    <polyline points="15 18 9 12 15 6"></polyline>
-                                </svg>
-                            </button>
-                            <div class="chat-avatar" id="active-chat-avatar">?</div>
-                            <div class="chat-header-info">
-                                <div class="chat-title-row">
-                                    <h3 id="active-chat-name">Customer Name</h3>
-                                    <span class="window-badge" id="active-chat-window-badge">24h Active</span>
-                                </div>
-                                <div class="chat-subhead-row">
-                                    <p id="active-chat-phone" style="margin:0;">+00000000000</p>
-                                    <div id="active-chat-products-list"
-                                        style="display:flex; align-items:center; gap:0.3rem; flex-wrap:wrap;"></div>
-                                    <div id="active-chat-tags-list"
-                                        style="display:flex; align-items:center; gap:0.3rem; flex-wrap:wrap;"></div>
-                                    <div class="chat-status-action-wrap">
-                                        <label for="chat-header-status-select" class="chat-status-label">Status:</label>
-                                        <select id="chat-header-status-select" class="chat-header-status-select"
-                                            title="Click to change customer status">
-                                            <option value="Open - Not Contacted">🔵 Open - Not Contacted</option>
-                                            <option value="Working - Contacted">🟡 Working - Contacted</option>
-                                            <option value="Closed - Not Converted">⚪ Closed - Not Converted</option>
-                                            <option value="Converted">🟢 Converted</option>
-                                        </select>
-                                        <button type="button" id="btn-chat-notes" class="btn-chat-notes"
-                                            title="View or update conversation notes">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                                style="width:13px;height:13px;">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7">
-                                                </path>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z">
-                                                </path>
-                                            </svg>
-                                            <span>Notes</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Lead Assignment Dropdown (Interakt Style) -->
-                            <div class="chat-assign-container" id="chat-assign-container">
-                                <button type="button" id="btn-chat-assign" class="chat-assign-btn"
-                                    title="Click to assign lead to an employee">
-                                    <span class="chat-assign-avatar" id="chat-assign-avatar">👤</span>
-                                    <span class="chat-assign-name" id="chat-assign-name">Unassigned</span>
+                            <!-- Top Tier: Navigation, Customer Identity & Lead Assignment -->
+                            <div class="chat-header-top-row">
+                                <button type="button" id="close-chat-btn" class="icon-btn back-btn" title="Back to Chats"
+                                    aria-label="Back">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                        class="chat-assign-chevron" style="width:12px;height:12px;opacity:0.7;">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                        style="width:18px;height:18px;">
+                                        <polyline points="15 18 9 12 15 6"></polyline>
                                     </svg>
                                 </button>
-                                <div id="chat-assign-dropdown" class="chat-assign-dropdown hidden">
-                                    <div class="chat-assign-dropdown-header">Assign Lead To</div>
-                                    <div id="chat-assign-users-list" class="chat-assign-users-list">
-                                        <!-- Populated via loadChatAssignDropdown() -->
+                                <div class="chat-avatar" id="active-chat-avatar">?</div>
+                                <div class="chat-header-info">
+                                    <div class="chat-title-row">
+                                        <h3 id="active-chat-name">Customer Name</h3>
+                                        <span class="window-badge" id="active-chat-window-badge">24h Active</span>
+                                    </div>
+                                    <p id="active-chat-phone" class="chat-header-phone" style="margin:0;">+00000000000</p>
+                                </div>
+                                <div class="chat-header-actions">
+                                    <!-- Lead Assignment Dropdown (Interakt Style) -->
+                                    <div class="chat-assign-container" id="chat-assign-container">
+                                        <button type="button" id="btn-chat-assign" class="chat-assign-btn"
+                                            title="Click to assign lead to an employee">
+                                            <span class="chat-assign-avatar" id="chat-assign-avatar">👤</span>
+                                            <span class="chat-assign-name" id="chat-assign-name">Unassigned</span>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                                class="chat-assign-chevron" style="width:12px;height:12px;opacity:0.7;">
+                                                <polyline points="6 9 12 15 18 9"></polyline>
+                                            </svg>
+                                        </button>
+                                        <div id="chat-assign-dropdown" class="chat-assign-dropdown hidden">
+                                            <div class="chat-assign-dropdown-header">Assign Lead To</div>
+                                            <div id="chat-assign-users-list" class="chat-assign-users-list">
+                                                <!-- Populated via loadChatAssignDropdown() -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chat-menu-container">
+                                        <button type="button" id="chat-menu-btn" class="icon-btn" title="Options"
+                                            aria-label="Options">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                style="width:20px;height:20px;">
+                                                <circle cx="12" cy="12" r="1.5"></circle>
+                                                <circle cx="12" cy="5" r="1.5"></circle>
+                                                <circle cx="12" cy="19" r="1.5"></circle>
+                                            </svg>
+                                        </button>
+                                        <div id="chat-dropdown-menu" class="chat-dropdown-menu hidden">
+                                            <button type="button" id="btn-inbox-send-template" class="dropdown-item">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                    style="width:15px;height:15px;margin-right:8px;">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                                </svg>
+                                                <span>Send Template</span>
+                                            </button>
+                                            <button type="button" id="btn-inbox-manage-tags" class="dropdown-item"
+                                                onclick="openInboxAssignTagsModal()">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                    style="width:15px;height:15px;margin-right:8px;">
+                                                    <path
+                                                        d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z">
+                                                    </path>
+                                                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                                </svg>
+                                                <span>Manage Tags</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="chat-menu-container">
-                                <button type="button" id="chat-menu-btn" class="icon-btn" title="Options"
-                                    aria-label="Options">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        style="width:20px;height:20px;">
-                                        <circle cx="12" cy="12" r="1.5"></circle>
-                                        <circle cx="12" cy="5" r="1.5"></circle>
-                                        <circle cx="12" cy="19" r="1.5"></circle>
-                                    </svg>
-                                </button>
-                                <div id="chat-dropdown-menu" class="chat-dropdown-menu hidden">
-                                    <button type="button" id="btn-inbox-send-template" class="dropdown-item">
+
+                            <!-- Bottom Tier: CRM Actions Strip (Status, Products, Tags, Notes) -->
+                            <div class="chat-subhead-row" id="chat-subhead-row">
+                                <div class="chat-status-action-wrap">
+                                    <label for="chat-header-status-select" class="chat-status-label">Status:</label>
+                                    <select id="chat-header-status-select" class="chat-header-status-select"
+                                        title="Click to change customer status">
+                                        <option value="Open - Not Contacted">🔵 Open - Not Contacted</option>
+                                        <option value="Working - Contacted">🟡 Working - Contacted</option>
+                                        <option value="Closed - Not Converted">⚪ Closed - Not Converted</option>
+                                        <option value="Converted">🟢 Converted</option>
+                                    </select>
+                                    <button type="button" id="btn-chat-notes" class="btn-chat-notes"
+                                        title="View or update conversation notes">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            style="width:15px;height:15px;margin-right:8px;">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                        </svg>
-                                        <span>Send Template</span>
-                                    </button>
-                                    <button type="button" id="btn-inbox-manage-tags" class="dropdown-item"
-                                        onclick="openInboxAssignTagsModal()">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            style="width:15px;height:15px;margin-right:8px;">
-                                            <path
-                                                d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z">
+                                            style="width:13px;height:13px;">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7">
                                             </path>
-                                            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z">
+                                            </path>
                                         </svg>
-                                        <span>Manage Tags</span>
+                                        <span>Notes</span>
                                     </button>
                                 </div>
+                                <div id="active-chat-products-list" class="chat-header-chips-list"></div>
+                                <div id="active-chat-tags-list" class="chat-header-chips-list"></div>
                             </div>
                         </div>
 

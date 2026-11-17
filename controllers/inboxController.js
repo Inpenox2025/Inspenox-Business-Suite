@@ -934,6 +934,22 @@ function closeChat() {
 }
 window.closeChat = closeChat;
 
+// Responsive Window Resize Handler for Inbox Panels
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+        document.getElementById('inbox-customers-panel')?.classList.remove('hidden');
+        document.getElementById('inbox-chat-area')?.classList.remove('hidden');
+    } else {
+        if (activeInboxCustomer) {
+            document.getElementById('inbox-customers-panel')?.classList.add('hidden');
+            document.getElementById('inbox-chat-area')?.classList.remove('hidden');
+        } else {
+            document.getElementById('inbox-customers-panel')?.classList.remove('hidden');
+            document.getElementById('inbox-chat-area')?.classList.add('hidden');
+        }
+    }
+});
+
 // ⌨️ WhatsApp Web Style Escape Key Handler: Closes active chat window & refocuses search
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' || e.key === 'Esc') {

@@ -3406,7 +3406,18 @@ window.switchView = function switchView(target, pushHistory = true) {
     localStorage.setItem('activeView', target);
     document.getElementById('sidebar-nav')?.classList.remove('active');
 
-    if (target !== 'inbox') closeChat();
+    if (target === 'inbox') {
+        document.querySelector('.content')?.classList.add('content-inbox-active');
+        if (window.innerWidth <= 768 && !activeInboxCustomer) {
+            document.getElementById('inbox-customers-panel')?.classList.remove('hidden');
+            document.getElementById('inbox-chat-area')?.classList.add('hidden');
+        }
+        loadInboxSidebar();
+        ensureTemplatesCacheLoaded();
+    } else {
+        document.querySelector('.content')?.classList.remove('content-inbox-active');
+        closeChat();
+    }
 
     if (target === 'dashboard') loadDashboard();
     if (target === 'usage') loadUsageAnalytics();
@@ -3418,10 +3429,6 @@ window.switchView = function switchView(target, pushHistory = true) {
         loadTemplatesForSelect();
         if (typeof updateBroadcastSenderPhoneSelect === 'function') updateBroadcastSenderPhoneSelect();
         if (typeof initVarPickers === 'function') initVarPickers();
-    }
-    if (target === 'inbox') {
-        loadInboxSidebar();
-        ensureTemplatesCacheLoaded();
     }
     if (target === 'media') loadMedia();
     if (target === 'settings') loadCompaniesSettings();
@@ -11343,6 +11350,22 @@ function closeChat() {
     }
 }
 window.closeChat = closeChat;
+
+// Responsive Window Resize Handler for Inbox Panels
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+        document.getElementById('inbox-customers-panel')?.classList.remove('hidden');
+        document.getElementById('inbox-chat-area')?.classList.remove('hidden');
+    } else {
+        if (activeInboxCustomer) {
+            document.getElementById('inbox-customers-panel')?.classList.add('hidden');
+            document.getElementById('inbox-chat-area')?.classList.remove('hidden');
+        } else {
+            document.getElementById('inbox-customers-panel')?.classList.remove('hidden');
+            document.getElementById('inbox-chat-area')?.classList.add('hidden');
+        }
+    }
+});
 
 // ⌨️ WhatsApp Web Style Escape Key Handler: Closes active chat window & refocuses search
 document.addEventListener('keydown', (e) => {
