@@ -76,7 +76,7 @@ function getCustomerMaturationInfo(cust) {
         const totalMinutes = Math.ceil(remainingMs / (1000 * 60));
         const remainingHours = Math.floor(totalMinutes / 60);
         const remainingMinutes = totalMinutes % 60;
-        const timeText = remainingHours > 0 
+        const timeText = remainingHours > 0
             ? (remainingMinutes > 0 ? `${remainingHours}h ${remainingMinutes}m` : `${remainingHours}h`)
             : `${remainingMinutes}m`;
         return { isMaturing: true, remainingHours, remainingMinutes, timeText };
@@ -2532,7 +2532,7 @@ async function ensureTemplatesCacheLoaded(force = false) {
                     return;
                 }
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 
     isFetchingTemplatesCache = true;
@@ -2545,7 +2545,7 @@ async function ensureTemplatesCacheLoaded(force = false) {
             try {
                 const coId = (typeof currentCompanyId !== 'undefined' && currentCompanyId) ? currentCompanyId : 'default';
                 sessionStorage.setItem(`templates_cache_${coId}`, JSON.stringify(rawTemplates));
-            } catch (e) {}
+            } catch (e) { }
 
             // Re-render chat if active so templates switch from fallback to real rich cards
             if (activeInboxCustomer) {
@@ -2569,7 +2569,7 @@ window.clearTemplatesCache = () => {
         sessionStorage.removeItem(`templates_cache_${coId}`);
         templatesCache = [];
         ensureTemplatesCacheLoaded(true);
-    } catch (e) {}
+    } catch (e) { }
 };
 
 let selectedCustomerIds = [];
@@ -3992,14 +3992,14 @@ function applyCustomerFilters() {
     // Dynamically update Export button labels with filtered count
     const exportLabel = document.getElementById('btn-export-customers-label');
     if (exportLabel) {
-        exportLabel.textContent = filteredCustomers.length > 0 
-            ? `Export (${filteredCustomers.length})` 
+        exportLabel.textContent = filteredCustomers.length > 0
+            ? `Export (${filteredCustomers.length})`
             : 'Export Excel';
     }
     const pdfLabel = document.getElementById('btn-export-pdf-label');
     if (pdfLabel) {
-        pdfLabel.textContent = filteredCustomers.length > 0 
-            ? `PDF (${filteredCustomers.length})` 
+        pdfLabel.textContent = filteredCustomers.length > 0
+            ? `PDF (${filteredCustomers.length})`
             : 'Export PDF';
     }
 }
@@ -4067,7 +4067,7 @@ function renderCustomersTable() {
         const custDesc = c.description || c.notes || '';
 
         const matInfo = getCustomerMaturationInfo(c);
-        const quarantineBadge = matInfo.isMaturing ? 
+        const quarantineBadge = matInfo.isMaturing ?
             `<span class="quarantine-badge" onmouseenter="showQuarantineTooltip(event, '${matInfo.timeText}')" onmouseleave="hideQuarantineTooltip()" title="In 6-hour Quarantine cooldown (${matInfo.timeText} left)">
                 <span>Quarantine: ${matInfo.timeText}</span>
                 <button type="button" class="quarantine-info-btn" onclick="openQuarantineInfoModal(event, '${matInfo.timeText}')" title="Why is this contact in quarantine? Click to view policy">🛈</button>
@@ -4078,7 +4078,7 @@ function renderCustomersTable() {
         if (c.city) addrParts.push(escapeHtml(c.city));
         if (c.state) addrParts.push(escapeHtml(c.state));
         if (c.pincode) addrParts.push(escapeHtml(c.pincode));
-        const addressDisplayHtml = addrParts.length > 0 
+        const addressDisplayHtml = addrParts.length > 0
             ? `<div style="display:flex; align-items:flex-start; gap:4px; font-size:0.8rem; color:var(--text-main); line-height:1.35;">
                 <span style="opacity:0.65; flex-shrink:0;">📍</span>
                 <span>${addrParts.join(', ')}</span>
@@ -4333,9 +4333,9 @@ function syncChatNotesUI(customer) {
 
 window.openCustomerNoteModal = (id) => {
     const numId = parseInt(id, 10);
-    const customer = (allCustomers || []).find(c => c.id === numId || c.id === id) || 
-                     (inboxCustomersList || []).find(c => c.id === numId || c.id === id) ||
-                     (activeCustomerData && (activeCustomerData.id === numId || activeCustomerData.id === id) ? activeCustomerData : null);
+    const customer = (allCustomers || []).find(c => c.id === numId || c.id === id) ||
+        (inboxCustomersList || []).find(c => c.id === numId || c.id === id) ||
+        (activeCustomerData && (activeCustomerData.id === numId || activeCustomerData.id === id) ? activeCustomerData : null);
     if (!customer) return;
 
     const modal = document.getElementById('cust-note-modal');
@@ -4715,7 +4715,7 @@ async function exportFilteredCustomersPdf() {
             6: { cellWidth: 46, halign: 'center' },
             7: { cellWidth: 67, fontStyle: 'bold', halign: 'center' }
         },
-        didParseCell: function(data) {
+        didParseCell: function (data) {
             if (data.section === 'body' && data.column.index === 7) {
                 const text = String(data.cell.raw || '');
                 if (text.includes('Open')) {
@@ -4729,7 +4729,7 @@ async function exportFilteredCustomersPdf() {
                 }
             }
         },
-        didDrawPage: function(data) {
+        didDrawPage: function (data) {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(7.5);
             doc.setTextColor(130, 140, 150);
@@ -6370,7 +6370,7 @@ function attachStep2FormListeners() {
         const mediaIconEl = document.getElementById('tpl-media-file-icon');
 
         if (fileNameTextEl) fileNameTextEl.textContent = file.name;
-        
+
         const formattedSize = file.size >= 1024 * 1024
             ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
             : `${(file.size / 1024).toFixed(0)} KB`;
@@ -7407,7 +7407,7 @@ window.loadConnectedCatalogs = async function loadConnectedCatalogs() {
                                 <span style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">ID: ${cat.id}${pCountText}</span>
                             </div>
                         </div>
-                        <a href="https://commerce.facebook.com/commerce" target="_blank" rel="noopener" class="btn secondary sm" style="text-decoration:none; font-size:0.75rem; padding:0.3rem 0.6rem;">
+                        <a href="https://facebook.com/commerce" target="_blank" rel="noopener" class="btn secondary sm" style="text-decoration:none; font-size:0.75rem; padding:0.3rem 0.6rem;">
                             Open Commerce Manager ↗
                         </a>
                     </div>
@@ -7455,7 +7455,7 @@ window.loadConnectedCatalogs = async function loadConnectedCatalogs() {
                         </p>
                         <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                             <button type="button" class="btn primary sm" onclick="openCatalogSetupModal()">🔗 Connect Meta Catalog</button>
-                            <a href="https://commerce.facebook.com/commerce" target="_blank" rel="noopener" class="btn secondary sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;">Create on Meta ↗</a>
+                            <a href="https://facebook.com/commerce" target="_blank" rel="noopener" class="btn secondary sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;">Create on Meta ↗</a>
                         </div>
                     </div>
                 `;
@@ -8124,10 +8124,10 @@ async function loadCustomersForSelect() {
                     </div>
                     <div class="bc-cust-right">
                         ${maturingBadgeHtml}
-                        ${isSent 
-                            ? `<span class="bc-sent-badge" title="Sent outbound broadcast/messages previously (${outboundCount} sent)">✓ Sent (${outboundCount})</span>`
-                            : `<span class="bc-pending-badge" title="No outbound messages sent yet">• Unsent</span>`
-                        }
+                        ${isSent
+                        ? `<span class="bc-sent-badge" title="Sent outbound broadcast/messages previously (${outboundCount} sent)">✓ Sent (${outboundCount})</span>`
+                        : `<span class="bc-pending-badge" title="No outbound messages sent yet">• Unsent</span>`
+                    }
                         <div class="bc-cust-tags">
                             ${pillsHtml}
                         </div>
@@ -8786,12 +8786,12 @@ document.getElementById('broadcast-form')?.addEventListener('submit', async (e) 
                 const activeCoId = typeof getCompanyId === 'function' ? getCompanyId() : null;
                 const senderPhoneSelect = document.getElementById('bc-sender-phone-select');
                 const senderPhoneId = senderPhoneSelect?.value || null;
-                const senderPhoneText = senderPhoneSelect && senderPhoneSelect.selectedIndex >= 0 
-                    ? senderPhoneSelect.options[senderPhoneSelect.selectedIndex].text 
+                const senderPhoneText = senderPhoneSelect && senderPhoneSelect.selectedIndex >= 0
+                    ? senderPhoneSelect.options[senderPhoneSelect.selectedIndex].text
                     : '';
 
                 let currentUser = {};
-                try { currentUser = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch(e){}
+                try { currentUser = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}'); } catch (e) { }
                 const initiatedBy = currentUser.username || currentUser.email || 'Admin';
 
                 const res = await apiFetch('/api/broadcast', {
@@ -9406,13 +9406,13 @@ window.openCampaignDetailsModal = async function openCampaignDetailsModal(campai
         // 4. Date & Sent Summary
         const dateEl = document.getElementById('cd-param-date');
         const sentSumEl = document.getElementById('cd-param-sent-summary');
-        const dateStr = camp.created_at 
-            ? new Date(camp.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+        const dateStr = camp.created_at
+            ? new Date(camp.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
             : '-';
         dateEl.textContent = dateStr;
-        
-        const totalRecipientsCount = window._currentCampaignRecipients.length > 0 
-            ? window._currentCampaignRecipients.length 
+
+        const totalRecipientsCount = window._currentCampaignRecipients.length > 0
+            ? window._currentCampaignRecipients.length
             : (camp.sent_count || 0);
         sentSumEl.textContent = `🎯 ${totalRecipientsCount} Customer(s) Targeted`;
 
@@ -9528,7 +9528,7 @@ window.renderCampaignRecipientsTable = function renderCampaignRecipientsTable() 
             statusHtml = '<span class="status-pill" style="background:#f1f5f9; color:#64748b; border:1px solid var(--border);">✓ Sent</span>';
         }
 
-        const dateStr = r.sent_at 
+        const dateStr = r.sent_at
             ? new Date(r.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', ' + new Date(r.sent_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
             : '-';
 
@@ -9617,7 +9617,7 @@ async function loadInboxSidebar() {
     }
     try {
         if (typeof availableTags === 'undefined' || !availableTags || availableTags.length === 0) {
-            if (typeof loadTags === 'function') loadTags().catch(() => {});
+            if (typeof loadTags === 'function') loadTags().catch(() => { });
         }
 
         const res = await apiFetch('/api/customers');
@@ -10487,7 +10487,7 @@ window.showToast = function showToast(message, type = 'info') {
 
     const toast = document.createElement('div');
     toast.className = `toast-popup toast-${type}`;
-    
+
     let bg = '#0f172a';
     let border = '#334155';
     let text = '#f8fafc';
@@ -10580,7 +10580,7 @@ window.saveInboxCustomerTags = async function saveInboxCustomerTags() {
         } else {
             // 1. Immediately update active customer object reference
             activeCustomerData.tags = newTagsStr;
-            
+
             // 2. Immediately update in inboxCustomersList
             if (typeof inboxCustomersList !== 'undefined' && Array.isArray(inboxCustomersList)) {
                 const inListCust = inboxCustomersList.find(c => String(c.id) === String(activeInboxCustomer));
@@ -10592,7 +10592,7 @@ window.saveInboxCustomerTags = async function saveInboxCustomerTags() {
                 const inAllCust = allCustomers.find(c => String(c.id) === String(activeInboxCustomer));
                 if (inAllCust) inAllCust.tags = newTagsStr;
             }
-            
+
             // 4. Close modal immediately
             closeInboxAssignTagsModal();
 
@@ -10609,7 +10609,7 @@ window.saveInboxCustomerTags = async function saveInboxCustomerTags() {
                         const style = getTagStyle(tn);
                         return `<span class="contact-tag-pill ${style.cls}" style="${style.styleAttr}" title="${tn}">${tn}</span>`;
                     }).join('') + (tagNames.length > 3 ? `<span style="font-size:0.6rem; color:var(--text-muted); align-self:center;">+${tagNames.length - 3}</span>` : '');
-                    
+
                     if (tagsContainer) {
                         tagsContainer.innerHTML = tagsHtml;
                     } else {
@@ -10634,7 +10634,7 @@ window.saveInboxCustomerTags = async function saveInboxCustomerTags() {
 
             showToast('Tags updated successfully', 'success');
         }
-    } catch(e) {
+    } catch (e) {
         console.error('Failed to save inbox tags:', e);
         showToast('Failed to save tags: ' + (e.message || 'Unknown error'), 'error');
     } finally {
@@ -10906,21 +10906,21 @@ function renderChatMessageMedia(m) {
     const type = (m.type || '').toLowerCase();
     const mediaUrl = (m.media_url || '').trim();
 
-    const isImage = type === 'image' || rawContent === '[Image]' || rawContent === '[image]' || 
-                    (mediaUrl && (mediaUrl.includes('mime=image') || /\.(jpe?g|png|webp|gif)($|\?)/i.test(mediaUrl)));
+    const isImage = type === 'image' || rawContent === '[Image]' || rawContent === '[image]' ||
+        (mediaUrl && (mediaUrl.includes('mime=image') || /\.(jpe?g|png|webp|gif)($|\?)/i.test(mediaUrl)));
 
-    const isVideo = type === 'video' || rawContent === '[Video]' || rawContent === '[video]' || 
-                    (mediaUrl && (mediaUrl.includes('mime=video') || /\.(mp4|mov|webm|avi|m4v)($|\?)/i.test(mediaUrl)));
+    const isVideo = type === 'video' || rawContent === '[Video]' || rawContent === '[video]' ||
+        (mediaUrl && (mediaUrl.includes('mime=video') || /\.(mp4|mov|webm|avi|m4v)($|\?)/i.test(mediaUrl)));
 
     const isAudio = type === 'audio' || rawContent === '[Audio]' || rawContent === '[audio]' || rawContent.toLowerCase().includes('voice note') ||
-                    (mediaUrl && (mediaUrl.includes('mime=audio') || /\.(ogg|opus|mp3|wav|m4a|aac)($|\?)/i.test(mediaUrl)));
+        (mediaUrl && (mediaUrl.includes('mime=audio') || /\.(ogg|opus|mp3|wav|m4a|aac)($|\?)/i.test(mediaUrl)));
 
     const isSticker = type === 'sticker' || rawContent === '[Sticker]' || rawContent === '[sticker]';
 
     // Extract caption if not a generic placeholder
     let caption = rawContent;
-    if (caption === '[Image]' || caption === '[image]' || caption === '[Video]' || caption === '[video]' || 
-        caption === '[Document]' || caption === '[document]' || caption === '[Audio]' || caption === '[audio]' || 
+    if (caption === '[Image]' || caption === '[image]' || caption === '[Video]' || caption === '[video]' ||
+        caption === '[Document]' || caption === '[document]' || caption === '[Audio]' || caption === '[audio]' ||
         caption === '[Sticker]' || caption === '[sticker]') {
         caption = '';
     }
@@ -11025,7 +11025,7 @@ function renderChatMessageMedia(m) {
                 const last = parts[parts.length - 1];
                 if (last && last.includes('.')) docName = decodeURIComponent(last);
             }
-        } catch(e) {}
+        } catch (e) { }
     }
     if (docName === 'Document' && caption && caption.includes('.')) {
         docName = caption;
@@ -11095,7 +11095,7 @@ function handleMediaImgError(imgEl, fallbackTitle) {
     }
 }
 
-window.downloadChatMedia = async function(url, defaultFilename) {
+window.downloadChatMedia = async function (url, defaultFilename) {
     if (!url) return;
     try {
         const res = await fetch(url);
@@ -11108,7 +11108,7 @@ window.downloadChatMedia = async function(url, defaultFilename) {
                 } else if (data.error) {
                     errMsg = data.error;
                 }
-            } catch(e) {}
+            } catch (e) { }
             showModal('Download Error', errMsg);
             return;
         }
@@ -11160,7 +11160,7 @@ window.downloadChatMedia = async function(url, defaultFilename) {
     }
 };
 
-window.openMediaLightbox = function(url, type) {
+window.openMediaLightbox = function (url, type) {
     const modal = document.getElementById('modal-media-lightbox');
     const container = document.getElementById('lightbox-media-container');
     const downloadBtn = document.getElementById('lightbox-download-btn');
@@ -11183,7 +11183,7 @@ window.openMediaLightbox = function(url, type) {
     modal.style.display = 'flex';
 };
 
-window.closeMediaLightbox = function() {
+window.closeMediaLightbox = function () {
     const modal = document.getElementById('modal-media-lightbox');
     const container = document.getElementById('lightbox-media-container');
     if (modal) modal.style.display = 'none';
@@ -11328,29 +11328,29 @@ async function fetchChatMessages(isInitial = false) {
                         ${templateCard.buttons && templateCard.buttons.length > 0 ? `
                             <div class="tpl-card-buttons-container">
                                 ${templateCard.buttons.map(b => {
-                                    if (b.url) {
-                                        return `
+                    if (b.url) {
+                        return `
                                             <a href="${escapeHtml(b.url)}" target="_blank" rel="noopener noreferrer" class="tpl-card-action-btn" title="Template Action: ${escapeHtml(b.text)}" style="text-decoration:none;">
                                                 <span>${b.icon || '↗️'}</span>
                                                 <span>${escapeHtml(b.text)}</span>
                                             </a>
                                         `;
-                                    }
-                                    if (b.phone_number) {
-                                        return `
+                    }
+                    if (b.phone_number) {
+                        return `
                                             <a href="tel:${escapeHtml(b.phone_number)}" class="tpl-card-action-btn" title="Call: ${escapeHtml(b.phone_number)}" style="text-decoration:none;">
                                                 <span>${b.icon || '📞'}</span>
                                                 <span>${escapeHtml(b.text)}</span>
                                             </a>
                                         `;
-                                    }
-                                    return `
+                    }
+                    return `
                                         <div class="tpl-card-action-btn" title="Template Action: ${escapeHtml(b.text)}">
                                             <span>${b.icon || '💬'}</span>
                                             <span>${escapeHtml(b.text)}</span>
                                         </div>
                                     `;
-                                }).join('')}
+                }).join('')}
                             </div>
                         ` : ''}
                     </div>
@@ -11587,7 +11587,7 @@ document.getElementById('btn-inbox-send-template')?.addEventListener('click', as
         try {
             const coId = (typeof currentCompanyId !== 'undefined' && currentCompanyId) ? currentCompanyId : 'default';
             sessionStorage.setItem(`templates_cache_${coId}`, JSON.stringify(rawTemplates));
-        } catch (e) {}
+        } catch (e) { }
         // Strictly show ONLY approved templates (exclude PENDING, REJECTED, PAUSED)
         const templates = Array.isArray(rawTemplates)
             ? rawTemplates.filter(t => (t.status || '').toUpperCase() === 'APPROVED')
@@ -12663,17 +12663,17 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                                 }
                             });
 
-                            const expDateStr = verifyData.subscription_expires_at 
-                                ? new Date(verifyData.subscription_expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) 
+                            const expDateStr = verifyData.subscription_expires_at
+                                ? new Date(verifyData.subscription_expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
                                 : '';
                             const validityNotice = expDateStr ? `<br><br>📅 <strong>Valid Until:</strong> ${expDateStr}` : '';
                             const targetNoticeEmail = email || verifyData.payment?.user_email || 'your email';
-                            const emailNotice = verifyData.email_sent 
-                                ? `<br>📧 An official payment receipt and plan confirmation has been sent to <strong>${targetNoticeEmail}</strong>.` 
+                            const emailNotice = verifyData.email_sent
+                                ? `<br>📧 An official payment receipt and plan confirmation has been sent to <strong>${targetNoticeEmail}</strong>.`
                                 : (verifyData.email_error ? `<br><small style="color:var(--text-muted);">📧 Email status: ${verifyData.email_error}</small>` : '');
 
                             showModal(
-                                'Payment Successful! 🎉', 
+                                'Payment Successful! 🎉',
                                 `Thank you! Your payment of ₹${orderData.amount.toLocaleString('en-IN')} for <strong>${planName}</strong> has been verified and active features unlocked!${validityNotice}${emailNotice}`
                             );
                         } else {
@@ -12766,13 +12766,13 @@ window.proceedToRazorpayPayment = async function proceedToRazorpayPayment(e) {
                             }
                         });
 
-                        const expDateStr = verifyData.subscription_expires_at 
-                            ? new Date(verifyData.subscription_expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) 
+                        const expDateStr = verifyData.subscription_expires_at
+                            ? new Date(verifyData.subscription_expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
                             : '';
                         const validityNotice = expDateStr ? `<br><br>📅 <strong>Valid Until:</strong> ${expDateStr}` : '';
                         const targetNoticeEmail = email || verifyData.payment?.user_email || 'your email';
-                        const emailNotice = verifyData.email_sent 
-                            ? `<br>📧 An official payment receipt and plan confirmation has been sent to <strong>${targetNoticeEmail}</strong>.` 
+                        const emailNotice = verifyData.email_sent
+                            ? `<br>📧 An official payment receipt and plan confirmation has been sent to <strong>${targetNoticeEmail}</strong>.`
                             : (verifyData.email_error ? `<br><small style="color:var(--text-muted);">📧 Email status: ${verifyData.email_error}</small>` : '');
 
                         showModal('Subscription Activated! 🎉', `Payment verified successfully! Subscription activated for <strong>${planName}</strong>.${validityNotice}${emailNotice}`);
@@ -13300,10 +13300,10 @@ function isEnterpriseActive(specificCompanyId) {
         }
         return false;
     }
-    const isInspenox = !!((activeComp.slug && activeComp.slug.toLowerCase() === 'inspenox') || 
-                          (activeComp.name && activeComp.name.toLowerCase() === 'inspenox') || 
-                          activeComp.is_parent === true || 
-                          activeComp.is_master === true);
+    const isInspenox = !!((activeComp.slug && activeComp.slug.toLowerCase() === 'inspenox') ||
+        (activeComp.name && activeComp.name.toLowerCase() === 'inspenox') ||
+        activeComp.is_parent === true ||
+        activeComp.is_master === true);
     if (isInspenox) return true;
 
     const isExpired = !!(activeComp.subscription_expires_at && (new Date(activeComp.subscription_expires_at) < new Date()));
@@ -13814,7 +13814,7 @@ function onRuleButtonSelectChanged(btnText) {
     const chipsContainer = document.getElementById('modal-rule-buttons-chips');
     let targetChip = null;
     if (chipsContainer) {
-        targetChip = Array.from(chipsContainer.querySelectorAll('.auto-rule-btn-chip')).find(c => 
+        targetChip = Array.from(chipsContainer.querySelectorAll('.auto-rule-btn-chip')).find(c =>
             c.textContent.trim().includes(btnText.trim())
         );
     }
@@ -14059,7 +14059,7 @@ async function submitAutoRuleModal() {
     const chainStep = parseInt(document.getElementById('modal-rule-chain-step')?.value, 10) || 1;
     const parentRuleId = document.getElementById('modal-rule-parent-id')?.value || null;
     const triggerType = document.getElementById('modal-rule-trigger-type')?.value;
-    
+
     let triggerValue = '';
     if (triggerType === 'button_reply') {
         triggerValue = document.getElementById('modal-rule-trigger-value')?.value?.trim() || '';
@@ -14151,8 +14151,8 @@ function openAutoTestModal(ruleId = null) {
     const phoneInput = document.getElementById('auto-test-phone-input');
 
     if (activeTestRule) {
-        const desc = activeTestRule.response_type === 'text' 
-            ? `Text: "${(activeTestRule.response_text || '').slice(0, 35)}..."` 
+        const desc = activeTestRule.response_type === 'text'
+            ? `Text: "${(activeTestRule.response_text || '').slice(0, 35)}..."`
             : `Template: "${activeTestRule.template_name}"`;
         if (targetLabel) targetLabel.textContent = `Rule "${activeTestRule.name}" ➔ ${desc}`;
     } else {
@@ -14163,7 +14163,7 @@ function openAutoTestModal(ruleId = null) {
     // Pre-fill phone if available in session
     if (phoneInput && !phoneInput.value) {
         let user = {};
-        try { user = JSON.parse(localStorage.getItem('inspenox_user') || '{}'); } catch(e) {}
+        try { user = JSON.parse(localStorage.getItem('inspenox_user') || '{}'); } catch (e) { }
         phoneInput.value = user.phone ? String(user.phone).replace(/\D/g, '') : '91';
     }
 

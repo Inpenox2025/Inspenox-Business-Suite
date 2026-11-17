@@ -1481,7 +1481,7 @@ function attachStep2FormListeners() {
         const mediaIconEl = document.getElementById('tpl-media-file-icon');
 
         if (fileNameTextEl) fileNameTextEl.textContent = file.name;
-        
+
         const formattedSize = file.size >= 1024 * 1024
             ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
             : `${(file.size / 1024).toFixed(0)} KB`;
@@ -2540,7 +2540,7 @@ window.loadConnectedCatalogs = async function loadConnectedCatalogs() {
                                 <span style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;">ID: ${cat.id}${pCountText}</span>
                             </div>
                         </div>
-                        <a href="https://commerce.facebook.com/commerce" target="_blank" rel="noopener" class="btn secondary sm" style="text-decoration:none; font-size:0.75rem; padding:0.3rem 0.6rem;">
+                        <a href="https://facebook.com/commerce" target="_blank" rel="noopener" class="btn secondary sm" style="text-decoration:none; font-size:0.75rem; padding:0.3rem 0.6rem;">
                             Open Commerce Manager ↗
                         </a>
                     </div>
@@ -2588,7 +2588,7 @@ window.loadConnectedCatalogs = async function loadConnectedCatalogs() {
                         </p>
                         <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                             <button type="button" class="btn primary sm" onclick="openCatalogSetupModal()">🔗 Connect Meta Catalog</button>
-                            <a href="https://commerce.facebook.com/commerce" target="_blank" rel="noopener" class="btn secondary sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;">Create on Meta ↗</a>
+                            <a href="https://facebook.com/commerce" target="_blank" rel="noopener" class="btn secondary sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;">Create on Meta ↗</a>
                         </div>
                     </div>
                 `;
@@ -2765,7 +2765,7 @@ window.submitInAppCatalog = async function submitInAppCatalog() {
     rows.forEach(r => {
         const pName = (r.querySelector('.inp-prod-name')?.value || '').trim();
         const pPrice = parseFloat(r.querySelector('.inp-prod-price')?.value) || 0;
-        const pSku = (r.querySelector('.inp-prod-sku')?.value || '').trim() || `SKU_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+        const pSku = (r.querySelector('.inp-prod-sku')?.value || '').trim() || `SKU_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
         if (pName) {
             items.push({
@@ -2815,7 +2815,7 @@ window.submitInAppCatalog = async function submitInAppCatalog() {
                 closeCatalogSetupModal();
             }, 900);
         }
-    } catch(err) {
+    } catch (err) {
         showModal('Error', 'Network error creating catalog: ' + err.message);
     } finally {
         if (saveBtn) {
