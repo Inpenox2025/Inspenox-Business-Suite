@@ -388,53 +388,67 @@ let currentLibrarySearch = '';
 let activeModalTemplate = null;
 let activeModalPreviewTab = 'parameters'; // 'parameters' | 'example'
 
+// Smart sample generator for Example preview mode
+function getRealisticSampleValue(varKey, lang) {
+    const k = String(varKey).toLowerCase();
+    if (lang === 'te') {
+        if (k.includes('name') || k.includes('customer')) return 'రాజీవ్';
+        if (k.includes('order')) return '#INSP-89412';
+        if (k.includes('date')) return '24 నవంబర్';
+        if (k.includes('address')) return 'ప్లాట్ నెం. 12, మాదాపూర్, హైదరాబాద్';
+        if (k.includes('code') || k === '1') return '582910';
+        if (k.includes('product')) return 'రోటవేటర్';
+        return 'రాజేష్';
+    } else if (lang === 'hi') {
+        if (k.includes('name') || k.includes('customer')) return 'अमित';
+        if (k.includes('order')) return '#ORD-55412';
+        if (k.includes('date')) return '24 नवंबर';
+        if (k.includes('address')) return 'प्लॉट 42, मालवीय नगर, जयपुर';
+        if (k.includes('code') || k === '1') return '582910';
+        if (k.includes('product')) return 'रोटावेटर';
+        return 'विजय';
+    } else {
+        if (k.includes('name') || k.includes('customer')) return 'Alex';
+        if (k.includes('order')) return '#ORD-98412';
+        if (k.includes('date')) return 'Nov 24';
+        if (k.includes('address')) return '42 Palm Street, Suite 3B';
+        if (k.includes('code') || k === '1') return '582910';
+        if (k.includes('product')) return 'Rotavator';
+        return 'John Doe';
+    }
+}
+
 // --- View Tabs Switcher (My Templates vs Template Library) ---
 window.switchTemplateTab = function switchTemplateTab(tab) {
+    const isLib = tab === 'library';
     const myTabBtn = document.getElementById('tab-btn-my-templates') || document.getElementById('tab-my-templates');
     const libTabBtn = document.getElementById('tab-btn-library-templates') || document.getElementById('tab-library-templates');
     const myView = document.getElementById('templates-my-container');
     const libView = document.getElementById('templates-library-container');
 
-    if (tab === 'library') {
-        if (myTabBtn) {
-            myTabBtn.classList.remove('active');
-            myTabBtn.style.color = 'var(--text-muted)';
-            myTabBtn.style.borderBottom = '3px solid transparent';
-            myTabBtn.style.background = 'transparent';
-            myTabBtn.style.fontWeight = '600';
-        }
-        if (libTabBtn) {
-            libTabBtn.classList.add('active');
-            libTabBtn.style.color = 'var(--primary)';
-            libTabBtn.style.borderBottom = '3px solid var(--primary)';
-            libTabBtn.style.background = 'var(--bg-card)';
-            libTabBtn.style.fontWeight = '700';
-        }
-        if (myView) myView.style.display = 'none';
-        if (libView) {
-            libView.style.display = 'block';
+    if (myTabBtn) {
+        myTabBtn.classList.toggle('active', !isLib);
+        myTabBtn.style.color = !isLib ? 'var(--primary)' : 'var(--text-muted)';
+        myTabBtn.style.borderBottom = !isLib ? '3px solid var(--primary)' : '3px solid transparent';
+        myTabBtn.style.background = !isLib ? 'var(--bg-card)' : 'transparent';
+        myTabBtn.style.fontWeight = !isLib ? '700' : '600';
+    }
+    if (libTabBtn) {
+        libTabBtn.classList.toggle('active', isLib);
+        libTabBtn.style.color = isLib ? 'var(--primary)' : 'var(--text-muted)';
+        libTabBtn.style.borderBottom = isLib ? '3px solid var(--primary)' : '3px solid transparent';
+        libTabBtn.style.background = isLib ? 'var(--bg-card)' : 'transparent';
+        libTabBtn.style.fontWeight = isLib ? '700' : '600';
+    }
+    if (myView) myView.style.display = isLib ? 'none' : 'block';
+    if (libView) {
+        libView.style.display = isLib ? 'block' : 'none';
+        if (isLib) {
             if (typeof populateLibraryFeatureFilters === 'function') {
                 populateLibraryFeatureFilters();
             }
             renderTemplateLibrary();
         }
-    } else {
-        if (myTabBtn) {
-            myTabBtn.classList.add('active');
-            myTabBtn.style.color = 'var(--primary)';
-            myTabBtn.style.borderBottom = '3px solid var(--primary)';
-            myTabBtn.style.background = 'var(--bg-card)';
-            myTabBtn.style.fontWeight = '700';
-        }
-        if (libTabBtn) {
-            libTabBtn.classList.remove('active');
-            libTabBtn.style.color = 'var(--text-muted)';
-            libTabBtn.style.borderBottom = '3px solid transparent';
-            libTabBtn.style.background = 'transparent';
-            libTabBtn.style.fontWeight = '600';
-        }
-        if (myView) myView.style.display = 'block';
-        if (libView) libView.style.display = 'none';
     }
 };
 
@@ -452,9 +466,9 @@ window.populateLibraryFeatureFilters = function populateLibraryFeatureFilters() 
     let html = `
         <button type="button" class="btn text-left tpl-lib-feat-btn ${currentLibraryFeature === 'ALL' ? 'active' : ''}"
             onclick="setLibraryFeatureFilter('ALL', this)"
-            style="text-align: left; padding: 0.45rem 0.65rem; border-radius: 6px; font-size: 0.825rem; font-weight: ${currentLibraryFeature === 'ALL' ? '700' : '500'}; background: ${currentLibraryFeature === 'ALL' ? 'rgba(0, 168, 132, 0.12)' : 'transparent'}; color: ${currentLibraryFeature === 'ALL' ? 'var(--primary)' : 'var(--text-main)'}; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            style="text-align: left; padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.825rem; font-weight: ${currentLibraryFeature === 'ALL' ? '700' : '500'}; background: ${currentLibraryFeature === 'ALL' ? 'rgba(0, 168, 132, 0.12)' : 'transparent'}; color: ${currentLibraryFeature === 'ALL' ? 'var(--primary)' : 'var(--text-main)'}; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; transition: all 0.15s ease;">
             <span>All Features</span>
-            <span style="font-size: 0.75rem; background: var(--bg-main, #f1f5f9); padding: 1px 6px; border-radius: 10px; color: var(--text-muted);">${META_TEMPLATE_LIBRARY.length}</span>
+            <span style="font-size: 0.75rem; background: var(--bg-main, #f1f5f9); padding: 1px 7px; border-radius: 10px; color: var(--text-muted); font-weight: 600;">${META_TEMPLATE_LIBRARY.length}</span>
         </button>
     `;
 
@@ -464,9 +478,9 @@ window.populateLibraryFeatureFilters = function populateLibraryFeatureFilters() 
         html += `
             <button type="button" class="btn text-left tpl-lib-feat-btn ${isActive ? 'active' : ''}"
                 onclick="setLibraryFeatureFilter('${escapeHtml(feat)}', this)"
-                style="text-align: left; padding: 0.45rem 0.65rem; border-radius: 6px; font-size: 0.825rem; font-weight: ${isActive ? '700' : '500'}; background: ${isActive ? 'rgba(0, 168, 132, 0.12)' : 'transparent'}; color: ${isActive ? 'var(--primary)' : 'var(--text-main)'}; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                style="text-align: left; padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.825rem; font-weight: ${isActive ? '700' : '500'}; background: ${isActive ? 'rgba(0, 168, 132, 0.12)' : 'transparent'}; color: ${isActive ? 'var(--primary)' : 'var(--text-main)'}; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; transition: all 0.15s ease;">
                 <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;">${escapeHtml(feat)}</span>
-                <span style="font-size: 0.75rem; background: var(--bg-main, #f1f5f9); padding: 1px 6px; border-radius: 10px; color: var(--text-muted); margin-left: 4px;">${count}</span>
+                <span style="font-size: 0.75rem; background: var(--bg-main, #f1f5f9); padding: 1px 7px; border-radius: 10px; color: var(--text-muted); margin-left: 4px; font-weight: 600;">${count}</span>
             </button>
         `;
     });
@@ -480,6 +494,16 @@ window.renderTemplateLibrary = function renderTemplateLibrary() {
     const countBadge = document.getElementById('library-templates-count');
     const countLabel = document.getElementById('tpl-lib-count-label');
     if (!grid) return;
+
+    // Always synchronize live state from the DOM controls
+    const langSel = document.getElementById('tpl-lib-language');
+    if (langSel && langSel.value) {
+        currentLibraryLanguage = langSel.value === 'all' ? 'ALL' : langSel.value;
+    }
+    const searchInp = document.getElementById('tpl-lib-search');
+    if (searchInp && searchInp.value !== undefined) {
+        currentLibrarySearch = searchInp.value.toLowerCase().trim();
+    }
 
     const filtered = META_TEMPLATE_LIBRARY.filter(t => {
         const matchCat = currentLibraryCategory === 'ALL' || t.category === currentLibraryCategory;
@@ -503,10 +527,10 @@ window.renderTemplateLibrary = function renderTemplateLibrary() {
 
     if (filtered.length === 0) {
         grid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
-                <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🔍</div>
-                <h4 style="color: var(--text-main); margin: 0 0 0.35rem 0;">No templates match your filters</h4>
-                <p style="font-size: 0.85rem; margin: 0 0 1rem 0;">Try resetting the language, category, or search keywords.</p>
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1rem; color: var(--text-muted);">
+                <div style="font-size: 2.4rem; margin-bottom: 0.6rem;">🔍</div>
+                <h4 style="color: var(--text-main); margin: 0 0 0.35rem 0; font-size: 1.1rem;">No templates match your filters</h4>
+                <p style="font-size: 0.85rem; margin: 0 0 1.25rem 0;">Try resetting the language, category, or search keywords.</p>
                 <button type="button" class="btn secondary sm" onclick="resetLibraryFilters()">Reset Filters</button>
             </div>
         `;
@@ -516,17 +540,17 @@ window.renderTemplateLibrary = function renderTemplateLibrary() {
     grid.innerHTML = filtered.map(t => {
         const catBadgeColor = t.category === 'UTILITY' ? 'badge-blue' : (t.category === 'MARKETING' ? 'badge-green' : 'badge-amber');
         
-        // Highlight parameters like {{text}} or {{customer_name}}
-        const formattedBody = escapeHtml(t.body.text).replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, '<span style="color:#00a884; font-weight:700; background:rgba(0,168,132,0.1); padding:1px 5px; border-radius:4px;">{{$1}}</span>');
+        // Highlight parameters like {{text}} or {{customer_name}} with distinct green WhatsApp pills
+        const formattedBody = escapeHtml(t.body.text).replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, '<span class="tpl-param-pill">{{$1}}</span>');
 
         // Buttons HTML preview
         let buttonsHtml = '';
         if (Array.isArray(t.buttons) && t.buttons.length > 0) {
             buttonsHtml = `
-                <div style="display:flex; flex-direction:column; gap:0.3rem; margin-top:0.6rem; border-top:1px solid #e9edef; padding-top:0.5rem;">
+                <div style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.65rem; border-top:1px solid #e9edef; padding-top:0.55rem;">
                     ${t.buttons.map(b => {
                         const icon = b.type === 'CATALOG' ? '🛒' : (b.type === 'MPM' ? '🛍️' : (b.type === 'URL' ? '↗' : (b.type === 'PHONE_NUMBER' ? '📞' : '📋')));
-                        return `<div style="color:#00a884; font-size:0.75rem; font-weight:600; text-align:center; padding:0.3rem; background:#fff; border-radius:6px; border:1px solid #e9edef; display:flex; align-items:center; justify-content:center; gap:5px;">
+                        return `<div style="color:#00a884; font-size:0.75rem; font-weight:600; text-align:center; padding:0.35rem; background:#fff; border-radius:6px; border:1px solid #e9edef; display:flex; align-items:center; justify-content:center; gap:5px; box-shadow:0 1px 2px rgba(0,0,0,0.04);">
                             <span>${icon}</span> <span>${escapeHtml(b.text || 'View')}</span>
                         </div>`;
                     }).join('')}
@@ -535,22 +559,22 @@ window.renderTemplateLibrary = function renderTemplateLibrary() {
         }
 
         return `
-            <div class="card library-template-card" style="cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; border-radius:12px; transition:all 0.2s; border:1px solid var(--border);" onclick="openLibraryTemplateModal('${t.id}')">
+            <div class="card library-template-card" style="cursor:pointer;" onclick="openLibraryTemplateModal('${t.id}')">
                 <div>
-                    <!-- Card Top Header -->
+                    <!-- Top Category & Language Bar -->
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                        <span class="badge ${catBadgeColor}" style="font-size:0.68rem; font-weight:700; letter-spacing:0.04em;">${t.category}</span>
-                        <div style="display:flex; align-items:center; gap:5px;">
-                            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${t.languageName}</span>
+                        <span class="badge ${catBadgeColor}" style="font-size:0.7rem; font-weight:700; letter-spacing:0.04em;">${t.category}</span>
+                        <div style="display:flex; align-items:center; gap:5px; background:rgba(0,0,0,0.04); padding:2px 8px; border-radius:12px;">
+                            <span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">${t.languageName}</span>
                             <span style="font-size:0.85rem;">🌐</span>
                         </div>
                     </div>
 
-                    <!-- WhatsApp Preview Bubble -->
-                    <div style="background:#efeae2; border-radius:10px; padding:0.85rem; margin-bottom:0.85rem; box-shadow:inset 0 1px 3px rgba(0,0,0,0.05); font-family:system-ui, -apple-system, sans-serif;">
-                        <div style="background:#ffffff; border-radius:8px 8px 8px 0; padding:0.75rem 0.85rem; box-shadow:0 1px 2px rgba(0,0,0,0.12);">
+                    <!-- WhatsApp Preview Screen -->
+                    <div class="tpl-lib-bubble-wrap">
+                        <div class="tpl-lib-bubble-msg">
                             ${t.header?.text ? `
-                                <div style="font-weight:700; font-size:0.825rem; color:#111b21; margin-bottom:0.35rem; display:flex; align-items:center; gap:5px;">
+                                <div style="font-weight:700; font-size:0.85rem; color:#111b21; margin-bottom:0.4rem; display:flex; align-items:center; gap:5px;">
                                     ${t.header.format === 'CATALOG_HEADER' ? '🛍️' : ''}
                                     <span>${escapeHtml(t.header.text)}</span>
                                 </div>
@@ -558,7 +582,7 @@ window.renderTemplateLibrary = function renderTemplateLibrary() {
                             <div style="font-size:0.8rem; color:#111b21; line-height:1.45; word-break:break-word;">
                                 ${formattedBody}
                             </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.35rem; font-size:0.65rem; color:#667781;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.4rem; font-size:0.65rem; color:#667781;">
                                 <span>${escapeHtml(t.footer?.text || '')}</span>
                                 <span style="display:flex; align-items:center; gap:2px;">
                                     <span>07:01</span>
@@ -570,13 +594,13 @@ window.renderTemplateLibrary = function renderTemplateLibrary() {
                     </div>
                 </div>
 
-                <!-- Card Bottom Actions -->
-                <div style="border-top:1px solid var(--border); padding-top:0.75rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
-                    <div style="overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1;">
+                <!-- Bottom Meta & Action Button -->
+                <div style="border-top:1px solid var(--border); padding-top:0.75rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; margin-top:auto;">
+                    <div style="overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1;" title="${escapeHtml(t.name)}">
                         <div style="font-weight:700; font-size:0.825rem; color:var(--text-main); font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(t.name)}</div>
                         <div style="font-size:0.72rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(t.feature)}</div>
                     </div>
-                    <button type="button" class="btn primary sm tpl-lib-use-btn" style="font-size:0.75rem; padding:0.35rem 0.75rem; white-space:nowrap; flex-shrink:0;" onclick="event.stopPropagation(); openLibraryTemplateModal('${t.id}')">
+                    <button type="button" class="btn primary sm tpl-lib-use-btn" onclick="event.stopPropagation(); openLibraryTemplateModal('${t.id}')">
                         Use Template ➔
                     </button>
                 </div>
@@ -634,6 +658,8 @@ window.filterLibraryByFeature = function filterLibraryByFeature(feat) {
 
 window.filterLibraryByLanguage = function filterLibraryByLanguage(lang) {
     currentLibraryLanguage = lang;
+    const langSelect = document.getElementById('tpl-lib-language') || document.getElementById('library-lang-select');
+    if (langSelect) langSelect.value = lang.toLowerCase();
     renderTemplateLibrary();
 };
 
@@ -673,7 +699,7 @@ window.resetLibraryFilters = function resetLibraryFilters() {
     renderTemplateLibrary();
 };
 
-// --- Template Details Preview Modal (Matching Image 2) ---
+// --- Template Details Preview Modal ---
 window.updateLibraryModalNameCounter = function updateLibraryModalNameCounter(val) {
     const counter = document.getElementById('lib-modal-name-counter');
     if (counter) {
@@ -684,7 +710,7 @@ window.updateLibraryModalNameCounter = function updateLibraryModalNameCounter(va
 };
 
 window.openLibraryTemplateModal = function openLibraryTemplateModal(templateId) {
-    const tpl = META_TEMPLATE_LIBRARY.find(t => t.id === templateId);
+    const tpl = META_TEMPLATE_LIBRARY.find(t => t.id === templateId || t.name === templateId);
     if (!tpl) return;
 
     activeModalTemplate = tpl;
@@ -727,27 +753,9 @@ window.setLibraryPreviewTab = function setLibraryPreviewTab(tabName) {
     const btnExample = document.getElementById('lib-preview-tab-example');
 
     if (btnParams && btnExample) {
-        if (activeModalPreviewTab === 'parameters') {
-            btnParams.style.background = '#fff';
-            btnParams.style.color = 'var(--text-main, #111b21)';
-            btnParams.style.fontWeight = '700';
-            btnParams.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-
-            btnExample.style.background = 'transparent';
-            btnExample.style.color = 'var(--text-muted, #667781)';
-            btnExample.style.fontWeight = '600';
-            btnExample.style.boxShadow = 'none';
-        } else {
-            btnExample.style.background = '#fff';
-            btnExample.style.color = 'var(--text-main, #111b21)';
-            btnExample.style.fontWeight = '700';
-            btnExample.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-
-            btnParams.style.background = 'transparent';
-            btnParams.style.color = 'var(--text-muted, #667781)';
-            btnParams.style.fontWeight = '600';
-            btnParams.style.boxShadow = 'none';
-        }
+        const isParams = activeModalPreviewTab === 'parameters';
+        btnParams.classList.toggle('active', isParams);
+        btnExample.classList.toggle('active', !isParams);
     }
     renderLibraryModalBubblePreview();
 };
@@ -761,12 +769,23 @@ function renderLibraryModalBubblePreview() {
 
     const headerEl = document.getElementById('lib-preview-header');
     const bodyEl = document.getElementById('lib-preview-body');
+    const footerEl = document.getElementById('lib-preview-footer');
     const buttonsEl = document.getElementById('lib-preview-buttons');
 
-    const rawText = isExample ? (tpl.body.exampleText || tpl.body.text) : tpl.body.text;
-    const displayText = isExample 
-        ? escapeHtml(rawText)
-        : escapeHtml(rawText).replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, '<span style="color:#00a884; font-weight:700; background:rgba(0,168,132,0.12); padding:1px 5px; border-radius:4px;">{{$1}}</span>');
+    // Body rendering:
+    // In Parameters mode: show with {{variable_name}} highlighted in green pill
+    // In Example mode: show with actual realistic values substituted
+    let displayText = '';
+    if (isExample) {
+        let textToUse = tpl.body.exampleText || tpl.body.text;
+        // If text still contains {{...}}, substitute with realistic values
+        textToUse = textToUse.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, p1) => {
+            return getRealisticSampleValue(p1, tpl.language);
+        });
+        displayText = escapeHtml(textToUse);
+    } else {
+        displayText = escapeHtml(tpl.body.text).replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, '<span class="tpl-param-pill">{{$1}}</span>');
+    }
 
     // Header element
     if (headerEl) {
@@ -785,13 +804,24 @@ function renderLibraryModalBubblePreview() {
         bodyEl.innerHTML = displayText;
     }
 
+    // Footer element
+    if (footerEl) {
+        if (tpl.footer?.text) {
+            footerEl.style.display = 'block';
+            footerEl.textContent = tpl.footer.text;
+        } else {
+            footerEl.style.display = 'none';
+            footerEl.textContent = '';
+        }
+    }
+
     // Buttons element
     if (buttonsEl) {
         if (Array.isArray(tpl.buttons) && tpl.buttons.length > 0) {
             buttonsEl.style.display = 'flex';
             buttonsEl.innerHTML = tpl.buttons.map(b => {
                 const icon = b.type === 'CATALOG' ? '🛒' : (b.type === 'MPM' ? '🛍️' : (b.type === 'URL' ? '↗' : (b.type === 'PHONE_NUMBER' ? '📞' : '📋')));
-                return `<div style="color:#00a884; font-size:0.8rem; font-weight:600; text-align:center; padding:0.4rem; background:#fff; border-radius:6px; border:1px solid #e9edef; display:flex; align-items:center; justify-content:center; gap:6px;">
+                return `<div style="color:#00a884; font-size:0.8rem; font-weight:600; text-align:center; padding:0.45rem; background:#fff; border-radius:6px; border:1px solid #e9edef; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
                     <span>${icon}</span> <span>${escapeHtml(b.text || 'View')}</span>
                 </div>`;
             }).join('');
@@ -799,45 +829,6 @@ function renderLibraryModalBubblePreview() {
             buttonsEl.style.display = 'none';
             buttonsEl.innerHTML = '';
         }
-    }
-
-    // Fallback if full bubble content container is targeted
-    const fallbackBubble = document.getElementById('lib-modal-bubble-content');
-    if (fallbackBubble && !bodyEl) {
-        let buttonsHtml = '';
-        if (Array.isArray(tpl.buttons) && tpl.buttons.length > 0) {
-            buttonsHtml = `
-                <div style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.75rem; border-top:1px solid #e9edef; padding-top:0.6rem;">
-                    ${tpl.buttons.map(b => {
-                        const icon = b.type === 'CATALOG' ? '🛒' : (b.type === 'MPM' ? '🛍️' : (b.type === 'URL' ? '↗' : (b.type === 'PHONE_NUMBER' ? '📞' : '📋')));
-                        return `<div style="color:#00a884; font-size:0.8rem; font-weight:600; text-align:center; padding:0.4rem; background:#fff; border-radius:6px; border:1px solid #e9edef; display:flex; align-items:center; justify-content:center; gap:6px;">
-                            <span>${icon}</span> <span>${escapeHtml(b.text || 'View')}</span>
-                        </div>`;
-                    }).join('')}
-                </div>
-            `;
-        }
-        fallbackBubble.innerHTML = `
-            <div style="background:#ffffff; border-radius:8px 8px 8px 0; padding:0.85rem 1rem; box-shadow:0 1px 2px rgba(0,0,0,0.15);">
-                ${tpl.header?.text ? `
-                    <div style="font-weight:700; font-size:0.9rem; color:#111b21; margin-bottom:0.4rem; display:flex; align-items:center; gap:6px;">
-                        ${tpl.header.format === 'CATALOG_HEADER' ? '🛍️' : ''}
-                        <span>${escapeHtml(tpl.header.text)}</span>
-                    </div>
-                ` : ''}
-                <div style="font-size:0.85rem; color:#111b21; line-height:1.5; word-break:break-word;">
-                    ${displayText}
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.4rem; font-size:0.68rem; color:#667781;">
-                    <span>${escapeHtml(tpl.footer?.text || '')}</span>
-                    <span style="display:flex; align-items:center; gap:2px;">
-                        <span>07:01</span>
-                        <span style="color:#53bdeb; font-weight:bold;">✓✓</span>
-                    </span>
-                </div>
-                ${buttonsHtml}
-            </div>
-        `;
     }
 }
 
@@ -1018,6 +1009,15 @@ window.submitLibraryTemplateDirectly = async function submitLibraryTemplateDirec
 
 // Initialize Library on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
+    const langSel = document.getElementById('tpl-lib-language');
+    if (langSel) {
+        langSel.addEventListener('change', filterTemplateLibrary);
+    }
+    const searchInp = document.getElementById('tpl-lib-search');
+    if (searchInp) {
+        searchInp.addEventListener('input', filterTemplateLibrary);
+    }
+
     // If the template view is loaded, ensure library can be rendered
     const libView = document.getElementById('templates-library-container');
     if (libView) {

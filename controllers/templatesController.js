@@ -43,6 +43,12 @@ async function loadTemplates() {
         templatesCache.is_view_only = isViewOnly;
         templatesCache.is_configured = isConfigured;
 
+        // Update My Templates count badge in tab navigation
+        const myBadge = document.getElementById('my-templates-count-badge');
+        if (myBadge) {
+            myBadge.textContent = Array.isArray(templatesCache) ? templatesCache.length : '0';
+        }
+
         // Toggle View-Only Notification Banner
         const bannerEl = document.getElementById('templates-view-only-banner');
         if (bannerEl) {
@@ -2835,29 +2841,30 @@ window.downloadCatalogCsvFeed = function downloadCatalogCsvFeed(catalogId = '') 
 
 // --- Template Tab Switching (My Templates vs Template Library) ---
 window.switchTemplateTab = function switchTemplateTab(tab) {
+    const isLib = tab === 'library';
     const myBtn = document.getElementById('tab-btn-my-templates') || document.getElementById('tab-my-templates');
     const libBtn = document.getElementById('tab-btn-library-templates') || document.getElementById('tab-library-templates');
     const myContainer = document.getElementById('templates-my-container');
     const libContainer = document.getElementById('templates-library-container');
 
-    if (tab === 'library') {
-        if (libBtn) {
-            libBtn.classList.add('active');
-            libBtn.style.color = 'var(--primary)';
-            libBtn.style.borderBottom = '3px solid var(--primary)';
-            libBtn.style.background = 'var(--bg-card)';
-            libBtn.style.fontWeight = '700';
-        }
-        if (myBtn) {
-            myBtn.classList.remove('active');
-            myBtn.style.color = 'var(--text-muted)';
-            myBtn.style.borderBottom = '3px solid transparent';
-            myBtn.style.background = 'transparent';
-            myBtn.style.fontWeight = '600';
-        }
-        if (myContainer) myContainer.style.display = 'none';
-        if (libContainer) {
-            libContainer.style.display = 'block';
+    if (myBtn) {
+        myBtn.classList.toggle('active', !isLib);
+        myBtn.style.color = !isLib ? 'var(--primary)' : 'var(--text-muted)';
+        myBtn.style.borderBottom = !isLib ? '3px solid var(--primary)' : '3px solid transparent';
+        myBtn.style.background = !isLib ? 'var(--bg-card)' : 'transparent';
+        myBtn.style.fontWeight = !isLib ? '700' : '600';
+    }
+    if (libBtn) {
+        libBtn.classList.toggle('active', isLib);
+        libBtn.style.color = isLib ? 'var(--primary)' : 'var(--text-muted)';
+        libBtn.style.borderBottom = isLib ? '3px solid var(--primary)' : '3px solid transparent';
+        libBtn.style.background = isLib ? 'var(--bg-card)' : 'transparent';
+        libBtn.style.fontWeight = isLib ? '700' : '600';
+    }
+    if (myContainer) myContainer.style.display = isLib ? 'none' : 'block';
+    if (libContainer) {
+        libContainer.style.display = isLib ? 'block' : 'none';
+        if (isLib) {
             if (typeof populateLibraryFeatureFilters === 'function') {
                 populateLibraryFeatureFilters();
             }
@@ -2865,23 +2872,6 @@ window.switchTemplateTab = function switchTemplateTab(tab) {
                 renderTemplateLibrary();
             }
         }
-    } else {
-        if (myBtn) {
-            myBtn.classList.add('active');
-            myBtn.style.color = 'var(--primary)';
-            myBtn.style.borderBottom = '3px solid var(--primary)';
-            myBtn.style.background = 'var(--bg-card)';
-            myBtn.style.fontWeight = '700';
-        }
-        if (libBtn) {
-            libBtn.classList.remove('active');
-            libBtn.style.color = 'var(--text-muted)';
-            libBtn.style.borderBottom = '3px solid transparent';
-            libBtn.style.background = 'transparent';
-            libBtn.style.fontWeight = '600';
-        }
-        if (myContainer) myContainer.style.display = 'block';
-        if (libContainer) libContainer.style.display = 'none';
     }
 };
 

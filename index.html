@@ -1066,20 +1066,15 @@
                 <!-- Navigation Tabs: My Templates vs Template Library -->
                 <div class="tabs-nav-wrapper"
                     style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 2px solid var(--border);">
-                    <button type="button" id="tab-btn-my-templates" class="btn tab-btn active"
-                        onclick="switchTemplateTab('my')"
-                        style="border: none; border-radius: 8px 8px 0 0; padding: 0.7rem 1.25rem; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; background: var(--bg-card); color: var(--primary); border-bottom: 3px solid var(--primary); margin-bottom: -2px;">
+                    <button type="button" id="tab-btn-my-templates" class="tpl-nav-tab active"
+                        onclick="switchTemplateTab('my')">
                         <span>📁 My Templates</span>
-                        <span id="my-templates-count-badge"
-                            style="background: rgba(0, 168, 132, 0.15); color: var(--primary); padding: 0.15rem 0.55rem; border-radius: 12px; font-size: 0.75rem;">...</span>
+                        <span id="my-templates-count-badge" class="tpl-tab-badge">0</span>
                     </button>
-                    <button type="button" id="tab-btn-library-templates" class="btn tab-btn"
-                        onclick="switchTemplateTab('library')"
-                        style="border: none; border-radius: 8px 8px 0 0; padding: 0.7rem 1.25rem; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; background: transparent; color: var(--text-muted); border-bottom: 3px solid transparent; margin-bottom: -2px;">
+                    <button type="button" id="tab-btn-library-templates" class="tpl-nav-tab"
+                        onclick="switchTemplateTab('library')">
                         <span>📚 Template Library (Meta Standards)</span>
-                        <span
-                            style="background: #e0f2fe; color: #0284c7; padding: 0.15rem 0.55rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">25+
-                            Pre-approved</span>
+                        <span class="tpl-tab-badge-lib">25+ Pre-approved</span>
                     </button>
                 </div>
 
@@ -1109,8 +1104,8 @@
                                         Language:</span>
                                     <select id="tpl-lib-language" onchange="filterTemplateLibrary()"
                                         style="padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text-main); font-size: 0.85rem; font-weight: 600;">
-                                        <option value="all">All Languages</option>
-                                        <option value="te" selected>Telugu (తెలుగు)</option>
+                                        <option value="all" selected>All Languages</option>
+                                        <option value="te">Telugu (తెలుగు)</option>
                                         <option value="en">English (en)</option>
                                         <option value="hi">Hindi (हिंदी)</option>
                                     </select>
@@ -6582,46 +6577,44 @@
 
                 <!-- Right Live Preview Column -->
                 <div class="lib-modal-preview-col"
-                    style="padding: 1.25rem; background: #eef1f4; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
+                    style="padding: 1.5rem; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
                     <!-- Parameters vs Example Toggle Tabs -->
                     <div
-                        style="display: inline-flex; background: #dfe3e8; border-radius: 6px; padding: 2px; margin-bottom: 1rem;">
-                        <button type="button" id="lib-preview-tab-params" onclick="setLibraryPreviewTab('params')"
-                            style="border: none; border-radius: 5px; padding: 0.35rem 0.85rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; background: #fff; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        style="display: inline-flex; background: #e2e8f0; border-radius: 8px; padding: 3px; margin-bottom: 1.25rem;">
+                        <button type="button" id="lib-preview-tab-params" class="lib-toggle-btn active" onclick="setLibraryPreviewTab('params')">
                             Parameters
                         </button>
-                        <button type="button" id="lib-preview-tab-example" onclick="setLibraryPreviewTab('example')"
-                            style="border: none; border-radius: 5px; padding: 0.35rem 0.85rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-muted);">
+                        <button type="button" id="lib-preview-tab-example" class="lib-toggle-btn" onclick="setLibraryPreviewTab('example')">
                             Example
                         </button>
                     </div>
 
                     <!-- WhatsApp Phone Screen Bubble Preview -->
-                    <div
-                        style="width: 100%; max-width: 290px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); padding: 0.9rem; position: relative;">
+                    <div class="lib-preview-phone-card">
                         <!-- WhatsApp Chat Bubble -->
-                        <div id="lib-preview-bubble-content"
-                            style="font-size: 0.85rem; color: #111b21; line-height: 1.45;">
+                        <div id="lib-preview-bubble-content" class="lib-preview-chat-bubble">
                             <!-- Header -->
                             <div id="lib-preview-header"
-                                style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.45rem;"></div>
+                                style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.45rem; color: #111b21;"></div>
                             <!-- Body -->
-                            <div id="lib-preview-body" style="white-space: pre-wrap; word-break: break-word;"></div>
+                            <div id="lib-preview-body" style="white-space: pre-wrap; word-break: break-word; color: #111b21;"></div>
+                            <!-- Footer -->
+                            <div id="lib-preview-footer" style="font-size: 0.72rem; color: #667781; margin-top: 0.4rem; display: none;"></div>
                             <!-- Timestamp -->
-                            <div style="text-align: right; font-size: 0.65rem; color: #667781; margin-top: 0.35rem;">
-                                07:01 ✓✓</div>
+                            <div id="lib-preview-time" style="text-align: right; font-size: 0.65rem; color: #667781; margin-top: 0.35rem;">
+                                07:01 <span style="color:#53bdeb; font-weight:bold;">✓✓</span>
+                            </div>
                         </div>
 
                         <!-- Buttons Container -->
                         <div id="lib-preview-buttons"
-                            style="margin-top: 0.6rem; display: flex; flex-direction: column; gap: 0.35rem; border-top: 1px solid #e9edef; padding-top: 0.5rem;">
+                            style="margin-top: 0.6rem; display: flex; flex-direction: column; gap: 0.35rem; display: none;">
                         </div>
                     </div>
 
                     <p
                         style="margin: 0.85rem 0 0 0; font-size: 0.72rem; color: #64748b; text-align: center; line-height: 1.4; max-width: 280px;">
-                        Text in brackets <code>{{ }}</code> is dynamic. It will update with your content when your
-                        message has been sent.
+                        Text in brackets <code>{{ }}</code> is dynamic. Switch to <strong>Example</strong> to view realistic customer-ready text.
                     </p>
                 </div>
             </div>
