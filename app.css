@@ -7460,6 +7460,74 @@ td.empty-state .empty-state-desc,
     }
 }
 
+/* Meta WhatsApp Template Library & Modal Styling */
+.tpl-lib-main-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.tpl-lib-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.library-template-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.library-template-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.tpl-lib-use-btn {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    min-width: max-content !important;
+}
+
+.lib-modal-split-body {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    min-height: 400px;
+    max-height: 72vh;
+    overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+    .tpl-lib-main-layout {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .tpl-lib-cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .lib-modal-split-body {
+        grid-template-columns: 1fr !important;
+    }
+
+    .lib-modal-details-col {
+        border-right: none !important;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .lib-modal-preview-col {
+        padding: 1rem !important;
+    }
+
+    .tpl-lib-cards-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
 
 
 

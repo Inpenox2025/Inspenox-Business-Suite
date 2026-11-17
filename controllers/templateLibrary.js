@@ -390,31 +390,95 @@ let activeModalPreviewTab = 'parameters'; // 'parameters' | 'example'
 
 // --- View Tabs Switcher (My Templates vs Template Library) ---
 window.switchTemplateTab = function switchTemplateTab(tab) {
-    const myTabBtn = document.getElementById('tab-my-templates');
-    const libTabBtn = document.getElementById('tab-library-templates');
+    const myTabBtn = document.getElementById('tab-btn-my-templates') || document.getElementById('tab-my-templates');
+    const libTabBtn = document.getElementById('tab-btn-library-templates') || document.getElementById('tab-library-templates');
     const myView = document.getElementById('templates-my-container');
     const libView = document.getElementById('templates-library-container');
 
     if (tab === 'library') {
-        if (myTabBtn) myTabBtn.classList.remove('active');
-        if (libTabBtn) libTabBtn.classList.add('active');
+        if (myTabBtn) {
+            myTabBtn.classList.remove('active');
+            myTabBtn.style.color = 'var(--text-muted)';
+            myTabBtn.style.borderBottom = '3px solid transparent';
+            myTabBtn.style.background = 'transparent';
+            myTabBtn.style.fontWeight = '600';
+        }
+        if (libTabBtn) {
+            libTabBtn.classList.add('active');
+            libTabBtn.style.color = 'var(--primary)';
+            libTabBtn.style.borderBottom = '3px solid var(--primary)';
+            libTabBtn.style.background = 'var(--bg-card)';
+            libTabBtn.style.fontWeight = '700';
+        }
         if (myView) myView.style.display = 'none';
         if (libView) {
             libView.style.display = 'block';
+            if (typeof populateLibraryFeatureFilters === 'function') {
+                populateLibraryFeatureFilters();
+            }
             renderTemplateLibrary();
         }
     } else {
-        if (myTabBtn) myTabBtn.classList.add('active');
-        if (libTabBtn) libTabBtn.classList.remove('active');
+        if (myTabBtn) {
+            myTabBtn.classList.add('active');
+            myTabBtn.style.color = 'var(--primary)';
+            myTabBtn.style.borderBottom = '3px solid var(--primary)';
+            myTabBtn.style.background = 'var(--bg-card)';
+            myTabBtn.style.fontWeight = '700';
+        }
+        if (libTabBtn) {
+            libTabBtn.classList.remove('active');
+            libTabBtn.style.color = 'var(--text-muted)';
+            libTabBtn.style.borderBottom = '3px solid transparent';
+            libTabBtn.style.background = 'transparent';
+            libTabBtn.style.fontWeight = '600';
+        }
         if (myView) myView.style.display = 'block';
         if (libView) libView.style.display = 'none';
     }
+};
+
+// --- Populate Feature / Type Filters in Left Sidebar ---
+window.populateLibraryFeatureFilters = function populateLibraryFeatureFilters() {
+    const container = document.getElementById('tpl-lib-feature-filters');
+    if (!container) return;
+
+    const features = {};
+    META_TEMPLATE_LIBRARY.forEach(t => {
+        if (!t.feature) return;
+        features[t.feature] = (features[t.feature] || 0) + 1;
+    });
+
+    let html = `
+        <button type="button" class="btn text-left tpl-lib-feat-btn ${currentLibraryFeature === 'ALL' ? 'active' : ''}"
+            onclick="setLibraryFeatureFilter('ALL', this)"
+            style="text-align: left; padding: 0.45rem 0.65rem; border-radius: 6px; font-size: 0.825rem; font-weight: ${currentLibraryFeature === 'ALL' ? '700' : '500'}; background: ${currentLibraryFeature === 'ALL' ? 'rgba(0, 168, 132, 0.12)' : 'transparent'}; color: ${currentLibraryFeature === 'ALL' ? 'var(--primary)' : 'var(--text-main)'}; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <span>All Features</span>
+            <span style="font-size: 0.75rem; background: var(--bg-main, #f1f5f9); padding: 1px 6px; border-radius: 10px; color: var(--text-muted);">${META_TEMPLATE_LIBRARY.length}</span>
+        </button>
+    `;
+
+    Object.keys(features).sort().forEach(feat => {
+        const isActive = currentLibraryFeature === feat;
+        const count = features[feat];
+        html += `
+            <button type="button" class="btn text-left tpl-lib-feat-btn ${isActive ? 'active' : ''}"
+                onclick="setLibraryFeatureFilter('${escapeHtml(feat)}', this)"
+                style="text-align: left; padding: 0.45rem 0.65rem; border-radius: 6px; font-size: 0.825rem; font-weight: ${isActive ? '700' : '500'}; background: ${isActive ? 'rgba(0, 168, 132, 0.12)' : 'transparent'}; color: ${isActive ? 'var(--primary)' : 'var(--text-main)'}; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;">${escapeHtml(feat)}</span>
+                <span style="font-size: 0.75rem; background: var(--bg-main, #f1f5f9); padding: 1px 6px; border-radius: 10px; color: var(--text-muted); margin-left: 4px;">${count}</span>
+            </button>
+        `;
+    });
+
+    container.innerHTML = html;
 };
 
 // --- Render Template Library ---
 window.renderTemplateLibrary = function renderTemplateLibrary() {
     const grid = document.getElementById('template-library-grid');
     const countBadge = document.getElementById('library-templates-count');
+    const countLabel = document.getElementById('tpl-lib-count-label');
     if (!grid) return;
 
     const filtered = META_TEMPLATE_LIBRARY.filter(t => {
@@ -432,6 +496,9 @@ window.renderTemplateLibrary = function renderTemplateLibrary() {
 
     if (countBadge) {
         countBadge.textContent = `${filtered.length} templates`;
+    }
+    if (countLabel) {
+        countLabel.textContent = `Showing ${filtered.length} of ${META_TEMPLATE_LIBRARY.length} templates`;
     }
 
     if (filtered.length === 0) {
@@ -505,11 +572,11 @@ window.renderTemplateLibrary = function renderTemplateLibrary() {
 
                 <!-- Card Bottom Actions -->
                 <div style="border-top:1px solid var(--border); padding-top:0.75rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
-                    <div>
-                        <div style="font-weight:700; font-size:0.825rem; color:var(--text-main); font-family:monospace;">${escapeHtml(t.name)}</div>
-                        <div style="font-size:0.72rem; color:var(--text-muted);">${escapeHtml(t.feature)}</div>
+                    <div style="overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1;">
+                        <div style="font-weight:700; font-size:0.825rem; color:var(--text-main); font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(t.name)}</div>
+                        <div style="font-size:0.72rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(t.feature)}</div>
                     </div>
-                    <button type="button" class="btn primary sm" style="font-size:0.75rem; padding:0.35rem 0.75rem; white-space:nowrap;" onclick="event.stopPropagation(); openLibraryTemplateModal('${t.id}')">
+                    <button type="button" class="btn primary sm tpl-lib-use-btn" style="font-size:0.75rem; padding:0.35rem 0.75rem; white-space:nowrap; flex-shrink:0;" onclick="event.stopPropagation(); openLibraryTemplateModal('${t.id}')">
                         Use Template ➔
                     </button>
                 </div>
@@ -519,19 +586,49 @@ window.renderTemplateLibrary = function renderTemplateLibrary() {
 };
 
 // --- Library Filters Helpers ---
+window.setLibraryCategoryFilter = function setLibraryCategoryFilter(cat, btn) {
+    currentLibraryCategory = cat;
+    document.querySelectorAll('.lib-cat-pill').forEach(b => {
+        b.classList.remove('active');
+        b.classList.add('secondary');
+        b.style.background = 'transparent';
+        b.style.color = 'var(--text-muted)';
+        b.style.fontWeight = '500';
+    });
+    if (btn) {
+        btn.classList.add('active');
+        btn.classList.remove('secondary');
+        btn.style.background = 'var(--primary)';
+        btn.style.color = '#fff';
+        btn.style.fontWeight = '700';
+    }
+    renderTemplateLibrary();
+};
+
+window.setLibraryFeatureFilter = function setLibraryFeatureFilter(feat, btn) {
+    currentLibraryFeature = feat;
+    populateLibraryFeatureFilters();
+    renderTemplateLibrary();
+};
+
+window.filterTemplateLibrary = function filterTemplateLibrary() {
+    const searchInp = document.getElementById('tpl-lib-search');
+    const langSel = document.getElementById('tpl-lib-language');
+
+    currentLibrarySearch = (searchInp?.value || '').toLowerCase().trim();
+    const selectedLang = langSel?.value || 'all';
+    currentLibraryLanguage = selectedLang === 'all' ? 'ALL' : selectedLang;
+
+    renderTemplateLibrary();
+};
+
 window.filterLibraryByCategory = function filterLibraryByCategory(cat) {
     currentLibraryCategory = cat;
-    document.querySelectorAll('.library-cat-filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.cat === cat);
-    });
     renderTemplateLibrary();
 };
 
 window.filterLibraryByFeature = function filterLibraryByFeature(feat) {
     currentLibraryFeature = feat;
-    document.querySelectorAll('.library-feature-filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.feature === feat);
-    });
     renderTemplateLibrary();
 };
 
@@ -551,22 +648,41 @@ window.resetLibraryFilters = function resetLibraryFilters() {
     currentLibraryLanguage = 'ALL';
     currentLibrarySearch = '';
 
-    const searchInput = document.getElementById('library-search-input');
-    const langSelect = document.getElementById('library-lang-select');
+    const searchInput = document.getElementById('tpl-lib-search') || document.getElementById('library-search-input');
+    const langSelect = document.getElementById('tpl-lib-language') || document.getElementById('library-lang-select');
     if (searchInput) searchInput.value = '';
-    if (langSelect) langSelect.value = 'ALL';
+    if (langSelect) langSelect.value = 'all';
 
-    document.querySelectorAll('.library-cat-filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.cat === 'ALL');
-    });
-    document.querySelectorAll('.library-feature-filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.feature === 'ALL');
+    document.querySelectorAll('.lib-cat-pill').forEach((btn, idx) => {
+        if (idx === 0) {
+            btn.classList.add('active');
+            btn.classList.remove('secondary');
+            btn.style.background = 'var(--primary)';
+            btn.style.color = '#fff';
+            btn.style.fontWeight = '700';
+        } else {
+            btn.classList.remove('active');
+            btn.classList.add('secondary');
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--text-muted)';
+            btn.style.fontWeight = '500';
+        }
     });
 
+    populateLibraryFeatureFilters();
     renderTemplateLibrary();
 };
 
 // --- Template Details Preview Modal (Matching Image 2) ---
+window.updateLibraryModalNameCounter = function updateLibraryModalNameCounter(val) {
+    const counter = document.getElementById('lib-modal-name-counter');
+    if (counter) {
+        const len = (val || '').length;
+        counter.textContent = `${len}/512`;
+        counter.style.color = len > 512 ? 'var(--danger, #ef4444)' : 'var(--text-muted)';
+    }
+};
+
 window.openLibraryTemplateModal = function openLibraryTemplateModal(templateId) {
     const tpl = META_TEMPLATE_LIBRARY.find(t => t.id === templateId);
     if (!tpl) return;
@@ -578,18 +694,19 @@ window.openLibraryTemplateModal = function openLibraryTemplateModal(templateId) 
     if (!modal) return;
 
     // Header & Breadcrumbs
-    const titleEl = document.getElementById('lib-modal-title');
+    const titleEl = document.getElementById('lib-modal-tpl-title') || document.getElementById('lib-modal-title');
     const breadcrumbsEl = document.getElementById('lib-modal-breadcrumbs');
     if (titleEl) titleEl.textContent = tpl.name;
-    if (breadcrumbsEl) breadcrumbsEl.textContent = tpl.breadcrumbs || `${tpl.category} > ${tpl.feature}`;
+    if (breadcrumbsEl) breadcrumbsEl.textContent = tpl.breadcrumbs || `${tpl.category} › ${tpl.feature}`;
 
     // Suggested Template Name Input
     const nameInput = document.getElementById('lib-modal-tpl-name');
     if (nameInput) {
         nameInput.value = tpl.name;
+        updateLibraryModalNameCounter(tpl.name);
     }
 
-    renderLibraryModalBubblePreview();
+    setLibraryPreviewTab('params');
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
 };
@@ -603,62 +720,125 @@ window.closeLibraryTemplateModal = function closeLibraryTemplateModal() {
     activeModalTemplate = null;
 };
 
-window.switchLibraryModalTab = function switchLibraryModalTab(tabName) {
-    activeModalPreviewTab = tabName;
-    const tabParams = document.getElementById('tab-lib-parameters');
-    const tabExample = document.getElementById('tab-lib-example');
-    if (tabParams) tabParams.classList.toggle('active', tabName === 'parameters');
-    if (tabExample) tabExample.classList.toggle('active', tabName === 'example');
+window.setLibraryPreviewTab = function setLibraryPreviewTab(tabName) {
+    activeModalPreviewTab = (tabName === 'example' ? 'example' : 'parameters');
+    
+    const btnParams = document.getElementById('lib-preview-tab-params');
+    const btnExample = document.getElementById('lib-preview-tab-example');
+
+    if (btnParams && btnExample) {
+        if (activeModalPreviewTab === 'parameters') {
+            btnParams.style.background = '#fff';
+            btnParams.style.color = 'var(--text-main, #111b21)';
+            btnParams.style.fontWeight = '700';
+            btnParams.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+
+            btnExample.style.background = 'transparent';
+            btnExample.style.color = 'var(--text-muted, #667781)';
+            btnExample.style.fontWeight = '600';
+            btnExample.style.boxShadow = 'none';
+        } else {
+            btnExample.style.background = '#fff';
+            btnExample.style.color = 'var(--text-main, #111b21)';
+            btnExample.style.fontWeight = '700';
+            btnExample.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+
+            btnParams.style.background = 'transparent';
+            btnParams.style.color = 'var(--text-muted, #667781)';
+            btnParams.style.fontWeight = '600';
+            btnParams.style.boxShadow = 'none';
+        }
+    }
     renderLibraryModalBubblePreview();
 };
 
-function renderLibraryModalBubblePreview() {
-    const bubbleContent = document.getElementById('lib-modal-bubble-content');
-    if (!bubbleContent || !activeModalTemplate) return;
+window.switchLibraryModalTab = window.setLibraryPreviewTab;
 
+function renderLibraryModalBubblePreview() {
+    if (!activeModalTemplate) return;
     const tpl = activeModalTemplate;
     const isExample = activeModalPreviewTab === 'example';
 
-    const rawText = isExample ? tpl.body.exampleText : tpl.body.text;
+    const headerEl = document.getElementById('lib-preview-header');
+    const bodyEl = document.getElementById('lib-preview-body');
+    const buttonsEl = document.getElementById('lib-preview-buttons');
+
+    const rawText = isExample ? (tpl.body.exampleText || tpl.body.text) : tpl.body.text;
     const displayText = isExample 
         ? escapeHtml(rawText)
         : escapeHtml(rawText).replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, '<span style="color:#00a884; font-weight:700; background:rgba(0,168,132,0.12); padding:1px 5px; border-radius:4px;">{{$1}}</span>');
 
-    let buttonsHtml = '';
-    if (Array.isArray(tpl.buttons) && tpl.buttons.length > 0) {
-        buttonsHtml = `
-            <div style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.75rem; border-top:1px solid #e9edef; padding-top:0.6rem;">
-                ${tpl.buttons.map(b => {
-                    const icon = b.type === 'CATALOG' ? '🛒' : (b.type === 'MPM' ? '🛍️' : (b.type === 'URL' ? '↗' : (b.type === 'PHONE_NUMBER' ? '📞' : '📋')));
-                    return `<div style="color:#00a884; font-size:0.8rem; font-weight:600; text-align:center; padding:0.4rem; background:#fff; border-radius:6px; border:1px solid #e9edef; display:flex; align-items:center; justify-content:center; gap:6px;">
-                        <span>${icon}</span> <span>${escapeHtml(b.text || 'View')}</span>
-                    </div>`;
-                }).join('')}
+    // Header element
+    if (headerEl) {
+        if (tpl.header?.text) {
+            headerEl.style.display = 'block';
+            const isCatalog = tpl.header.format === 'CATALOG_HEADER';
+            headerEl.innerHTML = `${isCatalog ? '🛍️ ' : ''}<span>${escapeHtml(tpl.header.text)}</span>`;
+        } else {
+            headerEl.style.display = 'none';
+            headerEl.innerHTML = '';
+        }
+    }
+
+    // Body element
+    if (bodyEl) {
+        bodyEl.innerHTML = displayText;
+    }
+
+    // Buttons element
+    if (buttonsEl) {
+        if (Array.isArray(tpl.buttons) && tpl.buttons.length > 0) {
+            buttonsEl.style.display = 'flex';
+            buttonsEl.innerHTML = tpl.buttons.map(b => {
+                const icon = b.type === 'CATALOG' ? '🛒' : (b.type === 'MPM' ? '🛍️' : (b.type === 'URL' ? '↗' : (b.type === 'PHONE_NUMBER' ? '📞' : '📋')));
+                return `<div style="color:#00a884; font-size:0.8rem; font-weight:600; text-align:center; padding:0.4rem; background:#fff; border-radius:6px; border:1px solid #e9edef; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <span>${icon}</span> <span>${escapeHtml(b.text || 'View')}</span>
+                </div>`;
+            }).join('');
+        } else {
+            buttonsEl.style.display = 'none';
+            buttonsEl.innerHTML = '';
+        }
+    }
+
+    // Fallback if full bubble content container is targeted
+    const fallbackBubble = document.getElementById('lib-modal-bubble-content');
+    if (fallbackBubble && !bodyEl) {
+        let buttonsHtml = '';
+        if (Array.isArray(tpl.buttons) && tpl.buttons.length > 0) {
+            buttonsHtml = `
+                <div style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.75rem; border-top:1px solid #e9edef; padding-top:0.6rem;">
+                    ${tpl.buttons.map(b => {
+                        const icon = b.type === 'CATALOG' ? '🛒' : (b.type === 'MPM' ? '🛍️' : (b.type === 'URL' ? '↗' : (b.type === 'PHONE_NUMBER' ? '📞' : '📋')));
+                        return `<div style="color:#00a884; font-size:0.8rem; font-weight:600; text-align:center; padding:0.4rem; background:#fff; border-radius:6px; border:1px solid #e9edef; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <span>${icon}</span> <span>${escapeHtml(b.text || 'View')}</span>
+                        </div>`;
+                    }).join('')}
+                </div>
+            `;
+        }
+        fallbackBubble.innerHTML = `
+            <div style="background:#ffffff; border-radius:8px 8px 8px 0; padding:0.85rem 1rem; box-shadow:0 1px 2px rgba(0,0,0,0.15);">
+                ${tpl.header?.text ? `
+                    <div style="font-weight:700; font-size:0.9rem; color:#111b21; margin-bottom:0.4rem; display:flex; align-items:center; gap:6px;">
+                        ${tpl.header.format === 'CATALOG_HEADER' ? '🛍️' : ''}
+                        <span>${escapeHtml(tpl.header.text)}</span>
+                    </div>
+                ` : ''}
+                <div style="font-size:0.85rem; color:#111b21; line-height:1.5; word-break:break-word;">
+                    ${displayText}
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.4rem; font-size:0.68rem; color:#667781;">
+                    <span>${escapeHtml(tpl.footer?.text || '')}</span>
+                    <span style="display:flex; align-items:center; gap:2px;">
+                        <span>07:01</span>
+                        <span style="color:#53bdeb; font-weight:bold;">✓✓</span>
+                    </span>
+                </div>
+                ${buttonsHtml}
             </div>
         `;
     }
-
-    bubbleContent.innerHTML = `
-        <div style="background:#ffffff; border-radius:8px 8px 8px 0; padding:0.85rem 1rem; box-shadow:0 1px 2px rgba(0,0,0,0.15);">
-            ${tpl.header?.text ? `
-                <div style="font-weight:700; font-size:0.9rem; color:#111b21; margin-bottom:0.4rem; display:flex; align-items:center; gap:6px;">
-                    ${tpl.header.format === 'CATALOG_HEADER' ? '🛍️' : ''}
-                    <span>${escapeHtml(tpl.header.text)}</span>
-                </div>
-            ` : ''}
-            <div style="font-size:0.85rem; color:#111b21; line-height:1.5; word-break:break-word;">
-                ${displayText}
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.4rem; font-size:0.68rem; color:#667781;">
-                <span>${escapeHtml(tpl.footer?.text || '')}</span>
-                <span style="display:flex; align-items:center; gap:2px;">
-                    <span>07:01</span>
-                    <span style="color:#53bdeb; font-weight:bold;">✓✓</span>
-                </span>
-            </div>
-            ${buttonsHtml}
-        </div>
-    `;
 }
 
 // --- Action 1: "Customise Template" (Pre-fills Step 2 Template Builder Wizard) ---
@@ -841,6 +1021,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // If the template view is loaded, ensure library can be rendered
     const libView = document.getElementById('templates-library-container');
     if (libView) {
+        if (typeof populateLibraryFeatureFilters === 'function') {
+            populateLibraryFeatureFilters();
+        }
         renderTemplateLibrary();
     }
 });

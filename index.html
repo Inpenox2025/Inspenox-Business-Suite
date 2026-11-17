@@ -1139,9 +1139,9 @@
                     </div>
 
                     <!-- Library Layout: Sidebar Filters + Cards Grid -->
-                    <div style="display: grid; grid-template-columns: 240px 1fr; gap: 1.5rem; align-items: start;">
+                    <div class="tpl-lib-main-layout">
                         <!-- Left Filter Sidebar -->
-                        <div
+                        <div class="tpl-lib-sidebar"
                             style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; box-shadow: var(--shadow-sm);">
                             <h4
                                 style="margin: 0 0 0.85rem 0; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);">
@@ -1168,15 +1168,14 @@
                         </div>
 
                         <!-- Right Grid of Templates -->
-                        <div>
+                        <div class="tpl-lib-grid-wrapper">
                             <div
                                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                                 <span id="tpl-lib-count-label"
                                     style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Showing
                                     templates...</span>
                             </div>
-                            <div id="template-library-grid"
-                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem;">
+                            <div id="template-library-grid" class="tpl-lib-cards-grid">
                                 <!-- Populated dynamically by templateLibrary.js -->
                             </div>
                         </div>
@@ -6533,10 +6532,10 @@
             </div>
 
             <!-- Modal Body Split Columns -->
-            <div
-                style="display: grid; grid-template-columns: 1fr 340px; min-height: 400px; max-height: 68vh; overflow-y: auto;">
+            <div class="lib-modal-split-body"
+                style="display: grid; grid-template-columns: 1fr 340px; min-height: 400px; max-height: 72vh; overflow-y: auto;">
                 <!-- Left Details & Naming Column -->
-                <div
+                <div class="lib-modal-details-col"
                     style="padding: 1.5rem; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         <h4 style="margin: 0 0 0.35rem 0; font-size: 1rem; font-weight: 700; color: var(--text-main);">
@@ -6582,7 +6581,7 @@
                 </div>
 
                 <!-- Right Live Preview Column -->
-                <div
+                <div class="lib-modal-preview-col"
                     style="padding: 1.25rem; background: #eef1f4; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
                     <!-- Parameters vs Example Toggle Tabs -->
                     <div

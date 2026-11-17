@@ -2835,8 +2835,8 @@ window.downloadCatalogCsvFeed = function downloadCatalogCsvFeed(catalogId = '') 
 
 // --- Template Tab Switching (My Templates vs Template Library) ---
 window.switchTemplateTab = function switchTemplateTab(tab) {
-    const myBtn = document.getElementById('tab-btn-my-templates');
-    const libBtn = document.getElementById('tab-btn-library-templates');
+    const myBtn = document.getElementById('tab-btn-my-templates') || document.getElementById('tab-my-templates');
+    const libBtn = document.getElementById('tab-btn-library-templates') || document.getElementById('tab-library-templates');
     const myContainer = document.getElementById('templates-my-container');
     const libContainer = document.getElementById('templates-library-container');
 
@@ -2846,18 +2846,24 @@ window.switchTemplateTab = function switchTemplateTab(tab) {
             libBtn.style.color = 'var(--primary)';
             libBtn.style.borderBottom = '3px solid var(--primary)';
             libBtn.style.background = 'var(--bg-card)';
+            libBtn.style.fontWeight = '700';
         }
         if (myBtn) {
             myBtn.classList.remove('active');
             myBtn.style.color = 'var(--text-muted)';
             myBtn.style.borderBottom = '3px solid transparent';
             myBtn.style.background = 'transparent';
+            myBtn.style.fontWeight = '600';
         }
         if (myContainer) myContainer.style.display = 'none';
-        if (libContainer) libContainer.style.display = 'block';
-
-        if (typeof renderTemplateLibrary === 'function') {
-            renderTemplateLibrary();
+        if (libContainer) {
+            libContainer.style.display = 'block';
+            if (typeof populateLibraryFeatureFilters === 'function') {
+                populateLibraryFeatureFilters();
+            }
+            if (typeof renderTemplateLibrary === 'function') {
+                renderTemplateLibrary();
+            }
         }
     } else {
         if (myBtn) {
@@ -2865,12 +2871,14 @@ window.switchTemplateTab = function switchTemplateTab(tab) {
             myBtn.style.color = 'var(--primary)';
             myBtn.style.borderBottom = '3px solid var(--primary)';
             myBtn.style.background = 'var(--bg-card)';
+            myBtn.style.fontWeight = '700';
         }
         if (libBtn) {
             libBtn.classList.remove('active');
             libBtn.style.color = 'var(--text-muted)';
             libBtn.style.borderBottom = '3px solid transparent';
             libBtn.style.background = 'transparent';
+            libBtn.style.fontWeight = '600';
         }
         if (myContainer) myContainer.style.display = 'block';
         if (libContainer) libContainer.style.display = 'none';
