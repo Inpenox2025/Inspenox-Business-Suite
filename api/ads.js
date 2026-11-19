@@ -8,9 +8,56 @@ function formatIndiaPhone(phone) {
     return digits;
 }
 
+async function ensureAdsTables(sql) {
+    try {
+        await sql`
+            CREATE TABLE IF NOT EXISTS meta_ads (
+                id SERIAL PRIMARY KEY,
+                company_id INT,
+                meta_ad_id TEXT UNIQUE,
+                meta_campaign_id TEXT,
+                meta_adset_id TEXT,
+                meta_creative_id TEXT,
+                name TEXT NOT NULL,
+                ad_account_id TEXT NOT NULL,
+                page_id TEXT NOT NULL,
+                instagram_actor_id TEXT,
+                destination_type TEXT DEFAULT 'WHATSAPP',
+                whatsapp_phone_number_id TEXT,
+                whatsapp_phone_number TEXT,
+                lead_form_id TEXT,
+                website_url TEXT,
+                headline TEXT,
+                primary_text TEXT,
+                icebreaker_message TEXT,
+                media_url TEXT,
+                media_type TEXT DEFAULT 'image',
+                daily_budget NUMERIC DEFAULT 0,
+                currency TEXT DEFAULT 'INR',
+                placements JSONB DEFAULT '["facebook_feed", "instagram_feed"]',
+                targeting JSONB DEFAULT '{}',
+                status TEXT DEFAULT 'ACTIVE',
+                spend NUMERIC DEFAULT 0,
+                clicks INT DEFAULT 0,
+                impressions INT DEFAULT 0,
+                inbound_leads_count INT DEFAULT 0,
+                sales_converted_count INT DEFAULT 0,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+            );
+        `;
+        await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS meta_ad_id TEXT;`;
+        await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS meta_referral JSONB;`;
+        await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS source_ad_id TEXT;`;
+    } catch(e) {
+        console.warn('ensureAdsTables error in ads.js:', e.message);
+    }
+}
+
 module.exports = async (req, res) => {
     const env = req.env || process.env || {};
     const sql = getDb(env);
+    await ensureAdsTables(sql);
 
     const query = req.query || {};
     const body = req.body || {};

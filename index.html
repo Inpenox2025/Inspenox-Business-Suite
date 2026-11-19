@@ -6988,8 +6988,8 @@
     </style>
 
     <!-- Create Meta Ad Campaign Modal -->
-    <div id="create-ad-modal" class="modal"
-        style="display: none; align-items: center; justify-content: center; z-index: 99999; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);">
+    <div id="create-ad-modal" class="modal-overlay hidden" onclick="if(event.target === this) closeCreateAdModal()"
+        style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 99999; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center;">
         <div class="modal-content"
             style="max-width: 1040px; width: 95%; height: 90vh; max-height: 820px; display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card); box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
 
@@ -7419,20 +7419,20 @@
         </div>
     </div>
 
-    <script src="/controllers/coreController.js"></script>
-    <script src="/controllers/companyController.js"></script>
-    <script src="/controllers/dashboardController.js"></script>
-    <script src="/controllers/customersController.js"></script>
-    <script src="/controllers/templatesController.js"></script>
-    <script src="/controllers/templateLibrary.js"></script>
-    <script src="/controllers/broadcastController.js"></script>
-    <script src="/controllers/campaignsController.js"></script>
-    <script src="/controllers/inboxController.js"></script>
-    <script src="/controllers/mediaController.js"></script>
-    <script src="/controllers/billingController.js"></script>
-    <script src="/controllers/automationController.js"></script>
-    <script src="/controllers/simulatorController.js"></script>
-    <script src="/controllers/adsController.js"></script>
+    <script src="/controllers/coreController.js?v=2.2"></script>
+    <script src="/controllers/companyController.js?v=2.2"></script>
+    <script src="/controllers/dashboardController.js?v=2.2"></script>
+    <script src="/controllers/customersController.js?v=2.2"></script>
+    <script src="/controllers/templatesController.js?v=2.2"></script>
+    <script src="/controllers/templateLibrary.js?v=2.2"></script>
+    <script src="/controllers/broadcastController.js?v=2.2"></script>
+    <script src="/controllers/campaignsController.js?v=2.2"></script>
+    <script src="/controllers/inboxController.js?v=2.2"></script>
+    <script src="/controllers/mediaController.js?v=2.2"></script>
+    <script src="/controllers/billingController.js?v=2.2"></script>
+    <script src="/controllers/automationController.js?v=2.2"></script>
+    <script src="/controllers/simulatorController.js?v=2.2"></script>
+    <script src="/controllers/adsController.js?v=2.2"></script>
 </body>
 
 </html>
