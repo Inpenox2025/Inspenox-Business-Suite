@@ -5,6 +5,18 @@
  */
 
 (function () {
+    function escapeHTML(str) {
+        if (typeof window.escapeHtml === 'function') return window.escapeHtml(str);
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+    window.escapeHTML = escapeHTML;
+
     let adsList = [];
     let adsAssets = null;
     let currentAdStep = 1;
@@ -96,20 +108,24 @@
         if (!banner) return;
         banner.innerHTML = `
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; width:100%;">
-                <div style="display:flex; align-items:center; gap:0.75rem;">
-                    <div style="width:36px; height:36px; border-radius:8px; background:rgba(16,185,129,0.15); display:flex; align-items:center; justify-content:center; color:#10b981; font-size:1.2rem;">💳</div>
+                <div style="display:flex; align-items:center; gap:0.9rem;">
+                    <div style="width:42px; height:42px; border-radius:10px; background:rgba(16,185,129,0.15); display:flex; align-items:center; justify-content:center; color:#10b981; font-size:1.35rem; flex-shrink:0;">💳</div>
                     <div>
-                        <div style="font-weight:700; font-size:0.9rem; color:var(--text-main); display:flex; align-items:center; gap:0.5rem;">
-                            Direct Meta Ad Billing: Active 
-                            <span style="background:rgba(16,185,129,0.2); color:#10b981; font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:700;">0% Platform Fees</span>
+                        <div style="font-weight:700; font-size:0.95rem; color:var(--text-main); display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+                            <span>Direct Meta Ad Billing: Active</span>
+                            <span style="background:rgba(16,185,129,0.2); color:#10b981; font-size:0.68rem; padding:2px 8px; border-radius:10px; font-weight:800;">0% Platform Fees</span>
+                            <span style="background:rgba(59,130,246,0.15); color:#3b82f6; font-size:0.68rem; padding:2px 8px; border-radius:10px; font-weight:700;">Zero Commission &bull; Your Rules</span>
                         </div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-                            Meta directly charges the payment method (Credit/Debit/UPI) linked to your Ad Account. Inspenox never deducts ad spend.
+                        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:3px; line-height:1.4;">
+                            We connect you directly to Meta for billing. No wallet recharges, no platform markup, no credits, and no advance payments for credits — that is your freedom!
                         </div>
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:0.6rem;">
-                    <a href="https://adsmanager.facebook.com/adsmanager/manage/billing" target="_blank" rel="noopener noreferrer" class="btn secondary sm" style="font-size:0.75rem; gap:4px; text-decoration:none;">
+                <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+                    <a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing#rate-cards" target="_blank" rel="noopener noreferrer" class="btn secondary sm" style="font-size:0.75rem; gap:4px; text-decoration:none; font-weight:600;">
+                        Official Meta Rate Cards ↗
+                    </a>
+                    <a href="https://adsmanager.facebook.com/adsmanager/manage/billing" target="_blank" rel="noopener noreferrer" class="btn secondary sm" style="font-size:0.75rem; gap:4px; text-decoration:none; font-weight:600;">
                         Manage Card / UPI on Meta ↗
                     </a>
                 </div>

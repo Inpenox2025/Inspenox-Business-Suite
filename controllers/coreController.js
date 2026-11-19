@@ -23,6 +23,7 @@ function escapeHtml(str) {
 }
 if (typeof window !== 'undefined') {
     window.escapeHtml = escapeHtml;
+    window.escapeHTML = escapeHtml;
     window.formatIndiaPhone = formatIndiaPhone;
     window.formatDisplayPhone = formatDisplayPhone;
     window.getInitial = getInitial;

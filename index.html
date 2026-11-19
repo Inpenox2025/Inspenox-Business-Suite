@@ -798,58 +798,76 @@
                 </div>
 
                 <!-- Executive KPIs Grid -->
-                <div class="stats-grid"
-                    style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                    <div class="stat-card" style="position: relative; overflow: hidden;">
-                        <div class="stat-label">Total Ad Spend</div>
-                        <div id="ad-metric-spend" class="stat-value" style="color: var(--text-main);">₹0.00</div>
-                        <div class="stat-desc" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
-                            Direct to Meta via card/UPI</div>
+                <div class="ad-kpi-grid">
+                    <div class="ad-kpi-card">
+                        <div class="ad-kpi-header">
+                            <span class="ad-kpi-title">Total Ad Spend</span>
+                            <div class="ad-kpi-icon" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">💳</div>
+                        </div>
+                        <div id="ad-metric-spend" class="ad-kpi-value">₹0.00</div>
+                        <div class="ad-kpi-footer">
+                            <span style="color: #10b981; font-weight: 800;">●</span> Direct Meta billing (Card/UPI)
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Link Clicks & Reach</div>
-                        <div id="ad-metric-clicks" class="stat-value" style="color: #3b82f6;">0 clicks</div>
-                        <div class="stat-desc" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
-                            Facebook & Instagram traffic</div>
+                    <div class="ad-kpi-card">
+                        <div class="ad-kpi-header">
+                            <span class="ad-kpi-title">Link Clicks & Reach</span>
+                            <div class="ad-kpi-icon" style="background: rgba(59, 130, 246, 0.12); color: #3b82f6;">🖱️</div>
+                        </div>
+                        <div id="ad-metric-clicks" class="ad-kpi-value" style="color: #3b82f6;">0 clicks</div>
+                        <div class="ad-kpi-footer">
+                            <span style="color: #3b82f6; font-weight: 800;">●</span> Facebook & Instagram traffic
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Inbound Leads (WhatsApp)</div>
-                        <div id="ad-metric-leads" class="stat-value" style="color: #10b981;">0 leads</div>
-                        <div class="stat-desc" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
-                            Landed directly in Inbox</div>
+                    <div class="ad-kpi-card">
+                        <div class="ad-kpi-header">
+                            <span class="ad-kpi-title">Inbound Leads (WhatsApp)</span>
+                            <div class="ad-kpi-icon" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">💬</div>
+                        </div>
+                        <div id="ad-metric-leads" class="ad-kpi-value" style="color: #10b981;">0 leads</div>
+                        <div class="ad-kpi-footer">
+                            <span style="color: #10b981; font-weight: 800;">●</span> Landed directly in Live Inbox
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Sales Converted</div>
-                        <div id="ad-metric-converted" class="stat-value" style="color: #8b5cf6;">0 (0.0%)</div>
-                        <div class="stat-desc" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
-                            Deals marked converted</div>
+                    <div class="ad-kpi-card">
+                        <div class="ad-kpi-header">
+                            <span class="ad-kpi-title">Sales Converted</span>
+                            <div class="ad-kpi-icon" style="background: rgba(139, 92, 246, 0.12); color: #8b5cf6;">🎯</div>
+                        </div>
+                        <div id="ad-metric-converted" class="ad-kpi-value" style="color: #8b5cf6;">0 (0.0%)</div>
+                        <div class="ad-kpi-footer">
+                            <span style="color: #8b5cf6; font-weight: 800;">●</span> Deals marked Converted
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Return on Ad Spend</div>
-                        <div id="ad-metric-roas" class="stat-value" style="color: #eab308;">0.0x ROAS</div>
-                        <div class="stat-desc" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
-                            Revenue / Ad Spend ratio</div>
+                    <div class="ad-kpi-card">
+                        <div class="ad-kpi-header">
+                            <span class="ad-kpi-title">Return on Ad Spend</span>
+                            <div class="ad-kpi-icon" style="background: rgba(234, 179, 8, 0.12); color: #eab308;">📈</div>
+                        </div>
+                        <div id="ad-metric-roas" class="ad-kpi-value" style="color: #eab308;">0.0x ROAS</div>
+                        <div class="ad-kpi-footer">
+                            <span style="color: #eab308; font-weight: 800;">●</span> Total Revenue / Ad Spend ratio
+                        </div>
                     </div>
                 </div>
 
                 <!-- Campaigns List Section -->
-                <div class="content-card" style="padding: 1.25rem;">
-                    <div
-                        style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 260px;">
-                            <div class="search-box" style="width: 100%; max-width: 340px;">
+                <div class="content-card" style="padding: 1.5rem; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; flex-wrap: wrap;">
+                            <div class="search-box" style="flex: 1; min-width: 240px; max-width: 360px;">
                                 <input type="text" id="ads-search-input" placeholder="Search campaigns by name or ID..."
                                     oninput="filterAdsTable()"
-                                    style="width: 100%; padding: 0.5rem 0.8rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;" />
+                                    style="width: 100%; padding: 0.55rem 0.85rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;" />
                             </div>
                             <select id="ads-status-filter" onchange="filterAdsTable()"
-                                style="padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.82rem; font-weight: 600;">
+                                style="padding: 0.55rem 0.85rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.82rem; font-weight: 600; cursor: pointer;">
                                 <option value="ALL">All Status</option>
                                 <option value="ACTIVE">🟢 Active</option>
                                 <option value="PAUSED">⏸ Paused</option>
                             </select>
                             <select id="ads-dest-filter" onchange="filterAdsTable()"
-                                style="padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.82rem; font-weight: 600;">
+                                style="padding: 0.55rem 0.85rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.82rem; font-weight: 600; cursor: pointer;">
                                 <option value="ALL">All Destinations</option>
                                 <option value="WHATSAPP">💬 WhatsApp (CTWA)</option>
                                 <option value="INSTAGRAM_DIRECT">📸 Instagram DM</option>
@@ -861,18 +879,17 @@
                     </div>
 
                     <div class="table-responsive" style="overflow-x: auto;">
-                        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                        <table class="ad-data-table">
                             <thead>
-                                <tr
-                                    style="border-bottom: 2px solid var(--border); text-align: left; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
-                                    <th style="padding: 0.75rem 0.85rem;">Campaign & Creative</th>
-                                    <th style="padding: 0.75rem 0.85rem;">Destination</th>
-                                    <th style="padding: 0.75rem 0.85rem;">Budget & Spend</th>
-                                    <th style="padding: 0.75rem 0.85rem;">Clicks / CPC</th>
-                                    <th style="padding: 0.75rem 0.85rem;">Inbound Leads</th>
-                                    <th style="padding: 0.75rem 0.85rem;">Sales Converted</th>
-                                    <th style="padding: 0.75rem 0.85rem;">ROAS</th>
-                                    <th style="padding: 0.75rem 0.85rem; text-align: right;">Action</th>
+                                <tr>
+                                    <th style="min-width: 220px;">Campaign & Creative</th>
+                                    <th style="min-width: 140px;">Destination</th>
+                                    <th style="min-width: 130px;">Budget & Spend</th>
+                                    <th style="min-width: 110px;">Clicks / CPC</th>
+                                    <th style="min-width: 120px;">Inbound Leads</th>
+                                    <th style="min-width: 120px;">Sales Converted</th>
+                                    <th style="min-width: 110px;">ROAS</th>
+                                    <th style="min-width: 90px; text-align: right;">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="ads-table-body">
