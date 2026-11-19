@@ -217,3 +217,48 @@ CREATE TABLE IF NOT EXISTS automations (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 9. Meta Ads (Click-to-WhatsApp, Instagram DMs, Messenger & Lead Forms)
+CREATE TABLE IF NOT EXISTS meta_ads (
+  id SERIAL PRIMARY KEY,
+  company_id INT REFERENCES companies(id) ON DELETE CASCADE,
+  meta_ad_id TEXT UNIQUE,
+  meta_campaign_id TEXT,
+  meta_adset_id TEXT,
+  meta_creative_id TEXT,
+  name TEXT NOT NULL,
+  ad_account_id TEXT NOT NULL,
+  page_id TEXT NOT NULL,
+  instagram_actor_id TEXT,
+  destination_type TEXT DEFAULT 'WHATSAPP',
+  whatsapp_phone_number_id TEXT,
+  whatsapp_phone_number TEXT,
+  lead_form_id TEXT,
+  website_url TEXT,
+  headline TEXT,
+  primary_text TEXT,
+  icebreaker_message TEXT,
+  media_url TEXT,
+  media_type TEXT DEFAULT 'image',
+  daily_budget NUMERIC DEFAULT 0,
+  currency TEXT DEFAULT 'INR',
+  placements JSONB DEFAULT '["facebook_feed", "instagram_feed"]',
+  targeting JSONB DEFAULT '{}',
+  status TEXT DEFAULT 'ACTIVE',
+  spend NUMERIC DEFAULT 0,
+  clicks INT DEFAULT 0,
+  impressions INT DEFAULT 0,
+  inbound_leads_count INT DEFAULT 0,
+  sales_converted_count INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Meta Ads Attribution Columns
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS meta_ad_id TEXT;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS meta_referral JSONB;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS source_ad_id TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS deal_value NUMERIC DEFAULT 0;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS meta_ad_account_id TEXT;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS meta_page_id TEXT;
+

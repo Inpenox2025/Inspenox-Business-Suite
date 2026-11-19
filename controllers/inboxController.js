@@ -661,6 +661,9 @@ async function openChat(customer, pushHistory = true) {
     // Sync conversation notes strip
     syncChatNotesUI(customer);
 
+    // Render Meta Ad Referral Badge if lead originated from a Meta Ad
+    renderChatAdReferralBanner(customer);
+
     // Update Lead Assignment Button in Chat Header
     updateChatAssigneeUI(customer);
 
@@ -678,6 +681,41 @@ async function openChat(customer, pushHistory = true) {
     if (inboxPollInterval) clearInterval(inboxPollInterval);
     inboxPollInterval = setInterval(fetchChatMessages, 4000);
 }
+
+function renderChatAdReferralBanner(customer) {
+    const existingBanner = document.getElementById('chat-ad-referral-banner');
+    if (existingBanner) existingBanner.remove();
+
+    const hasAd = customer && (customer.source_ad_id || (customer.tags && customer.tags.includes('Ad:')) || (customer.tags && customer.tags.includes('Meta Ad')));
+    if (!hasAd) return;
+
+    let headline = 'Facebook / Instagram Ad';
+    if (customer.tags) {
+        const adMatch = customer.tags.split(',').find(t => t.trim().startsWith('Ad:'));
+        if (adMatch) headline = adMatch.trim().replace(/^Ad:\s*/, '');
+    }
+
+    const banner = document.createElement('div');
+    banner.id = 'chat-ad-referral-banner';
+    banner.style.cssText = 'background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); border-radius: 8px; margin: 0.5rem 1rem 0 1rem; padding: 0.5rem 0.85rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem;';
+    banner.innerHTML = `
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-size:1.1rem;">🎯</span>
+            <div>
+                <span style="font-weight:700; color:#10b981;">Came from Meta Ad:</span>
+                <span style="color:var(--text-main); font-weight:600; margin-left:4px;">"${escapeHTML(headline)}"</span>
+                ${customer.source_ad_id ? `<span style="font-size:0.68rem; color:var(--text-muted); margin-left:6px; font-family:monospace;">ID: ${escapeHTML(String(customer.source_ad_id).slice(0, 16))}</span>` : ''}
+            </div>
+        </div>
+        <span style="background:rgba(16,185,129,0.2); color:#10b981; font-size:0.65rem; font-weight:700; padding:2px 8px; border-radius:10px;">Click-to-WhatsApp</span>
+    `;
+
+    const headerBar = document.getElementById('chat-header-bar');
+    if (headerBar && headerBar.parentNode) {
+        headerBar.parentNode.insertBefore(banner, headerBar.nextSibling);
+    }
+}
+window.renderChatAdReferralBanner = renderChatAdReferralBanner;
 
 window.openChat = openChat;
 

@@ -2,6 +2,16 @@
 <html lang="en">
 
 <head>
+    <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-NTKTMG5D"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() 
+        { 
+            dataLayer.push(arguments); 
+        }
+        
+        gtag('js', new Date());
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inspenox Business Suite For Marketing — Official Meta WhatsApp Cloud API & Omnichannel Marketing</title>
@@ -250,6 +260,17 @@
                         <rect x="3" y="16" width="7" height="5" rx="1"></rect>
                     </svg>
                     <span>Dashboard</span>
+                </a>
+
+                <a href="#ads" data-view="ads" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        <circle cx="18" cy="4" r="3" fill="#10b981"></circle>
+                    </svg>
+                    <span>Meta Ads</span>
+                    <span class="badge-new"
+                        style="background: #10b981; color: white; font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; margin-left: auto;">NEW</span>
                 </a>
 
                 <!-- WhatsApp Marketing Submenu Group -->
@@ -721,6 +742,148 @@
                 </div>
                 <footer class="page-footer">
                     <p>Inspenox Business Suite For Marketing</p>
+                </footer>
+            </section>
+
+            <!-- Meta Ads Manager View -->
+            <section id="view-ads" class="view">
+                <div class="page-header">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                            <h1 style="margin: 0;">Meta Ads Manager</h1>
+                            <span class="badge"
+                                style="background: rgba(16,185,129,0.15); color: #10b981; font-weight: 700; font-size: 0.72rem; padding: 3px 8px; border-radius: 12px;">Click-to-WhatsApp
+                                & Lead Gen</span>
+                        </div>
+                        <p class="subtitle">Run high-converting Facebook & Instagram ads with direct WhatsApp
+                            redirection, 0% platform fees, and closed-loop ROAS.</p>
+                    </div>
+                    <div class="header-actions"
+                        style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn secondary" onclick="loadAds()" style="gap: 6px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Refresh</span>
+                        </button>
+                        <a href="https://adsmanager.facebook.com" target="_blank" rel="noopener noreferrer"
+                            class="btn secondary" style="gap: 6px; text-decoration: none;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <line x1="10" y1="14" x2="21" y2="3"></line>
+                            </svg>
+                            <span>Meta Ads Manager ↗</span>
+                        </a>
+                        <button class="btn primary" onclick="openCreateAdModal()"
+                            style="font-weight: 700; gap: 6px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>+ Create Ad</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Direct Meta Billing Status Banner -->
+                <div id="ads-billing-status-banner"
+                    style="background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid #10b981; border-radius: var(--radius); padding: 0.85rem 1.25rem; margin-bottom: 1.5rem;">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Executive KPIs Grid -->
+                <div class="stats-grid"
+                    style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="stat-card" style="position: relative; overflow: hidden;">
+                        <div class="stat-label">Total Ad Spend</div>
+                        <div id="ad-metric-spend" class="stat-value" style="color: var(--text-main);">₹0.00</div>
+                        <div class="stat-desc" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+                            Direct to Meta via card/UPI</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Link Clicks & Reach</div>
+                        <div id="ad-metric-clicks" class="stat-value" style="color: #3b82f6;">0 clicks</div>
+                        <div class="stat-desc" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+                            Facebook & Instagram traffic</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Inbound Leads (WhatsApp)</div>
+                        <div id="ad-metric-leads" class="stat-value" style="color: #10b981;">0 leads</div>
+                        <div class="stat-desc" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+                            Landed directly in Inbox</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Sales Converted</div>
+                        <div id="ad-metric-converted" class="stat-value" style="color: #8b5cf6;">0 (0.0%)</div>
+                        <div class="stat-desc" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+                            Deals marked converted</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Return on Ad Spend</div>
+                        <div id="ad-metric-roas" class="stat-value" style="color: #eab308;">0.0x ROAS</div>
+                        <div class="stat-desc" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+                            Revenue / Ad Spend ratio</div>
+                    </div>
+                </div>
+
+                <!-- Campaigns List Section -->
+                <div class="content-card" style="padding: 1.25rem;">
+                    <div
+                        style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 260px;">
+                            <div class="search-box" style="width: 100%; max-width: 340px;">
+                                <input type="text" id="ads-search-input" placeholder="Search campaigns by name or ID..."
+                                    oninput="filterAdsTable()"
+                                    style="width: 100%; padding: 0.5rem 0.8rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;" />
+                            </div>
+                            <select id="ads-status-filter" onchange="filterAdsTable()"
+                                style="padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.82rem; font-weight: 600;">
+                                <option value="ALL">All Status</option>
+                                <option value="ACTIVE">🟢 Active</option>
+                                <option value="PAUSED">⏸ Paused</option>
+                            </select>
+                            <select id="ads-dest-filter" onchange="filterAdsTable()"
+                                style="padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.82rem; font-weight: 600;">
+                                <option value="ALL">All Destinations</option>
+                                <option value="WHATSAPP">💬 WhatsApp (CTWA)</option>
+                                <option value="INSTAGRAM_DIRECT">📸 Instagram DM</option>
+                                <option value="MESSENGER">🔵 Messenger</option>
+                                <option value="INSTANT_FORM">📋 Lead Form</option>
+                                <option value="WEBSITE">🌐 Website</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr
+                                    style="border-bottom: 2px solid var(--border); text-align: left; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <th style="padding: 0.75rem 0.85rem;">Campaign & Creative</th>
+                                    <th style="padding: 0.75rem 0.85rem;">Destination</th>
+                                    <th style="padding: 0.75rem 0.85rem;">Budget & Spend</th>
+                                    <th style="padding: 0.75rem 0.85rem;">Clicks / CPC</th>
+                                    <th style="padding: 0.75rem 0.85rem;">Inbound Leads</th>
+                                    <th style="padding: 0.75rem 0.85rem;">Sales Converted</th>
+                                    <th style="padding: 0.75rem 0.85rem;">ROAS</th>
+                                    <th style="padding: 0.75rem 0.85rem; text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ads-table-body">
+                                <!-- Populated dynamically by adsController -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <footer class="page-footer">
+                    <p>Inspenox Business Suite For Marketing &bull; Meta Ads Manager</p>
                 </footer>
             </section>
 
@@ -2378,8 +2541,8 @@
                         <div class="chat-header-bar" id="chat-header-bar" style="display:none;">
                             <!-- Top Tier: Navigation, Customer Identity & Lead Assignment -->
                             <div class="chat-header-top-row">
-                                <button type="button" id="close-chat-btn" class="icon-btn back-btn" title="Back to Chats"
-                                    aria-label="Back">
+                                <button type="button" id="close-chat-btn" class="icon-btn back-btn"
+                                    title="Back to Chats" aria-label="Back">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                                         style="width:18px;height:18px;">
                                         <polyline points="15 18 9 12 15 6"></polyline>
@@ -2391,7 +2554,8 @@
                                         <h3 id="active-chat-name">Customer Name</h3>
                                         <span class="window-badge" id="active-chat-window-badge">24h Active</span>
                                     </div>
-                                    <p id="active-chat-phone" class="chat-header-phone" style="margin:0;">+00000000000</p>
+                                    <p id="active-chat-phone" class="chat-header-phone" style="margin:0;">+00000000000
+                                    </p>
                                 </div>
                                 <div class="chat-header-actions">
                                     <!-- Lead Assignment Dropdown (Interakt Style) -->
@@ -2400,8 +2564,9 @@
                                             title="Click to assign lead to an employee">
                                             <span class="chat-assign-avatar" id="chat-assign-avatar">👤</span>
                                             <span class="chat-assign-name" id="chat-assign-name">Unassigned</span>
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                                class="chat-assign-chevron" style="width:12px;height:12px;opacity:0.7;">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2.5" class="chat-assign-chevron"
+                                                style="width:12px;height:12px;opacity:0.7;">
                                                 <polyline points="6 9 12 15 18 9"></polyline>
                                             </svg>
                                         </button>
@@ -2424,17 +2589,19 @@
                                         </button>
                                         <div id="chat-dropdown-menu" class="chat-dropdown-menu hidden">
                                             <button type="button" id="btn-inbox-send-template" class="dropdown-item">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                                    style="width:15px;height:15px;margin-right:8px;">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" style="width:15px;height:15px;margin-right:8px;">
+                                                    <path
+                                                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                                                    </path>
                                                     <polyline points="14 2 14 8 20 8"></polyline>
                                                 </svg>
                                                 <span>Send Template</span>
                                             </button>
                                             <button type="button" id="btn-inbox-manage-tags" class="dropdown-item"
                                                 onclick="openInboxAssignTagsModal()">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                                    style="width:15px;height:15px;margin-right:8px;">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" style="width:15px;height:15px;margin-right:8px;">
                                                     <path
                                                         d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z">
                                                     </path>
@@ -6632,10 +6799,12 @@
                     <!-- Parameters vs Example Toggle Tabs -->
                     <div
                         style="display: inline-flex; background: #e2e8f0; border-radius: 8px; padding: 3px; margin-bottom: 1.25rem;">
-                        <button type="button" id="lib-preview-tab-params" class="lib-toggle-btn active" onclick="setLibraryPreviewTab('params')">
+                        <button type="button" id="lib-preview-tab-params" class="lib-toggle-btn active"
+                            onclick="setLibraryPreviewTab('params')">
                             Parameters
                         </button>
-                        <button type="button" id="lib-preview-tab-example" class="lib-toggle-btn" onclick="setLibraryPreviewTab('example')">
+                        <button type="button" id="lib-preview-tab-example" class="lib-toggle-btn"
+                            onclick="setLibraryPreviewTab('example')">
                             Example
                         </button>
                     </div>
@@ -6646,13 +6815,17 @@
                         <div id="lib-preview-bubble-content" class="lib-preview-chat-bubble">
                             <!-- Header -->
                             <div id="lib-preview-header"
-                                style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.45rem; color: #111b21;"></div>
+                                style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.45rem; color: #111b21;">
+                            </div>
                             <!-- Body -->
-                            <div id="lib-preview-body" style="white-space: pre-wrap; word-break: break-word; color: #111b21;"></div>
+                            <div id="lib-preview-body"
+                                style="white-space: pre-wrap; word-break: break-word; color: #111b21;"></div>
                             <!-- Footer -->
-                            <div id="lib-preview-footer" style="font-size: 0.72rem; color: #667781; margin-top: 0.4rem; display: none;"></div>
+                            <div id="lib-preview-footer"
+                                style="font-size: 0.72rem; color: #667781; margin-top: 0.4rem; display: none;"></div>
                             <!-- Timestamp -->
-                            <div id="lib-preview-time" style="text-align: right; font-size: 0.65rem; color: #667781; margin-top: 0.35rem;">
+                            <div id="lib-preview-time"
+                                style="text-align: right; font-size: 0.65rem; color: #667781; margin-top: 0.35rem;">
                                 07:01 <span style="color:#53bdeb; font-weight:bold;">✓✓</span>
                             </div>
                         </div>
@@ -6665,7 +6838,8 @@
 
                     <p
                         style="margin: 0.85rem 0 0 0; font-size: 0.72rem; color: #64748b; text-align: center; line-height: 1.4; max-width: 280px;">
-                        Text in brackets <code>{{ }}</code> is dynamic. Switch to <strong>Example</strong> to view realistic customer-ready text.
+                        Text in brackets <code>{{ }}</code> is dynamic. Switch to <strong>Example</strong> to view
+                        realistic customer-ready text.
                     </p>
                 </div>
             </div>
@@ -6796,6 +6970,438 @@
         }
     </style>
 
+    <!-- Create Meta Ad Campaign Modal -->
+    <div id="create-ad-modal" class="modal"
+        style="display: none; align-items: center; justify-content: center; z-index: 99999; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);">
+        <div class="modal-content"
+            style="max-width: 1040px; width: 95%; height: 90vh; max-height: 820px; display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card); box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+
+            <!-- Modal Header -->
+            <div
+                style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface);">
+                <div>
+                    <h2
+                        style="margin: 0; font-size: 1.15rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                        <span>📢 Create Meta Ad Campaign</span>
+                        <span
+                            style="font-size: 0.65rem; background: rgba(16,185,129,0.15); color: #10b981; padding: 2px 8px; border-radius: 999px; font-weight: 700;">Direct
+                            Meta Billing</span>
+                    </h2>
+                    <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--text-muted);">
+                        5-Step Setup for Click-to-WhatsApp, Instagram DMs & Lead Gen Ads with Real-Time Mockup.
+                    </p>
+                </div>
+                <button class="icon-btn" onclick="closeCreateAdModal()" style="font-size: 1.25rem;">✕</button>
+            </div>
+
+            <!-- Stepper Progress Bar -->
+            <div class="ad-stepper-bar">
+                <div id="ad-step-pill-1" class="ad-step-pill active" onclick="setAdStep(1)">
+                    <span class="step-num">1</span>
+                    <span>Account & Page</span>
+                </div>
+                <div id="ad-step-pill-2" class="ad-step-pill" onclick="setAdStep(2)">
+                    <span class="step-num">2</span>
+                    <span>Destination & Creative</span>
+                </div>
+                <div id="ad-step-pill-3" class="ad-step-pill" onclick="setAdStep(3)">
+                    <span class="step-num">3</span>
+                    <span>Budget & Schedule</span>
+                </div>
+                <div id="ad-step-pill-4" class="ad-step-pill" onclick="setAdStep(4)">
+                    <span class="step-num">4</span>
+                    <span>Audience & Placements</span>
+                </div>
+                <div id="ad-step-pill-5" class="ad-step-pill" onclick="setAdStep(5)">
+                    <span class="step-num">5</span>
+                    <span>Review & Publish</span>
+                </div>
+            </div>
+
+            <!-- Modal Body Split View (Left Form / Right Phone Mockup) -->
+            <div style="flex: 1; display: grid; grid-template-columns: 1fr 380px; overflow: hidden;">
+                <!-- Left Column: Step Contents -->
+                <div style="padding: 1.5rem; overflow-y: auto; border-right: 1px solid var(--border);">
+
+                    <!-- STEP 1: Connect Account & Page -->
+                    <div id="ad-step-content-1">
+                        <h3 style="font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--text-main);">Step 1: Select
+                            Meta Ad Account & Page</h3>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+                            Select which Meta Ad Account will fund the ad budget and which Facebook/Instagram profile
+                            will run it.
+                        </p>
+
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+                                Campaign / Ad Name *
+                            </label>
+                            <input type="text" id="ad-form-name" placeholder="e.g. Summer Promo - Rotavator Offer"
+                                oninput="updateAdLivePreview()"
+                                style="width: 100%; padding: 0.55rem 0.8rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;" />
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+                                <span>Meta Ad Account *</span>
+                                <span style="font-size: 0.7rem; color: #10b981; font-weight: 600;">Direct Meta
+                                    Billing</span>
+                            </label>
+                            <select id="ad-form-account"
+                                style="width: 100%; padding: 0.55rem 0.8rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                                <option value="act_default">Loading Ad Accounts...</option>
+                            </select>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+                                Meta bills this account directly via the credit/debit card or UPI on file.
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+                                Facebook Page & Connected Instagram *
+                            </label>
+                            <select id="ad-form-page" onchange="updateAdLivePreview()"
+                                style="width: 100%; padding: 0.55rem 0.8rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;">
+                                <option value="page_default">Loading Pages...</option>
+                            </select>
+                        </div>
+
+                        <div
+                            style="padding: 0.85rem; border-radius: 8px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); font-size: 0.75rem; color: var(--text-main); line-height: 1.4;">
+                            💡 <b>Direct Meta Billing Note:</b> All ad spend is paid directly to Meta via your connected
+                            payment method with official GST invoices issued by Meta. Inspenox charges zero platform
+                            commission.
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: Destination & Creative -->
+                    <div id="ad-step-content-2" style="display: none;">
+                        <h3 style="font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--text-main);">Step 2: Choose
+                            Ad Destination & Creative</h3>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1rem;">
+                            Select where customer clicks should redirect, set your ad copy, and preview live on the
+                            phone.
+                        </p>
+
+                        <!-- Destination Cards Grid -->
+                        <div
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1.25rem;">
+                            <div class="ad-dest-card selected" data-dest="WHATSAPP"
+                                onclick="selectAdDestination('WHATSAPP')">
+                                <span style="font-size: 1.3rem;">💬</span>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-main);">WhatsApp
+                                        (CTWA)</div>
+                                    <div style="font-size: 0.7rem; color: #10b981; font-weight: 600;">Recommended &bull;
+                                        Pre-Verified</div>
+                                </div>
+                            </div>
+                            <div class="ad-dest-card" data-dest="INSTAGRAM_DIRECT"
+                                onclick="selectAdDestination('INSTAGRAM_DIRECT')">
+                                <span style="font-size: 1.3rem;">📸</span>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-main);">
+                                        Instagram DM</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">Direct message on IG</div>
+                                </div>
+                            </div>
+                            <div class="ad-dest-card" data-dest="INSTANT_FORM"
+                                onclick="selectAdDestination('INSTANT_FORM')">
+                                <span style="font-size: 1.3rem;">📋</span>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-main);">Instant
+                                        Lead Form</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">In-app popup lead form
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ad-dest-card" data-dest="WEBSITE" onclick="selectAdDestination('WEBSITE')">
+                                <span style="font-size: 1.3rem;">🌐</span>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-main);">Website
+                                        Link</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">Landing page URL</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WhatsApp Destination Details (Pre-Verified WABA) -->
+                        <div id="ad-destination-whatsapp-block"
+                            style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: 8px; padding: 0.85rem; margin-bottom: 1.25rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: #10b981; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+                                <span>Verified WhatsApp WABA Number (No OTP Required)</span>
+                                <span
+                                    style="font-size: 0.65rem; background: #10b981; color: #fff; padding: 2px 6px; border-radius: 999px;">Cloud
+                                    API Verified</span>
+                            </label>
+                            <select id="ad-form-waba"
+                                style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem; font-weight: 600;">
+                                <option value="">Loading registered numbers...</option>
+                            </select>
+
+                            <div style="margin-top: 0.75rem;">
+                                <label
+                                    style="font-size: 0.75rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.25rem;">
+                                    Pre-filled WhatsApp Welcome Message (Icebreaker)
+                                </label>
+                                <textarea id="ad-form-icebreaker" rows="2"
+                                    placeholder="Hi, I saw your ad and want to know more about this offer!"
+                                    oninput="updateAdLivePreview()"
+                                    style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); font-size: 0.8rem; resize: vertical;">Hi, I saw your ad on Facebook/Instagram and want to know more about your offerings!</textarea>
+                                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
+                                    When a user clicks the ad, WhatsApp opens with this message already typed and ready
+                                    to send!
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Website URL Block -->
+                        <div id="ad-destination-website-block" style="display: none; margin-bottom: 1.25rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">Website
+                                / Landing Page URL *</label>
+                            <input type="url" id="ad-form-website-url" placeholder="https://yourwebsite.com/product"
+                                oninput="updateAdLivePreview()"
+                                style="width: 100%; padding: 0.55rem 0.8rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;" />
+                        </div>
+
+                        <!-- Ad Creative Inputs -->
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+                                Ad Headline (Shown beside CTA button) *
+                            </label>
+                            <input type="text" id="ad-form-headline" value="Chat with us on WhatsApp"
+                                oninput="updateAdLivePreview()"
+                                style="width: 100%; padding: 0.55rem 0.8rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;" />
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+                                Primary Text (Caption / Body copy) *
+                            </label>
+                            <textarea id="ad-form-primary-text" rows="3"
+                                placeholder="Explain your product or special offer clearly..."
+                                oninput="updateAdLivePreview()"
+                                style="width: 100%; padding: 0.55rem 0.8rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.82rem; resize: vertical;">Get high-quality products and verified service directly from our official store. Tap below to chat with us on WhatsApp!</textarea>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+                                Ad Creative Image / Video URL
+                            </label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="url" id="ad-form-media-url" placeholder="https://example.com/ad-image.jpg"
+                                    oninput="updateAdLivePreview()"
+                                    style="flex: 1; padding: 0.55rem 0.8rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.85rem;" />
+                                <button type="button" class="btn secondary sm"
+                                    onclick="switchView('media'); closeCreateAdModal();"
+                                    style="white-space: nowrap; font-size: 0.75rem;">
+                                    Browse Media
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: Budget & Schedule -->
+                    <div id="ad-step-content-3" style="display: none;">
+                        <h3 style="font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--text-main);">Step 3: Set Ad
+                            Budget & Schedule</h3>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+                            Set your daily spend limit. You can pause or stop the ad at any time.
+                        </p>
+
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+                                Daily Budget (₹ INR) *
+                            </label>
+                            <input type="number" id="ad-form-budget" value="1000" min="100" step="50"
+                                oninput="updateEstimatedReach(this.value)"
+                                style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 1.1rem; font-weight: 700;" />
+                        </div>
+
+                        <!-- Quick Budget Pills -->
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+                            <div class="budget-pill" data-amount="500" onclick="selectQuickBudget(500)">₹500 / day</div>
+                            <div class="budget-pill active" data-amount="1000" onclick="selectQuickBudget(1000)">₹1,000
+                                / day</div>
+                            <div class="budget-pill" data-amount="2500" onclick="selectQuickBudget(2500)">₹2,500 / day
+                            </div>
+                            <div class="budget-pill" data-amount="5000" onclick="selectQuickBudget(5000)">₹5,000 / day
+                            </div>
+                        </div>
+
+                        <!-- Estimated Reach Box -->
+                        <div
+                            style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+                            <div
+                                style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                                Estimated Daily Results</div>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                                <span style="font-size: 0.82rem; color: var(--text-main);">Daily Reach</span>
+                                <span id="ad-estimated-reach"
+                                    style="font-weight: 700; color: #10b981; font-size: 0.9rem;">2,800 – 7,500
+                                    people/day</span>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem;">
+                                <span style="font-size: 0.82rem; color: var(--text-main);">Est. WhatsApp Inbound
+                                    Clicks</span>
+                                <span id="ad-estimated-clicks"
+                                    style="font-weight: 700; color: #3b82f6; font-size: 0.9rem;">120 – 350
+                                    clicks/day</span>
+                            </div>
+                        </div>
+
+                        <div
+                            style="padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; font-size: 0.75rem; color: var(--text-main);">
+                            ⏱ <b>Schedule:</b> Starts immediately upon Meta review approval and runs continuously until
+                            paused.
+                        </div>
+                    </div>
+
+                    <!-- STEP 4: Audience & Placements -->
+                    <div id="ad-step-content-4" style="display: none;">
+                        <h3 style="font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--text-main);">Step 4:
+                            Placements & Audience Targeting</h3>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+                            Choose where Meta distributes your ad across Facebook & Instagram.
+                        </p>
+
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+                                Placements Distribution
+                            </label>
+                            <div
+                                style="padding: 0.85rem; border-radius: 8px; background: var(--bg-surface); border: 1.5px solid var(--primary); margin-bottom: 0.5rem;">
+                                <div
+                                    style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.85rem; color: var(--primary);">
+                                    <span>⚡ Advantage+ Placements (Recommended by Meta)</span>
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+                                    Automatically distributes budget across Facebook Feed, Instagram Feed, Instagram
+                                    Stories, Reels, and Explore for maximum conversions.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+                                Target Country
+                            </label>
+                            <input type="text" value="India (IN)" disabled
+                                style="width: 100%; padding: 0.55rem 0.8rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem;" />
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                            <div>
+                                <label
+                                    style="font-size: 0.75rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">Age
+                                    Range</label>
+                                <select
+                                    style="width: 100%; padding: 0.5rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.82rem;">
+                                    <option>18 – 65+ (All Adults)</option>
+                                    <option>21 – 55 (Prime Buyers)</option>
+                                    <option>25 – 60 (Business Owners)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    style="font-size: 0.75rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">Gender</label>
+                                <select
+                                    style="width: 100%; padding: 0.5rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.82rem;">
+                                    <option>All Genders</option>
+                                    <option>Men</option>
+                                    <option>Women</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label
+                                style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+                                Detailed Interests (Optional)
+                            </label>
+                            <input type="text" placeholder="e.g. Agriculture, Real Estate, E-Commerce, Retail"
+                                style="width: 100%; padding: 0.55rem 0.8rem; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); font-size: 0.82rem;" />
+                        </div>
+                    </div>
+
+                    <!-- STEP 5: Review & Publish -->
+                    <div id="ad-step-content-5" style="display: none;">
+                        <h3 style="font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--text-main);">Step 5: Final
+                            Review & 1-Click Publish</h3>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+                            Confirm your campaign parameters before publishing to Meta Graph API.
+                        </p>
+
+                        <div id="ad-summary-review-box">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Interactive Phone Mockup Preview -->
+                <div
+                    style="background: var(--bg-surface); padding: 1.25rem; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-y: auto;">
+
+                    <!-- Platform Toggle Pills -->
+                    <div
+                        style="display: flex; gap: 0.4rem; margin-bottom: 1rem; background: var(--bg-card); padding: 4px; border-radius: 999px; border: 1px solid var(--border);">
+                        <button type="button" id="btn-preview-fb" class="btn sm active"
+                            onclick="switchAdPreviewPlatform('facebook')"
+                            style="border-radius: 999px; font-size: 0.72rem; padding: 4px 12px; font-weight: 700;">
+                            Facebook Feed
+                        </button>
+                        <button type="button" id="btn-preview-ig" class="btn sm secondary"
+                            onclick="switchAdPreviewPlatform('instagram')"
+                            style="border-radius: 999px; font-size: 0.72rem; padding: 4px 12px; font-weight: 700;">
+                            Instagram Feed
+                        </button>
+                    </div>
+
+                    <!-- Smartphone Mockup -->
+                    <div class="phone-mockup-frame">
+                        <div class="phone-mockup-speaker"></div>
+                        <div class="phone-mockup-screen" id="ad-phone-mockup-inner">
+                            <!-- Populated dynamically by updateAdLivePreview() -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div
+                style="padding: 0.85rem 1.5rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface);">
+                <button type="button" class="btn secondary" onclick="closeCreateAdModal()">Cancel</button>
+                <div style="display: flex; gap: 0.6rem;">
+                    <button type="button" id="ad-btn-prev" class="btn secondary" onclick="prevAdStep()"
+                        style="display: none;">
+                        ← Previous
+                    </button>
+                    <button type="button" id="ad-btn-next" class="btn primary" onclick="nextAdStep()"
+                        style="font-weight: 700;">
+                        Next Step →
+                    </button>
+                    <button type="button" id="ad-btn-publish" class="btn primary" onclick="publishAd()"
+                        style="display: none; font-weight: 800; background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+                        <span>🚀 Publish Ad to Meta</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="/controllers/coreController.js"></script>
     <script src="/controllers/companyController.js"></script>
     <script src="/controllers/dashboardController.js"></script>
@@ -6809,6 +7415,7 @@
     <script src="/controllers/billingController.js"></script>
     <script src="/controllers/automationController.js"></script>
     <script src="/controllers/simulatorController.js"></script>
+    <script src="/controllers/adsController.js"></script>
 </body>
 
 </html>

@@ -405,8 +405,13 @@ module.exports = async (req, res) => {
                   content = `[${messageType}]`;
                 }
 
+                const metaReferral = message.referral || (message.context && message.context.referred_product) || null;
+                const metaAdId = (metaReferral && (metaReferral.source_type === 'ad' || metaReferral.source_id)) ? String(metaReferral.source_id) : null;
+                const adHeadline = metaReferral ? (metaReferral.headline || metaReferral.body || 'Ad Lead') : '';
+                const adTag = adHeadline ? `Ad: ${adHeadline.slice(0, 30)}` : (metaAdId ? 'Meta Ad' : null);
+
                 let customer = await sql`
-                  SELECT id FROM customers 
+                  SELECT id, tags, source_ad_id FROM customers 
                   WHERE (phone = ${phone} OR phone = ${tenDigits}) AND company_id = ${targetCompanyId}
                   ORDER BY is_saved DESC, id ASC 
                   LIMIT 1
@@ -416,14 +421,39 @@ module.exports = async (req, res) => {
 
                 if (customer.length === 0) {
                   isBrandNewLead = true;
+                  const initialTags = adTag ? adTag : '';
                   const newCust = await sql`
-                    INSERT INTO customers (name, phone, company_id, is_saved) 
-                    VALUES (${name}, ${phone}, ${targetCompanyId}, false) 
+                    INSERT INTO customers (name, phone, company_id, is_saved, source_ad_id, tags) 
+                    VALUES (${name}, ${phone}, ${targetCompanyId}, false, ${metaAdId}, ${initialTags}) 
                     RETURNING id
                   `;
                   customerId = newCust[0].id;
                 } else {
                   customerId = customer[0].id;
+                  if (metaAdId && !customer[0].source_ad_id) {
+                    let updatedTags = customer[0].tags || '';
+                    if (adTag && !updatedTags.includes(adTag)) {
+                      updatedTags = updatedTags ? `${updatedTags}, ${adTag}` : adTag;
+                    }
+                    try {
+                      await sql`
+                        UPDATE customers 
+                        SET source_ad_id = ${metaAdId}, tags = ${updatedTags} 
+                        WHERE id = ${customerId}
+                      `;
+                    } catch(e) {}
+                  }
+                }
+
+                // Increment inbound leads count on the matching ad
+                if (metaAdId) {
+                  try {
+                    await sql`
+                      UPDATE meta_ads 
+                      SET inbound_leads_count = inbound_leads_count + 1, updated_at = NOW() 
+                      WHERE meta_ad_id = ${metaAdId} AND company_id = ${targetCompanyId}
+                    `;
+                  } catch(e) {}
                 }
 
                 // Determine if this is customer's first inbound contact
@@ -444,8 +474,8 @@ module.exports = async (req, res) => {
                 const validTypes = ["text", "image", "video", "document", "audio", "sticker", "template", "button", "interactive"];
                 const dbMsgType = validTypes.includes(messageType) ? messageType : "text";
                 await sql`
-                  INSERT INTO messages (company_id, customer_id, direction, type, content, media_url, wa_message_id, status) 
-                  VALUES (${targetCompanyId}, ${customerId}, 'inbound', ${dbMsgType}, ${content}, ${mediaUrl}, ${messageId}, 'delivered')
+                  INSERT INTO messages (company_id, customer_id, direction, type, content, media_url, wa_message_id, status, meta_ad_id, meta_referral) 
+                  VALUES (${targetCompanyId}, ${customerId}, 'inbound', ${dbMsgType}, ${content}, ${mediaUrl}, ${messageId}, 'delivered', ${metaAdId}, ${metaReferral ? JSON.stringify(metaReferral) : null}::jsonb)
                 `;
 
                 // Trigger 24/7 Enterprise Auto-Reply in Inspenox Business Suite For Marketing (Supports First Contact, Button Clicks & Keywords)

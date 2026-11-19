@@ -8025,6 +8025,153 @@ td.empty-state .empty-state-desc,
     }
 }
 
+/* ==========================================================================
+   META ADS MANAGER & CREATIVE WIZARD STYLES
+   ========================================================================== */
+.ad-stepper-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+}
+
+.ad-step-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ad-step-pill .step-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.ad-step-pill.active {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.ad-step-pill.active .step-num {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+.ad-step-pill.completed {
+    border-color: rgba(16, 185, 129, 0.4);
+    color: var(--text-main);
+}
+
+.ad-step-pill.completed .step-num {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.ad-dest-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem;
+    border-radius: 10px;
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ad-dest-card:hover {
+    border-color: var(--text-muted);
+    transform: translateY(-1px);
+}
+
+.ad-dest-card.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.budget-pill {
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.budget-pill:hover {
+    border-color: var(--primary);
+}
+
+.budget-pill.active {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+.phone-mockup-frame {
+    width: 320px;
+    height: 580px;
+    background: #000000;
+    border-radius: 36px;
+    padding: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 0 0 2px rgba(255, 255, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    margin: 0 auto;
+}
+
+.phone-mockup-speaker {
+    width: 60px;
+    height: 4px;
+    background: #333333;
+    border-radius: 2px;
+    margin: 0 auto 8px auto;
+}
+
+.phone-mockup-screen {
+    flex: 1;
+    background: var(--bg-card);
+    border-radius: 26px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.phone-mockup-screen::-webkit-scrollbar {
+    width: 4px;
+}
+.phone-mockup-screen::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+}
+
+
 
 
 

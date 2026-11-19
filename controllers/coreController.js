@@ -798,6 +798,13 @@ window.switchView = function switchView(target, pushHistory = true) {
             window.loadAutomationBoard();
         }
     }
+    if (target === 'ads') {
+        if (typeof loadAds === 'function') {
+            loadAds();
+        } else if (typeof window.loadAds === 'function') {
+            window.loadAds();
+        }
+    }
 
     if (pushHistory && history.pushState) {
         history.pushState({ view: target }, '', `#${target}`);
