@@ -405,6 +405,8 @@ module.exports = async (req, res) => {
             const newPriority = priority ? priority.toLowerCase() : null;
 
             const isResolvedNow = (newStatus === 'RESOLVED' || newStatus === 'CLOSED');
+            const hasNotes = (resolution_notes !== undefined && resolution_notes !== null);
+            const notesValue = hasNotes ? String(resolution_notes).trim() : null;
 
             const updated = await sql`
                 UPDATE support_tickets
@@ -412,9 +414,9 @@ module.exports = async (req, res) => {
                     status = ${newStatus},
                     category = COALESCE(${category || null}, category),
                     priority = COALESCE(${newPriority && validPriorities.includes(newPriority) ? newPriority : null}, priority),
-                    resolution_notes = ${resolution_notes !== undefined ? resolution_notes : sql`resolution_notes`},
-                    resolved_by = ${resolved_by || (isResolvedNow ? 'Superadmin' : sql`resolved_by`)},
-                    resolved_at = ${isResolvedNow ? sql`NOW()` : sql`resolved_at`},
+                    resolution_notes = CASE WHEN ${hasNotes} THEN ${notesValue} ELSE resolution_notes END,
+                    resolved_by = CASE WHEN ${isResolvedNow} THEN COALESCE(${resolved_by || null}, 'Superadmin') ELSE resolved_by END,
+                    resolved_at = CASE WHEN ${isResolvedNow} THEN COALESCE(resolved_at, NOW()) ELSE resolved_at END,
                     updated_at = NOW()
                 WHERE id = ${id}
                 RETURNING *
