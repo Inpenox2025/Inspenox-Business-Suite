@@ -522,14 +522,21 @@
 
         if (filtered.length === 0) {
             container.innerHTML = `
-                <div class="empty-state-card" style="padding: 2.5rem; text-align: center; background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🔍</div>
-                    <h4 style="margin: 0 0 0.5rem 0; color: var(--text-main); font-size: 1.1rem;">No matching self-help solutions found</h4>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 480px; margin: 0 auto 1.5rem auto;">
-                        We couldn't find a pre-trained solution for "${escapeHTML(query)}". Our engineering and support team is ready to assist you directly!
+                <div class="empty-state-card" style="padding: 2.5rem 1.5rem; text-align: center; background: var(--bg-card); border-radius: 14px; border: 1.5px dashed var(--border);">
+                    <div style="margin-bottom: 1rem; display: flex; justify-content: center;">
+                        <svg width="68" height="68" viewBox="0 0 68 68" fill="none">
+                            <circle cx="34" cy="34" r="32" fill="rgba(59, 130, 246, 0.08)" />
+                            <circle cx="30" cy="30" r="15" stroke="#3b82f6" stroke-width="3" />
+                            <path d="M41 41 L52 52" stroke="#3b82f6" stroke-width="3.5" stroke-linecap="round" />
+                            <circle cx="30" cy="30" r="7" fill="rgba(59, 130, 246, 0.2)" />
+                        </svg>
+                    </div>
+                    <h4 style="margin: 0 0 0.4rem 0; color: var(--text-main); font-size: 1.15rem; font-weight: 800;">No matching self-help solutions found</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 480px; margin: 0 auto 1.5rem auto; line-height: 1.5;">
+                        We couldn't find a pre-trained solution for "<b>${escapeHTML(query)}</b>". Our engineering specialists are ready to help you directly!
                     </p>
                     <button type="button" class="btn primary" onclick="escalateToTicket('', '${escapeHTML(query)}')" style="font-weight: 700; gap: 6px;">
-                        <span>🎫 Raise a Support Ticket Now &rarr;</span>
+                        <span>🎫 Raise a Dedicated Support Ticket &rarr;</span>
                     </button>
                 </div>
             `;
@@ -760,11 +767,21 @@
 
         if (tickets.length === 0) {
             container.innerHTML = `
-                <div class="empty-state-card" style="padding: 2.5rem; text-align: center; background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border);">
-                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🎫</div>
-                    <h4 style="margin: 0 0 0.5rem 0; color: var(--text-main); font-size: 1.1rem;">No support tickets raised yet</h4>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem auto;">
-                        Have questions or encountering an issue? Check our self-help Q&A or raise a direct support ticket.
+                <div class="empty-state-card" style="padding: 2.5rem 1.5rem; text-align: center; background: var(--bg-card); border-radius: 14px; border: 1.5px dashed var(--border);">
+                    <div style="margin-bottom: 1rem; display: flex; justify-content: center;">
+                        <svg width="74" height="74" viewBox="0 0 74 74" fill="none">
+                            <rect x="13" y="15" width="48" height="44" rx="12" fill="rgba(16, 185, 129, 0.08)" stroke="#10b981" stroke-width="2.5" />
+                            <path d="M13 30 L61 30" stroke="#10b981" stroke-width="2" stroke-dasharray="3 3" />
+                            <circle cx="13" cy="30" r="4.5" fill="var(--bg-card)" stroke="#10b981" stroke-width="2" />
+                            <circle cx="61" cy="30" r="4.5" fill="var(--bg-card)" stroke="#10b981" stroke-width="2" />
+                            <path d="M28 42 L34 48 L46 34" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                            <circle cx="56" cy="18" r="6" fill="#f59e0b" />
+                            <path d="M56 15 L56 19 M56 21 L56 21.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <h4 style="margin: 0 0 0.4rem 0; color: var(--text-main); font-size: 1.15rem; font-weight: 800;">No support tickets raised yet</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem auto; line-height: 1.5;">
+                        Have questions or encountering an issue? Check our pre-trained self-help Q&A or raise a direct support ticket.
                     </p>
                     <button type="button" class="btn primary" onclick="switchSupportTab('create-ticket')" style="font-weight: 700; gap: 6px;">
                         <span>+ Raise a New Ticket</span>
