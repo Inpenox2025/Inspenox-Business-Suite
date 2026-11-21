@@ -409,7 +409,7 @@
             const res = await apiFetch('/api/support?action=close_ticket', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: ticketId, company_id: companyId })
+                body: JSON.stringify({ action: 'close_ticket', id: ticketId, company_id: companyId })
             });
             const data = await res.json();
             if (data.success) {
@@ -1122,8 +1122,12 @@
         try {
             const res = await apiFetch('/api/support?action=update_status', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-User-Role': 'superadmin'
+                },
                 body: JSON.stringify({
+                    action: 'update_status',
                     id: selectedAdminTicket.id,
                     status: newStatus,
                     category: newCategory,
@@ -1222,6 +1226,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    action: 'feedback',
                     id: selectedFeedbackTicketId,
                     feedback: feedback,
                     company_id: companyId

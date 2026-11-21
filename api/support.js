@@ -244,7 +244,7 @@ module.exports = async (req, res) => {
     // =========================================================================
     // 2. POST CREATE: Raise a New Support Ticket
     // =========================================================================
-    if (req.method === 'POST' && (action === 'create' || !body.action)) {
+    if (req.method === 'POST' && action === 'create') {
         try {
             const {
                 user_name,
@@ -439,7 +439,7 @@ module.exports = async (req, res) => {
     // 4. POST FEEDBACK: User submits feedback if ticket is not resolved
     // Updates status to IN_PROGRESS so Superadmin can follow up
     // =========================================================================
-    if (req.method === 'POST' && action === 'feedback') {
+    if (req.method === 'POST' && (action === 'feedback' || action === 'submit_feedback')) {
         try {
             const { id, feedback } = body;
             if (!id) {
