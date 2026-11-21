@@ -806,6 +806,13 @@ window.switchView = function switchView(target, pushHistory = true) {
             window.loadAds();
         }
     }
+    if (target === 'support') {
+        if (typeof loadSupportPortal === 'function') {
+            loadSupportPortal();
+        } else if (typeof window.loadSupportPortal === 'function') {
+            window.loadSupportPortal();
+        }
+    }
 
     if (pushHistory && history.pushState) {
         history.pushState({ view: target }, '', `#${target}`);

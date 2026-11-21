@@ -262,3 +262,29 @@ ALTER TABLE customers ADD COLUMN IF NOT EXISTS deal_value NUMERIC DEFAULT 0;
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS meta_ad_account_id TEXT;
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS meta_page_id TEXT;
 
+-- 10. Help & Support Tickets
+CREATE TABLE IF NOT EXISTS support_tickets (
+  id SERIAL PRIMARY KEY,
+  ticket_number TEXT UNIQUE NOT NULL,
+  company_id INT REFERENCES companies(id) ON DELETE CASCADE,
+  company_name TEXT,
+  user_name TEXT NOT NULL,
+  user_email TEXT NOT NULL,
+  user_phone TEXT,
+  category TEXT NOT NULL,
+  priority TEXT DEFAULT 'medium',
+  subject TEXT NOT NULL,
+  description TEXT NOT NULL,
+  attachment_url TEXT,
+  status TEXT DEFAULT 'OPEN',
+  resolution_notes TEXT,
+  resolved_by TEXT,
+  resolved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_support_tickets_company ON support_tickets(company_id);
+CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);
+
+

@@ -8292,6 +8292,435 @@ td.empty-state .empty-state-desc,
     display: none !important;
 }
 
+/* ==========================================================================
+   Help & Support Module Styles (Amazon/Flipkart Style Self-Service & Desk)
+   ========================================================================== */
+.support-tab-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.25rem;
+    overflow-x: auto;
+}
+
+.support-tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 0.65rem 1.1rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.support-tab-btn:hover {
+    color: var(--text-main);
+}
+
+.support-tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.support-badge-pill {
+    background: rgba(16, 185, 129, 0.18);
+    color: #10b981;
+    font-size: 0.68rem;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-weight: 800;
+}
+
+.support-hero-box {
+    background: linear-gradient(135deg, rgba(0, 168, 132, 0.08) 0%, rgba(59, 130, 246, 0.06) 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem 1.75rem;
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+
+.support-search-bar {
+    max-width: 680px;
+    margin: 1.25rem auto 0 auto;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.support-search-bar input {
+    width: 100%;
+    padding: 0.85rem 1.25rem 0.85rem 2.85rem;
+    border-radius: 999px;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    font-size: 0.95rem;
+    color: var(--text-main);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
+}
+
+.support-search-bar input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 4px 24px rgba(16, 185, 129, 0.2);
+    outline: none;
+}
+
+.support-search-icon {
+    position: absolute;
+    left: 1rem;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+
+.faq-categories-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.faq-category-pill {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.15s ease;
+}
+
+.faq-category-pill:hover {
+    background: var(--bg-card);
+    border-color: var(--primary);
+}
+
+.faq-category-pill.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.faq-accordion-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 0.85rem;
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.faq-accordion-card:hover {
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.faq-accordion-header {
+    padding: 1.1rem 1.35rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    gap: 1rem;
+}
+
+.faq-accordion-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.35;
+}
+
+.faq-accordion-snippet {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+.faq-accordion-arrow {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.faq-accordion-content {
+    padding: 1rem 1.35rem 1.35rem 1.35rem;
+    border-top: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.015);
+}
+
+.faq-solution-body {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-main);
+}
+
+.faq-solution-body p {
+    margin: 0 0 0.75rem 0;
+}
+
+.faq-solution-body ol, .faq-solution-body ul {
+    margin: 0.5rem 0 0.85rem 1.25rem;
+    padding: 0;
+}
+
+.faq-solution-body li {
+    margin-bottom: 0.4rem;
+}
+
+.faq-solution-body code {
+    background: rgba(0, 0, 0, 0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.82rem;
+}
+
+.faq-resolution-box {
+    margin-top: 1.25rem;
+    padding: 0.85rem 1.1rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.faq-resolution-prompt {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.faq-resolution-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-res-yes {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-res-yes:hover {
+    background: #10b981;
+    color: #fff;
+}
+
+.btn-res-no {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #ef4444;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-res-no:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+.faq-solved-badge {
+    margin-top: 1rem;
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+    font-size: 0.82rem;
+}
+
+/* Support Ticket Cards (My Tickets) */
+.support-ticket-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.35rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.support-ticket-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.support-ticket-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+}
+
+.ticket-num-pill {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    font-family: monospace;
+    font-weight: 800;
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.ticket-cat-pill {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.ticket-status-badge {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ticket-status-badge.badge-open {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.ticket-status-badge.badge-progress {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.ticket-status-badge.badge-resolved {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.ticket-status-badge.badge-closed {
+    background: rgba(156, 163, 175, 0.15);
+    color: #9ca3af;
+    border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+.ticket-priority-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+}
+
+.ticket-priority-badge.priority-urgent {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.ticket-priority-badge.priority-high {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+}
+
+.ticket-priority-badge.priority-medium {
+    background: rgba(234, 179, 8, 0.15);
+    color: #eab308;
+}
+
+.ticket-priority-badge.priority-low {
+    background: rgba(107, 114, 128, 0.15);
+    color: #9ca3af;
+}
+
+.ticket-subject-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 0.35rem 0;
+}
+
+.ticket-desc-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.ticket-resolution-callout {
+    margin-top: 0.85rem;
+    padding: 0.85rem 1rem;
+    background: rgba(16, 185, 129, 0.08);
+    border-left: 3px solid #10b981;
+    border-radius: 6px;
+}
+
+.support-ticket-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.85rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+/* Superadmin Support KPI Cards */
+.support-admin-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.support-admin-kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+
 
 
 

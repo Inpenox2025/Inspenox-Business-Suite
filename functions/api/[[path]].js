@@ -21,8 +21,11 @@ const catalogsHandler = require('../../api/catalogs');
 const mediaProxyHandler = require('../../api/media-proxy');
 const automationHandler = require('../../api/automation');
 const adsHandler = require('../../api/ads');
+const supportHandler = require('../../api/support');
 
 const routes = {
+    'support': supportHandler,
+    'tickets': supportHandler,
     'ads': adsHandler,
     'meta-ads': adsHandler,
     'analytics': analyticsHandler,
