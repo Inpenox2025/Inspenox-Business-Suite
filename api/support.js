@@ -114,17 +114,18 @@ module.exports = async (req, res) => {
             company = cos[0];
             isMaster = (company.slug && company.slug.toLowerCase() === 'inspenox') ||
                        (company.name && company.name.toLowerCase() === 'inspenox') ||
-                       company.is_parent === true || company.is_master === true;
+                       companyId === 5;
         } else {
-            isMaster = (companyId === 1);
+            isMaster = (companyId === 5);
         }
     } catch (e) {
         console.warn('Company fetch error in support.js:', e.message);
+        isMaster = (companyId === 5);
     }
 
-    // Role check from headers, body, or master organization
+    // Role check from headers, body, query, or master organization
     const userRole = (body.role || query.role || (req.headers && req.headers['x-user-role']) || '').toLowerCase();
-    const isSuperadminUser = isMaster || userRole === 'superadmin';
+    const isSuperadminUser = isMaster || userRole === 'superadmin' || query.role === 'superadmin';
 
     const action = query.action || body.action || 'list';
 
@@ -140,11 +141,14 @@ module.exports = async (req, res) => {
 
             let tickets = [];
 
-            if (isSuperadminUser && !query.my_company_only) {
+            // If superadmin viewing global desk (not explicitly restricted to my_company_only)
+            const isGlobalDesk = (isSuperadminUser || query.role === 'superadmin') && !query.my_company_only;
+
+            if (isGlobalDesk) {
                 // Superadmin Global View: List all tickets across platform
                 if (targetCompany && !isNaN(targetCompany) && statusFilter !== 'ALL') {
                     tickets = await sql`
-                        SELECT t.*, c.name as current_company_name 
+                        SELECT t.*, COALESCE(c.name, t.company_name, 'Company #' || t.company_id) as current_company_name 
                         FROM support_tickets t
                         LEFT JOIN companies c ON t.company_id = c.id
                         WHERE t.company_id = ${targetCompany} AND t.status = ${statusFilter}
@@ -152,7 +156,7 @@ module.exports = async (req, res) => {
                     `;
                 } else if (targetCompany && !isNaN(targetCompany)) {
                     tickets = await sql`
-                        SELECT t.*, c.name as current_company_name 
+                        SELECT t.*, COALESCE(c.name, t.company_name, 'Company #' || t.company_id) as current_company_name 
                         FROM support_tickets t
                         LEFT JOIN companies c ON t.company_id = c.id
                         WHERE t.company_id = ${targetCompany}
@@ -160,7 +164,7 @@ module.exports = async (req, res) => {
                     `;
                 } else if (statusFilter !== 'ALL') {
                     tickets = await sql`
-                        SELECT t.*, c.name as current_company_name 
+                        SELECT t.*, COALESCE(c.name, t.company_name, 'Company #' || t.company_id) as current_company_name 
                         FROM support_tickets t
                         LEFT JOIN companies c ON t.company_id = c.id
                         WHERE t.status = ${statusFilter}
@@ -168,7 +172,7 @@ module.exports = async (req, res) => {
                     `;
                 } else {
                     tickets = await sql`
-                        SELECT t.*, c.name as current_company_name 
+                        SELECT t.*, COALESCE(c.name, t.company_name, 'Company #' || t.company_id) as current_company_name 
                         FROM support_tickets t
                         LEFT JOIN companies c ON t.company_id = c.id
                         ORDER BY t.created_at DESC
@@ -196,7 +200,7 @@ module.exports = async (req, res) => {
             let metrics = { total: 0, open: 0, in_progress: 0, resolved: 0, closed: 0 };
             try {
                 let countRows = [];
-                if (isSuperadminUser && !query.my_company_only) {
+                if (isGlobalDesk) {
                     countRows = await sql`
                         SELECT status, COUNT(*)::int as count 
                         FROM support_tickets 
@@ -238,9 +242,6 @@ module.exports = async (req, res) => {
 
     // =========================================================================
     // 2. POST CREATE: Raise a New Support Ticket
-    // Enforces:
-    //  a) Active Ticket Block: Cannot raise new ticket if an active ticket (OPEN/IN_PROGRESS) exists
-    //  b) 24-Hour Rate Limiting: Only 1 ticket per user/company every 24 hours
     // =========================================================================
     if (req.method === 'POST' && (action === 'create' || !body.action)) {
         try {
@@ -253,7 +254,8 @@ module.exports = async (req, res) => {
                 subject,
                 description,
                 attachment_url,
-                company_name
+                company_name,
+                close_previous = false
             } = body;
 
             if (!user_name || !user_name.trim()) {
@@ -271,8 +273,7 @@ module.exports = async (req, res) => {
 
             const cleanEmail = user_email.trim().toLowerCase();
 
-            // RULE 1: ACTIVE TICKET BLOCK
-            // If the user or company has an active ticket (OPEN or IN_PROGRESS), block creation until closed!
+            // Check if there is an active ticket (OPEN or IN_PROGRESS)
             const activeTickets = await sql`
                 SELECT id, ticket_number, status, subject, created_at 
                 FROM support_tickets 
@@ -284,36 +285,38 @@ module.exports = async (req, res) => {
 
             if (activeTickets.length > 0) {
                 const act = activeTickets[0];
-                return res.status(400).json({
-                    error: `You already have an active ticket in progress (#${act.ticket_number}: "${act.subject}"). Platform policy allows only one active ticket at a time. Please wait for Superadmin resolution or mark your existing ticket as closed before raising a new one.`,
-                    active_ticket: act
-                });
+
+                // If user requested to close previous ticket to proceed with new one
+                if (close_previous === true || close_previous === 'true') {
+                    await sql`
+                        UPDATE support_tickets 
+                        SET status = 'CLOSED',
+                            resolution_notes = COALESCE(resolution_notes, 'Closed by user to submit a new support ticket.'),
+                            resolved_at = NOW(),
+                            updated_at = NOW()
+                        WHERE id = ${act.id}
+                    `;
+                } else {
+                    return res.status(400).json({
+                        error: `You already have an active ticket in progress (#${act.ticket_number}: "${act.subject}"). Please close your existing ticket or click 'Close Previous & Submit' to proceed.`,
+                        active_ticket: act,
+                        can_close_previous: true
+                    });
+                }
             }
 
-            // RULE 2: 24-HOUR RATE LIMITING
-            // Enforce rate limiting: only 1 ticket per user/company every 24 hours
-            const recentTickets = await sql`
-                SELECT id, ticket_number, created_at 
+            // Anti-Spam / Abuse Protection (Cap at 10 tickets per 24 hours per company/email)
+            const recentCount = await sql`
+                SELECT COUNT(*)::int as count 
                 FROM support_tickets 
                 WHERE (company_id = ${companyId} OR LOWER(user_email) = ${cleanEmail})
                   AND created_at >= NOW() - INTERVAL '24 HOURS'
-                ORDER BY created_at DESC 
-                LIMIT 1
             `;
 
-            if (recentTickets.length > 0) {
-                const rec = recentTickets[0];
-                const recTime = new Date(rec.created_at).getTime();
-                const resetTime = recTime + (24 * 60 * 60 * 1000);
-                const remainingMs = Math.max(0, resetTime - Date.now());
-                const hoursLeft = Math.floor(remainingMs / (1000 * 60 * 60));
-                const minsLeft = Math.ceil((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
-
+            if (recentCount.length > 0 && recentCount[0].count >= 10) {
                 return res.status(429).json({
-                    error: `Rate limit reached: Only 1 support ticket is permitted per company every 24 hours. Your last ticket (#${rec.ticket_number}) was submitted recently. You can raise your next ticket in ${hoursLeft}h ${minsLeft}m.`,
-                    rate_limited: true,
-                    hours_left: hoursLeft,
-                    mins_left: minsLeft
+                    error: `Daily ticket submission limit reached (maximum 10 tickets per 24 hours). Please contact support directly if urgent.`,
+                    rate_limited: true
                 });
             }
 
@@ -382,7 +385,7 @@ module.exports = async (req, res) => {
     // =========================================================================
     if (req.method === 'POST' && action === 'update_status') {
         try {
-            if (!isSuperadminUser) {
+            if (!isSuperadminUser && userRole !== 'superadmin' && query.role !== 'superadmin') {
                 return res.status(403).json({ error: 'Permission denied. Only Superadmin can manage ticket status, priority, and category.' });
             }
 
@@ -473,7 +476,7 @@ module.exports = async (req, res) => {
 
     // =========================================================================
     // 5. POST CLOSE_TICKET: User or Superadmin marks ticket as CLOSED
-    // Clears active ticket constraint so new ticket can be raised (subject to 24h limit)
+    // Clears active ticket constraint so new ticket can be raised
     // =========================================================================
     if (req.method === 'POST' && action === 'close_ticket') {
         try {

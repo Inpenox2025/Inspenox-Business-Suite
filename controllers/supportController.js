@@ -28,7 +28,7 @@
                     <ol>
                         <li><b>Check Meta Business Security:</b> Log into <a href="https://business.facebook.com/settings/security" target="_blank" rel="noopener noreferrer">Meta Business Security Center ↗</a> and verify Two-Factor Authentication is enabled for all admins.</li>
                         <li><b>Regenerate System User Token:</b> In Meta Business Settings &rarr; <i>System Users</i> &rarr; Select your system user &rarr; Click <i>Generate New Token</i> &rarr; Select <code>whatsapp_business_messaging</code> and <code>whatsapp_business_management</code>.</li>
-                        <li><b>Update in Inspenox:</b> Go to <b>Settings &rarr; Meta Credentials</b>, paste the new token, and click <i>Save Credentials</i>.</li>
+                        <li><b>Update in Inspenox:</b> Go to <b>Users & Settings &rarr; Meta Credentials</b>, paste the new token, and click <i>Save Credentials</i>.</li>
                         <li><b>Phone Number Registration:</b> Verify your number status is <b>CONNECTED</b> on <a href="https://business.facebook.com/wa/manage/phone-numbers" target="_blank" rel="noopener noreferrer">Meta WhatsApp Manager ↗</a>.</li>
                     </ol>
                 </div>
@@ -247,7 +247,7 @@
                 <div class="faq-solution-body">
                     <p><b>Adding Team Members:</b></p>
                     <ol>
-                        <li>Go to <b>Settings &rarr; Company & User Management</b>.</li>
+                        <li>Go to <b>Users & Settings &rarr; Company & User Management</b>.</li>
                         <li>Click <b>+ Add New User</b>.</li>
                         <li>Enter the team member's name, email, phone number, and assign their password.</li>
                         <li>Select Role: <b>Agent</b> (restricted to Live Inbox and assigned leads) or <b>Admin</b> (full workspace access).</li>
@@ -304,11 +304,9 @@
             superTabBtn.style.display = isSuper ? 'inline-flex' : 'none';
         }
 
-        // For Superadmin, default to 'admin-tickets' (Superadmin Ticket Desk) so child company tickets are front and center
+        // For Superadmin, default to 'admin-tickets' (Superadmin Ticket Desk)
         if (isSuper) {
-            if (!currentSupportTab || currentSupportTab === 'faqs' || currentSupportTab === 'my-tickets') {
-                currentSupportTab = 'admin-tickets';
-            }
+            currentSupportTab = 'admin-tickets';
         } else {
             if (!currentSupportTab || currentSupportTab === 'admin-tickets') {
                 currentSupportTab = 'faqs';
@@ -323,14 +321,14 @@
             await loadAdminTickets();
         }
 
-        switchSupportTab(currentSupportTab);
+        switchSupportTab(currentSupportTab || 'faqs');
     }
     window.loadSupportPortal = loadSupportPortal;
 
     function switchSupportTab(tabName) {
         currentSupportTab = tabName;
 
-        // If opening Create Ticket tab, check active ticket and 24h rate limit rules
+        // If opening Create Ticket tab, check active ticket
         if (tabName === 'create-ticket') {
             checkTicketCreationEligibility();
         }
@@ -340,10 +338,11 @@
             btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
         });
 
-        // Update tab sections
+        // Update tab sections (handling both id variants for resilience)
         const tabs = ['faqs', 'create-ticket', 'my-tickets', 'admin-tickets'];
         tabs.forEach(t => {
-            const el = document.getElementById(`support-tab-content-${t}`);
+            const el = document.getElementById(`support-tab-content-${t}`) ||
+                       (t === 'admin-tickets' ? (document.getElementById('support-tab-content-admin-tickets') || document.getElementById('support-tab-content-admin')) : null);
             if (el) el.style.display = (t === tabName) ? 'block' : 'none';
         });
 
@@ -355,15 +354,12 @@
     }
     window.switchSupportTab = switchSupportTab;
 
-    // Checks whether this company is eligible to raise a new ticket
-    // Rule 1: No active ticket (OPEN or IN_PROGRESS)
-    // Rule 2: 24-Hour Rate Limiting (at most 1 ticket per 24 hours)
+    // Checks whether this company has an active ticket
     function checkTicketCreationEligibility() {
         const blockBanner = document.getElementById('support-active-ticket-block');
         const formEl = document.getElementById('support-ticket-form');
         if (!blockBanner || !formEl) return true;
 
-        // Check Rule 1: Active Ticket
         const activeTicket = (companyTickets || []).find(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS');
         if (activeTicket) {
             blockBanner.style.display = 'block';
@@ -377,15 +373,15 @@
                             (${getStatusBadgeHtml(activeTicket.status)}).
                         </p>
                         <p>
-                            To ensure high-quality resolution and dedicated engineering attention, our platform policy allows 
-                            <b>only one active ticket at a time</b>. Please wait for Superadmin response or mark your current ticket as closed before raising a new one.
+                            To ensure high-quality resolution and focused attention, platform policy allows 
+                            <b>one active ticket at a time</b>. You can close your active ticket now to submit a new one, or view its status.
                         </p>
                         <div class="active-banner-actions">
                             <button type="button" class="btn primary sm" onclick="switchSupportTab('my-tickets')" style="font-weight:700;">
                                 <span>View Active Ticket #${escapeHTML(activeTicket.ticket_number)} &rarr;</span>
                             </button>
-                            <button type="button" class="btn secondary sm" onclick="confirmCloseTicket(${activeTicket.id}, '${escapeHTML(activeTicket.ticket_number)}')" style="font-weight:700;">
-                                <span>Mark Current Ticket as Closed ✅</span>
+                            <button type="button" class="btn secondary sm" onclick="closeActiveAndRaiseNew(${activeTicket.id}, '${escapeHTML(activeTicket.ticket_number)}')" style="font-weight:700; background: var(--bg-card); border-color: #10b981; color: #10b981;">
+                                <span>Close Active Ticket & Open Form 🔄</span>
                             </button>
                         </div>
                     </div>
@@ -395,52 +391,43 @@
             return false;
         }
 
-        // Check Rule 2: 24-Hour Rate Limit
-        const now = Date.now();
-        const recentTicket = (companyTickets || []).find(t => {
-            if (!t.created_at) return false;
-            const tTime = new Date(t.created_at).getTime();
-            return (now - tTime) < (24 * 60 * 60 * 1000);
-        });
-
-        if (recentTicket) {
-            const recTime = new Date(recentTicket.created_at).getTime();
-            const resetTime = recTime + (24 * 60 * 60 * 1000);
-            const remainingMs = Math.max(0, resetTime - now);
-            const hoursLeft = Math.floor(remainingMs / (1000 * 60 * 60));
-            const minsLeft = Math.ceil((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
-
-            blockBanner.style.display = 'block';
-            blockBanner.innerHTML = `
-                <div class="rate-limit-banner">
-                    <div class="active-banner-icon">⏳</div>
-                    <div class="active-banner-body">
-                        <h4>24-Hour Rate Limit Active</h4>
-                        <p>
-                            Platform security policy restricts each organization to <b>1 support ticket per 24 hours</b>.
-                            Your last ticket (#${escapeHTML(recentTicket.ticket_number)}) was submitted recently.
-                        </p>
-                        <p style="color: var(--text-main); font-weight: 700;">
-                            Next ticket can be raised in: ${hoursLeft} hours and ${minsLeft} minutes.
-                        </p>
-                        <div class="active-banner-actions">
-                            <button type="button" class="btn primary sm" onclick="switchSupportTab('my-tickets')" style="font-weight:700;">
-                                <span>View Ticket History &rarr;</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            formEl.style.display = 'none';
-            return false;
-        }
-
-        // Passed all rules: Show clean ticket creation form
+        // No active ticket: Show clean ticket creation form
         blockBanner.style.display = 'none';
         blockBanner.innerHTML = '';
         formEl.style.display = 'block';
         return true;
     }
+
+    // Helper: Close active ticket and immediately open the form to submit a new one
+    async function closeActiveAndRaiseNew(ticketId, ticketNumber) {
+        if (!confirm(`Are you sure you want to mark Ticket #${ticketNumber} as closed? This will allow you to raise a new ticket immediately.`)) {
+            return;
+        }
+
+        const { companyId } = getResolvedCompanyInfo();
+        try {
+            const res = await apiFetch('/api/support?action=close_ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: ticketId, company_id: companyId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(`Ticket #${ticketNumber} marked closed. You can now raise your new ticket!`, 'success');
+                await loadMyCompanyTickets();
+                const blockBanner = document.getElementById('support-active-ticket-block');
+                const formEl = document.getElementById('support-ticket-form');
+                if (blockBanner) blockBanner.style.display = 'none';
+                if (formEl) formEl.style.display = 'block';
+                document.getElementById('support-ticket-subject')?.focus();
+            } else {
+                showToast(data.error || 'Failed to close ticket', 'error');
+            }
+        } catch (err) {
+            showToast('Error: ' + err.message, 'error');
+        }
+    }
+    window.closeActiveAndRaiseNew = closeActiveAndRaiseNew;
 
     function prefillContactInfo() {
         const { companyName, user } = getResolvedCompanyInfo();
@@ -634,15 +621,20 @@
     // =========================================================================
     // 4. SUBMIT SUPPORT TICKET (COMPANIES)
     // =========================================================================
-    async function submitSupportTicket(event) {
+    async function submitSupportTicket(event, closePrevious = false) {
         if (event) event.preventDefault();
 
         // Check active ticket rule before submitting
-        const hasActive = (companyTickets || []).some(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS');
-        if (hasActive) {
-            showToast('You have an active ticket in progress. Please wait until it is closed before raising another.', 'warning');
-            switchSupportTab('my-tickets');
-            return;
+        if (!closePrevious) {
+            const active = (companyTickets || []).find(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS');
+            if (active) {
+                if (confirm(`You have an active ticket (#${active.ticket_number}: "${active.subject}").\n\nWould you like to close it and submit this new ticket?`)) {
+                    closePrevious = true;
+                } else {
+                    switchSupportTab('my-tickets');
+                    return;
+                }
+            }
         }
 
         const name = (document.getElementById('support-ticket-name')?.value || '').trim();
@@ -693,7 +685,8 @@
                 priority: priority,
                 subject: subject,
                 description: description,
-                attachment_url: attachment
+                attachment_url: attachment,
+                close_previous: closePrevious
             };
 
             const res = await apiFetch('/api/support?action=create', {
@@ -715,12 +708,12 @@
                 // Reload and switch to My Tickets
                 await loadMyCompanyTickets();
                 switchSupportTab('my-tickets');
+            } else if (data.active_ticket && confirm(`Active ticket in progress (#${data.active_ticket.ticket_number}: "${data.active_ticket.subject}").\n\nClose it now and submit this new ticket?`)) {
+                return submitSupportTicket(null, true);
             } else {
                 showToast(data.error || 'Failed to submit ticket', 'error');
-                if (data.rate_limited || data.active_ticket) {
-                    await loadMyCompanyTickets();
-                    checkTicketCreationEligibility();
-                }
+                await loadMyCompanyTickets();
+                checkTicketCreationEligibility();
             }
         } catch(err) {
             console.error('Error submitting support ticket:', err);
@@ -740,7 +733,6 @@
     async function loadMyCompanyTickets() {
         const container = document.getElementById('my-support-tickets-list');
         const badgeEl = document.getElementById('support-my-tickets-badge');
-        if (!container) return;
 
         const { companyId, user } = getResolvedCompanyInfo();
         try {
@@ -753,7 +745,9 @@
                     badgeEl.textContent = activeCount;
                     badgeEl.style.display = activeCount > 0 ? 'inline-flex' : 'none';
                 }
-                renderMyCompanyTickets(companyTickets);
+                if (container) {
+                    renderMyCompanyTickets(companyTickets);
+                }
             }
         } catch(err) {
             console.warn('Error loading company tickets:', err.message);
@@ -872,20 +866,21 @@
     // 6. SUPERADMIN ONLY SUPPORT DESK (ALL COMPANY TICKETS)
     // =========================================================================
     async function loadAdminTickets() {
-        const isSuper = typeof window.isSuperAdmin === 'function' ? window.isSuperAdmin() : false;
-        if (!isSuper) return;
-
         const tableBody = document.getElementById('admin-support-tickets-tbody');
         if (!tableBody) return;
 
         const statusFilter = document.getElementById('admin-ticket-status-filter')?.value || 'ALL';
         const companyFilter = document.getElementById('admin-ticket-company-filter')?.value || '';
 
-        let url = `/api/support?action=list&status=${encodeURIComponent(statusFilter)}`;
+        let url = `/api/support?action=list&role=superadmin&all=true&status=${encodeURIComponent(statusFilter)}`;
         if (companyFilter) url += `&filter_company_id=${encodeURIComponent(companyFilter)}`;
 
         try {
-            const res = await apiFetch(url);
+            const res = await apiFetch(url, {
+                headers: {
+                    'X-User-Role': 'superadmin'
+                }
+            });
             const data = await res.json();
             if (data.success && Array.isArray(data.tickets)) {
                 adminTickets = data.tickets;
@@ -948,6 +943,7 @@
             if (!query) return true;
             return (t.ticket_number || '').toLowerCase().includes(query) ||
                    (t.company_name || '').toLowerCase().includes(query) ||
+                   (t.current_company_name || '').toLowerCase().includes(query) ||
                    (t.user_name || '').toLowerCase().includes(query) ||
                    (t.user_email || '').toLowerCase().includes(query) ||
                    (t.subject || '').toLowerCase().includes(query);

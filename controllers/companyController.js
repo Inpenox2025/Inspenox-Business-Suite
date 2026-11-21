@@ -225,10 +225,10 @@ async function loadCompanies() {
         subNav.style.display = 'flex';
     }
 
-    // Dynamic sidebar nav label: "Settings" for Superadmin/Parent vs "Meta Credentials" for other companies
+    // Dynamic sidebar nav label: "Settings" for Superadmin/Parent vs "Users & Settings" for other companies
     const settingsNavSpan = document.querySelector('#sidebar-nav a[data-view="settings"] span');
     if (settingsNavSpan) {
-        settingsNavSpan.textContent = (isParent || isSuper) ? 'Settings' : 'Meta Credentials';
+        settingsNavSpan.textContent = (isParent || isSuper) ? 'Settings' : 'Users & Settings';
     }
 
     let user = {};
@@ -443,12 +443,12 @@ async function loadCompaniesSettings() {
         if (pageSubtitle) pageSubtitle.textContent = 'Manage multi-tenant companies, WhatsApp Cloud API credentials, and security settings.';
         if (settingsNavSpan) settingsNavSpan.textContent = 'Settings';
     } else {
-        // Other companies see "Meta Credentials"
-        if (panelTitle) panelTitle.textContent = '⚙️ Meta Credentials';
-        if (panelDesc) panelDesc.textContent = 'Manage your official Meta WhatsApp Cloud API credentials, Phone ID, and Access Tokens.';
-        if (pageTitle) pageTitle.textContent = '⚙️ Meta Credentials';
-        if (pageSubtitle) pageSubtitle.textContent = 'Configure your official Meta WhatsApp Cloud API credentials and workspace settings.';
-        if (settingsNavSpan) settingsNavSpan.textContent = 'Meta Credentials';
+        // Other companies see "Users & Settings"
+        if (panelTitle) panelTitle.textContent = '⚙️ Users & Settings';
+        if (panelDesc) panelDesc.textContent = 'Manage your company users, team members, and official Meta WhatsApp Cloud API credentials.';
+        if (pageTitle) pageTitle.textContent = '⚙️ Users & Settings';
+        if (pageSubtitle) pageSubtitle.textContent = 'Configure your company users, permissions, and official WhatsApp Cloud API credentials.';
+        if (settingsNavSpan) settingsNavSpan.textContent = 'Users & Settings';
     }
 
     // Toggle System Environment credentials panel visibility (strictly for Master Superadmin)

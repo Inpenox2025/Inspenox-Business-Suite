@@ -221,14 +221,16 @@
                         var isSuper = role === 'superadmin' || uname === 'superadmin' || uname === 'inspenox' ||
                             (cname.includes('inspenox') && (role === 'admin' || uname === 'admin')) ||
                             (uname === 'admin' && (!coId || coId === 'default' || coId === 'parent'));
-                        if (!isSuper && u.company_name) {
-                            var brandNameEl = document.getElementById('nav-active-company-name');
-                            if (brandNameEl) {
-                                brandNameEl.textContent = u.company_name;
-                                brandNameEl.title = u.company_name;
+                        if (!isSuper) {
+                            if (u.company_name) {
+                                var brandNameEl = document.getElementById('nav-active-company-name');
+                                if (brandNameEl) {
+                                    brandNameEl.textContent = u.company_name;
+                                    brandNameEl.title = u.company_name;
+                                }
+                                var poweredBadge = document.getElementById('nav-powered-by-badge');
+                                if (poweredBadge) poweredBadge.style.display = 'flex';
                             }
-                            var poweredBadge = document.getElementById('nav-powered-by-badge');
-                            if (poweredBadge) poweredBadge.style.display = 'flex';
                             var settingsNav = document.querySelector('#sidebar-nav a[data-view="settings"] span');
                             if (settingsNav) settingsNav.textContent = 'Users & Settings';
                         }
@@ -5244,7 +5246,7 @@
                 </div>
 
                 <!-- TAB 4: SUPERADMIN SUPPORT DESK (SUPERADMIN ONLY) -->
-                <div id="support-tab-content-admin" style="display: none;">
+                <div id="support-tab-content-admin-tickets" class="support-tab-content-admin" style="display: none;">
                     <div
                         style="padding: 0.85rem 1.25rem; border-radius: 10px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.25); margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
                         <div style="display: flex; align-items: center; gap: 0.6rem;">
@@ -8115,21 +8117,21 @@
         </div>
     </div>
 
-    <script src="/controllers/coreController.js?v=2.2"></script>
-    <script src="/controllers/companyController.js?v=2.2"></script>
-    <script src="/controllers/dashboardController.js?v=2.2"></script>
-    <script src="/controllers/customersController.js?v=2.2"></script>
-    <script src="/controllers/templatesController.js?v=2.2"></script>
-    <script src="/controllers/templateLibrary.js?v=2.2"></script>
-    <script src="/controllers/broadcastController.js?v=2.2"></script>
-    <script src="/controllers/campaignsController.js?v=2.2"></script>
-    <script src="/controllers/inboxController.js?v=2.2"></script>
-    <script src="/controllers/mediaController.js?v=2.2"></script>
-    <script src="/controllers/billingController.js?v=2.2"></script>
-    <script src="/controllers/automationController.js?v=2.2"></script>
-    <script src="/controllers/simulatorController.js?v=2.2"></script>
-    <script src="/controllers/adsController.js?v=2.2"></script>
-    <script src="/controllers/supportController.js?v=2.2"></script>
+    <script src="/controllers/coreController.js?v=2.5"></script>
+    <script src="/controllers/companyController.js?v=2.5"></script>
+    <script src="/controllers/dashboardController.js?v=2.5"></script>
+    <script src="/controllers/customersController.js?v=2.5"></script>
+    <script src="/controllers/templatesController.js?v=2.5"></script>
+    <script src="/controllers/templateLibrary.js?v=2.5"></script>
+    <script src="/controllers/broadcastController.js?v=2.5"></script>
+    <script src="/controllers/campaignsController.js?v=2.5"></script>
+    <script src="/controllers/inboxController.js?v=2.5"></script>
+    <script src="/controllers/mediaController.js?v=2.5"></script>
+    <script src="/controllers/billingController.js?v=2.5"></script>
+    <script src="/controllers/automationController.js?v=2.5"></script>
+    <script src="/controllers/simulatorController.js?v=2.5"></script>
+    <script src="/controllers/adsController.js?v=2.5"></script>
+    <script src="/controllers/supportController.js?v=2.5"></script>
 </body>
 
 </html>
