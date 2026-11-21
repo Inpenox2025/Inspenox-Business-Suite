@@ -17176,7 +17176,7 @@ window.replayChatSimulation = replayChatSimulation;
                 if (found) compName = found.name;
             }
         }
-        if (!compName) compName = (String(coId) === '1' ? 'Inspenox' : `Company #${coId}`);
+        if (!compName) compName = (String(coId) === '5' ? 'Inspenox' : `Company #${coId}`);
 
         return { companyId: coId, companyName: compName, user: user };
     }

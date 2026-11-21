@@ -42,12 +42,12 @@ async function ensureSupportTables(sql) {
         await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS user_feedback TEXT;`;
         await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS feedback_at TIMESTAMPTZ;`;
 
-        // Migration Fix: Ensure tickets raised by Manaswini or sairajeev36 are correctly assigned to Manaswini Enterprises (company_id = 2)
+        // Migration Fix: Ensure tickets raised by Manaswini are correctly assigned to Manaswini Enterprises (company_id = 1)
         await sql`
             UPDATE support_tickets 
-            SET company_id = 2, company_name = 'Manaswini Enterprises'
-            WHERE (LOWER(user_email) = 'sairajeev36@gmail.com' OR LOWER(user_name) LIKE '%manaswini%')
-              AND (company_id = 1 OR company_name = 'Inspenox' OR company_name IS NULL OR company_name = 'Unknown Company');
+            SET company_id = 1, company_name = 'Manaswini Enterprises'
+            WHERE (LOWER(user_email) = 'sairajeev38@gmail.com' OR LOWER(user_email) = 'sairajeev36@gmail.com' OR LOWER(user_name) LIKE '%manaswini%' OR company_name ILIKE '%manaswini%')
+              AND company_id != 1;
         `;
     } catch (e) {
         console.warn('ensureSupportTables warning:', e.message);
@@ -180,17 +180,18 @@ module.exports = async (req, res) => {
                 }
             } else {
                 // Regular Company View (or Superadmin viewing their own internal company tickets):
-                // Strictly filtered by companyId
+                // Strictly filtered by companyId OR matching user_email if provided
                 if (statusFilter !== 'ALL') {
                     tickets = await sql`
                         SELECT * FROM support_tickets 
-                        WHERE company_id = ${companyId} AND status = ${statusFilter}
+                        WHERE (company_id = ${companyId} OR (LENGTH(${checkEmail}) > 0 AND LOWER(user_email) = ${checkEmail})) 
+                          AND status = ${statusFilter}
                         ORDER BY created_at DESC
                     `;
                 } else {
                     tickets = await sql`
                         SELECT * FROM support_tickets 
-                        WHERE company_id = ${companyId}
+                        WHERE (company_id = ${companyId} OR (LENGTH(${checkEmail}) > 0 AND LOWER(user_email) = ${checkEmail}))
                         ORDER BY created_at DESC
                     `;
                 }
@@ -210,7 +211,7 @@ module.exports = async (req, res) => {
                     countRows = await sql`
                         SELECT status, COUNT(*)::int as count 
                         FROM support_tickets 
-                        WHERE company_id = ${companyId} 
+                        WHERE (company_id = ${companyId} OR (LENGTH(${checkEmail}) > 0 AND LOWER(user_email) = ${checkEmail}))
                         GROUP BY status
                     `;
                 }
@@ -323,7 +324,7 @@ module.exports = async (req, res) => {
             // Generate unique human-readable ticket number (e.g. TICK-58492)
             const randomCode = Math.floor(10000 + Math.random() * 90000);
             const ticketNumber = `TICK-${randomCode}`;
-            const compName = company_name || (company ? company.name : (companyId === 1 ? 'Inspenox' : `Company #${companyId}`));
+            const compName = company_name || (company ? company.name : (companyId === 5 ? 'Inspenox' : `Company #${companyId}`));
             const cleanPhone = user_phone ? formatIndiaPhone(user_phone) : (company ? company.phone : '');
 
             const validPriorities = ['low', 'medium', 'high', 'urgent'];
