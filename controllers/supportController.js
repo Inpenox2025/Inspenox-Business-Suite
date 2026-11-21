@@ -4,11 +4,12 @@
  */
 
 (function () {
-    let currentSupportTab = 'faqs'; // 'faqs', 'create-ticket', 'my-tickets', 'admin-tickets'
+    let currentSupportTab = null; // 'faqs', 'create-ticket', 'my-tickets', 'admin-tickets'
     let selectedFaqCategory = 'all';
     let companyTickets = [];
     let adminTickets = [];
     let selectedAdminTicket = null;
+    let selectedFeedbackTicketId = null;
 
     // =========================================================================
     // 1. PRE-TRAINED KNOWLEDGE BASE & SOLUTIONS DATA (Amazon/Flipkart Style)
@@ -258,41 +259,81 @@
         }
     ];
 
+    // Helper: Determine current company tenancy and stored user
+    function getResolvedCompanyInfo() {
+        let user = {};
+        try {
+            user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
+        } catch(e) {}
+
+        let coId = localStorage.getItem('inspenox_company_id');
+        if (!coId || coId === 'default' || coId === 'parent') {
+            coId = user.company_id || (typeof window.getActiveCompanyId === 'function' ? window.getActiveCompanyId() : '1');
+        }
+        if (!coId || coId === 'default' || coId === 'parent') {
+            coId = '1';
+        }
+
+        let compName = user.company_name;
+        if (!compName && typeof window.getStoredCompany === 'function') {
+            compName = window.getStoredCompany().name;
+        }
+        if (!compName || compName === 'Registered Account' || compName === 'Workspace') {
+            if (typeof window.allCompanies !== 'undefined' && Array.isArray(window.allCompanies)) {
+                const found = window.allCompanies.find(c => String(c.id) === String(coId));
+                if (found) compName = found.name;
+            }
+        }
+        if (!compName) compName = (String(coId) === '1' ? 'Inspenox' : `Company #${coId}`);
+
+        return { companyId: coId, companyName: compName, user: user };
+    }
+
     // =========================================================================
     // 2. CONTROLLER INITIALIZATION & TAB SWITCHING
     // =========================================================================
     async function loadSupportPortal() {
-        // Pre-fill user contact info in the ticket form
         prefillContactInfo();
-
-        // Render FAQ categories and articles
         renderFaqCategories();
         renderFaqList();
 
-        // Check if user is Superadmin
         const isSuper = typeof window.isSuperAdmin === 'function' ? window.isSuperAdmin() : false;
         const superTabBtn = document.getElementById('support-tab-btn-admin');
-        const superTabSection = document.getElementById('support-tab-content-admin');
 
         if (superTabBtn) {
             superTabBtn.style.display = isSuper ? 'inline-flex' : 'none';
         }
 
+        // For Superadmin, default to 'admin-tickets' (Superadmin Ticket Desk) so child company tickets are front and center
+        if (isSuper) {
+            if (!currentSupportTab || currentSupportTab === 'faqs' || currentSupportTab === 'my-tickets') {
+                currentSupportTab = 'admin-tickets';
+            }
+        } else {
+            if (!currentSupportTab || currentSupportTab === 'admin-tickets') {
+                currentSupportTab = 'faqs';
+            }
+        }
+
         // Load company's existing tickets
         await loadMyCompanyTickets();
 
-        // If Superadmin, also load all tickets
+        // If Superadmin, load all tickets across platform
         if (isSuper) {
             await loadAdminTickets();
         }
 
-        // Switch to default tab
-        switchSupportTab(currentSupportTab || 'faqs');
+        switchSupportTab(currentSupportTab);
     }
     window.loadSupportPortal = loadSupportPortal;
 
     function switchSupportTab(tabName) {
         currentSupportTab = tabName;
+
+        // If opening Create Ticket tab, check active ticket and 24h rate limit rules
+        if (tabName === 'create-ticket') {
+            checkTicketCreationEligibility();
+        }
 
         // Update tab buttons
         document.querySelectorAll('.support-tab-btn').forEach(btn => {
@@ -314,11 +355,95 @@
     }
     window.switchSupportTab = switchSupportTab;
 
+    // Checks whether this company is eligible to raise a new ticket
+    // Rule 1: No active ticket (OPEN or IN_PROGRESS)
+    // Rule 2: 24-Hour Rate Limiting (at most 1 ticket per 24 hours)
+    function checkTicketCreationEligibility() {
+        const blockBanner = document.getElementById('support-active-ticket-block');
+        const formEl = document.getElementById('support-ticket-form');
+        if (!blockBanner || !formEl) return true;
+
+        // Check Rule 1: Active Ticket
+        const activeTicket = (companyTickets || []).find(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS');
+        if (activeTicket) {
+            blockBanner.style.display = 'block';
+            blockBanner.innerHTML = `
+                <div class="active-ticket-block-banner">
+                    <div class="active-banner-icon">⚠️</div>
+                    <div class="active-banner-body">
+                        <h4>Active Ticket in Progress (#${escapeHTML(activeTicket.ticket_number)})</h4>
+                        <p>
+                            You currently have an active support ticket: <b>"${escapeHTML(activeTicket.subject)}"</b> 
+                            (${getStatusBadgeHtml(activeTicket.status)}).
+                        </p>
+                        <p>
+                            To ensure high-quality resolution and dedicated engineering attention, our platform policy allows 
+                            <b>only one active ticket at a time</b>. Please wait for Superadmin response or mark your current ticket as closed before raising a new one.
+                        </p>
+                        <div class="active-banner-actions">
+                            <button type="button" class="btn primary sm" onclick="switchSupportTab('my-tickets')" style="font-weight:700;">
+                                <span>View Active Ticket #${escapeHTML(activeTicket.ticket_number)} &rarr;</span>
+                            </button>
+                            <button type="button" class="btn secondary sm" onclick="confirmCloseTicket(${activeTicket.id}, '${escapeHTML(activeTicket.ticket_number)}')" style="font-weight:700;">
+                                <span>Mark Current Ticket as Closed ✅</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            formEl.style.display = 'none';
+            return false;
+        }
+
+        // Check Rule 2: 24-Hour Rate Limit
+        const now = Date.now();
+        const recentTicket = (companyTickets || []).find(t => {
+            if (!t.created_at) return false;
+            const tTime = new Date(t.created_at).getTime();
+            return (now - tTime) < (24 * 60 * 60 * 1000);
+        });
+
+        if (recentTicket) {
+            const recTime = new Date(recentTicket.created_at).getTime();
+            const resetTime = recTime + (24 * 60 * 60 * 1000);
+            const remainingMs = Math.max(0, resetTime - now);
+            const hoursLeft = Math.floor(remainingMs / (1000 * 60 * 60));
+            const minsLeft = Math.ceil((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+
+            blockBanner.style.display = 'block';
+            blockBanner.innerHTML = `
+                <div class="rate-limit-banner">
+                    <div class="active-banner-icon">⏳</div>
+                    <div class="active-banner-body">
+                        <h4>24-Hour Rate Limit Active</h4>
+                        <p>
+                            Platform security policy restricts each organization to <b>1 support ticket per 24 hours</b>.
+                            Your last ticket (#${escapeHTML(recentTicket.ticket_number)}) was submitted recently.
+                        </p>
+                        <p style="color: var(--text-main); font-weight: 700;">
+                            Next ticket can be raised in: ${hoursLeft} hours and ${minsLeft} minutes.
+                        </p>
+                        <div class="active-banner-actions">
+                            <button type="button" class="btn primary sm" onclick="switchSupportTab('my-tickets')" style="font-weight:700;">
+                                <span>View Ticket History &rarr;</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            formEl.style.display = 'none';
+            return false;
+        }
+
+        // Passed all rules: Show clean ticket creation form
+        blockBanner.style.display = 'none';
+        blockBanner.innerHTML = '';
+        formEl.style.display = 'block';
+        return true;
+    }
+
     function prefillContactInfo() {
-        let user = {};
-        try {
-            user = JSON.parse(localStorage.getItem('inspenox_user') || localStorage.getItem('induio_user') || '{}');
-        } catch(e) {}
+        const { companyName, user } = getResolvedCompanyInfo();
 
         const nameInput = document.getElementById('support-ticket-name');
         if (nameInput && !nameInput.value) {
@@ -337,7 +462,7 @@
 
         const compBadge = document.getElementById('support-ticket-company-name');
         if (compBadge) {
-            compBadge.textContent = user.company_name || 'Active Company Workspace';
+            compBadge.textContent = companyName;
         }
     }
 
@@ -426,7 +551,6 @@
                 <div class="faq-accordion-content" id="faq-content-${item.id}" style="display: none;">
                     ${item.solution}
                     
-                    <!-- Amazon/Flipkart Style Helpful Resolution Check -->
                     <div class="faq-resolution-box" id="faq-resolution-box-${item.id}">
                         <div class="faq-resolution-prompt">
                             <span>Did this solution resolve your problem?</span>
@@ -470,7 +594,6 @@
     }
     window.markFaqResolved = markFaqResolved;
 
-    // Escalates from Q&A straight to the ticket form with pre-filled context
     function escalateToTicket(category, subjectHint) {
         switchSupportTab('create-ticket');
 
@@ -506,6 +629,14 @@
     // =========================================================================
     async function submitSupportTicket(event) {
         if (event) event.preventDefault();
+
+        // Check active ticket rule before submitting
+        const hasActive = (companyTickets || []).some(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS');
+        if (hasActive) {
+            showToast('You have an active ticket in progress. Please wait until it is closed before raising another.', 'warning');
+            switchSupportTab('my-tickets');
+            return;
+        }
 
         const name = (document.getElementById('support-ticket-name')?.value || '').trim();
         const email = (document.getElementById('support-ticket-email')?.value || '').trim();
@@ -544,9 +675,10 @@
         }
 
         try {
-            const coId = typeof window.getActiveCompanyId === 'function' ? window.getActiveCompanyId() : '1';
+            const { companyId, companyName } = getResolvedCompanyInfo();
             const payload = {
-                company_id: coId,
+                company_id: companyId,
+                company_name: companyName,
                 user_name: name,
                 user_email: email,
                 user_phone: phone,
@@ -568,16 +700,20 @@
             if (data.success && data.ticket) {
                 showToast(`🎉 Ticket #${data.ticket.ticket_number} created successfully! Superadmin notified.`, 'success');
 
-                // Clear form
+                // Clear form inputs
                 if (document.getElementById('support-ticket-subject')) document.getElementById('support-ticket-subject').value = '';
                 if (document.getElementById('support-ticket-desc')) document.getElementById('support-ticket-desc').value = '';
                 if (document.getElementById('support-ticket-attachment')) document.getElementById('support-ticket-attachment').value = '';
 
-                // Switch to My Tickets
+                // Reload and switch to My Tickets
                 await loadMyCompanyTickets();
                 switchSupportTab('my-tickets');
             } else {
                 showToast(data.error || 'Failed to submit ticket', 'error');
+                if (data.rate_limited || data.active_ticket) {
+                    await loadMyCompanyTickets();
+                    checkTicketCreationEligibility();
+                }
             }
         } catch(err) {
             console.error('Error submitting support ticket:', err);
@@ -599,16 +735,16 @@
         const badgeEl = document.getElementById('support-my-tickets-badge');
         if (!container) return;
 
-        const coId = typeof window.getActiveCompanyId === 'function' ? window.getActiveCompanyId() : '1';
+        const { companyId, user } = getResolvedCompanyInfo();
         try {
-            const res = await apiFetch(`/api/support?action=list&company_id=${coId}&my_company_only=true`);
+            const res = await apiFetch(`/api/support?action=list&company_id=${encodeURIComponent(companyId)}&user_email=${encodeURIComponent(user.email || '')}&my_company_only=true`);
             const data = await res.json();
             if (data.success && Array.isArray(data.tickets)) {
                 companyTickets = data.tickets;
                 if (badgeEl) {
-                    const openCount = companyTickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length;
-                    badgeEl.textContent = openCount;
-                    badgeEl.style.display = openCount > 0 ? 'inline-flex' : 'none';
+                    const activeCount = companyTickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length;
+                    badgeEl.textContent = activeCount;
+                    badgeEl.style.display = activeCount > 0 ? 'inline-flex' : 'none';
                 }
                 renderMyCompanyTickets(companyTickets);
             }
@@ -642,9 +778,10 @@
             const statusBadge = getStatusBadgeHtml(t.status);
             const priorityPill = getPriorityBadgeHtml(t.priority);
             const dateStr = formatTicketDate(t.created_at);
+            const isClosed = (t.status || '').toUpperCase() === 'CLOSED';
 
             return `
-                <div class="support-ticket-card">
+                <div class="support-ticket-card" id="ticket-card-${t.id}">
                     <div class="support-ticket-card-header">
                         <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
                             <span class="ticket-num-pill">${escapeHTML(t.ticket_number)}</span>
@@ -667,12 +804,24 @@
 
                     ${t.resolution_notes ? `
                         <div class="ticket-resolution-callout">
-                            <div style="font-weight:700; font-size:0.75rem; color:#10b981; margin-bottom:3px; display:flex; align-items:center; gap:4px;">
+                            <div style="font-weight:700; font-size:0.75rem; color:#10b981; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px;">
                                 <span>🛠️ Resolution from Superadmin Support Team</span>
                                 ${t.resolved_at ? `<span style="font-size:0.68rem; color:var(--text-muted); font-weight:normal;">(${formatTicketDate(t.resolved_at)})</span>` : ''}
                             </div>
-                            <div style="font-size:0.8rem; color:var(--text-main); line-height:1.45;">
+                            <div style="font-size:0.82rem; color:var(--text-main); line-height:1.5; white-space:pre-wrap;">
                                 ${escapeHTML(t.resolution_notes)}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${t.user_feedback ? `
+                        <div class="ticket-user-feedback-callout">
+                            <div class="ticket-feedback-header">
+                                <span>💬 Your Feedback / Follow-up:</span>
+                                ${t.feedback_at ? `<span style="font-size:0.68rem; color:var(--text-muted); font-weight:normal;">(${formatTicketDate(t.feedback_at)})</span>` : ''}
+                            </div>
+                            <div class="ticket-feedback-body" style="white-space:pre-wrap;">
+                                ${escapeHTML(t.user_feedback)}
                             </div>
                         </div>
                     ` : ''}
@@ -680,6 +829,22 @@
                     <div class="support-ticket-card-footer">
                         <span>Created on ${dateStr}</span>
                         <span>Contact: ${escapeHTML(t.user_name)} (${escapeHTML(t.user_email)})</span>
+                    </div>
+
+                    <!-- User Action Bar -->
+                    <div class="ticket-user-action-bar">
+                        ${!isClosed ? `
+                            <button type="button" class="btn-ticket-close" onclick="confirmCloseTicket(${t.id}, '${escapeHTML(t.ticket_number)}')">
+                                <span>Mark Resolved & Close Ticket ✅</span>
+                            </button>
+                            <button type="button" class="btn-ticket-feedback" onclick="openUserFeedbackModal(${t.id}, '${escapeHTML(t.ticket_number)}', '${escapeHTML(t.subject)}')">
+                                <span>${t.resolution_notes ? 'Not Resolved / Send Feedback 💬' : 'Add Note / Feedback 💬'}</span>
+                            </button>
+                        ` : `
+                            <span style="font-size:0.75rem; color:#10b981; font-weight:700; display:flex; align-items:center; gap:4px;">
+                                <span>✅ Ticket Resolved & Closed</span>
+                            </span>
+                        `}
                     </div>
                 </div>
             `;
@@ -740,7 +905,6 @@
             }
         });
 
-        // Also add companies from allCompanies global if present
         if (typeof window.allCompanies !== 'undefined' && Array.isArray(window.allCompanies)) {
             window.allCompanies.forEach(c => {
                 if (c && c.id && !companiesMap.has(c.id)) {
@@ -820,6 +984,11 @@
                         <div style="font-size:0.72rem; color:var(--text-muted); max-width:240px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                             ${escapeHTML(t.description)}
                         </div>
+                        ${t.user_feedback ? `
+                            <div style="margin-top:3px; display:inline-flex; align-items:center; gap:3px; font-size:0.7rem; color:#d97706; background:rgba(245, 158, 11, 0.15); padding:1px 6px; border-radius:4px; font-weight:700;">
+                                <span>💬 Feedback received</span>
+                            </div>
+                        ` : ''}
                     </td>
                     <td>${statusBadge}</td>
                     <td style="text-align:right;">
@@ -848,7 +1017,7 @@
         document.getElementById('m-adm-ticket-num').textContent = `#${t.ticket_number}`;
         document.getElementById('m-adm-ticket-company').textContent = t.current_company_name || t.company_name || `Company #${t.company_id}`;
         document.getElementById('m-adm-ticket-user').textContent = `${t.user_name} (${t.user_email} | ${t.user_phone || 'No phone'})`;
-        document.getElementById('m-adm-ticket-cat').textContent = `${t.category} • Priority: ${t.priority.toUpperCase()}`;
+        document.getElementById('m-adm-ticket-cat').textContent = `${t.category} • Priority: ${(t.priority || 'medium').toUpperCase()}`;
         document.getElementById('m-adm-ticket-subject').textContent = t.subject;
         document.getElementById('m-adm-ticket-desc').textContent = t.description;
 
@@ -869,11 +1038,43 @@
             }
         }
 
-        const statusSelect = document.getElementById('m-adm-ticket-status');
-        if (statusSelect) statusSelect.value = t.status || 'OPEN';
+        // Customer Feedback section
+        const feedbackBlock = document.getElementById('m-adm-ticket-feedback-block');
+        const feedbackText = document.getElementById('m-adm-ticket-feedback-text');
+        const feedbackDate = document.getElementById('m-adm-ticket-feedback-date');
+        if (feedbackBlock && feedbackText) {
+            if (t.user_feedback) {
+                feedbackBlock.style.display = 'block';
+                feedbackText.textContent = t.user_feedback;
+                if (feedbackDate) feedbackDate.textContent = t.feedback_at ? formatTicketDate(t.feedback_at) : '';
+            } else {
+                feedbackBlock.style.display = 'none';
+            }
+        }
 
+        // Editable Problem Category
+        const catSelect = document.getElementById('m-adm-ticket-category');
+        if (catSelect) {
+            catSelect.value = t.category || 'General Inquiry';
+        }
+
+        // Editable Issue Priority
+        const prioritySelect = document.getElementById('m-adm-ticket-priority');
+        if (prioritySelect) {
+            prioritySelect.value = (t.priority || 'medium').toLowerCase();
+        }
+
+        // Editable Status
+        const statusSelect = document.getElementById('m-adm-ticket-status');
+        if (statusSelect) {
+            statusSelect.value = (t.status || 'OPEN').toUpperCase();
+        }
+
+        // Official Response Notes
         const notesText = document.getElementById('m-adm-ticket-notes');
-        if (notesText) notesText.value = t.resolution_notes || '';
+        if (notesText) {
+            notesText.value = t.resolution_notes || '';
+        }
 
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
@@ -894,6 +1095,8 @@
     async function saveAdminTicketResolution() {
         if (!selectedAdminTicket) return;
 
+        const newCategory = document.getElementById('m-adm-ticket-category')?.value || selectedAdminTicket.category;
+        const newPriority = document.getElementById('m-adm-ticket-priority')?.value || selectedAdminTicket.priority;
         const newStatus = document.getElementById('m-adm-ticket-status')?.value || 'OPEN';
         const resolutionNotes = (document.getElementById('m-adm-ticket-notes')?.value || '').trim();
 
@@ -910,6 +1113,8 @@
                 body: JSON.stringify({
                     id: selectedAdminTicket.id,
                     status: newStatus,
+                    category: newCategory,
+                    priority: newPriority,
                     resolution_notes: resolutionNotes,
                     role: 'superadmin'
                 })
@@ -936,7 +1141,136 @@
     window.saveAdminTicketResolution = saveAdminTicketResolution;
 
     // =========================================================================
-    // 7. HELPER BADGE & FORMATTING UTILITIES
+    // 7. USER FEEDBACK MODAL (WHEN TICKET NOT RESOLVED)
+    // =========================================================================
+    function openUserFeedbackModal(ticketId, ticketNumber, subject) {
+        selectedFeedbackTicketId = ticketId;
+        const modal = document.getElementById('user-ticket-feedback-modal');
+        if (!modal) return;
+
+        const ticket = companyTickets.find(t => t.id === ticketId);
+
+        document.getElementById('m-usr-ticket-num').textContent = `#${ticketNumber}`;
+        document.getElementById('m-usr-ticket-subj').textContent = subject || '';
+
+        const adminResBox = document.getElementById('m-usr-admin-res-box');
+        const adminResText = document.getElementById('m-usr-admin-res-text');
+        if (adminResBox && adminResText) {
+            if (ticket && ticket.resolution_notes) {
+                adminResBox.style.display = 'block';
+                adminResText.textContent = ticket.resolution_notes;
+            } else {
+                adminResBox.style.display = 'none';
+            }
+        }
+
+        const input = document.getElementById('user-feedback-input');
+        if (input) {
+            input.value = (ticket && ticket.user_feedback) ? ticket.user_feedback : '';
+            setTimeout(() => input.focus(), 100);
+        }
+
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    window.openUserFeedbackModal = openUserFeedbackModal;
+
+    function closeUserFeedbackModal() {
+        const modal = document.getElementById('user-ticket-feedback-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        }
+        document.body.style.overflow = '';
+        selectedFeedbackTicketId = null;
+    }
+    window.closeUserFeedbackModal = closeUserFeedbackModal;
+
+    async function submitUserTicketFeedback() {
+        if (!selectedFeedbackTicketId) return;
+
+        const feedback = (document.getElementById('user-feedback-input')?.value || '').trim();
+        if (!feedback) {
+            showToast('Please describe why the issue is not resolved.', 'warning');
+            document.getElementById('user-feedback-input')?.focus();
+            return;
+        }
+
+        const btnSubmit = document.getElementById('btn-submit-user-feedback');
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<div class="spinner sm" style="margin-right:6px;"></div> Submitting...`;
+        }
+
+        try {
+            const { companyId } = getResolvedCompanyInfo();
+            const res = await apiFetch('/api/support?action=feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: selectedFeedbackTicketId,
+                    feedback: feedback,
+                    company_id: companyId
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                showToast('Feedback submitted! Ticket status set to In Progress for Superadmin follow-up.', 'success');
+                closeUserFeedbackModal();
+                await loadMyCompanyTickets();
+            } else {
+                showToast(data.error || 'Failed to submit feedback', 'error');
+            }
+        } catch (err) {
+            console.error('Error submitting feedback:', err);
+            showToast('Error submitting feedback: ' + err.message, 'error');
+        } finally {
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `<span>Submit Feedback & Request Review 🚀</span>`;
+            }
+        }
+    }
+    window.submitUserTicketFeedback = submitUserTicketFeedback;
+
+    // =========================================================================
+    // 8. CLOSE TICKET (USER ACTION)
+    // =========================================================================
+    async function confirmCloseTicket(ticketId, ticketNumber) {
+        if (!confirm(`Are you sure you want to mark Ticket #${ticketNumber} as closed? This confirms your issue has been resolved.`)) {
+            return;
+        }
+
+        try {
+            const { companyId } = getResolvedCompanyInfo();
+            const res = await apiFetch('/api/support?action=close_ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: ticketId,
+                    company_id: companyId
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                showToast(`Ticket #${ticketNumber} closed successfully.`, 'success');
+                await loadMyCompanyTickets();
+                checkTicketCreationEligibility();
+            } else {
+                showToast(data.error || 'Failed to close ticket', 'error');
+            }
+        } catch (err) {
+            console.error('Error closing ticket:', err);
+            showToast('Error closing ticket: ' + err.message, 'error');
+        }
+    }
+    window.confirmCloseTicket = confirmCloseTicket;
+
+    // =========================================================================
+    // 9. HELPER BADGE & FORMATTING UTILITIES
     // =========================================================================
     function getStatusBadgeHtml(status) {
         const s = (status || 'OPEN').toUpperCase();

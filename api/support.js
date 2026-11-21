@@ -28,12 +28,27 @@ async function ensureSupportTables(sql) {
                 resolution_notes TEXT,
                 resolved_by TEXT,
                 resolved_at TIMESTAMPTZ,
+                user_feedback TEXT,
+                feedback_at TIMESTAMPTZ,
                 created_at TIMESTAMPTZ DEFAULT NOW(),
                 updated_at TIMESTAMPTZ DEFAULT NOW()
             );
         `;
         await sql`CREATE INDEX IF NOT EXISTS idx_support_tickets_company ON support_tickets(company_id);`;
         await sql`CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);`;
+        await sql`CREATE INDEX IF NOT EXISTS idx_support_tickets_email ON support_tickets(LOWER(user_email));`;
+
+        // Ensure user_feedback and feedback_at columns exist if table was previously created
+        await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS user_feedback TEXT;`;
+        await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS feedback_at TIMESTAMPTZ;`;
+
+        // Migration Fix: Ensure tickets raised by Manaswini or sairajeev36 are correctly assigned to Manaswini Enterprises (company_id = 2)
+        await sql`
+            UPDATE support_tickets 
+            SET company_id = 2, company_name = 'Manaswini Enterprises'
+            WHERE (LOWER(user_email) = 'sairajeev36@gmail.com' OR LOWER(user_name) LIKE '%manaswini%')
+              AND (company_id = 1 OR company_name = 'Inspenox' OR company_name IS NULL OR company_name = 'Unknown Company');
+        `;
     } catch (e) {
         console.warn('ensureSupportTables warning:', e.message);
     }
@@ -58,6 +73,41 @@ module.exports = async (req, res) => {
         if (!isNaN(parsed)) companyId = parsed;
     }
 
+    // Secondary email-based company lookup to ensure child company users (e.g. Manaswini) are strictly isolated
+    const checkEmail = (body.user_email || query.user_email || '').trim().toLowerCase();
+    if (checkEmail) {
+        try {
+            const uRows = await sql`
+                SELECT u.company_id, c.name as company_name 
+                FROM users u
+                LEFT JOIN companies c ON u.company_id = c.id
+                WHERE LOWER(u.email) = ${checkEmail} OR LOWER(u.username) = ${checkEmail}
+                LIMIT 1
+            `;
+            if (uRows.length > 0 && uRows[0].company_id) {
+                companyId = uRows[0].company_id;
+            }
+        } catch (e) {
+            console.warn('User email company lookup error:', e.message);
+        }
+    }
+
+    // Fallback: If body.company_name matches a registered company and companyId is still 1
+    if (body.company_name && companyId === 1 && String(body.company_name).toLowerCase() !== 'inspenox') {
+        try {
+            const cRows = await sql`
+                SELECT id, name FROM companies 
+                WHERE LOWER(name) = ${String(body.company_name).trim().toLowerCase()}
+                LIMIT 1
+            `;
+            if (cRows.length > 0) {
+                companyId = cRows[0].id;
+            }
+        } catch (e) {
+            console.warn('Company name lookup error:', e.message);
+        }
+    }
+
     try {
         const cos = await sql`SELECT * FROM companies WHERE id = ${companyId} LIMIT 1`;
         if (cos.length > 0) {
@@ -72,7 +122,7 @@ module.exports = async (req, res) => {
         console.warn('Company fetch error in support.js:', e.message);
     }
 
-    // Role check from headers or body
+    // Role check from headers, body, or master organization
     const userRole = (body.role || query.role || (req.headers && req.headers['x-user-role']) || '').toLowerCase();
     const isSuperadminUser = isMaster || userRole === 'superadmin';
 
@@ -91,7 +141,7 @@ module.exports = async (req, res) => {
             let tickets = [];
 
             if (isSuperadminUser && !query.my_company_only) {
-                // Superadmin: List all tickets across platform
+                // Superadmin Global View: List all tickets across platform
                 if (targetCompany && !isNaN(targetCompany) && statusFilter !== 'ALL') {
                     tickets = await sql`
                         SELECT t.*, c.name as current_company_name 
@@ -125,7 +175,8 @@ module.exports = async (req, res) => {
                     `;
                 }
             } else {
-                // Regular Company: View ONLY their company's tickets
+                // Regular Company View (or Superadmin viewing their own internal company tickets):
+                // Strictly filtered by companyId
                 if (statusFilter !== 'ALL') {
                     tickets = await sql`
                         SELECT * FROM support_tickets 
@@ -176,7 +227,8 @@ module.exports = async (req, res) => {
                 success: true,
                 tickets: tickets,
                 metrics: metrics,
-                is_superadmin: isSuperadminUser
+                is_superadmin: isSuperadminUser,
+                company_id: companyId
             });
         } catch (err) {
             console.error('Error listing support tickets:', err);
@@ -186,7 +238,9 @@ module.exports = async (req, res) => {
 
     // =========================================================================
     // 2. POST CREATE: Raise a New Support Ticket
-    // Accessible by all companies
+    // Enforces:
+    //  a) Active Ticket Block: Cannot raise new ticket if an active ticket (OPEN/IN_PROGRESS) exists
+    //  b) 24-Hour Rate Limiting: Only 1 ticket per user/company every 24 hours
     // =========================================================================
     if (req.method === 'POST' && (action === 'create' || !body.action)) {
         try {
@@ -198,14 +252,15 @@ module.exports = async (req, res) => {
                 priority = 'medium',
                 subject,
                 description,
-                attachment_url
+                attachment_url,
+                company_name
             } = body;
 
             if (!user_name || !user_name.trim()) {
                 return res.status(400).json({ error: 'Contact name is required.' });
             }
-            if (!user_email || !user_email.trim()) {
-                return res.status(400).json({ error: 'Contact email is required.' });
+            if (!user_email || !user_email.trim() || !user_email.includes('@')) {
+                return res.status(400).json({ error: 'Valid contact email is required.' });
             }
             if (!subject || !subject.trim()) {
                 return res.status(400).json({ error: 'Ticket subject is required.' });
@@ -214,11 +269,62 @@ module.exports = async (req, res) => {
                 return res.status(400).json({ error: 'Problem description is required.' });
             }
 
+            const cleanEmail = user_email.trim().toLowerCase();
+
+            // RULE 1: ACTIVE TICKET BLOCK
+            // If the user or company has an active ticket (OPEN or IN_PROGRESS), block creation until closed!
+            const activeTickets = await sql`
+                SELECT id, ticket_number, status, subject, created_at 
+                FROM support_tickets 
+                WHERE (company_id = ${companyId} OR LOWER(user_email) = ${cleanEmail})
+                  AND status IN ('OPEN', 'IN_PROGRESS')
+                ORDER BY created_at DESC
+                LIMIT 1
+            `;
+
+            if (activeTickets.length > 0) {
+                const act = activeTickets[0];
+                return res.status(400).json({
+                    error: `You already have an active ticket in progress (#${act.ticket_number}: "${act.subject}"). Platform policy allows only one active ticket at a time. Please wait for Superadmin resolution or mark your existing ticket as closed before raising a new one.`,
+                    active_ticket: act
+                });
+            }
+
+            // RULE 2: 24-HOUR RATE LIMITING
+            // Enforce rate limiting: only 1 ticket per user/company every 24 hours
+            const recentTickets = await sql`
+                SELECT id, ticket_number, created_at 
+                FROM support_tickets 
+                WHERE (company_id = ${companyId} OR LOWER(user_email) = ${cleanEmail})
+                  AND created_at >= NOW() - INTERVAL '24 HOURS'
+                ORDER BY created_at DESC 
+                LIMIT 1
+            `;
+
+            if (recentTickets.length > 0) {
+                const rec = recentTickets[0];
+                const recTime = new Date(rec.created_at).getTime();
+                const resetTime = recTime + (24 * 60 * 60 * 1000);
+                const remainingMs = Math.max(0, resetTime - Date.now());
+                const hoursLeft = Math.floor(remainingMs / (1000 * 60 * 60));
+                const minsLeft = Math.ceil((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+
+                return res.status(429).json({
+                    error: `Rate limit reached: Only 1 support ticket is permitted per company every 24 hours. Your last ticket (#${rec.ticket_number}) was submitted recently. You can raise your next ticket in ${hoursLeft}h ${minsLeft}m.`,
+                    rate_limited: true,
+                    hours_left: hoursLeft,
+                    mins_left: minsLeft
+                });
+            }
+
             // Generate unique human-readable ticket number (e.g. TICK-58492)
             const randomCode = Math.floor(10000 + Math.random() * 90000);
             const ticketNumber = `TICK-${randomCode}`;
-            const compName = company ? company.name : 'Unknown Company';
+            const compName = company_name || (company ? company.name : (companyId === 1 ? 'Inspenox' : `Company #${companyId}`));
             const cleanPhone = user_phone ? formatIndiaPhone(user_phone) : (company ? company.phone : '');
+
+            const validPriorities = ['low', 'medium', 'high', 'urgent'];
+            const normalizedPriority = validPriorities.includes(String(priority).toLowerCase()) ? String(priority).toLowerCase() : 'medium';
 
             const inserted = await sql`
                 INSERT INTO support_tickets (
@@ -241,10 +347,10 @@ module.exports = async (req, res) => {
                     ${companyId},
                     ${compName},
                     ${user_name.trim()},
-                    ${user_email.trim().toLowerCase()},
+                    ${cleanEmail},
                     ${cleanPhone},
                     ${category || 'General Inquiry'},
-                    ${priority.toLowerCase()},
+                    ${normalizedPriority},
                     ${subject.trim()},
                     ${description.trim()},
                     ${attachment_url || null},
@@ -257,7 +363,7 @@ module.exports = async (req, res) => {
 
             return res.status(200).json({
                 success: true,
-                message: 'Support ticket raised successfully.',
+                message: 'Support ticket raised successfully. Superadmin notified.',
                 ticket: inserted[0]
             });
         } catch (err) {
@@ -267,25 +373,32 @@ module.exports = async (req, res) => {
     }
 
     // =========================================================================
-    // 3. POST UPDATE_STATUS: Update Ticket Status & Resolution Notes
-    // Restricted to Superadmin only
+    // 3. POST UPDATE_STATUS: Superadmin Manage Ticket
+    // Superadmin can:
+    //  - Change Status (OPEN, IN_PROGRESS, RESOLVED, CLOSED)
+    //  - Change Issue Priority (low, medium, high, urgent)
+    //  - Change Problem Category
+    //  - Add/Update Superadmin Resolution / Official Response Message
     // =========================================================================
     if (req.method === 'POST' && action === 'update_status') {
         try {
             if (!isSuperadminUser) {
-                return res.status(403).json({ error: 'Permission denied. Only Superadmin can update ticket status.' });
+                return res.status(403).json({ error: 'Permission denied. Only Superadmin can manage ticket status, priority, and category.' });
             }
 
-            const { id, status, resolution_notes, resolved_by } = body;
+            const { id, status, category, priority, resolution_notes, resolved_by } = body;
             if (!id) {
                 return res.status(400).json({ error: 'Ticket ID is required.' });
             }
 
             const validStatuses = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
-            const newStatus = (status || 'OPEN').toUpperCase();
+            const newStatus = status ? status.toUpperCase() : 'OPEN';
             if (!validStatuses.includes(newStatus)) {
                 return res.status(400).json({ error: 'Invalid status. Must be OPEN, IN_PROGRESS, RESOLVED, or CLOSED.' });
             }
+
+            const validPriorities = ['low', 'medium', 'high', 'urgent'];
+            const newPriority = priority ? priority.toLowerCase() : null;
 
             const isResolvedNow = (newStatus === 'RESOLVED' || newStatus === 'CLOSED');
 
@@ -293,6 +406,8 @@ module.exports = async (req, res) => {
                 UPDATE support_tickets
                 SET 
                     status = ${newStatus},
+                    category = COALESCE(${category || null}, category),
+                    priority = COALESCE(${newPriority && validPriorities.includes(newPriority) ? newPriority : null}, priority),
                     resolution_notes = ${resolution_notes !== undefined ? resolution_notes : sql`resolution_notes`},
                     resolved_by = ${resolved_by || (isResolvedNow ? 'Superadmin' : sql`resolved_by`)},
                     resolved_at = ${isResolvedNow ? sql`NOW()` : sql`resolved_at`},
@@ -307,11 +422,87 @@ module.exports = async (req, res) => {
 
             return res.status(200).json({
                 success: true,
-                message: `Ticket #${updated[0].ticket_number} updated to ${newStatus}.`,
+                message: `Ticket #${updated[0].ticket_number} updated successfully.`,
                 ticket: updated[0]
             });
         } catch (err) {
             console.error('Error updating ticket status:', err);
+            return res.status(500).json({ error: err.message });
+        }
+    }
+
+    // =========================================================================
+    // 4. POST FEEDBACK: User submits feedback if ticket is not resolved
+    // Updates status to IN_PROGRESS so Superadmin can follow up
+    // =========================================================================
+    if (req.method === 'POST' && action === 'feedback') {
+        try {
+            const { id, feedback } = body;
+            if (!id) {
+                return res.status(400).json({ error: 'Ticket ID is required.' });
+            }
+            if (!feedback || !feedback.trim()) {
+                return res.status(400).json({ error: 'Feedback message cannot be empty.' });
+            }
+
+            const updated = await sql`
+                UPDATE support_tickets
+                SET 
+                    user_feedback = ${feedback.trim()},
+                    feedback_at = NOW(),
+                    status = 'IN_PROGRESS',
+                    updated_at = NOW()
+                WHERE id = ${id}
+                RETURNING *
+            `;
+
+            if (updated.length === 0) {
+                return res.status(404).json({ error: 'Ticket not found.' });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Your feedback has been submitted. Superadmin has been notified to follow up.',
+                ticket: updated[0]
+            });
+        } catch (err) {
+            console.error('Error submitting feedback:', err);
+            return res.status(500).json({ error: err.message });
+        }
+    }
+
+    // =========================================================================
+    // 5. POST CLOSE_TICKET: User or Superadmin marks ticket as CLOSED
+    // Clears active ticket constraint so new ticket can be raised (subject to 24h limit)
+    // =========================================================================
+    if (req.method === 'POST' && action === 'close_ticket') {
+        try {
+            const { id } = body;
+            if (!id) {
+                return res.status(400).json({ error: 'Ticket ID is required.' });
+            }
+
+            const updated = await sql`
+                UPDATE support_tickets
+                SET 
+                    status = 'CLOSED',
+                    resolved_at = COALESCE(resolved_at, NOW()),
+                    updated_at = NOW()
+                WHERE id = ${id}
+                RETURNING *
+            `;
+
+            if (updated.length === 0) {
+                return res.status(404).json({ error: 'Ticket not found.' });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: `Ticket #${updated[0].ticket_number} marked as closed.`,
+                ticket: updated[0]
+            });
+        } catch (err) {
+            console.error('Error closing ticket:', err);
             return res.status(500).json({ error: err.message });
         }
     }

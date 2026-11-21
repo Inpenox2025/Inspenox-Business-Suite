@@ -8720,6 +8720,127 @@ td.empty-state .empty-state-desc,
     justify-content: space-between;
 }
 
+/* Active Ticket Blocking & 24h Rate Limiting Banners */
+.active-ticket-block-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(245, 158, 11, 0.08) 100%);
+    border: 1.5px solid rgba(239, 68, 68, 0.35);
+}
+
+.active-banner-icon {
+    font-size: 2rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.active-banner-body h4 {
+    margin: 0 0 0.35rem 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.active-banner-body p {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.active-banner-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.rate-limit-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(59, 130, 246, 0.06) 100%);
+    border: 1.5px solid rgba(245, 158, 11, 0.35);
+}
+
+/* User Feedback Callout in Ticket Card */
+.ticket-user-feedback-callout {
+    margin-top: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: rgba(245, 158, 11, 0.08);
+    border-left: 3px solid #f59e0b;
+    border-radius: 6px;
+}
+
+.ticket-feedback-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #d97706;
+    margin-bottom: 4px;
+}
+
+.ticket-feedback-body {
+    font-size: 0.82rem;
+    color: var(--text-main);
+    line-height: 1.45;
+}
+
+/* Action Bar for Users inside Ticket Cards */
+.ticket-user-action-bar {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.btn-ticket-close {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #10b981;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-ticket-close:hover {
+    background: #10b981;
+    color: #fff;
+}
+
+.btn-ticket-feedback {
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    color: #3b82f6;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-ticket-feedback:hover {
+    background: #3b82f6;
+    color: #fff;
+}
+
+
 
 
 
